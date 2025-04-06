@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 滾動條樣式 */
+::-webkit-scrollbar {
+  width: 16px;
+  background: #0a0a0a;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-track {
+  background: repeating-linear-gradient(
+    45deg,
+    #0a0a0a,
+    #0a0a0a 2px,
+    #141414 2px,
+    #141414 4px
+  );
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.05),
+              inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #333333;
+}
+
+::-webkit-scrollbar-button {
+  display: block;
+  height: 16px;
+  background-color: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.05),
+              inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 動畫效果 */
+@keyframes typing {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-typing {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: typing 2s steps(40, end);
+}
+
+.cursor-blink {
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1.5s step-end infinite;
+}
+
+/* 主題顏色 */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --accent: #333333;
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* 基礎樣式 */
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Chicago', monospace;
+}
+
+/* 復古效果 */
+.window-shadow {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.retro-border {
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.grain {
+  position: relative;
+}
+
+.grain::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/grain.png');
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+/* DappKit 按鈕樣式 */
+[data-dapp-kit] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05) !important;
+  font-family: monospace !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  padding: 8px 16px !important;
+  border-radius: 0 !important;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+[data-dapp-kit]:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 按鈕內文字樣式 */
+button[data-dapp-kit] .Text_textVariants_mono_true__2bv1ur7,
+button[data-dapp-kit] .Text_textVariants_size_sm__2bv1ur1 {
+  color: #ffffff !important;
+}
+
+/* 下拉菜單容器樣式 */
+div[data-side="bottom"][data-align="center"][role="menu"] {
+  background-color: #141414 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05) !important;
+  border-radius: 0 !important;
+  padding: 4px !important;
+  min-width: 200px !important;
+  overflow: hidden !important;
+  margin-top: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+/* 菜單項目樣式 */
+div[role="menuitem"] {
+  font-family: monospace !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  padding: 6px 12px !important;
+  height: 28px !important;
+  transition: all 0.2s !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  text-align: center !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+
+div[role="menuitem"] .Text_textVariants_mono_true__2bv1ur7,
+div[role="menuitem"] .Text_textVariants_size_sm__2bv1ur1 {
+  color: #ffffff !important;
+}
+
+/* 選中項目的勾勾圖標 */
+div[role="menuitem"] svg {
+  width: 12px !important;
+  height: 12px !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  margin-left: 8px !important;
+}
+
+div[role="menuitem"] svg path {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 菜單項目懸停效果 */
+div[role="menuitem"]:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 下拉箭頭圖標樣式 */
+button[data-dapp-kit] svg {
+  width: 12px !important;
+  height: 12px !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+button[data-dapp-kit] svg path {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+button[data-dapp-kit] svg * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 隱藏分隔線 */
+div.AccountDropdownMenu_separator__div2ql5 {
+  display: none !important;
+}
+
+/* 圖片樣式 */
+.artlier-image {
+  image-rendering: pixelated;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
