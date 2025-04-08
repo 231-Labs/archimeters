@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
 const Header = () => {
   const [currentTime, setCurrentTime] = useState('');
@@ -9,12 +8,10 @@ const Header = () => {
     const updateDateTime = () => {
       const now = new Date();
       
-      // 更新時間
       const hours = now.getHours().toString().padStart(2, '0');
       const minutes = now.getMinutes().toString().padStart(2, '0');
       setCurrentTime(`${hours}:${minutes}`);
       
-      // 更新日期
       const year = now.getFullYear();
       const month = (now.getMonth() + 1).toString().padStart(2, '0');
       const day = now.getDate().toString().padStart(2, '0');
