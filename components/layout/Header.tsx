@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 const Header = () => {
   const [currentTime, setCurrentTime] = useState('');
@@ -38,7 +39,7 @@ const Header = () => {
         className="text-xs font-mono font-bold text-white hover:text-white/80 transition-colors cursor-pointer"
         onClick={() => {/* 待實現 */}}
       >
-        Archimeter OS
+        Archimeters OS
       </button>
 
       <div className="flex items-center gap-2 text-white">

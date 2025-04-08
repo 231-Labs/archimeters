@@ -8,7 +8,7 @@ import { WindowName } from '@/types/index';
 type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 
 // NFT 類型常量
-const OS_TYPE = `${PACKAGE_ID}::archimeter::ID`;
+const OS_TYPE = `${PACKAGE_ID}::archimeters::ID`;
 
 interface EntryWindowProps {
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;

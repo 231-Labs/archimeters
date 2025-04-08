@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Archimeter OS",
-  description: "Archimeter OS is a decentralized operating system for the Artlier.",
+  title: "Archimeters",
+  description: "Archimeters is a decentralized operating system for the Artlier.",
 }; 
