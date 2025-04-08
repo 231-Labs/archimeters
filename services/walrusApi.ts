@@ -1,45 +1,119 @@
 export class WalrusApiService {
-  private publisherUrl: string;
+  private publisherUrls: string[];
   private aggregatorUrl: string;
+  private currentPublisherIndex: number;
 
   constructor() {
-    this.publisherUrl = process.env.NEXT_PUBLIC_WALRUS_PUBLISHER || '';
-    this.aggregatorUrl = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR || '';
+    // 從環境變數讀取 publisher 列表
+    const envPublishers = process.env.NEXT_PUBLIC_WALRUS_PUBLISHERS;
+    this.publisherUrls = envPublishers 
+      ? envPublishers.split(',').map(url => url.trim())
+      : [
+          'https://publisher.walrus-testnet.walrus.space',
+          'https://publisher.testnet.walrus.atalma.io',
+          'https://publisher.walrus-01.tududes.com',
+          'https://publisher.walrus.banansen.dev',
+          'https://testnet-publisher.walrus.graphyte.dev',
+          'https://walrus-pub.testnet.obelisk.sh'
+        ];
+
+    // 確保所有 URL 都是有效的
+    this.publisherUrls = this.publisherUrls.filter(url => {
+      try {
+        new URL(url);
+        return true;
+      } catch {
+        console.warn(`Invalid publisher URL: ${url}`);
+        return false;
+      }
+    });
+
+    if (this.publisherUrls.length === 0) {
+      throw new Error('No valid publisher URLs configured');
+    }
+
+    this.aggregatorUrl = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR || 'https://aggregator.walrus-testnet.walrus.space';
+    this.currentPublisherIndex = 0;
+
+    console.log('Configured publishers:', this.publisherUrls);
+  }
+
+  private getNextPublisher(): string {
+    const publisher = this.publisherUrls[this.currentPublisherIndex];
+    this.currentPublisherIndex = (this.currentPublisherIndex + 1) % this.publisherUrls.length;
+    return publisher;
   }
 
   // 上傳 blob，添加品質相關的 headers
-  async uploadBlob(fileBuffer: Buffer, epochs: string = '1') {
-    const response = await fetch(`${this.publisherUrl}/v1/blobs?epochs=${epochs}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Cache-Control': 'no-transform',  // 防止 CDN 壓縮
-        'X-Content-Type-Options': 'nosniff'  // 防止內容類型猜測
-      },
-      body: fileBuffer,
-    });
-
-    const responseText = await response.text();
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status} ${responseText}`);
+  async uploadBlob(fileBuffer: Buffer, epochs: string = '1', retryCount: number = 0): Promise<any> {
+    if (retryCount >= this.publisherUrls.length) {
+      throw new Error('All publishers failed to respond');
     }
 
-    return JSON.parse(responseText);
+    const publisherUrl = this.getNextPublisher();
+    
+    try {
+      const url = new URL('/v1/blobs', publisherUrl);
+      url.searchParams.set('epochs', epochs);
+
+      console.log('Uploading to:', url.toString());
+      console.log('File size:', fileBuffer.length, 'bytes');
+      console.log('Epochs:', epochs);
+      console.log('Retry count:', retryCount);
+
+      const response = await fetch(url.toString(), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'Cache-Control': 'no-transform',
+          'X-Content-Type-Options': 'nosniff'
+        },
+        body: fileBuffer,
+      });
+
+      const responseText = await response.text();
+      console.log('Upload response:', response.status, responseText);
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          // 如果遇到限流，嘗試下一個 publisher
+          console.log('Rate limited, trying next publisher...');
+          return this.uploadBlob(fileBuffer, epochs, retryCount + 1);
+        }
+        throw new Error(`Upload failed: ${response.status} ${responseText}`);
+      }
+
+      return JSON.parse(responseText);
+    } catch (error) {
+      console.error('Upload error:', error);
+      if (error instanceof Error && error.message.includes('failed to fetch')) {
+        // 如果連接失敗，嘗試下一個 publisher
+        console.log('Connection failed, trying next publisher...');
+        return this.uploadBlob(fileBuffer, epochs, retryCount + 1);
+      }
+      throw error;
+    }
   }
 
   // 讀取 blob，添加品質相關的參數
   async readBlob(blobId: string) {
-    const response = await fetch(`${this.aggregatorUrl}/v1/blobs/${encodeURIComponent(blobId)}`, {
+    if (!this.aggregatorUrl) {
+      throw new Error('Aggregator URL is not configured');
+    }
+
+    const url = new URL(`/v1/blobs/${encodeURIComponent(blobId)}`, this.aggregatorUrl);
+    
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Cache-Control': 'no-transform',
-        'X-Content-Type-Options': 'nosniff',
-        'Accept': 'image/gif,image/*;q=0.8,*/*;q=0.5'
+        'Accept': '*/*',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch blob: ${response.statusText}`);
+      throw new Error(`Failed to fetch blob: ${response.status} ${response.statusText}`);
     }
 
     return response;
@@ -47,15 +121,27 @@ export class WalrusApiService {
 
   // 處理文件上傳
   async handleFileUpload(formData: FormData, method: 'PUT' | 'POST' = 'POST') {
-    const file = formData.get('data') || formData.get('file');
-    const epochs = formData.get('epochs')?.toString() || '1';
-    
-    if (!file || !(file instanceof File)) {
-      throw new Error('Invalid file');
-    }
+    try {
+      const file = formData.get('data') || formData.get('file');
+      const epochs = formData.get('epochs')?.toString() || '1';
+      
+      if (!file || !(file instanceof File)) {
+        throw new Error('Invalid file');
+      }
 
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    return this.uploadBlob(fileBuffer, epochs);
+      console.log('Processing file upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        epochs
+      });
+
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      return this.uploadBlob(fileBuffer, epochs);
+    } catch (error) {
+      console.error('File upload error:', error);
+      throw error;
+    }
   }
 }
 

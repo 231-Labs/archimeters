@@ -1,19 +1,18 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction as TX } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x0';
-export const STATE_ID = '0x0';
+export const PACKAGE_ID = '0x80d49eb9fd5553ed959bbf6a8ba4fa96fefc481a79abb9a4214f2010c169b5cc';
+export const STATE_ID = '0x0f636eeb4859365681f415ec3654e83beeae957f3e4cb49ba47863c347ee4c6d';
 
-export const mintOS = async (username: string, settings_blob: string = "") => {
-  console.log('mintOS params:', username, settings_blob);
+export const mintMembership = async (username: string) => {
+  console.log('mintOS params:', username);
   
   const tx = new TX();
   tx.moveCall({
-    target: `${PACKAGE_ID}::artlier::mint_id`,  // TODO: change to actual function call
+    target: `${PACKAGE_ID}::archimeters::mint_membership`,  // TODO: change to actual function call
     arguments: [
       tx.object(STATE_ID),
       tx.pure(bcs.string().serialize(username).toBytes()),
-      tx.pure(bcs.string().serialize(settings_blob).toBytes()),
     ],
   });
   return tx;

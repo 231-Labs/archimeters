@@ -28,7 +28,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="Upload"
-            onClick={() => onOpenWindow('walrusupload')}
+            onClick={() => onOpenWindow('walrus-upload')}
             icon="📤"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
@@ -39,7 +39,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="View"
-            onClick={() => onOpenWindow('walrusview')}
+            onClick={() => onOpenWindow('walrus-view')}
             icon="📥"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
