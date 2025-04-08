@@ -1,14 +1,14 @@
 import { ConnectButton, useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
-import { mintOS, PACKAGE_ID } from '@/utils/transactions';
+import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
 import { WindowName } from '@/types/index';
 
 // 模擬用的臨時類型
 type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 
 // NFT 類型常量
-const OS_TYPE = `${PACKAGE_ID}::archimeters::ID`; //TODO: 改正確的 package id
+const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`; //TODO: 改正確的 package id
 
 interface EntryWindowProps {
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
@@ -39,7 +39,7 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
       const { data: objects } = await suiClient.getOwnedObjects({
         owner: currentAccount.address,
         filter: {
-          StructType: OS_TYPE
+          StructType: MEMBERSHIP_TYPE
         },
         options: {
           showType: true,
@@ -67,7 +67,7 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
 
     try {
       setIsMinting(true);
-      const tx = await mintOS(username, 'initial-settings');
+      const tx = await mintMembership(username);
 
       signAndExecuteTransaction(
         {
@@ -163,7 +163,7 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
       setGifError('');
       
       try {
-        const blobId = '6Ci8-LwW5w0rZ4f3FATjJm3-1YyApJL1eTfUGuZITLw';
+        const blobId = 'yy3Ngjkh5O1Vg7GWp9R96pGsJ8fzNbvnopia9dc9uMw';
         const response = await fetch(`/api/walrus/blob/${blobId}`);
         
         if (!response.ok) {

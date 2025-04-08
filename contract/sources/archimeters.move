@@ -15,7 +15,6 @@ module archimeters::archimeters {
 
     // == Structs ==
 
-    #[test_only]
     public struct State has key {
         id: UID,
         accounts: Table<address, ID>,
