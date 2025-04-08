@@ -1,5 +1,5 @@
 import React from 'react';
-import type { WindowName } from '../types/index';
+import type { WindowName } from '@/types';
 
 interface WindowProps {
   name: WindowName;

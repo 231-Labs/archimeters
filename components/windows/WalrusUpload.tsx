@@ -5,6 +5,7 @@ export default function WalrusUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [response, setResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -17,10 +18,11 @@ export default function WalrusUpload() {
     if (!file) return;
 
     setIsLoading(true);
+    setError('');
     try {
       const formData = new FormData();
       formData.append('data', file);
-      formData.append('epochs', '100');
+      formData.append('epochs', '5'); // 減少 epochs 數量
 
       const response = await fetch('/api/walrus', {
         method: 'PUT',
@@ -28,13 +30,15 @@ export default function WalrusUpload() {
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Upload failed: ${response.status}`);
       }
 
       const result = await response.json();
       setResponse(JSON.stringify(result, null, 2));
     } catch (error) {
-      setResponse(error instanceof Error ? error.message : 'Upload failed');
+      setError(error instanceof Error ? error.message : 'Upload failed');
+      setResponse('');
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +61,11 @@ export default function WalrusUpload() {
           Upload
         </Button>
       </div>
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/20 text-red-400 rounded">
+          {error}
+        </div>
+      )}
       <div className="flex-1 overflow-auto">
         <pre className="p-3 bg-[rgba(255,255,255,0.05)] font-mono text-sm whitespace-pre-wrap text-white/90">
           {response || 'Response will appear here...'}

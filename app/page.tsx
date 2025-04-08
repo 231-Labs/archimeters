@@ -14,8 +14,8 @@ import Dock from '@/components/layout/Dock';
 
 const defaultWindowSizes = {
   artlier: { width: 500, height: 600 },
-  walrusupload: { width: 540, height: 400 },
-  walrusview: { width: 365, height: 446 },
+  'walrus-upload': { width: 540, height: 400 },
+  'walrus-view': { width: 365, height: 446 },
 };
 
 interface WindowState {
@@ -69,8 +69,8 @@ export default function Home() {
   const [draggingWindow, setDraggingWindow] = useState<WindowName | null>(null);
   const [windowPositions, setWindowPositions] = useState({
     artlier: { x: 0, y: 0 },
-    walrusupload: { x: 350, y: 350 },
-    walrusview: { x: 400, y: 400 },
+    'walrus-upload': { x: 350, y: 350 },
+    'walrus-view': { x: 400, y: 400 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -210,38 +210,38 @@ export default function Home() {
                       />
                     </Window>
                   );
-                case 'walrusupload':
+                case 'walrus-upload':
                   return (
                     <Window
                       key={name}
                       name={name}
                       title="Walrus Upload"
-                      position={windowPositions.walrusupload}
-                      size={windowSizes.walrusupload}
-                      isActive={activeWindow === 'walrusupload'}
+                      position={windowPositions['walrus-upload']}
+                      size={windowSizes['walrus-upload']}
+                      isActive={activeWindow === 'walrus-upload'}
                       resizable={true}
                       onClose={handleCloseWindow}
                       onDragStart={handleDragStart}
                       onResize={handleResize}
-                      onClick={() => handleWindowActivate('walrusupload')}
+                      onClick={() => handleWindowActivate('walrus-upload')}
                     >
                       <WalrusUpload />
                     </Window>
                   );
-                case 'walrusview':
+                case 'walrus-view':
                   return (
                     <Window
                       key={name}
                       name={name}
                       title="Walrus View"
-                      position={windowPositions.walrusview}
-                      size={windowSizes.walrusview}
-                      isActive={activeWindow === 'walrusview'}
+                      position={windowPositions['walrus-view']}
+                      size={windowSizes['walrus-view']}
+                      isActive={activeWindow === 'walrus-view'}
                       resizable={true}
                       onClose={handleCloseWindow}
                       onDragStart={handleDragStart}
                       onResize={handleResize}
-                      onClick={() => handleWindowActivate('walrusview')}
+                      onClick={() => handleWindowActivate('walrus-view')}
                     >
                       <WalrusView />
                     </Window>
