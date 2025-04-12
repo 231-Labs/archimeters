@@ -14,7 +14,34 @@
     - 調整了輸入框的高度
     - 移除了輸入值的限制
 
-### 2. ThreeScene.tsx
+### 2. ParametricScene.tsx
+- 位置：`components/3d/ParametricScene.tsx`
+- 功能：參數化曲面生成和渲染組件
+- 主要實現邏輯：
+  1. 場景初始化：
+     - 創建 Three.js 場景、相機和渲染器
+     - 設置背景色為黑色
+     - 添加軌道控制器實現相機控制
+     - 添加環境光和點光源
+
+  2. 參數化曲面生成：
+     - 使用 `BufferGeometry` 創建自定義幾何體
+     - 根據 resolution 參數生成網格頂點
+     - 使用正弦函數生成曲面高度
+     - 計算頂點法線實現光照效果
+     - 設置網格材質（支持網格線顯示）
+
+  3. 響應式處理：
+     - 使用 `ResizeObserver` 監聽容器大小變化
+     - 自動調整相機視角和渲染器大小
+     - 實現平滑的動畫循環
+
+  4. 資源管理：
+     - 使用 `useRef` 保存 Three.js 實例
+     - 在組件卸載時正確清理資源
+     - 處理材質和幾何體的釋放
+
+### 3. ThreeScene.tsx
 - 位置：`components/3d/ThreeScene.tsx`
 - 功能：Three.js 場景渲染組件
 - 主要修改點：

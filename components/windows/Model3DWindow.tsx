@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { WindowName } from '@/types';
 
-const ThreeScene = dynamic(() => import('../3d/ThreeScene'), {
+const ParametricScene = dynamic(() => import('../3d/ParametricScene'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
@@ -19,88 +19,63 @@ interface Model3DWindowProps {
 }
 
 const Model3DWindow: React.FC<Model3DWindowProps> = ({ onClose, name }) => {
-  const [dimensions, setDimensions] = useState({
-    width: '',
-    height: '',
-    depth: '',
+  const [parameters, setParameters] = useState({
+    amplitude: 1,
+    frequency: 1,
+    resolution: 20,
+    color: '#f5f5dc',
   });
 
-  const handleDimensionChange = (key: keyof typeof dimensions, value: string) => {
-    setDimensions(prev => ({
+  const handleParameterChange = (key: keyof typeof parameters, value: string) => {
+    setParameters(prev => ({
       ...prev,
-      [key]: value,
+      [key]: key === 'color' ? value : value === '' ? '' : parseFloat(value),
     }));
   };
-
-  const getNumericDimensions = () => {
-    return {
-      width: dimensions.width === '' ? 1 : parseFloat(dimensions.width) || 1,
-      height: dimensions.height === '' ? 1 : parseFloat(dimensions.height) || 1,
-      depth: dimensions.depth === '' ? 1 : parseFloat(dimensions.depth) || 1,
-    };
-  };
-
-  const inputClassName = `
-    w-full px-3 border
-    focus:outline-none focus:ring-2 focus:ring-blue-500 
-    bg-[#2a2a2a] text-white border-[#3a3a3a]
-    [appearance:textfield] 
-    [&::-webkit-outer-spin-button]:appearance-none 
-    [&::-webkit-inner-spin-button]:appearance-none
-  `;
 
   return (
     <div className="flex h-full w-full">
       <div className="flex-1">
-        <ThreeScene dimensions={getNumericDimensions()} />
+        <ParametricScene parameters={parameters} />
       </div>
       <div className="w-64 p-4 bg-[#1a1a1a] border-l border-white/10">
-        <h3 className="text-lg font-semibold mb-4 text-white">Dimensions</h3>
+        <h3 className="text-lg font-semibold mb-4 text-white">Parameters</h3>
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-1 text-white/90">Width</label>
+            <label className="block text-sm font-medium mb-1 text-white/90">Amplitude</label>
             <input
               type="number"
-              value={dimensions.width}
-              onChange={(e) => handleDimensionChange('width', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'e' || e.key === '-' || e.key === '+') {
-                  e.preventDefault();
-                }
-              }}
-              className={inputClassName}
+              value={parameters.amplitude}
+              onChange={(e) => handleParameterChange('amplitude', e.target.value)}
+              className="w-full px-3 py-1.5 bg-[#2a2a2a] text-white border border-[#3a3a3a] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <p className="mt-1 text-xs text-white/60">Enter a value between 0.1 and 10</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white/90">Height</label>
+            <label className="block text-sm font-medium mb-1 text-white/90">Frequency</label>
             <input
               type="number"
-              value={dimensions.height}
-              onChange={(e) => handleDimensionChange('height', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'e' || e.key === '-' || e.key === '+') {
-                  e.preventDefault();
-                }
-              }}
-              className={inputClassName}
+              value={parameters.frequency}
+              onChange={(e) => handleParameterChange('frequency', e.target.value)}
+              className="w-full px-3 py-1.5 bg-[#2a2a2a] text-white border border-[#3a3a3a] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <p className="mt-1 text-xs text-white/60">Enter a value between 0.1 and 10</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-white/90">Depth</label>
+            <label className="block text-sm font-medium mb-1 text-white/90">Resolution</label>
             <input
               type="number"
-              value={dimensions.depth}
-              onChange={(e) => handleDimensionChange('depth', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'e' || e.key === '-' || e.key === '+') {
-                  e.preventDefault();
-                }
-              }}
-              className={inputClassName}
+              value={parameters.resolution}
+              onChange={(e) => handleParameterChange('resolution', e.target.value)}
+              className="w-full px-3 py-1.5 bg-[#2a2a2a] text-white border border-[#3a3a3a] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <p className="mt-1 text-xs text-white/60">Enter a value between 0.1 and 10</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-white/90">Color</label>
+            <input
+              type="color"
+              value={parameters.color}
+              onChange={(e) => handleParameterChange('color', e.target.value)}
+              className="w-full h-8 cursor-pointer"
+            />
           </div>
         </div>
       </div>
