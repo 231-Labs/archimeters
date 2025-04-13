@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import WalrusUpload from '@/components/windows/WalrusUpload';
 import WalrusView from '@/components/windows/WalrusView';
 import EntryWindow from '@/components/windows/EntryWindow';
+import Model3DWindow from '@/components/windows/Model3DWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -16,6 +17,7 @@ const defaultWindowSizes = {
   artlier: { width: 500, height: 600 },
   'walrus-upload': { width: 540, height: 400 },
   'walrus-view': { width: 365, height: 446 },
+  'model3d': { width: 800, height: 600 },
 };
 
 interface WindowState {
@@ -71,6 +73,7 @@ export default function Home() {
     artlier: { x: 0, y: 0 },
     'walrus-upload': { x: 350, y: 350 },
     'walrus-view': { x: 400, y: 400 },
+    'model3d': { x: 100, y: 100 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -244,6 +247,27 @@ export default function Home() {
                       onClick={() => handleWindowActivate('walrus-view')}
                     >
                       <WalrusView />
+                    </Window>
+                  );
+                case 'model3d':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="3D Model Editor"
+                      position={windowPositions['model3d']}
+                      size={windowSizes['model3d']}
+                      isActive={activeWindow === 'model3d'}
+                      resizable={true}
+                      onClose={handleCloseWindow}
+                      onDragStart={handleDragStart}
+                      onResize={handleResize}
+                      onClick={() => handleWindowActivate('model3d')}
+                    >
+                      <Model3DWindow 
+                        name={name}
+                        onClose={() => handleCloseWindow(name)}
+                      />
                     </Window>
                   );
               }

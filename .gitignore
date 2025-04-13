@@ -65,3 +65,6 @@ build
 # package managers
 package-lock.json
 yarn.lock
+
+# Doc
+docs
