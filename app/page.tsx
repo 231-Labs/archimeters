@@ -12,12 +12,14 @@ import Model3DWindow from '@/components/windows/Model3DWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
+import { TerminalWindow } from '@/components/terminal';
 
 const defaultWindowSizes = {
   artlier: { width: 500, height: 600 },
   'walrus-upload': { width: 540, height: 400 },
   'walrus-view': { width: 365, height: 446 },
   'model3d': { width: 800, height: 600 },
+  'designer': { width: 800, height: 600 },
 };
 
 interface WindowState {
@@ -74,6 +76,7 @@ export default function Home() {
     'walrus-upload': { x: 350, y: 350 },
     'walrus-view': { x: 400, y: 400 },
     'model3d': { x: 100, y: 100 },
+    'designer': { x: 200, y: 200 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -269,6 +272,20 @@ export default function Home() {
                         onClose={() => handleCloseWindow(name)}
                       />
                     </Window>
+                  );
+                case 'designer':
+                  return (
+                    <TerminalWindow
+                      key={name}
+                      name={name}
+                      position={windowPositions['designer']}
+                      size={windowSizes['designer']}
+                      isActive={activeWindow === 'designer'}
+                      onClose={handleCloseWindow}
+                      onDragStart={handleDragStart}
+                      onResize={handleResize}
+                      onClick={() => handleWindowActivate('designer')}
+                    />
                   );
               }
             })}
