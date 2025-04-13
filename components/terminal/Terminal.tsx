@@ -17,7 +17,7 @@ const ArchimetersTerminal = () => {
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // 添加自定義樣式
+    // Add custom styles
     const styleSheet = document.createElement('style');
     styleSheet.textContent = Object.entries(terminalStyles)
       .map(([selector, rules]) => {
@@ -29,7 +29,7 @@ const ArchimetersTerminal = () => {
       .join('\n');
     document.head.appendChild(styleSheet);
 
-    // 初始化終端機
+    // Initialize terminal
     terminal.current = new XTerm({
       fontFamily: 'JetBrains Mono, monospace',
       fontSize: 14,
@@ -42,14 +42,14 @@ const ArchimetersTerminal = () => {
       convertEol: true,
     });
 
-    // 初始化適配插件
+    // Initialize fit addon
     fitAddon.current = new FitAddon();
     terminal.current.loadAddon(fitAddon.current);
 
-    // 掛載終端機
+    // Mount terminal
     terminal.current.open(terminalRef.current);
     
-    // 確保容器有尺寸後再調整終端機大小
+    // Ensure container has dimensions before fitting terminal
     setTimeout(() => {
       if (fitAddon.current) {
         try {
@@ -60,7 +60,7 @@ const ArchimetersTerminal = () => {
       }
     }, 0);
 
-    // 顯示歡迎訊息
+    // Display welcome messages
     drawLogo(terminal.current);
     writeLine(terminal.current, '', '1;37');
     writeLine(terminal.current, `                         ${WELCOME_MESSAGES.WELCOME}                          `, '1;37');
@@ -71,9 +71,9 @@ const ArchimetersTerminal = () => {
     writeLine(terminal.current, '', '1;37');
     showPrompt();
 
-    // 處理輸入
+    // Handle input
     const handleData = (data: string) => {
-      if (data === '\r') { // Enter
+      if (data === '\r') { // Enter key
         terminal.current?.writeln('');
         handleCommand(terminal.current, inputBuffer.current);
         inputBuffer.current = '';
@@ -91,7 +91,7 @@ const ArchimetersTerminal = () => {
 
     terminal.current.onData(handleData);
 
-    // 處理窗口大小變化
+    // Handle window resize
     const handleResize = () => {
       if (fitAddon.current) {
         try {
@@ -104,7 +104,7 @@ const ArchimetersTerminal = () => {
 
     window.addEventListener('resize', handleResize);
 
-    // 清理函數
+    // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize);
       terminal.current?.dispose();

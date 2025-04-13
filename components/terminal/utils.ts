@@ -5,10 +5,16 @@ import { WELCOME_MESSAGES } from './constants/messages';
 import { createLayout } from './constants/layouts';
 import { COLORS } from './constants/colors';
 
+/**
+ * Writes a line of text to the terminal with specified color
+ */
 export const writeLine = (terminal: Terminal | null, text: string, color: string = COLORS.DEFAULT) => {
   terminal?.writeln(`\x1B[${color}m${text}\x1B[0m`);
 };
 
+/**
+ * Draws a box with title and content in the terminal
+ */
 export const drawBox = (terminal: Terminal | null, title: string, content: string[], color: string = COLORS.DEFAULT) => {
   const width = 78;
   const paddedTitle = ` ${title} `;
@@ -22,6 +28,9 @@ export const drawBox = (terminal: Terminal | null, title: string, content: strin
   writeLine(terminal, `${BOX_STYLES.bottomLeft}${BOX_STYLES.horizontal.repeat(width)}${BOX_STYLES.bottomRight}`, color);
 };
 
+/**
+ * Displays a progress bar in the terminal
+ */
 export const showProgressBar = (terminal: Terminal | null, progress: number, message: string) => {
   const width = 20;
   const filled = Math.floor(progress * width);
@@ -29,6 +38,9 @@ export const showProgressBar = (terminal: Terminal | null, progress: number, mes
   terminal?.write(`\r\x1B[K[${bar}] ${(progress * 100).toFixed(0)}% ${message}`);
 };
 
+/**
+ * Draws the application logo in the terminal
+ */
 export const drawLogo = (terminal: Terminal | null) => {
   const logo = createLayout.logo(WELCOME_MESSAGES.TITLE, WELCOME_MESSAGES.SUBTITLE);
   drawBox(terminal, '', [
@@ -41,6 +53,9 @@ export const drawLogo = (terminal: Terminal | null) => {
 
 let loadingInterval: NodeJS.Timeout | null = null;
 
+/**
+ * Starts a loading animation in the terminal
+ */
 export const startLoading = (terminal: Terminal | null, message: string) => {
   let frame = 0;
   loadingInterval = setInterval(() => {
@@ -50,6 +65,9 @@ export const startLoading = (terminal: Terminal | null, message: string) => {
   }, 100);
 };
 
+/**
+ * Stops the loading animation in the terminal
+ */
 export const stopLoading = (terminal: Terminal | null) => {
   if (loadingInterval) {
     clearInterval(loadingInterval);

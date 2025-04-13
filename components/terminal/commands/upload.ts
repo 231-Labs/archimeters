@@ -6,6 +6,11 @@ import { COLORS } from '../constants/colors';
 import { TIMINGS } from '../constants/timings';
 import { createLayout } from '../constants/layouts';
 
+/**
+ * Handles the upload command
+ * @param terminal - Terminal instance
+ * @param args - Command arguments [configFile, algorithmFile]
+ */
 export const handleUpload = (terminal: Terminal | null, args: string[]) => {
   if (args.length < 2) {
     drawBox(terminal, UPLOAD_MESSAGES.ERROR.TITLE, [UPLOAD_MESSAGES.ERROR.USAGE], COLORS.ERROR);
@@ -15,7 +20,7 @@ export const handleUpload = (terminal: Terminal | null, args: string[]) => {
   const [configFile, algorithmFile] = args;
   writeLine(terminal, GEOMETRIC_BORDER, COLORS.INFO);
   
-  // 使用進度信息布局
+  // Use process info layout
   const processLayout = createLayout.processInfo(configFile, algorithmFile);
   drawBox(terminal, UPLOAD_MESSAGES.PROCESS.TITLE, [
     processLayout.header,
@@ -38,7 +43,7 @@ export const handleUpload = (terminal: Terminal | null, args: string[]) => {
     clearInterval(progressInterval);
     terminal?.write('\r\x1B[K');
 
-    // 使用分析結果布局
+    // Use analysis result layout
     const analysisLayout = createLayout.analysisResult(
       UPLOAD_MESSAGES.COMPLETE.NAME,
       UPLOAD_MESSAGES.COMPLETE.TYPE,
@@ -46,7 +51,7 @@ export const handleUpload = (terminal: Terminal | null, args: string[]) => {
       UPLOAD_MESSAGES.COMPLETE.ALGO
     );
 
-    // 使用生成的文件布局
+    // Use generated files layout
     const blobId = Math.random().toString(16).slice(2, 10);
     const filesLayout = createLayout.generatedFiles(
       UPLOAD_MESSAGES.COMPLETE.VISUAL,

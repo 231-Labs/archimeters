@@ -5,6 +5,11 @@ import { MOCK_MESSAGES } from '../constants/messages';
 import { COLORS } from '../constants/colors';
 import { TIMINGS } from '../constants/timings';
 
+/**
+ * Handles the mock command for testing success and failure scenarios
+ * @param terminal - Terminal instance
+ * @param args - Command arguments ['success' | 'fail']
+ */
 export const handleMock = (terminal: Terminal | null, args: string[]) => {
   if (args[0] === 'success') {
     writeLine(terminal, GEOMETRIC_BORDER, COLORS.DEFAULT);

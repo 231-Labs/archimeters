@@ -8,6 +8,11 @@ import { COLORS } from '../constants/colors';
 import { COMMANDS } from '../constants/commands';
 import { ERROR_MESSAGES } from '../constants/messages';
 
+/**
+ * Handles terminal command execution
+ * @param terminal - Terminal instance
+ * @param input - User input command
+ */
 export const handleCommand = (terminal: Terminal | null, input: string) => {
   const [command, ...args] = input.trim().split(' ');
   
@@ -45,10 +50,16 @@ export const handleCommand = (terminal: Terminal | null, input: string) => {
   }
 };
 
+/**
+ * Writes a line to the terminal with specified color
+ */
 const writeLine = (terminal: Terminal | null, text: string, color: string = COLORS.DEFAULT) => {
   terminal?.writeln(`\x1B[${color}m${text}\x1B[0m`);
 };
 
+/**
+ * Draws a box with title and content in the terminal
+ */
 const drawBox = (terminal: Terminal | null, title: string, content: string[], color: string = COLORS.DEFAULT) => {
   const width = 78;
   const paddedTitle = ` ${title} `;
@@ -62,6 +73,9 @@ const drawBox = (terminal: Terminal | null, title: string, content: string[], co
   writeLine(terminal, `${BOX_STYLES.bottomLeft}${BOX_STYLES.horizontal.repeat(width)}${BOX_STYLES.bottomRight}`, color);
 };
 
+/**
+ * Draws the application logo in the terminal
+ */
 const drawLogo = (terminal: Terminal | null) => {
   drawBox(terminal, '', [
     `                           ${COMMANDS.LOGO.TITLE}                             `,
@@ -71,6 +85,9 @@ const drawLogo = (terminal: Terminal | null) => {
   ], COLORS.DEFAULT);
 };
 
+/**
+ * Displays the help menu in the terminal
+ */
 const showHelp = (terminal: Terminal | null) => {
   writeLine(terminal, GEOMETRIC_BORDER, COLORS.DEFAULT);
   
