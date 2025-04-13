@@ -8,6 +8,7 @@ import { GEOMETRIC_BORDER } from './styles/borders';
 import { handleCommand } from './commands';
 import { drawLogo, writeLine } from './utils';
 import { WELCOME_MESSAGES } from './constants/messages';
+import { COLORS } from './constants/colors';
 
 const ArchimetersTerminal = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -78,13 +79,13 @@ const ArchimetersTerminal = () => {
 
       // Display welcome messages
       drawLogo(terminal.current);
-      writeLine(terminal.current, '', '1;37');
-      writeLine(terminal.current, `                         ${WELCOME_MESSAGES.WELCOME}                          `, '1;37');
-      writeLine(terminal.current, `                     ${WELCOME_MESSAGES.TAGLINE}                      `, '1;37');
-      writeLine(terminal.current, GEOMETRIC_BORDER, '1;34');
-      writeLine(terminal.current, '', '1;37');
-      writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, '1;37');
-      writeLine(terminal.current, '', '1;37');
+      writeLine(terminal.current, '', COLORS.DEFAULT);
+      writeLine(terminal.current, `                         ${WELCOME_MESSAGES.WELCOME}                          `, COLORS.DEFAULT);
+      writeLine(terminal.current, `                     ${WELCOME_MESSAGES.TAGLINE}                      `, COLORS.DEFAULT);
+      writeLine(terminal.current, GEOMETRIC_BORDER, COLORS.INFO);
+      writeLine(terminal.current, '', COLORS.DEFAULT);
+      writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
+      writeLine(terminal.current, '', COLORS.DEFAULT);
       showPrompt();
 
       // Handle input
