@@ -1,5 +1,5 @@
-import { bcs } from "@mysten/sui/bcs";
-import { Transaction as TX } from "@mysten/sui/transactions";
+import { bcs } from "@mysten/sui.js/bcs";
+import { TransactionBlock } from "@mysten/sui.js/transactions";
 
 export const PACKAGE_ID = '0x80d49eb9fd5553ed959bbf6a8ba4fa96fefc481a79abb9a4214f2010c169b5cc';
 export const STATE_ID = '0x0f636eeb4859365681f415ec3654e83beeae957f3e4cb49ba47863c347ee4c6d';
@@ -7,7 +7,7 @@ export const STATE_ID = '0x0f636eeb4859365681f415ec3654e83beeae957f3e4cb49ba4786
 export const mintMembership = async (username: string) => {
   console.log('mintOS params:', username);
   
-  const tx = new TX();
+  const tx = new TransactionBlock();
   tx.moveCall({
     target: `${PACKAGE_ID}::archimeters::mint_membership`,  // TODO: change to actual function call
     arguments: [
@@ -25,7 +25,7 @@ export const createArtlier = async (
 ) => {
   // console.log('create params:', { osId, name, blobId });
   
-  const tx = new TX();
+  const tx = new TransactionBlock();
   tx.moveCall({
     target: `${PACKAGE_ID}::artlier::create_art`, // TODO: change to actual function call
     arguments: [
@@ -44,7 +44,7 @@ export const createMoment = async (
   date: string,
   blobId?: string
 ) => {
-  const tx = new TX();
+  const tx = new TransactionBlock();
   tx.moveCall({
     target: `${PACKAGE_ID}::artlier::function_call`, // TODO: change to actual function call
     arguments: [

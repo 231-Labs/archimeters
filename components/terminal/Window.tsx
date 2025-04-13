@@ -12,11 +12,6 @@ const DEFAULT_SIZE = {
   height: 600
 };
 
-const MIN_SIZE = {
-  width: 400,
-  height: 300
-};
-
 const TerminalWindow: React.FC<TerminalWindowProps> = ({ onClose, name }) => {
   return (
     <Window
