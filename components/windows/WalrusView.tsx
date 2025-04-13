@@ -19,7 +19,6 @@ export default function WalrusView() {
   const handleFetch = async () => {
     if (!blobId.trim()) return;
 
-
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl);
       setBlobUrl('');
@@ -79,7 +78,7 @@ export default function WalrusView() {
             className="max-w-full h-auto"
           />
         ) : (
-          <div className="p-3 text-white/70">
+          <div className="p-3 text-white/90">
             Enter a blob ID and click Fetch to view content
           </div>
         )}

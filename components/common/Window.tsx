@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { WindowName } from '@/types';
 
 interface WindowProps {
@@ -7,7 +7,7 @@ interface WindowProps {
   position: { x: number; y: number };
   size: { width: number; height: number };
   isActive?: boolean;
-  resizable?: boolean;  // 新增縮放配置
+  resizable?: boolean;
   onClose: (name: WindowName) => void;
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
   onResize?: (e: React.MouseEvent, name: WindowName) => void;
@@ -22,7 +22,7 @@ const Window: React.FC<WindowProps> = ({
   position,
   size,
   isActive,
-  resizable = false,  // 默認不可縮放
+  resizable = false,
   onClose,
   onDragStart,
   onResize,
@@ -30,8 +30,17 @@ const Window: React.FC<WindowProps> = ({
   children,
   className,
 }) => {
-  const bgStyle = {
-    backgroundColor: '#FFF5F5',
+  const [windowSize, setWindowSize] = useState(size);
+
+  useEffect(() => {
+    setWindowSize(size);
+  }, [size]);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    if (!resizable) return;
+    if (onResize) {
+      onResize(e, name);
+    }
   };
 
   return (
@@ -40,8 +49,8 @@ const Window: React.FC<WindowProps> = ({
         isActive ? 'z-50' : 'z-0'
       } window-shadow retro-border bg-[#0a0a0a]`}
       style={{
-        width: `${size.width}px`,
-        height: `${size.height}px`,
+        width: `${windowSize.width}px`,
+        height: `${windowSize.height}px`,
         transform: `translate(${position.x}px, ${position.y}px)`,
       }}
       onClick={onClick}
@@ -50,10 +59,7 @@ const Window: React.FC<WindowProps> = ({
       <div
         className="h-6 px-2 flex items-center justify-between border-b border-[rgba(255,255,255,0.2)] bg-[#141414]"
         onMouseDown={(e) => {
-          // 如果點擊的是關閉按鈕，不觸發拖動
-          if ((e.target as HTMLElement).closest('button')) {
-            return;
-          }
+          if ((e.target as HTMLElement).closest('button')) return;
           onDragStart(e, name);
         }}
       >
@@ -68,18 +74,18 @@ const Window: React.FC<WindowProps> = ({
           ×
         </button>
       </div>
-
-      {/* 內容區域 */}
       <div className="flex-1 overflow-hidden">
         {children}
       </div>
-
-      {/* 調整大小的手柄 */}
       {resizable && onResize && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize border-l border-t border-[rgba(255,255,255,0.2)] hover:border-[rgba(255,255,255,0.4)]"
-          onMouseDown={(e) => onResize(e, name)}
-        />
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize group"
+          onMouseDown={handleResizeStart}
+        >
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-l border-t border-[rgba(255,255,255,0.3)] group-hover:border-[rgba(255,255,255,0.6)]" />
+          <div className="absolute bottom-1 right-1 w-2 h-2 border-l border-t border-[rgba(255,255,255,0.3)] group-hover:border-[rgba(255,255,255,0.6)]" />
+          <div className="absolute bottom-2 right-2 w-1 h-1 border-l border-t border-[rgba(255,255,255,0.3)] group-hover:border-[rgba(255,255,255,0.6)]" />
+        </div>
       )}
     </div>
   );

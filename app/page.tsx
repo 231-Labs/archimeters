@@ -12,7 +12,7 @@ import Model3DWindow from '@/components/windows/Model3DWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
-import { TerminalWindow } from '@/components/terminal';
+import { Terminal } from '@/components/terminal';
 
 const defaultWindowSizes = {
   artlier: { width: 500, height: 600 },
@@ -275,17 +275,21 @@ export default function Home() {
                   );
                 case 'designer':
                   return (
-                    <TerminalWindow
+                    <Window
                       key={name}
                       name={name}
+                      title="Parametric Terminal"
                       position={windowPositions['designer']}
                       size={windowSizes['designer']}
                       isActive={activeWindow === 'designer'}
+                      resizable={true}
                       onClose={handleCloseWindow}
                       onDragStart={handleDragStart}
                       onResize={handleResize}
                       onClick={() => handleWindowActivate('designer')}
-                    />
+                    >
+                      <Terminal />
+                    </Window>
                   );
               }
             })}
