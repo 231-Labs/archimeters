@@ -58,12 +58,14 @@ export default function Home() {
 
   // 計算視窗中心位置的函數
   const getCenterPosition = (width: number, height: number) => {
-    if (typeof window === 'undefined') return { x: 0, y: 0 };
+    if (typeof window === 'undefined') {
+      return { x: 0, y: 0 };
+    }
     
-    return {
-      x: Math.round((window.innerWidth - width) / 2),
-      y: Math.round((window.innerHeight - height) / 2) - 60,
-    };
+    const x = Math.round((window.innerWidth - width) / 2);
+    const y = Math.round((window.innerHeight - height) / 2) - 60;
+    
+    return { x, y };
   };
 
   const artlierSize = { width: 600, height: 600 };
@@ -83,6 +85,8 @@ export default function Home() {
 
   // 使用 useEffect 來設置 Artlier 窗口的初始位置
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const centerPosition = getCenterPosition(artlierSize.width, artlierSize.height);
     setWindowPositions(prev => ({
       ...prev,

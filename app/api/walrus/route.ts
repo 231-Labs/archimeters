@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { walrusApi } from '@/services/walrusApi';
+
+export const dynamic = 'force-dynamic';
 
 export async function PUT(req: Request) {
   try {
@@ -15,10 +17,9 @@ export async function PUT(req: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const blobId = searchParams.get('blobId');
+    const blobId = request.nextUrl.searchParams.get('blobId');
     
     if (!blobId) {
       return NextResponse.json(

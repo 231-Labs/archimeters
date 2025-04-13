@@ -5,6 +5,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  transpilePackages: ['@xterm/xterm'],
 }
 
 module.exports = nextConfig
