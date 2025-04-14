@@ -43,29 +43,28 @@ export const ERROR_MESSAGES = {
 
 export const UPLOAD_MESSAGES = {
   ERROR: {
-    TITLE: 'ERROR',
-    USAGE: '⚠️  Usage: upload <config> <algo>'
+    TITLE: 'Upload Error',
+    USAGE: 'Usage: upload <config-file>',
+    INVALID_CONFIG: 'Invalid configuration file',
+    FILE_NOT_FOUND: 'Configuration file not found',
+    PARSE_ERROR: 'Failed to parse configuration file'
   },
   PROCESS: {
-    TITLE: 'PARAMETRIC UPLOAD',
-    INIT: 'Initializing Process',
-    ANALYZING: 'Analyzing geometric parameters...'
+    TITLE: 'Upload Process',
+    ANALYZING: 'Analyzing configuration file...',
+    VALIDATING: 'Validating configuration...',
+    PARSING: 'Parsing configuration...'
   },
   COMPLETE: {
-    TITLE: 'ANALYSIS COMPLETE',
-    SECTION_INFO: 'Series Information',
-    SECTION_ARTIFACTS: 'Generated Artifacts',
-    NAME: 'Name: Geometric Patterns Vol.1',
-    TYPE: 'Type: Parametric Design',
-    DIMENSION: 'Dimension: Multi-dimensional',
-    ALGO: 'Algo: Euclidean Transform',
-    VISUAL: '✓ Main Visual: main.png',
-    ALGORITHM: '✓ Algorithm: processed.js',
-    STATUS: '✓ Status: Ready for Preview'
+    TITLE: 'Upload Complete',
+    SUCCESS: 'Configuration file uploaded successfully',
+    NEXT_STEPS: 'Next steps:',
+    GENERATE_WEBSITE: '1. Generate website with "generate" command',
+    VIEW_PREVIEW: '2. View preview with "preview" command'
   },
   NEXT: {
-    TITLE: 'NEXT STEP',
-    HINT: '💫 Type "preview" to enter the virtual gallery and explore your design'
+    TITLE: 'Next Steps',
+    HINT: 'Use "generate" command to create the website'
   }
 };
 

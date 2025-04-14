@@ -1,0 +1,41 @@
+{
+  "project": {
+    "name": "Project Name",
+    "description": "Project Description",
+    "designFee": 0.0,
+    "timeline": {
+      "startDate": "YYYY-MM-DD",
+      "endDate": "YYYY-MM-DD"
+    },
+    "design": {
+      "modelFile": "path/to/3d-model.js",
+      "previewImage": "path/to/preview.png",
+      "overrides": {  // 可選，覆蓋 Three.js 中的默認值
+        "parameters": {
+          "width": null,  // null 表示使用 Three.js 中的值
+          "height": null,
+          "depth": null
+        },
+        "camera": {
+          "position": null,
+          "target": null
+        },
+        "materials": {
+          "color": null
+        }
+      }
+    },
+    "output": {
+      "website": {
+        "title": "Project Title",
+        "description": "Project Description for Website",
+        "theme": "light",
+        "features": {
+          "modelViewer": true,
+          "parameterControls": true,
+          "materialPreview": true
+        }
+      }
+    }
+  }
+}
