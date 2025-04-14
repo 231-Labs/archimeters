@@ -8,7 +8,8 @@ export const WELCOME_MESSAGES = {
   ACCOUNT_STATUS: {
     CONNECTED: 'Connected',
     NOT_CONNECTED: 'Not connected'
-  }
+  },
+  WALLET_SWITCH_HINT: '💡 To switch wallet, please use the Entry Window'
 };
 
 export const COMMAND_HELP = {

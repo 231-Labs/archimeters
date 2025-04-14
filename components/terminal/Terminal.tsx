@@ -1,6 +1,6 @@
 'use client';
 
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useEffect, useRef } from 'react';
 import type { Terminal as XTerm } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
@@ -87,6 +87,7 @@ const ArchimetersTerminal = () => {
       writeLine(terminal.current, GEOMETRIC_BORDER, COLORS.INFO);
       writeLine(terminal.current, '', COLORS.DEFAULT);
       writeLine(terminal.current, `${WELCOME_MESSAGES.CURRENT_ACCOUNT} ${currentAccount?.address || WELCOME_MESSAGES.ACCOUNT_STATUS.NOT_CONNECTED}`, COLORS.INFO);
+      writeLine(terminal.current, WELCOME_MESSAGES.WALLET_SWITCH_HINT, COLORS.INFO);
       writeLine(terminal.current, '', COLORS.DEFAULT);
       writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
       writeLine(terminal.current, '', COLORS.DEFAULT);
@@ -141,6 +142,19 @@ const ArchimetersTerminal = () => {
     };
 
     initializeTerminal();
+  }, [currentAccount]);
+
+  useEffect(() => {
+    if (!terminal.current) return;
+
+    terminal.current.write('\x1B[2K\r');
+    terminal.current.write('\x1B[1A');
+    terminal.current.write('\x1B[2K\r');
+    writeLine(terminal.current, `${WELCOME_MESSAGES.CURRENT_ACCOUNT} ${currentAccount?.address || WELCOME_MESSAGES.ACCOUNT_STATUS.NOT_CONNECTED}`, COLORS.INFO);
+    writeLine(terminal.current, WELCOME_MESSAGES.WALLET_SWITCH_HINT, COLORS.INFO);
+    writeLine(terminal.current, '', COLORS.DEFAULT);
+    writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
+    showPrompt();
   }, [currentAccount]);
 
   const showPrompt = () => {
