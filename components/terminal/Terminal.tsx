@@ -1,5 +1,6 @@
 'use client';
 
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { useEffect, useRef } from 'react';
 import type { Terminal as XTerm } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
@@ -16,6 +17,7 @@ const ArchimetersTerminal = () => {
   const fitAddon = useRef<FitAddon | null>(null);
   const inputBuffer = useRef<string>('');
   const initialized = useRef<boolean>(false);
+  const currentAccount = useCurrentAccount();
 
   useEffect(() => {
     if (!terminalRef.current || typeof window === 'undefined' || initialized.current) return;
@@ -84,13 +86,15 @@ const ArchimetersTerminal = () => {
       writeLine(terminal.current, `                     ${WELCOME_MESSAGES.TAGLINE}                      `, COLORS.DEFAULT);
       writeLine(terminal.current, GEOMETRIC_BORDER, COLORS.INFO);
       writeLine(terminal.current, '', COLORS.DEFAULT);
+      writeLine(terminal.current, `${WELCOME_MESSAGES.CURRENT_ACCOUNT} ${currentAccount?.address || WELCOME_MESSAGES.ACCOUNT_STATUS.NOT_CONNECTED}`, COLORS.INFO);
+      writeLine(terminal.current, '', COLORS.DEFAULT);
       writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
       writeLine(terminal.current, '', COLORS.DEFAULT);
       showPrompt();
 
       // Handle input
       const handleData = (data: string) => {
-        // 處理複製貼上
+        // handle copy and paste
         if (data.length > 1) {
           inputBuffer.current += data;
           terminal.current?.write(data);
@@ -137,7 +141,7 @@ const ArchimetersTerminal = () => {
     };
 
     initializeTerminal();
-  }, []);
+  }, [currentAccount]);
 
   const showPrompt = () => {
     terminal.current?.write('\x1B[1;37m∆ \x1B[0m');

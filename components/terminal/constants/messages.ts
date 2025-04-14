@@ -3,7 +3,12 @@ export const WELCOME_MESSAGES = {
   SUBTITLE: 'PARAMETRIC TERMINAL',
   WELCOME: 'Welcome to the Design Interface',
   TAGLINE: 'Bridging Reality & Digital Geometry',
-  HELP_HINT: '💫 Type "help" or "-h" to explore commands'
+  HELP_HINT: '💫 Type "help" or "-h" to explore commands',
+  CURRENT_ACCOUNT: 'Current Account:',
+  ACCOUNT_STATUS: {
+    CONNECTED: 'Connected',
+    NOT_CONNECTED: 'Not connected'
+  }
 };
 
 export const COMMAND_HELP = {
