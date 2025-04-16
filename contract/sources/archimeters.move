@@ -1,12 +1,12 @@
 #[allow(unused_field)]
 module archimeters::archimeters {
     use std::string::{ String };
-    use archimeters::design_series::Design_series;
     use sui::{
         package,
         display,
         event,
-        table::{ Self, Table }
+        table::{ Self, Table },
+        vec_set::{ Self, VecSet }
     };
 
     // == Errors ==
@@ -25,17 +25,8 @@ module archimeters::archimeters {
         id: UID,
         owner: address,
         username: String,
-        artliers: vector<Design_series>,
-        gallery: vector<Bottega>,
-    }
-
-    public struct Bottega has key, store {
-        id: UID,
-        owner: address,
-        creator: address,
-        name: String,
-        blueprint: String,
-        structure: String,
+        artliers: VecSet<ID>,
+        gallery: vector<ID>,
     }
 
     // == One Time Witness ==
@@ -86,6 +77,14 @@ module archimeters::archimeters {
 
     // == Entry_functions ==
 
+    public fun owner(membership: &MemberShip): address {
+        membership.owner
+    }
+
+    public fun add_artlier(membership: &mut MemberShip, design_series_id: ID) {
+        vec_set::insert(&mut membership.artliers, design_series_id);
+    }
+
     public entry fun mint_membership(
         state: &mut State,
         username: String,
@@ -97,8 +96,8 @@ module archimeters::archimeters {
         let member = MemberShip {
             id: object::new(ctx),
             owner: sender,
-            username: username,
-            artliers: vector::empty(),
+            username,
+            artliers: vec_set::empty(),
             gallery: vector::empty(),
         };
 
@@ -111,7 +110,7 @@ module archimeters::archimeters {
 
         event::emit( New_member {
             member_id: id_copy,
-            username: username,
+            username,
         });
     }
 }
