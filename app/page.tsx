@@ -9,17 +9,19 @@ import WalrusUpload from '@/components/windows/WalrusUpload';
 import WalrusView from '@/components/windows/WalrusView';
 import EntryWindow from '@/components/windows/EntryWindow';
 import Model3DWindow from '@/components/windows/Model3DWindow';
+import TestDesignSeriesWindow from '@/components/windows/TestDesignSeriesWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/terminal';
 
 const defaultWindowSizes = {
-  artlier: { width: 500, height: 600 },
+  entry: { width: 500, height: 600 },
   'walrus-upload': { width: 540, height: 400 },
   'walrus-view': { width: 365, height: 446 },
-  'model3d': { width: 800, height: 600 },
+  'model-3d': { width: 800, height: 600 },
   'designer': { width: 800, height: 600 },
+  'test-design-series': { width: 500, height: 600 },
 };
 
 interface WindowState {
@@ -68,59 +70,54 @@ export default function Home() {
     return { x, y };
   };
 
-  const artlierSize = { width: 600, height: 600 };
+  const entrySize = { width: 600, height: 600 };
 
-  const [openWindows, setOpenWindows] = useState<WindowName[]>(['artlier']);
-  const [activeWindow, setActiveWindow] = useState<WindowName | null>('artlier');
+  const [openWindows, setOpenWindows] = useState<WindowName[]>(['entry']);
+  const [activeWindow, setActiveWindow] = useState<WindowName | null>('entry');
   const [draggingWindow, setDraggingWindow] = useState<WindowName | null>(null);
-  const [windowPositions, setWindowPositions] = useState({
-    artlier: { x: 0, y: 0 },
+  const [windowPositions, setWindowPositions] = useState<Record<WindowName, { x: number; y: number }>>({
+    entry: { x: 0, y: 0 },
     'walrus-upload': { x: 350, y: 350 },
     'walrus-view': { x: 400, y: 400 },
-    'model3d': { x: 100, y: 100 },
+    'model-3d': { x: 100, y: 100 },
     'designer': { x: 200, y: 200 },
+    'test-design-series': { x: 150, y: 150 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
 
-  // 使用 useEffect 來設置 Artlier 窗口的初始位置
+  // 使用 useEffect 來設置 Entry 窗口的初始位置
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    const centerPosition = getCenterPosition(artlierSize.width, artlierSize.height);
+    const centerPosition = getCenterPosition(entrySize.width, entrySize.height);
     setWindowPositions(prev => ({
       ...prev,
-      artlier: centerPosition,
+      entry: centerPosition,
     }));
-  }, []); // 只在組件掛載時執行一次
+  }, []);
 
-  // 新增：處理窗口激活的函數
   const handleWindowActivate = (name: WindowName) => {
     setActiveWindow(name);
     setOpenWindows(prev => [...prev.filter(w => w !== name), name]);
   };
 
-  // 修改打開窗口的處理函數
   const handleOpenWindow = (name: WindowName) => {
-    // 先添加到打開列表中（如果還沒打開）
     if (!openWindows.includes(name)) {
       setOpenWindows(current => [...current, name]);
     }
 
-    // 無論如何都要激活窗口
     handleWindowActivate(name);
     
-    // 如果是 Artlier 窗口，設置中心位置
-    if (name === 'artlier') {
-      const centerPosition = getCenterPosition(artlierSize.width, artlierSize.height);
+    if (name === 'entry') {
+      const centerPosition = getCenterPosition(entrySize.width, entrySize.height);
       setWindowPositions(prev => ({
         ...prev,
-        artlier: centerPosition,
+        entry: centerPosition,
       }));
     }
   };
 
-  // 修改關閉窗口的處理函數
   const handleCloseWindow = (name: WindowName) => {
     setOpenWindows(prev => prev.filter(w => w !== name));
     if (activeWindow === name) {
@@ -128,34 +125,26 @@ export default function Home() {
     }
   };
 
-  // 簡單的 Connect Wallet 功能
-  const connectWallet = () => {
-    console.log("Wallet connected!"); 
-    alert("Wallet connected!");
-  };
-
-  // 修改拖動開始的處理函數
-  const handleDragStart = (e: React.MouseEvent<Element>, windowName: string) => {
+  const handleDragStart = (e: React.MouseEvent<Element>, windowName: WindowName) => {
     e.preventDefault();
-    handleWindowActivate(windowName as WindowName);
-    setDraggingWindow(windowName as WindowName);
+    handleWindowActivate(windowName);
+    setDraggingWindow(windowName);
     
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const windowWidth = windowSizes[windowName as WindowName].width;
-      const windowHeight = windowSizes[windowName as WindowName].height;
+      const windowWidth = windowSizes[windowName].width;
+      const windowHeight = windowSizes[windowName].height;
       
-      // 修改這裡：使用 document.documentElement.clientWidth 而不是 window.innerWidth
       const maxX = document.documentElement.clientWidth - windowWidth;
-      const maxY = document.documentElement.clientHeight - windowHeight - 48; // 減去 header 高度
+      const maxY = document.documentElement.clientHeight - windowHeight - 48;
       
       const newX = Math.max(0, Math.min(e.clientX - offsetX, maxX));
       const newY = Math.max(0, Math.min(e.clientY - offsetY, maxY));
       
-      setWindowPositions(prev => ({...prev, [windowName as WindowName]: { x: newX, y: newY }}));
+      setWindowPositions(prev => ({...prev, [windowName]: { x: newX, y: newY }}));
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -165,7 +154,6 @@ export default function Home() {
     });
   };
 
-  // 處理窗口縮放
   const handleResize = (e: React.MouseEvent, name: WindowName) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -202,18 +190,18 @@ export default function Home() {
           <div className="h-full relative">
             {openWindows.map(name => {
               switch(name) {
-                case 'artlier':
+                case 'entry':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title="Artlier"
-                      position={windowPositions.artlier}
-                      size={windowSizes.artlier}
-                      isActive={activeWindow === 'artlier'}
+                      title="Entry"
+                      position={windowPositions.entry}
+                      size={windowSizes.entry}
+                      isActive={activeWindow === 'entry'}
                       onClose={handleCloseWindow}
                       onDragStart={handleDragStart}
-                      onClick={() => handleWindowActivate('artlier')}
+                      onClick={() => handleWindowActivate('entry')}
                     >
                       <EntryWindow 
                         onDragStart={handleDragStart}
@@ -256,20 +244,20 @@ export default function Home() {
                       <WalrusView />
                     </Window>
                   );
-                case 'model3d':
+                case 'model-3d':
                   return (
                     <Window
                       key={name}
                       name={name}
                       title="3D Model Editor"
-                      position={windowPositions['model3d']}
-                      size={windowSizes['model3d']}
-                      isActive={activeWindow === 'model3d'}
+                      position={windowPositions['model-3d']}
+                      size={windowSizes['model-3d']}
+                      isActive={activeWindow === 'model-3d'}
                       resizable={true}
                       onClose={handleCloseWindow}
                       onDragStart={handleDragStart}
                       onResize={handleResize}
-                      onClick={() => handleWindowActivate('model3d')}
+                      onClick={() => handleWindowActivate('model-3d')}
                     >
                       <Model3DWindow 
                         name={name}
@@ -293,6 +281,26 @@ export default function Home() {
                       onClick={() => handleWindowActivate('designer')}
                     >
                       <Terminal />
+                    </Window>
+                  );
+                case 'test-design-series':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Test Design Series"
+                      position={windowPositions['test-design-series']}
+                      size={windowSizes['test-design-series']}
+                      isActive={activeWindow === 'test-design-series'}
+                      resizable={true}
+                      onClose={handleCloseWindow}
+                      onDragStart={handleDragStart}
+                      onResize={handleResize}
+                      onClick={() => handleWindowActivate('test-design-series')}
+                    >
+                      <TestDesignSeriesWindow 
+                        onDragStart={handleDragStart}
+                      />
                     </Window>
                   );
               }

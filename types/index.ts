@@ -1,4 +1,4 @@
-export type WindowName = 'artlier' | 'walrus-upload' | 'walrus-view' | 'model3d' | 'designer';
+export type WindowName = 'entry' | 'walrus-view' | 'walrus-upload' | 'model-3d' | 'test-design-series' | 'designer';
 
 export interface WindowState {
   name: WindowName;
