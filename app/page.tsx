@@ -10,6 +10,7 @@ import WalrusView from '@/components/windows/WalrusView';
 import EntryWindow from '@/components/windows/EntryWindow';
 import Model3DWindow from '@/components/windows/Model3DWindow';
 import TestDesignSeriesWindow from '@/components/windows/TestDesignSeriesWindow';
+import ElegantPage from '@/components/windows/ElegantPage';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -22,6 +23,7 @@ const defaultWindowSizes = {
   'model-3d': { width: 800, height: 600 },
   'designer': { width: 800, height: 600 },
   'test-design-series': { width: 500, height: 600 },
+  'elegant-page': { width: 900, height: 700 },
 };
 
 interface WindowState {
@@ -82,6 +84,7 @@ export default function Home() {
     'model-3d': { x: 100, y: 100 },
     'designer': { x: 200, y: 200 },
     'test-design-series': { x: 150, y: 150 },
+    'elegant-page': { x: 500, y: 500 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -199,13 +202,13 @@ export default function Home() {
                       position={windowPositions.entry}
                       size={windowSizes.entry}
                       isActive={activeWindow === 'entry'}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onClick={() => handleWindowActivate('entry')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
-                      <EntryWindow 
-                        onDragStart={handleDragStart}
-                      />
+                      <EntryWindow onDragStart={function (e: React.MouseEvent<Element>, name: WindowName): void {
+                        throw new Error('Function not implemented.');
+                      } } />
                     </Window>
                   );
                 case 'walrus-upload':
@@ -218,10 +221,10 @@ export default function Home() {
                       size={windowSizes['walrus-upload']}
                       isActive={activeWindow === 'walrus-upload'}
                       resizable={true}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onResize={handleResize}
-                      onClick={() => handleWindowActivate('walrus-upload')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
                       <WalrusUpload />
                     </Window>
@@ -236,10 +239,10 @@ export default function Home() {
                       size={windowSizes['walrus-view']}
                       isActive={activeWindow === 'walrus-view'}
                       resizable={true}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onResize={handleResize}
-                      onClick={() => handleWindowActivate('walrus-view')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
                       <WalrusView />
                     </Window>
@@ -254,10 +257,10 @@ export default function Home() {
                       size={windowSizes['model-3d']}
                       isActive={activeWindow === 'model-3d'}
                       resizable={true}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onResize={handleResize}
-                      onClick={() => handleWindowActivate('model-3d')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
                       <Model3DWindow 
                         name={name}
@@ -275,10 +278,10 @@ export default function Home() {
                       size={windowSizes['designer']}
                       isActive={activeWindow === 'designer'}
                       resizable={true}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onResize={handleResize}
-                      onClick={() => handleWindowActivate('designer')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
                       <Terminal />
                     </Window>
@@ -293,14 +296,32 @@ export default function Home() {
                       size={windowSizes['test-design-series']}
                       isActive={activeWindow === 'test-design-series'}
                       resizable={true}
-                      onClose={handleCloseWindow}
-                      onDragStart={handleDragStart}
-                      onResize={handleResize}
-                      onClick={() => handleWindowActivate('test-design-series')}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
                     >
                       <TestDesignSeriesWindow 
-                        onDragStart={handleDragStart}
+                        onDragStart={(e) => handleDragStart(e, name)}
                       />
+                    </Window>
+                  );
+                case 'elegant-page':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Elegant Design"
+                      position={windowPositions['elegant-page']}
+                      size={windowSizes['elegant-page']}
+                      isActive={activeWindow === 'elegant-page'}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onClick={() => handleWindowActivate(name)}
+                      resizable
+                      onResize={(e) => handleResize(e, name)}
+                    >
+                      <ElegantPage />
                     </Window>
                   );
               }
