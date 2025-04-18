@@ -75,9 +75,9 @@ export class WalrusApiService {
       console.log('Upload response:', response.status, responseText);
 
       if (!response.ok) {
-        if (response.status === 429) {
-          // 如果遇到限流，嘗試下一個 publisher
-          console.log('Rate limited, trying next publisher...');
+        // 處理所有可能的錯誤狀態碼
+        if (response.status === 429 || response.status === 413 || response.status >= 500) {
+          console.log(`Error ${response.status}, trying next publisher...`);
           return this.uploadBlob(fileBuffer, epochs, retryCount + 1);
         }
         throw new Error(`Upload failed: ${response.status} ${responseText}`);
@@ -87,7 +87,6 @@ export class WalrusApiService {
     } catch (error) {
       console.error('Upload error:', error);
       if (error instanceof Error && error.message.includes('failed to fetch')) {
-        // 如果連接失敗，嘗試下一個 publisher
         console.log('Connection failed, trying next publisher...');
         return this.uploadBlob(fileBuffer, epochs, retryCount + 1);
       }

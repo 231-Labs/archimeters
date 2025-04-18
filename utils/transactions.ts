@@ -5,7 +5,7 @@ export const PACKAGE_ID = '0x8e3ec1c04ffa32baa2053d29b6eec37449eaa38a7acc800660d
 export const STATE_ID = '0x463f3fc95167229db0ec78c1aa30e9ac485b69e8d7508d30f3a79757f715a445';
 
 export const mintMembership = async (username: string) => {
-  console.log('mintOS params:', username);
+  // console.log('mintOS params:', username);
   
   const tx = new Transaction();
   tx.moveCall({
