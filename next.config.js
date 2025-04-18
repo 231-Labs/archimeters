@@ -5,7 +5,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  transpilePackages: ['@xterm/xterm'],
+  transpilePackages: ['xterm', 'xterm-addon-fit'],
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'xterm': 'xterm/lib/xterm.js',
+    };
+    return config;
+  },
 }
 
 module.exports = nextConfig

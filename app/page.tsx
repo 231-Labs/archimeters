@@ -11,6 +11,7 @@ import EntryWindow from '@/components/windows/EntryWindow';
 import Model3DWindow from '@/components/windows/Model3DWindow';
 import TestDesignSeriesWindow from '@/components/windows/TestDesignSeriesWindow';
 import ElegantPage from '@/components/windows/ElegantPage';
+import MonochromePage from '@/components/windows/MonochromePage';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -24,6 +25,7 @@ const defaultWindowSizes = {
   'designer': { width: 800, height: 600 },
   'test-design-series': { width: 500, height: 600 },
   'elegant-page': { width: 900, height: 700 },
+  'monochrome-page': { width: 900, height: 700 },
 };
 
 interface WindowState {
@@ -84,7 +86,8 @@ export default function Home() {
     'model-3d': { x: 100, y: 100 },
     'designer': { x: 200, y: 200 },
     'test-design-series': { x: 150, y: 150 },
-    'elegant-page': { x: 500, y: 500 },
+    'elegant-page': { x: 100, y: 50 },
+    'monochrome-page': { x: 700, y: 70 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -322,6 +325,24 @@ export default function Home() {
                       onResize={(e) => handleResize(e, name)}
                     >
                       <ElegantPage />
+                    </Window>
+                  );
+                case 'monochrome-page':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Monochrome Design"
+                      position={windowPositions['monochrome-page']}
+                      size={windowSizes['monochrome-page']}
+                      isActive={activeWindow === 'monochrome-page'}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onClick={() => handleWindowActivate(name)}
+                      resizable
+                      onResize={(e) => handleResize(e, name)}
+                    >
+                      <MonochromePage />
                     </Window>
                   );
               }

@@ -10,6 +10,7 @@ import { handleCommand } from './commands';
 import { drawLogo, writeLine } from './utils';
 import { WELCOME_MESSAGES } from './constants/messages';
 import { COLORS } from './constants/colors';
+import '@xterm/xterm/css/xterm.css';
 
 const ArchimetersTerminal = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -24,9 +25,10 @@ const ArchimetersTerminal = () => {
     initialized.current = true;
 
     const initializeTerminal = async () => {
-      const { Terminal } = await import('@xterm/xterm');
-      const { FitAddon } = await import('@xterm/addon-fit');
-      require('@xterm/xterm/css/xterm.css');
+      const xtermModule = await import('@xterm/xterm');
+      const fitAddonModule = await import('@xterm/addon-fit');
+      const Terminal = xtermModule.Terminal;
+      const FitAddon = fitAddonModule.FitAddon;
 
       // Add custom styles
       const styleSheet = document.createElement('style');
