@@ -2,7 +2,7 @@ module archimeters::design_series {
     use std::string::{ String };
     use sui::vec_set::{ Self, VecSet };
     use sui::event;
-    use archimeters::archimeters::{ Self, MemberShip };
+    use archimeters::archimeters::{ Self, MemberShip, State };
 
     // == Errors ==
     const ENO_MEMBERSHIP: u64 = 0;
@@ -24,6 +24,7 @@ module archimeters::design_series {
 
     // == Public Functions ==
     public entry fun mint(
+        state: &mut State,
         membership: &mut MemberShip,
         photo: String,
         website: String,
@@ -47,8 +48,9 @@ module archimeters::design_series {
             artificials: vec_set::empty(),
         };
 
-        // Add Design Series ID to MemberShip
-        archimeters::add_artlier(membership, id_inner);
+        // Add Design Series ID to MemberShip and State
+        archimeters::add_artlier_to_membership(membership, id_inner);
+        archimeters::add_artlier_to_state(state, id_inner, ctx);
 
         transfer::transfer(design_series, sender);
 

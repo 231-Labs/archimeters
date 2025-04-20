@@ -19,6 +19,7 @@ module archimeters::archimeters {
         id: UID,
         accounts: Table<address, ID>,
         all_members: vector<ID>,
+        all_artliers: Table<address, ID>,
     }
 
     public struct MemberShip has key, store {
@@ -69,6 +70,7 @@ module archimeters::archimeters {
             id: object::new(ctx),
             accounts: table::new(ctx),
             all_members: vector::empty(),
+            all_artliers: table::new(ctx),
         });
 
         transfer::public_transfer(publisher, ctx.sender());
@@ -81,8 +83,12 @@ module archimeters::archimeters {
         membership.owner
     }
 
-    public fun add_artlier(membership: &mut MemberShip, design_series_id: ID) {
+    public fun add_artlier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
         vec_set::insert(&mut membership.artliers, design_series_id);
+    }
+
+    public fun add_artlier_to_state(state: &mut State, design_series_id: ID, ctx: &mut TxContext) {
+        table::add(&mut state.all_artliers, ctx.sender(), design_series_id);
     }
 
     public entry fun mint_membership(
