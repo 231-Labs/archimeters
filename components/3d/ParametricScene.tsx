@@ -4,36 +4,36 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// 定義參數及其默認值
+// Define parameters and their default values
 export const defaultParameters = {
   amplitude: {
     type: 'number',
     default: 1,
-    label: '振幅',
+    label: 'Amplitude',
   },
   frequency: {
     type: 'number',
     default: 1,
-    label: '頻率',
+    label: 'Frequency',
   },
   resolution: {
     type: 'number',
     default: 20,
-    label: '解析度',
+    label: 'Resolution',
   },
   heightScale: {
     type: 'number',
     default: 1,
-    label: '高度縮放test',
+    label: 'Height Scale',
   },
   color: {
     type: 'color',
     default: '#f5f5dc',
-    label: '顏色',
+    label: 'Color',
   },
 } as const;
 
-// 從默認參數定義生成參數類型
+// Generate parameter types from default parameter definitions
 export type Parameters = {
   [K in keyof typeof defaultParameters]: 
     typeof defaultParameters[K]['type'] extends 'number' ? number :
@@ -61,33 +61,33 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
   const controlsRef = useRef<OrbitControls | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // 初始化場景、相機和控制器 - 只在組件掛載時執行一次
+  // Initialize scene, camera, and controls - runs once when component mounts
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 創建場景
+    // Create scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // 創建相機
+    // Create camera
     const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 1000);
     camera.position.set(5, 5, 10);
     cameraRef.current = camera;
 
-    // 創建渲染器
+    // Create renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 添加軌道控制器
+    // Add orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controlsRef.current = controls;
 
-    // 添加光源
+    // Add lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
@@ -95,7 +95,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     pointLight.position.set(10, 10, 10);
     scene.add(pointLight);
 
-    // 動畫循環
+    // Animation loop
     function animate() {
       animationFrameRef.current = requestAnimationFrame(animate);
       controls.update();
@@ -103,7 +103,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     }
     animate();
 
-    // 處理視窗大小變化
+    // Handle window resize
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       
@@ -115,13 +115,13 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       rendererRef.current.setSize(width, height);
     };
 
-    // 使用 ResizeObserver 來監聽容器大小變化
+    // Use ResizeObserver to monitor container size changes
     const resizeObserver = new ResizeObserver(handleResize);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
 
-    // 清理函數
+    // Cleanup function
     return () => {
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -135,13 +135,13 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       }
       rendererRef.current?.dispose();
     };
-  }, []); // 空依賴項，只在組件掛載時執行一次
+  }, []); // Empty dependency array - runs once on mount
 
-  // 更新參數化曲面 - 當參數變化時執行
+  // Update parametric surface - runs when parameters change
   useEffect(() => {
     if (!sceneRef.current) return;
 
-    // 移除舊的曲面
+    // Remove old surface
     if (surfaceRef.current) {
       sceneRef.current.remove(surfaceRef.current);
       surfaceRef.current.geometry.dispose();
@@ -152,7 +152,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       }
     }
 
-    // 創建參數化曲面
+    // Create parametric surface
     const createParametricSurface = () => {
       const geometry = new THREE.BufferGeometry();
       const vertices = [];
@@ -161,7 +161,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       const size = parameters.resolution;
       const step = 10 / size;
 
-      // 生成頂點
+      // Generate vertices
       for (let i = 0; i <= size; i++) {
         for (let j = 0; j <= size; j++) {
           const x = i * step - 5;
@@ -173,7 +173,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
         }
       }
 
-      // 生成索引
+      // Generate indices
       for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
           const a = i * (size + 1) + j;
@@ -203,11 +203,11 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     sceneRef.current.add(surface);
     surfaceRef.current = surface;
     
-    // 觸發一次渲染
+    // Trigger a render
     if (cameraRef.current && rendererRef.current) {
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     }
-  }, [parameters]); // 僅在參數變化時執行
+  }, [parameters]); // Only runs when parameters change
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
