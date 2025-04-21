@@ -26,6 +26,11 @@ export const defaultParameters = {
     default: 1,
     label: 'Height Scale',
   },
+  heightSdcale: {
+    type: 'number',
+    default: 1,
+    label: 'Height Scaledddd',
+  },
   color: {
     type: 'color',
     default: '#f5f5dc',
