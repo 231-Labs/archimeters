@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import { useRouter } from 'next/navigation';
 import type { WindowName } from '@/types';
 import Toast from '../common/Toast';
+import ParametricScene from '../3d/ParametricScene';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function WebsiteUpload() {
   const [imageError, setImageError] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>(''); 
   const [imageBlobId, setImageBlobId] = useState<string>(''); 
+  const [imageRequired, setImageRequired] = useState(false);
 
   // Algorithm 相關狀態
   const [algoFile, setAlgoFile] = useState<File | null>(null);
@@ -21,12 +23,27 @@ export default function WebsiteUpload() {
   const [isAlgoLoading, setIsAlgoLoading] = useState(false);
   const [algoError, setAlgoError] = useState<string>('');
   const [algoBlobId, setAlgoBlobId] = useState<string>(''); 
+  const [algoFileName, setAlgoFileName] = useState<string | null>(null);
+  
+  // 解析出的參數
+  interface CustomParameterDef {
+    type: string;
+    default: any;
+    label: string;
+    [key: string]: any;
+  }
+
+  interface CustomParameters {
+    [key: string]: CustomParameterDef;
+  }
+  
+  const [extractedParameters, setExtractedParameters] = useState<CustomParameters>({});
+  const [hasExtractedParams, setHasExtractedParams] = useState(false);
 
   // 網站和上傳相關狀態
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
-  const [imageRequired, setImageRequired] = useState(false);
 
   // 作品相關資訊
   const [workName, setWorkName] = useState('Celestial Harmonics');
@@ -56,6 +73,34 @@ export default function WebsiteUpload() {
     resolution: 'range',
   });
 
+  // 3D 預覽相關狀態
+  const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
+  const [showPreview, setShowPreview] = useState(false);
+
+  // 參數設定狀態
+  useEffect(() => {
+    if (hasExtractedParams && Object.keys(extractedParameters).length > 0) {
+      // 從解析的參數更新界面參數
+      const extractedTypes: Record<string, React.HTMLInputTypeAttribute> = {};
+      
+      Object.entries(extractedParameters).forEach(([key, paramDef]) => {
+        if (paramDef.type === 'number') {
+          extractedTypes[key] = 'range';
+        } else if (paramDef.type === 'color') {
+          extractedTypes[key] = 'color';
+        } else {
+          extractedTypes[key] = 'select';
+        }
+      });
+      
+      // 更新參數，但保留原始參數（如果沒有被替換的話）
+      setParameters(prev => ({
+        ...prev,
+        ...extractedTypes,
+      }));
+    }
+  }, [hasExtractedParams, extractedParameters]);
+
   // 分頁控制
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 3;
@@ -75,7 +120,94 @@ export default function WebsiteUpload() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setAlgoFile(selectedFile);
+      setAlgoFileName(selectedFile.name);
+      setHasExtractedParams(false); // 重置解析參數狀態
+      setAlgoError('');
+      
+      // 開始讀取文件內容
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          setAlgoResponse(content.substring(0, 500)); // 預覽用的前幾行
+          
+          // 解析參數
+          processSceneFile(content);
+        } catch (error) {
+          setAlgoError('演算法檔案讀取失敗');
+          console.error('Error reading algorithm file:', error);
+        }
+      };
+      
+      reader.onerror = () => {
+        setAlgoError('演算法檔案讀取失敗');
+      };
+      
+      reader.readAsText(selectedFile);
     }
+  };
+
+  // 處理演算法文件分析
+  const processSceneFile = (code: string) => {
+    try {
+      // 使用正則表達式提取 defaultParameters 或 parameters
+      const parametersMatch = code.match(/export\s+const\s+(?:default)?[pP]arameters\s*=\s*({[\s\S]*?})(?:\s+as\s+const)?;/);
+      
+      if (parametersMatch && parametersMatch[1]) {
+        // 將提取的參數字符串轉換為有效的 JSON
+        let paramStr = parametersMatch[1];
+        
+        // 1. 將屬性名稱轉換為帶雙引號的格式
+        paramStr = paramStr.replace(/(\w+):/g, '"$1":');
+        
+        // 2. 將單引號字符串轉換為雙引號字符串
+        paramStr = paramStr.replace(/'([^']*?)'/g, '"$1"');
+        
+        // 3. 處理尾隨逗號
+        paramStr = paramStr.replace(/,(\s*[}\]])/g, '$1');
+        
+        console.log("Processed param string:", paramStr);
+        
+        // 嘗試解析 JSON
+        const extractedParams = JSON.parse(paramStr);
+        
+        // 設置預覽參數
+        const initialParams = Object.fromEntries(
+          Object.entries(extractedParams).map(([key, value]: [string, any]) => [key, value.default])
+        );
+        setPreviewParams(initialParams);
+        setShowPreview(true);
+        
+        setExtractedParameters(extractedParams);
+        setHasExtractedParams(true);
+        setAlgoError('');
+      } else {
+        throw new Error("無法從代碼中提取參數定義");
+      }
+    } catch (err) {
+      console.error("處理演算法文件錯誤:", err);
+      setAlgoError(`解析參數失敗: ${err instanceof Error ? err.message : String(err)}`);
+      setShowPreview(false);
+    }
+  };
+
+  // 更新處理演算法文件分析函數
+  const handleParameterChange = (key: string, value: string) => {
+    const paramDef = extractedParameters[key];
+    if (!paramDef) return;
+
+    let processedValue: any = value;
+    if (paramDef.type === 'number') {
+      processedValue = value === '' ? paramDef.default : Number(value);
+      if (isNaN(processedValue)) return;
+    }
+
+    // 更新預覽參數
+    setPreviewParams(prev => ({
+      ...prev,
+      [key]: processedValue
+    }));
   };
 
   const handleImageUpload = async () => {
@@ -359,27 +491,35 @@ export default function WebsiteUpload() {
 
   const renderPageTwo = () => (
     <div className="flex h-full">
-      {/* 左側 - 演算法上傳 */}
+      {/* 左側 - 演算法上傳和預覽 */}
       <div className="w-2/3 p-8 border-r border-white/5">
         <div className="text-white/50 text-sm mb-4">Wave Function</div>
-        <div className="h-[calc(100%-2rem)] group relative">
-          <input
-            type="file"
-            onChange={handleAlgoFileChange}
-            className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
-          />
-          <div className="h-full border border-dashed border-white/20 rounded-lg flex items-center justify-center group-hover:border-white/40 transition-colors">
-            {algoFile ? (
-              <pre className="p-6 w-full h-full overflow-auto text-sm text-white/80 font-mono">
-                {algoResponse || '// Processing...'}
-              </pre>
-            ) : (
-              <div className="text-center text-white/40">
-                <div className="text-4xl mb-3">λ</div>
-                <div className="text-sm">Drop algorithm here</div>
+        <div className="h-[calc(100vh-280px)] group relative">
+          {showPreview && Object.keys(previewParams).length > 0 ? (
+            <div className="h-full rounded-lg overflow-hidden bg-black/30">
+              <ParametricScene parameters={previewParams} />
+            </div>
+          ) : (
+            <>
+              <input
+                type="file"
+                onChange={handleAlgoFileChange}
+                className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
+              />
+              <div className="h-full border border-dashed border-white/20 rounded-lg flex items-center justify-center group-hover:border-white/40 transition-colors">
+                {algoFile ? (
+                  <pre className="p-6 w-full h-full overflow-auto text-sm text-white/80 font-mono">
+                    {algoResponse || '// Processing...'}
+                  </pre>
+                ) : (
+                  <div className="text-center text-white/40">
+                    <div className="text-4xl mb-3">λ</div>
+                    <div className="text-sm">Drop algorithm here</div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
           {algoError && (
             <div className="mt-2 text-red-400 text-sm">
               <span className="font-mono">λ </span>{algoError}
@@ -393,24 +533,63 @@ export default function WebsiteUpload() {
         <div className="sticky top-8 space-y-8">
           <div className="text-white/50 text-sm">Quantum Parameters</div>
           <div className="space-y-6">
-            {Object.entries(parameters).map(([key, value]) => (
-              <div key={key}>
-                <div className="text-white/40 text-sm mb-2 capitalize">{key}</div>
-                <select
-                  value={value}
-                  onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      [key]: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                >
-                  <option value="range">Wave</option>
-                  <option value="select">Particle</option>
-                </select>
+            {hasExtractedParams ? (
+              // 顯示從演算法中提取的參數
+              Object.entries(extractedParameters).map(([key, paramDef]) => (
+                <div key={key}>
+                  <div className="text-white/60 text-sm mb-2 capitalize">{paramDef.label || key}</div>
+                  {paramDef.type === 'color' ? (
+                    <input
+                      type="color"
+                      value={previewParams[key] || paramDef.default}
+                      onChange={(e) => handleParameterChange(key, e.target.value)}
+                      className="w-full h-8 bg-transparent rounded cursor-pointer"
+                    />
+                  ) : (
+                    <input
+                      type="number"
+                      value={previewParams[key] || paramDef.default}
+                      onChange={(e) => handleParameterChange(key, e.target.value)}
+                      className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+                    />
+                  )}
+                  <div className="text-white/30 text-xs mt-1">
+                    Default: {typeof paramDef.default === 'object' ? JSON.stringify(paramDef.default) : paramDef.default}
+                  </div>
+                </div>
+              ))
+            ) : (
+              // 顯示默認參數
+              Object.entries(parameters).map(([key, value]) => (
+                <div key={key}>
+                  <div className="text-white/40 text-sm mb-2 capitalize">{key}</div>
+                  <select
+                    value={value}
+                    onChange={(e) =>
+                      setParameters((prev) => ({
+                        ...prev,
+                        [key]: e.target.value as React.HTMLInputTypeAttribute,
+                      }))
+                    }
+                    className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+                  >
+                    <option value="range">Wave</option>
+                    <option value="select">Particle</option>
+                  </select>
+                </div>
+              ))
+            )}
+            
+            {algoFileName && (
+              <div className="mt-8 p-4 bg-blue-900/20 rounded">
+                <div className="text-blue-300 font-medium">{algoFileName}</div>
+                <div className="text-white/60 text-sm mt-2">
+                  {hasExtractedParams 
+                    ? `${Object.keys(extractedParameters).length} parameters found` 
+                    : 'No parameters extracted'}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -468,7 +647,7 @@ export default function WebsiteUpload() {
                   onChange={(e) =>
                     setParameters((prev) => ({
                       ...prev,
-                      [key]: e.target.value,
+                      [key]: e.target.value as React.HTMLInputTypeAttribute,
                     }))
                   }
                   className="bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
