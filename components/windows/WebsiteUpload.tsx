@@ -44,6 +44,7 @@ export default function WebsiteUpload() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
+  const [algoRequired, setAlgoRequired] = useState(false);
 
   // 作品相關資訊
   const [workName, setWorkName] = useState('Celestial Harmonics');
@@ -59,6 +60,7 @@ export default function WebsiteUpload() {
   const [style, setStyle] = useState('dark');
   const [bgColor, setBgColor] = useState('#f9d006');
   const [fontColor, setFontColor] = useState('#1a1310');
+  const [fontStyle, setFontStyle] = useState('sans');
 
   // 參數設定
   type ParameterType = {
@@ -121,8 +123,9 @@ export default function WebsiteUpload() {
     if (selectedFile) {
       setAlgoFile(selectedFile);
       setAlgoFileName(selectedFile.name);
-      setHasExtractedParams(false); // 重置解析參數狀態
+      setHasExtractedParams(false);
       setAlgoError('');
+      setAlgoRequired(false); // 清除必填錯誤狀態
       
       // 開始讀取文件內容
       const reader = new FileReader();
@@ -130,7 +133,7 @@ export default function WebsiteUpload() {
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
-          setAlgoResponse(content.substring(0, 500)); // 預覽用的前幾行
+          setAlgoResponse(content.substring(0, 500));
           
           // 解析參數
           processSceneFile(content);
@@ -378,9 +381,15 @@ export default function WebsiteUpload() {
       setImageRequired(true);
       return;
     }
+
+    if (currentPage === 2 && !algoFile) {
+      setAlgoRequired(true);
+      return;
+    }
     
     if (currentPage < totalPages) {
       setImageRequired(false);
+      setAlgoRequired(false);
       setCurrentPage(currentPage + 1);
     }
   };
@@ -506,15 +515,17 @@ export default function WebsiteUpload() {
                 onChange={handleAlgoFileChange}
                 className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
               />
-              <div className="h-full border border-dashed border-white/20 rounded-lg flex items-center justify-center group-hover:border-white/40 transition-colors">
+              <div className={`h-full border border-dashed ${algoRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!algoRequired && 'group-hover:border-white/40'} transition-colors`}>
                 {algoFile ? (
                   <pre className="p-6 w-full h-full overflow-auto text-sm text-white/80 font-mono">
                     {algoResponse || '// Processing...'}
                   </pre>
                 ) : (
-                  <div className="text-center text-white/40">
-                    <div className="text-4xl mb-3">λ</div>
-                    <div className="text-sm">Drop algorithm here</div>
+                  <div className="text-center">
+                    <div className={`text-4xl mb-3 ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>λ</div>
+                    <div className={`text-sm ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>
+                      {algoRequired ? 'Wave function is required' : 'Drop algorithm here'}
+                    </div>
                   </div>
                 )}
               </div>
@@ -530,66 +541,55 @@ export default function WebsiteUpload() {
 
       {/* 右側 - 參數設定 */}
       <div className="w-1/3 p-8">
-        <div className="sticky top-8 space-y-8">
-          <div className="text-white/50 text-sm">Quantum Parameters</div>
-          <div className="space-y-6">
-            {hasExtractedParams ? (
-              // 顯示從演算法中提取的參數
-              Object.entries(extractedParameters).map(([key, paramDef]) => (
-                <div key={key}>
-                  <div className="text-white/60 text-sm mb-2 capitalize">{paramDef.label || key}</div>
-                  {paramDef.type === 'color' ? (
-                    <input
-                      type="color"
-                      value={previewParams[key] || paramDef.default}
-                      onChange={(e) => handleParameterChange(key, e.target.value)}
-                      className="w-full h-8 bg-transparent rounded cursor-pointer"
-                    />
-                  ) : (
-                    <input
-                      type="number"
-                      value={previewParams[key] || paramDef.default}
-                      onChange={(e) => handleParameterChange(key, e.target.value)}
-                      className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                    />
-                  )}
-                  <div className="text-white/30 text-xs mt-1">
-                    Default: {typeof paramDef.default === 'object' ? JSON.stringify(paramDef.default) : paramDef.default}
+        <div className="space-y-8">
+
+          {/* 參數列表 */}
+          {hasExtractedParams && (
+            <div className="space-y-4">
+              <div className="text-white/50 text-sm">Quantum Parameters</div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {Object.entries(extractedParameters).map(([key, paramDef]) => (
+                  <div key={key} className="bg-white/5 rounded-md p-3">
+                    <div className="text-white/60 mb-1 capitalize">{paramDef.label || key}</div>
+                    <div className="text-white font-mono">
+                      {typeof paramDef.default === 'object' 
+                        ? JSON.stringify(paramDef.default) 
+                        : paramDef.default}
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              // 顯示默認參數
-              Object.entries(parameters).map(([key, value]) => (
-                <div key={key}>
-                  <div className="text-white/40 text-sm mb-2 capitalize">{key}</div>
-                  <select
-                    value={value}
-                    onChange={(e) =>
-                      setParameters((prev) => ({
-                        ...prev,
-                        [key]: e.target.value as React.HTMLInputTypeAttribute,
-                      }))
-                    }
-                    className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                  >
-                    <option value="range">Wave</option>
-                    <option value="select">Particle</option>
-                  </select>
-                </div>
-              ))
-            )}
-            
-            {algoFileName && (
-              <div className="mt-8 p-4 bg-blue-900/20 rounded">
-                <div className="text-blue-300 font-medium">{algoFileName}</div>
-                <div className="text-white/60 text-sm mt-2">
-                  {hasExtractedParams 
-                    ? `${Object.keys(extractedParameters).length} parameters found` 
-                    : 'No parameters extracted'}
-                </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+
+          {/* 網站設計選項 */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-white/60 text-sm block mb-2">Interface Paradigm</label>
+              <select
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+              >
+                <option value="dark">Dark Matter</option>
+                <option value="light">Light Wave</option>
+                <option value="minimal">Quantum Minimal</option>
+                <option value="elegant">String Theory</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-white/60 text-sm block mb-2">Typography</label>
+              <select
+                value={fontStyle}
+                onChange={(e) => setFontStyle(e.target.value)}
+                className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+              >
+                <option value="sans">Quantum Sans</option>
+                <option value="serif">Cosmic Serif</option>
+                <option value="mono">Matrix Mono</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -682,7 +682,7 @@ export default function WebsiteUpload() {
   );
 
   return (
-    <div className="h-full bg-[rgba(10,10,10,0.3)]">
+    <div className="h-[742px] w-[1200px] bg-[rgba(10,10,10,0.3)]">
       {/* 頁面內容 */}
       <div className="h-full">
         {currentPage === 1 && renderPageOne()}
