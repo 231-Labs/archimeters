@@ -12,6 +12,7 @@ import Model3DWindow from '@/components/windows/Model3DWindow';
 import TestDesignSeriesWindow from '@/components/windows/TestDesignSeriesWindow';
 import ElegantPage from '@/components/windows/ElegantPage';
 import MonochromePage from '@/components/windows/MonochromePage';
+import WebsiteUpload from '@/components/windows/WebsiteUpload';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -26,6 +27,7 @@ const defaultWindowSizes = {
   'test-design-series': { width: 500, height: 600 },
   'elegant-page': { width: 900, height: 700 },
   'monochrome-page': { width: 900, height: 700 },
+  'website-upload': { width: 800, height: 600 },
 };
 
 interface WindowState {
@@ -88,6 +90,7 @@ export default function Home() {
     'test-design-series': { x: 150, y: 150 },
     'elegant-page': { x: 100, y: 50 },
     'monochrome-page': { x: 700, y: 70 },
+    'website-upload': { x: 300, y: 300 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
@@ -342,6 +345,24 @@ export default function Home() {
                       onResize={(e) => handleResize(e, name)}
                     >
                       <MonochromePage />
+                    </Window>
+                  );
+                case 'website-upload':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Website Upload"
+                      position={windowPositions['website-upload']}
+                      size={windowSizes['website-upload']}
+                      isActive={activeWindow === 'website-upload'}
+                      resizable={true}
+                      onClose={() => handleCloseWindow(name)}
+                      onDragStart={(e) => handleDragStart(e, name)}
+                      onResize={(e) => handleResize(e, name)}
+                      onClick={() => handleWindowActivate(name)}
+                    >
+                      <WebsiteUpload />
                     </Window>
                   );
               }

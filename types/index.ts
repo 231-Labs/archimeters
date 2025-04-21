@@ -6,7 +6,8 @@ export type WindowName =
   | 'designer'
   | 'test-design-series'
   | 'elegant-page'
-  | 'monochrome-page';
+  | 'monochrome-page'
+  | 'website-upload';
 
 export interface WindowState {
   name: WindowName;
