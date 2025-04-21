@@ -27,7 +27,7 @@ const defaultWindowSizes = {
   'test-design-series': { width: 500, height: 600 },
   'elegant-page': { width: 900, height: 700 },
   'monochrome-page': { width: 900, height: 700 },
-  'website-upload': { width: 1320, height: 720 },
+  'website-upload': { width: 1145, height: 756 },
 };
 
 interface WindowState {
@@ -64,18 +64,6 @@ export default function Home() {
     fetchOsId();
   }, [currentAccount, suiClient]);
 
-  // 計算視窗中心位置的函數
-  const getCenterPosition = (width: number, height: number) => {
-    if (typeof window === 'undefined') {
-      return { x: 0, y: 0 };
-    }
-    
-    const x = Math.round((window.innerWidth - width) / 2);
-    const y = Math.round((window.innerHeight - height) / 2) - 60;
-    
-    return { x, y };
-  };
-
   const entrySize = { width: 600, height: 600 };
 
   const [openWindows, setOpenWindows] = useState<WindowName[]>(['entry']);
@@ -90,19 +78,34 @@ export default function Home() {
     'test-design-series': { x: 150, y: 150 },
     'elegant-page': { x: 100, y: 50 },
     'monochrome-page': { x: 700, y: 70 },
-    'website-upload': { x: 300, y: 300 },
+    'website-upload': { x: 0, y: 0 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
   const [windows, setWindows] = useState<Record<string, WindowState>>({});
+
+  // 計算視窗中心位置的函數
+  const getCenterPosition = (width: number, height: number) => {
+    if (typeof window === 'undefined') {
+      return { x: 0, y: 0 };
+    }
+    
+    const x = Math.max(0, Math.round((window.innerWidth - width) / 2));
+    const y = Math.max(0, Math.round((window.innerHeight - height - 48) / 2));
+    
+    return { x, y };
+  };
 
   // 使用 useEffect 來設置 Entry 窗口的初始位置
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const centerPosition = getCenterPosition(entrySize.width, entrySize.height);
+    const websiteUploadCenter = getCenterPosition(defaultWindowSizes['website-upload'].width, defaultWindowSizes['website-upload'].height);
+    
     setWindowPositions(prev => ({
       ...prev,
       entry: centerPosition,
+      'website-upload': websiteUploadCenter,
     }));
   }, []);
 

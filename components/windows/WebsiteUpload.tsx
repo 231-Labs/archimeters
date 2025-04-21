@@ -47,14 +47,14 @@ export default function WebsiteUpload() {
   const [algoRequired, setAlgoRequired] = useState(false);
 
   // 作品相關資訊
-  const [workName, setWorkName] = useState('Celestial Harmonics');
-  const [description, setDescription] = useState('A quantum visualization that explores the delicate balance between chaos and order. Each pixel represents a node in the cosmic network, rendered through quantum calculations that mirror the fundamental patterns of existence.');
+  const [workName, setWorkName] = useState('Parametric Constellation #42');
+  const [description, setDescription] = useState('A generative artwork that explores the mathematical beauty of celestial patterns. This piece dynamically responds to parameter adjustments, creating unique constellations that reflect the harmony of algorithmic art and astronomical phenomena.');
   const [price, setPrice] = useState('1024');
 
   // 創作者資訊
-  const [name, setName] = useState('Artemis Stellarwind');
-  const [social, setSocial] = useState('stellarwind.cosmos');
-  const [intro, setIntro] = useState("Quantum mathematician and digital artist exploring the intersection of universal constants and visual expression. Creating windows into dimensions beyond human perception.");
+  const [name, setName] = useState('CryptoArtist#0042');
+  const [social, setSocial] = useState('archimeters.lens');
+  const [intro, setIntro] = useState('Digital artist exploring the intersection of mathematics and visual aesthetics through parametric art.');
 
   // 網站設計相關
   const [style, setStyle] = useState('dark');
@@ -78,6 +78,13 @@ export default function WebsiteUpload() {
   // 3D 預覽相關狀態
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [showPreview, setShowPreview] = useState(false);
+
+  // 必填欄位驗證狀態
+  const [workNameRequired, setWorkNameRequired] = useState(false);
+  const [descriptionRequired, setDescriptionRequired] = useState(false);
+  const [priceRequired, setPriceRequired] = useState(false);
+  const [introRequired, setIntroRequired] = useState(false);
+  const [priceError, setPriceError] = useState<string>('');
 
   // 參數設定狀態
   useEffect(() => {
@@ -377,9 +384,43 @@ export default function WebsiteUpload() {
 
   // 分頁導航
   const goToNextPage = () => {
-    if (currentPage === 1 && !imageFile) {
-      setImageRequired(true);
-      return;
+    if (currentPage === 1) {
+      // 檢查第一頁所有必填欄位
+      let hasError = false;
+      
+      if (!workName.trim()) {
+        setWorkNameRequired(true);
+        hasError = true;
+      }
+      
+      if (!description.trim()) {
+        setDescriptionRequired(true);
+        hasError = true;
+      }
+      
+      if (!price.trim()) {
+        setPriceRequired(true);
+        setPriceError('Artwork price is required');
+        hasError = true;
+      } else if (!/^\d+$/.test(price)) {
+        setPriceRequired(true);
+        setPriceError('Please enter a valid number');
+        hasError = true;
+      }
+      
+      if (!intro.trim()) {
+        setIntroRequired(true);
+        hasError = true;
+      }
+      
+      if (!imageFile) {
+        setImageRequired(true);
+        hasError = true;
+      }
+
+      if (hasError) {
+        return;
+      }
     }
 
     if (currentPage === 2 && !algoFile) {
@@ -388,6 +429,11 @@ export default function WebsiteUpload() {
     }
     
     if (currentPage < totalPages) {
+      // 清除所有錯誤狀態
+      setWorkNameRequired(false);
+      setDescriptionRequired(false);
+      setPriceRequired(false);
+      setIntroRequired(false);
       setImageRequired(false);
       setAlgoRequired(false);
       setCurrentPage(currentPage + 1);
@@ -397,6 +443,17 @@ export default function WebsiteUpload() {
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // 處理價格輸入
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 只允許輸入數字
+    if (value === '' || /^\d+$/.test(value)) {
+      setPrice(value);
+      setPriceRequired(false);
+      setPriceError('');
     }
   };
 
@@ -410,75 +467,104 @@ export default function WebsiteUpload() {
           <div>
             <input
               value={workName}
-              onChange={(e) => setWorkName(e.target.value)}
-              className="w-full bg-transparent text-white text-3xl font-light border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-              placeholder="Enter artifact designation..."
+              onChange={(e) => {
+                setWorkName(e.target.value);
+                setWorkNameRequired(false);
+              }}
+              className={`w-full bg-transparent text-white text-3xl font-light border-b ${workNameRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+              placeholder="Enter artwork title..."
             />
+            {workNameRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artwork title is required
+              </div>
+            )}
           </div>
 
           {/* 作品描述區 */}
           <div>
-            <div className="text-white/50 text-sm mb-3">Quantum Description</div>
+            <div className="text-white/50 text-sm mb-3">Artwork Description</div>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full h-32 bg-transparent text-white/90 focus:outline-none resize-none"
-              placeholder="Describe the quantum nature of your artifact..."
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setDescriptionRequired(false);
+              }}
+              className={`w-full h-32 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${descriptionRequired ? 'border-red-400' : 'border-white/20'}`}
+              placeholder="Describe your artwork and creative concept..."
             />
+            {descriptionRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artwork description is required
+              </div>
+            )}
           </div>
 
           {/* 創作者資訊區 */}
           <div className="space-y-4">
-            <div className="text-white/50 text-sm mb-1">Creator Information</div>
+            <div className="text-white/50 text-sm mb-1">Artist Information</div>
             <div className="flex items-center space-x-3">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="flex-1 bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                placeholder="Quantum signature"
-              />
+              <div className="flex-1 text-white/90 pb-2">
+                {name}
+              </div>
               <span className="text-white/30">|</span>
               <div className="flex items-center flex-1">
                 <span className="text-white/50 mr-2">@</span>
-                <input
-                  value={social}
-                  onChange={(e) => setSocial(e.target.value)}
-                  className="flex-1 bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                  placeholder="Coordinates"
-                />
+                <div className="text-white/90 pb-2">
+                  {social}
+                </div>
               </div>
             </div>
             <textarea
               value={intro}
-              onChange={(e) => setIntro(e.target.value)}
-              className="w-full h-24 bg-transparent text-white/90 focus:outline-none resize-none"
-              placeholder="Share your quantum journey..."
+              onChange={(e) => {
+                setIntro(e.target.value);
+                setIntroRequired(false);
+              }}
+              className={`w-full h-24 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${introRequired ? 'border-red-400' : 'border-white/20'}`}
+              placeholder="Introduce yourself as an artist..."
             />
+            {introRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artist introduction is required
+              </div>
+            )}
           </div>
 
-          {/* 能量值 */}
+          {/* 作品價格 */}
           <div className="-mt-12">
-            <div className="text-white/50 text-sm mb-3">Energy Value</div>
+            <div className="text-white/50 text-sm mb-3">Artwork Price</div>
             <div className="flex items-center">
               <span className="text-white/50 text-xl mr-3">φ</span>
               <input
+                type="text"
+                inputMode="numeric"
+                pattern="\d*"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="flex-1 bg-transparent text-white text-xl border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                placeholder="Define energy value..."
+                onChange={handlePriceChange}
+                className={`flex-1 bg-transparent text-white text-xl border-b ${priceRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+                placeholder="Set artwork price..."
               />
             </div>
+            {priceError && (
+              <div className="mt-2 text-red-400 text-sm">
+                {priceError}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* 右側 - 主視覺圖上傳 */}
       <div className="w-1/2 p-8 flex flex-col">
-        <div className="text-white/50 text-sm mb-4 mt-[12px]">Visual Quantum State</div>
+        <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
         <div className="h-[calc(100vh-320px)] group relative">
           <input
             type="file"
-            onChange={handleImageFileChange}
+            onChange={(e) => {
+              handleImageFileChange(e);
+              setImageRequired(false);
+            }}
             className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
           />
           <div className={`h-full border border-dashed ${imageRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!imageRequired && 'group-hover:border-white/40'} transition-colors`}>
@@ -486,9 +572,9 @@ export default function WebsiteUpload() {
               <img src={URL.createObjectURL(imageFile)} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
             ) : (
               <div className="text-center">
-                <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>⟨∅|</div>
+                <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
                 <div className={`text-sm ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>
-                  {imageRequired ? 'Visual quantum state is required' : 'Drop quantum state here'}
+                  {imageRequired ? 'Main visual is required' : 'Click or drag to upload image'}
                 </div>
               </div>
             )}
@@ -502,7 +588,7 @@ export default function WebsiteUpload() {
     <div className="flex h-full">
       {/* 左側 - 演算法上傳和預覽 */}
       <div className="w-2/3 p-8 border-r border-white/5">
-        <div className="text-white/50 text-sm mb-4">Wave Function</div>
+        <div className="text-white/50 text-sm mb-4">Algorithm File</div>
         <div className="h-[calc(100vh-280px)] group relative">
           {showPreview && Object.keys(previewParams).length > 0 ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
@@ -522,9 +608,9 @@ export default function WebsiteUpload() {
                   </pre>
                 ) : (
                   <div className="text-center">
-                    <div className={`text-4xl mb-3 ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>λ</div>
+                    <div className={`text-4xl mb-3 ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
                     <div className={`text-sm ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>
-                      {algoRequired ? 'Wave function is required' : 'Drop algorithm here'}
+                      {algoRequired ? 'Algorithm file is required' : 'Click or drag to upload algorithm'}
                     </div>
                   </div>
                 )}
@@ -533,7 +619,7 @@ export default function WebsiteUpload() {
           )}
           {algoError && (
             <div className="mt-2 text-red-400 text-sm">
-              <span className="font-mono">λ </span>{algoError}
+              <span className="font-mono">Error: </span>{algoError}
             </div>
           )}
         </div>
@@ -542,11 +628,10 @@ export default function WebsiteUpload() {
       {/* 右側 - 參數設定 */}
       <div className="w-1/3 p-8">
         <div className="space-y-8">
-
           {/* 參數列表 */}
           {hasExtractedParams && (
             <div className="space-y-4">
-              <div className="text-white/50 text-sm">Quantum Parameters</div>
+              <div className="text-white/50 text-sm">Algorithm Parameters</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {Object.entries(extractedParameters).map(([key, paramDef]) => (
                   <div key={key} className="bg-white/5 rounded-md p-3">
@@ -565,29 +650,29 @@ export default function WebsiteUpload() {
           {/* 網站設計選項 */}
           <div className="space-y-4">
             <div>
-              <label className="text-white/60 text-sm block mb-2">Interface Paradigm</label>
+              <label className="text-white/60 text-sm block mb-2">Page Style</label>
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
                 className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
               >
-                <option value="dark">Dark Matter</option>
-                <option value="light">Light Wave</option>
-                <option value="minimal">Quantum Minimal</option>
-                <option value="elegant">String Theory</option>
+                <option value="dark">Dark Theme</option>
+                <option value="light">Light Theme</option>
+                <option value="minimal">Minimal</option>
+                <option value="elegant">Elegant</option>
               </select>
             </div>
 
             <div>
-              <label className="text-white/60 text-sm block mb-2">Typography</label>
+              <label className="text-white/60 text-sm block mb-2">Font Style</label>
               <select
                 value={fontStyle}
                 onChange={(e) => setFontStyle(e.target.value)}
                 className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
               >
-                <option value="sans">Quantum Sans</option>
-                <option value="serif">Cosmic Serif</option>
-                <option value="mono">Matrix Mono</option>
+                <option value="sans">Sans Serif</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Monospace</option>
               </select>
             </div>
           </div>
@@ -602,8 +687,8 @@ export default function WebsiteUpload() {
       <div className="fixed inset-0 bg-[url('/grid.png')] opacity-[0.03] pointer-events-none" />
       <div className="fixed inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
 
-      <div className="relative max-w-6xl mx-auto p-6">
-        <header className="mb-8 relative text-center">
+      <div className="relative min-h-full max-w-[1800px] mx-auto p-6 pb-24 flex flex-col">
+        <header className="mb-6 relative text-center">
           <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-32 h-32">
             <div className="absolute inset-0 border border-white/10 rounded-sm"></div>
             <div className="absolute inset-4 border border-white/5 rounded-sm"></div>
@@ -624,49 +709,59 @@ export default function WebsiteUpload() {
           </div>
         </header>
 
-        <div className="grid grid-cols-12 gap-6 mb-8">
-          {/* 左側 - 主視覺和描述 */}
-          <div className="col-span-5 space-y-4">
-            {/* 主視覺 */}
-            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-              <div className="relative bg-black/50 backdrop-blur-sm p-6">
+        <div className="flex-1 flex flex-col lg:flex-row gap-6">
+          {/* 左側 - 3D展示區 */}
+          <div className="lg:w-[55%] flex flex-col gap-4">
+            {/* 3D預覽 */}
+            <div className="flex-1 relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 min-h-[500px]">
+              <div className="relative bg-black/50 backdrop-blur-sm p-6 h-full">
                 <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
                 <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
                 <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
                 <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
 
-                <div className="relative h-[280px] bg-black/70 overflow-hidden border border-white/10">
-                  {imageUrl && (
-                    <div className="relative group h-full">
-                      <img 
-                        src={imageUrl} 
-                        alt={workName}
-                        className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
-                    </div>
-                  )}
+                <div className="relative h-full bg-black/70 border border-white/10">
+                  {showPreview && Object.keys(previewParams).length > 0 ? (
+                    <ParametricScene parameters={previewParams} />
+                  ) : null}
                 </div>
               </div>
             </div>
 
-            {/* 描述 */}
+            {/* 作品資訊 */}
             <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
               <div className="relative bg-black/50 backdrop-blur-sm p-6">
-                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+                <div className="space-y-6">
+                  {/* 作品描述和主視覺圖 */}
+                  <div className="flex gap-6">
+                    {/* 主視覺圖 */}
+                    <div className="w-1/2">
+                      <div className="relative aspect-square bg-black/70 border border-white/10 overflow-hidden">
+                        {imageUrl && (
+                          <div className="relative group h-full">
+                            <img 
+                              src={imageUrl} 
+                              alt={workName}
+                              className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <h2 className="text-lg font-semibold mb-2 text-white/90">Quantum Description_</h2>
-                    <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
-                      {description}
-                    </p>
+                    {/* 作品描述 */}
+                    <div className="w-1/2">
+                      <h2 className="text-lg font-semibold mb-2 text-white/90">Artwork Description</h2>
+                      <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
+                        {description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold mb-2 text-white/90">Creator Manifesto_</h2>
+
+                  {/* 藝術家介紹 */}
+                  <div className="border-t border-white/10 pt-6">
+                    <h2 className="text-lg font-semibold mb-2 text-white/90">Artist Statement</h2>
                     <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
                       {intro}
                     </p>
@@ -676,136 +771,108 @@ export default function WebsiteUpload() {
             </div>
           </div>
 
-          {/* 右側 - 演算法預覽和參數 */}
-          <div className="col-span-7 space-y-4">
-            {/* 演算法預覽 */}
-            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-              <div className="relative bg-black/50 backdrop-blur-sm p-6">
-                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
-
-                <div className="relative h-[400px] bg-black/70 overflow-hidden border border-white/10">
-                  {showPreview && Object.keys(previewParams).length > 0 ? (
-                    <ParametricScene parameters={previewParams} />
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
+          {/* 右側 - 參數調整和Mint區 */}
+          <div className="lg:w-[45%] flex flex-col gap-4">
             {/* 參數設定 */}
             <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
               <div className="relative bg-black/50 backdrop-blur-sm p-6">
-                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-white/90">Quantum Parameters_</h2>
-                    <button 
-                      onClick={() => {
-                        const defaultParams = Object.fromEntries(
-                          Object.entries(extractedParameters).map(([key, value]) => [key, value.default])
-                        );
-                        setPreviewParams(defaultParams);
-                      }}
-                      className="text-sm text-white/50 hover:text-white/70 transition-colors"
-                    >
-                      Reset All
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-                    {Object.entries(extractedParameters).map(([key, paramDef]) => (
-                      <div key={key} className="bg-white/5 rounded-md p-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="text-white/60 capitalize text-sm">{paramDef.label || key}</div>
-                          <button 
-                            className="text-xs text-white/40 hover:text-white/60 transition-colors"
-                            onClick={() => handleParameterChange(key, paramDef.default)}
-                          >
-                            Reset
-                          </button>
-                        </div>
-                        {paramDef.type === 'number' ? (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="range"
-                                min={paramDef.min || 0}
-                                max={paramDef.max || 100}
-                                step={paramDef.step || 1}
-                                value={previewParams[key] ?? paramDef.default}
-                                onChange={(e) => handleParameterChange(key, e.target.value)}
-                                className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                              />
-                              <input
-                                type="number"
-                                value={previewParams[key] ?? paramDef.default}
-                                onChange={(e) => {
-                                  const value = e.target.value === '' ? '' : Number(e.target.value);
-                                  handleParameterChange(key, value);
-                                }}
-                                className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
-                              />
-                            </div>
-                            <div className="flex justify-between text-[10px] text-white/30">
-                              <span>{paramDef.min || 0}</span>
-                              <span>{paramDef.max || 100}</span>
-                            </div>
-                          </div>
-                        ) : paramDef.type === 'color' ? (
-                          <div className="flex items-center gap-2 relative group">
-                            <button
-                              className="w-6 h-6 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors"
-                              onClick={(e) => {
-                                const input = e.currentTarget.nextElementSibling as HTMLInputElement;
-                                input?.click();
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-white/90">Parameters</h2>
+                  <button 
+                    onClick={() => {
+                      const defaultParams = Object.fromEntries(
+                        Object.entries(extractedParameters).map(([key, value]) => [key, value.default])
+                      );
+                      setPreviewParams(defaultParams);
+                    }}
+                    className="text-sm text-white/50 hover:text-white/70 transition-colors"
+                  >
+                    Reset All
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  {Object.entries(extractedParameters).map(([key, paramDef]) => (
+                    <div key={key} className="bg-white/5 rounded-md p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="text-white/60 capitalize text-sm">{paramDef.label || key}</div>
+                        <button 
+                          className="text-xs text-white/40 hover:text-white/60 transition-colors"
+                          onClick={() => handleParameterChange(key, paramDef.default)}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      {paramDef.type === 'number' ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={paramDef.min || 0}
+                              max={paramDef.max || 100}
+                              step={paramDef.step || 1}
+                              value={previewParams[key] ?? paramDef.default}
+                              onChange={(e) => handleParameterChange(key, e.target.value)}
+                              className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <input
+                              type="number"
+                              value={previewParams[key] ?? paramDef.default}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? '' : Number(e.target.value);
+                                handleParameterChange(key, value);
                               }}
-                            >
-                              <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }}></div>
-                            </button>
-                            <input
-                              type="color"
-                              value={previewParams[key] || paramDef.default}
-                              onChange={(e) => handleParameterChange(key, e.target.value)}
-                              className="absolute opacity-0 pointer-events-none"
-                            />
-                            <input
-                              type="text"
-                              value={previewParams[key] || paramDef.default}
-                              onChange={(e) => handleParameterChange(key, e.target.value)}
-                              className="flex-1 bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                              className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
                             />
                           </div>
-                        ) : (
+                          <div className="flex justify-between text-[10px] text-white/30">
+                            <span>{paramDef.min || 0}</span>
+                            <span>{paramDef.max || 100}</span>
+                          </div>
+                        </div>
+                      ) : paramDef.type === 'color' ? (
+                        <div className="flex items-center gap-2 relative group">
+                          <button
+                            className="w-6 h-6 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors"
+                            onClick={(e) => {
+                              const input = e.currentTarget.nextElementSibling as HTMLInputElement;
+                              input?.click();
+                            }}
+                          >
+                            <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }}></div>
+                          </button>
+                          <input
+                            type="color"
+                            value={previewParams[key] || paramDef.default}
+                            onChange={(e) => handleParameterChange(key, e.target.value)}
+                            className="absolute opacity-0 pointer-events-none"
+                          />
                           <input
                             type="text"
                             value={previewParams[key] || paramDef.default}
                             onChange={(e) => handleParameterChange(key, e.target.value)}
-                            className="w-full bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                            className="flex-1 bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
                           />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={previewParams[key] || paramDef.default}
+                          onChange={(e) => handleParameterChange(key, e.target.value)}
+                          className="w-full bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Mint NFT 區域 - 獨立區塊 */}
+            {/* NFT Minting Area */}
             <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
               <div className="relative bg-black/50 backdrop-blur-sm p-4">
-                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
-
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-white/60 mb-1">Energy Value Required_</div>
+                    <div className="text-sm font-semibold text-white/60 mb-1">Price</div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-light text-white/90">φ</span>
                       <span className="text-3xl font-light bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80">
@@ -819,7 +886,7 @@ export default function WebsiteUpload() {
                     <button className="relative px-8 py-3 bg-black rounded-sm">
                       <div className="flex flex-col items-center">
                         <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
-                        <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Quantum State Initialization</span>
+                        <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Initialize Artwork</span>
                       </div>
                     </button>
                   </div>
@@ -831,7 +898,7 @@ export default function WebsiteUpload() {
       </div>
 
       {/* 導航按鈕 */}
-      <div className="absolute bottom-8 right-6 flex gap-2">
+      <div className="fixed bottom-8 right-6 flex gap-2">
         {currentPage > 1 && (
           <button 
             onClick={goToPreviousPage}
@@ -866,26 +933,12 @@ export default function WebsiteUpload() {
       </div>
 
       <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
         .hide-scrollbar {
-          scrollbar-width: none;  /* Firefox */
-          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .hide-scrollbar::-webkit-scrollbar {
-          display: none;  /* Chrome, Safari and Opera */
+          display: none;
         }
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
