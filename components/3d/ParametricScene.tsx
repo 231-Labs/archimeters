@@ -58,7 +58,10 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const surfaceRef = useRef<THREE.Mesh | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
+  // 初始化場景、相機和控制器 - 只在組件掛載時執行一次
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -81,6 +84,73 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     // 添加軌道控制器
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controlsRef.current = controls;
+
+    // 添加光源
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+
+    // 動畫循環
+    function animate() {
+      animationFrameRef.current = requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // 處理視窗大小變化
+    const handleResize = () => {
+      if (!cameraRef.current || !rendererRef.current) return;
+      
+      const width = containerRef.current?.clientWidth || 1;
+      const height = containerRef.current?.clientHeight || 1;
+
+      cameraRef.current.aspect = width / height;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(width, height);
+    };
+
+    // 使用 ResizeObserver 來監聽容器大小變化
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    // 清理函數
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+      }
+      resizeObserver.disconnect();
+      if (containerRef.current && rendererRef.current) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      rendererRef.current?.dispose();
+    };
+  }, []); // 空依賴項，只在組件掛載時執行一次
+
+  // 更新參數化曲面 - 當參數變化時執行
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    // 移除舊的曲面
+    if (surfaceRef.current) {
+      sceneRef.current.remove(surfaceRef.current);
+      surfaceRef.current.geometry.dispose();
+      if (Array.isArray(surfaceRef.current.material)) {
+        surfaceRef.current.material.forEach(material => material.dispose());
+      } else {
+        surfaceRef.current.material.dispose();
+      }
+    }
 
     // 創建參數化曲面
     const createParametricSurface = () => {
@@ -130,62 +200,14 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     };
 
     const surface = createParametricSurface();
-    scene.add(surface);
+    sceneRef.current.add(surface);
     surfaceRef.current = surface;
-
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(10, 10, 10);
-    scene.add(pointLight);
-
-    // 動畫循環
-    let frameId: number;
-    function animate() {
-      frameId = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
+    
+    // 觸發一次渲染
+    if (cameraRef.current && rendererRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
     }
-    animate();
-
-    // 處理視窗大小變化
-    const handleResize = () => {
-      if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
-      
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
-
-      cameraRef.current.aspect = width / height;
-      cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(width, height);
-    };
-
-    // 使用 ResizeObserver 來監聽容器大小變化
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(containerRef.current);
-
-    // 清理函數
-    return () => {
-      cancelAnimationFrame(frameId);
-      controls.dispose();
-      resizeObserver.disconnect();
-      if (containerRef.current && rendererRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      if (surfaceRef.current) {
-        sceneRef.current?.remove(surfaceRef.current);
-        surfaceRef.current.geometry.dispose();
-        if (Array.isArray(surfaceRef.current.material)) {
-          surfaceRef.current.material.forEach(material => material.dispose());
-        } else {
-          surfaceRef.current.material.dispose();
-        }
-      }
-      rendererRef.current?.dispose();
-    };
-  }, [parameters]);
+  }, [parameters]); // 僅在參數變化時執行
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
