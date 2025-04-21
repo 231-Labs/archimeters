@@ -26,6 +26,7 @@ export default function WebsiteUpload() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
+  const [imageRequired, setImageRequired] = useState(false);
 
   // 作品相關資訊
   const [workName, setWorkName] = useState('Celestial Harmonics');
@@ -66,6 +67,7 @@ export default function WebsiteUpload() {
       const url = URL.createObjectURL(selectedFile);
       setImageFile(selectedFile);
       setImageUrl(url);
+      setImageRequired(false);
     }
   };
 
@@ -240,7 +242,13 @@ export default function WebsiteUpload() {
 
   // 分頁導航
   const goToNextPage = () => {
+    if (currentPage === 1 && !imageFile) {
+      setImageRequired(true);
+      return;
+    }
+    
     if (currentPage < totalPages) {
+      setImageRequired(false);
       setCurrentPage(currentPage + 1);
     }
   };
@@ -332,21 +340,18 @@ export default function WebsiteUpload() {
             onChange={handleImageFileChange}
             className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
           />
-          <div className="h-full border border-dashed border-white/20 rounded-lg flex items-center justify-center group-hover:border-white/40 transition-colors">
+          <div className={`h-full border border-dashed ${imageRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!imageRequired && 'group-hover:border-white/40'} transition-colors`}>
             {imageFile ? (
               <img src={URL.createObjectURL(imageFile)} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
             ) : (
-              <div className="text-center text-white/40">
-                <div className="text-4xl mb-3">⟨∅|</div>
-                <div className="text-sm">Drop quantum state here</div>
+              <div className="text-center">
+                <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>⟨∅|</div>
+                <div className={`text-sm ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>
+                  {imageRequired ? 'Visual quantum state is required' : 'Drop quantum state here'}
+                </div>
               </div>
             )}
           </div>
-          {imageError && (
-            <div className="mt-2 text-red-400 text-sm">
-              <span className="font-mono">δ </span>{imageError}
-            </div>
-          )}
         </div>
       </div>
     </div>
