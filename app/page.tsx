@@ -266,7 +266,6 @@ export default function Home() {
                       onClick={() => handleWindowActivate(name)}
                     >
                       <Model3DWindow 
-                        name={name}
                         onClose={() => handleCloseWindow(name)}
                       />
                     </Window>

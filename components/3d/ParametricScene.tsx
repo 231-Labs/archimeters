@@ -4,16 +4,55 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-interface ParametricSceneProps {
-  parameters: {
-    amplitude: number;
-    frequency: number;
-    resolution: number;
-    color: string;
-  };
+// 定義參數及其默認值
+export const defaultParameters = {
+  amplitude: {
+    type: 'number',
+    default: 1,
+    label: '振幅',
+  },
+  frequency: {
+    type: 'number',
+    default: 1,
+    label: '頻率',
+  },
+  resolution: {
+    type: 'number',
+    default: 20,
+    label: '解析度',
+  },
+  heightScale: {
+    type: 'number',
+    default: 1,
+    label: '高度縮放test',
+  },
+  color: {
+    type: 'color',
+    default: '#f5f5dc',
+    label: '顏色',
+  },
+} as const;
+
+// 從默認參數定義生成參數類型
+export type Parameters = {
+  [K in keyof typeof defaultParameters]: 
+    typeof defaultParameters[K]['type'] extends 'number' ? number :
+    typeof defaultParameters[K]['type'] extends 'color' ? string :
+    never;
+};
+
+export interface ParametricSceneProps {
+  parameters: Partial<Parameters>;
 }
 
-const ParametricScene = ({ parameters }: ParametricSceneProps) => {
+const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) => {
+  const parameters = {
+    ...Object.fromEntries(
+      Object.entries(defaultParameters).map(([key, value]) => [key, value.default])
+    ),
+    ...userParameters
+  } as Parameters;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -30,7 +69,7 @@ const ParametricScene = ({ parameters }: ParametricSceneProps) => {
 
     // 創建相機
     const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 1000);
-    camera.position.set(5, 5, 5);
+    camera.position.set(5, 5, 10);
     cameraRef.current = camera;
 
     // 創建渲染器
@@ -57,7 +96,7 @@ const ParametricScene = ({ parameters }: ParametricSceneProps) => {
         for (let j = 0; j <= size; j++) {
           const x = i * step - 5;
           const y = j * step - 5;
-          const z = parameters.amplitude * Math.sin(
+          const z = parameters.heightScale * parameters.amplitude * Math.sin(
             parameters.frequency * Math.sqrt(x * x + y * y)
           );
           vertices.push(x, z, y);
@@ -103,8 +142,9 @@ const ParametricScene = ({ parameters }: ParametricSceneProps) => {
     scene.add(pointLight);
 
     // 動畫循環
+    let frameId: number;
     function animate() {
-      requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
@@ -128,6 +168,8 @@ const ParametricScene = ({ parameters }: ParametricSceneProps) => {
 
     // 清理函數
     return () => {
+      cancelAnimationFrame(frameId);
+      controls.dispose();
       resizeObserver.disconnect();
       if (containerRef.current && rendererRef.current) {
         containerRef.current.removeChild(rendererRef.current.domElement);
