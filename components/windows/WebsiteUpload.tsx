@@ -196,14 +196,14 @@ export default function WebsiteUpload() {
   };
 
   // 更新處理演算法文件分析函數
-  const handleParameterChange = (key: string, value: string) => {
+  const handleParameterChange = (key: string, value: string | number) => {
     const paramDef = extractedParameters[key];
     if (!paramDef) return;
 
     let processedValue: any = value;
     if (paramDef.type === 'number') {
-      processedValue = value === '' ? paramDef.default : Number(value);
-      if (isNaN(processedValue)) return;
+      processedValue = value === '' ? '' : Number(value);
+      if (typeof processedValue === 'number' && isNaN(processedValue)) return;
     }
 
     // 更新預覽參數
@@ -597,101 +597,241 @@ export default function WebsiteUpload() {
   );
 
   const renderPageThree = () => (
-    <div className="flex h-full">
-      <div className="w-1/2 p-8 border-r border-white/5">
-        <h3 className="text-white/90 text-lg mb-6">Space-Time Configuration</h3>
-        <div className="space-y-8">
-          <div>
-            <label className="text-white/60 text-sm block mb-3">Interface Paradigm</label>
-            <select
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-              className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-            >
-              <option value="dark">Dark Matter</option>
-              <option value="light">Light Wave</option>
-              <option value="minimal">Quantum Minimal</option>
-              <option value="elegant">String Theory</option>
-            </select>
+    <div className="h-full bg-black text-white overflow-auto hide-scrollbar">
+      {/* Grid overlay */}
+      <div className="fixed inset-0 bg-[url('/grid.png')] opacity-[0.03] pointer-events-none" />
+      <div className="fixed inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
+
+      <div className="relative max-w-6xl mx-auto p-6">
+        <header className="mb-8 relative text-center">
+          <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-32 h-32">
+            <div className="absolute inset-0 border border-white/10 rounded-sm"></div>
+            <div className="absolute inset-4 border border-white/5 rounded-sm"></div>
           </div>
-
-          <div className="grid grid-cols-2 gap-8">
-            <div>
-              <label className="text-white/60 text-sm block mb-3">Background Field</label>
-              <input
-                type="color"
-                value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)}
-                className="w-full h-10 bg-transparent rounded cursor-pointer"
-              />
-            </div>
-
-            <div>
-              <label className="text-white/60 text-sm block mb-3">Information Color</label>
-              <input
-                type="color"
-                value={fontColor}
-                onChange={(e) => setFontColor(e.target.value)}
-                className="w-full h-10 bg-transparent rounded cursor-pointer"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-white/60 text-sm block mb-3">Quantum Parameters</label>
-            <div className="grid grid-cols-3 gap-4">
-              {Object.entries(parameters).map(([key, value]) => (
-                <select
-                  key={key}
-                  value={value}
-                  onChange={(e) =>
-                    setParameters((prev) => ({
-                      ...prev,
-                      [key]: e.target.value as React.HTMLInputTypeAttribute,
-                    }))
-                  }
-                  className="bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
-                >
-                  <option value="range">Wave</option>
-                  <option value="select">Particle</option>
-                </select>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-1/2 p-8 flex items-center justify-center">
-        <div className="space-y-6 w-full max-w-md">
-          <Button 
-            onClick={handlePreview} 
-            className="w-full py-3 bg-white/5 hover:bg-white/10 transition-colors"
-          >
-            Preview Quantum State
-          </Button>
           
-          <Button 
-            onClick={handleConfirmUpload}
-            className="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
-          >
-            Initialize Universe
-          </Button>
+          <h1 className="text-4xl font-bold mb-3 tracking-tight">
+            <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/80">
+              {workName}
+            </span>
+          </h1>
+          <p className="text-base text-white/40 font-normal tracking-[0.5em] uppercase">
+            by {name} | @{social}
+          </p>
+
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-24">
+            <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            <div className="h-px mt-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-12 gap-6 mb-8">
+          {/* 左側 - 主視覺和描述 */}
+          <div className="col-span-5 space-y-4">
+            {/* 主視覺 */}
+            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+              <div className="relative bg-black/50 backdrop-blur-sm p-6">
+                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
+                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
+                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
+                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+
+                <div className="relative h-[280px] bg-black/70 overflow-hidden border border-white/10">
+                  {imageUrl && (
+                    <div className="relative group h-full">
+                      <img 
+                        src={imageUrl} 
+                        alt={workName}
+                        className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 描述 */}
+            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+              <div className="relative bg-black/50 backdrop-blur-sm p-6">
+                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
+                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
+                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
+                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2 text-white/90">Quantum Description_</h2>
+                    <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
+                      {description}
+                    </p>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2 text-white/90">Creator Manifesto_</h2>
+                    <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
+                      {intro}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 右側 - 演算法預覽和參數 */}
+          <div className="col-span-7 space-y-4">
+            {/* 演算法預覽 */}
+            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+              <div className="relative bg-black/50 backdrop-blur-sm p-6">
+                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
+                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
+                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
+                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+
+                <div className="relative h-[400px] bg-black/70 overflow-hidden border border-white/10">
+                  {showPreview && Object.keys(previewParams).length > 0 ? (
+                    <ParametricScene parameters={previewParams} />
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {/* 參數設定 */}
+            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+              <div className="relative bg-black/50 backdrop-blur-sm p-6">
+                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
+                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
+                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
+                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-white/90">Quantum Parameters_</h2>
+                    <button 
+                      onClick={() => {
+                        const defaultParams = Object.fromEntries(
+                          Object.entries(extractedParameters).map(([key, value]) => [key, value.default])
+                        );
+                        setPreviewParams(defaultParams);
+                      }}
+                      className="text-sm text-white/50 hover:text-white/70 transition-colors"
+                    >
+                      Reset All
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                    {Object.entries(extractedParameters).map(([key, paramDef]) => (
+                      <div key={key} className="bg-white/5 rounded-md p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-white/60 capitalize text-sm">{paramDef.label || key}</div>
+                          <button 
+                            className="text-xs text-white/40 hover:text-white/60 transition-colors"
+                            onClick={() => handleParameterChange(key, paramDef.default)}
+                          >
+                            Reset
+                          </button>
+                        </div>
+                        {paramDef.type === 'number' ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="range"
+                                min={paramDef.min || 0}
+                                max={paramDef.max || 100}
+                                step={paramDef.step || 1}
+                                value={previewParams[key] ?? paramDef.default}
+                                onChange={(e) => handleParameterChange(key, e.target.value)}
+                                className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                              />
+                              <input
+                                type="number"
+                                value={previewParams[key] ?? paramDef.default}
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? '' : Number(e.target.value);
+                                  handleParameterChange(key, value);
+                                }}
+                                className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                              />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-white/30">
+                              <span>{paramDef.min || 0}</span>
+                              <span>{paramDef.max || 100}</span>
+                            </div>
+                          </div>
+                        ) : paramDef.type === 'color' ? (
+                          <div className="flex items-center gap-2 relative group">
+                            <button
+                              className="w-6 h-6 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors"
+                              onClick={(e) => {
+                                const input = e.currentTarget.nextElementSibling as HTMLInputElement;
+                                input?.click();
+                              }}
+                            >
+                              <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }}></div>
+                            </button>
+                            <input
+                              type="color"
+                              value={previewParams[key] || paramDef.default}
+                              onChange={(e) => handleParameterChange(key, e.target.value)}
+                              className="absolute opacity-0 pointer-events-none"
+                            />
+                            <input
+                              type="text"
+                              value={previewParams[key] || paramDef.default}
+                              onChange={(e) => handleParameterChange(key, e.target.value)}
+                              className="flex-1 bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                            />
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={previewParams[key] || paramDef.default}
+                            onChange={(e) => handleParameterChange(key, e.target.value)}
+                            className="w-full bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mint NFT 區域 - 獨立區塊 */}
+            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+              <div className="relative bg-black/50 backdrop-blur-sm p-4">
+                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
+                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
+                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
+                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-white/60 mb-1">Energy Value Required_</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-light text-white/90">φ</span>
+                      <span className="text-3xl font-light bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80">
+                        {price}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group">
+                    <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-indigo-500/50 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <button className="relative px-8 py-3 bg-black rounded-sm">
+                      <div className="flex flex-col items-center">
+                        <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
+                        <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Quantum State Initialization</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
 
-  return (
-    <div className="h-[742px] w-[1200px] bg-[rgba(10,10,10,0.3)]">
-      {/* 頁面內容 */}
-      <div className="h-full">
-        {currentPage === 1 && renderPageOne()}
-        {currentPage === 2 && renderPageTwo()}
-        {currentPage === 3 && renderPageThree()}
-      </div>
-      
       {/* 導航按鈕 */}
-      <div className="absolute bottom-6 right-6 flex gap-2">
+      <div className="absolute bottom-8 right-6 flex gap-2">
         {currentPage > 1 && (
           <button 
             onClick={goToPreviousPage}
@@ -712,8 +852,112 @@ export default function WebsiteUpload() {
             <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
           </button>
         )}
+        {currentPage === totalPages && (
+          <button 
+            onClick={handleConfirmUpload}
+            className="group relative w-7 h-7 flex items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
+            <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
+            <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
+            <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
+          </button>
+        )}
       </div>
 
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        .hide-scrollbar {
+          scrollbar-width: none;  /* Firefox */
+          -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;  /* Chrome, Safari and Opera */
+        }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          background: white;
+          border-radius: 50%;
+          cursor: pointer;
+        }
+        input[type="color"] {
+          -webkit-appearance: none;
+          border: none;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+          padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+          border: none;
+          border-radius: 4px;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+    </div>
+  );
+
+  return (
+    <div className="h-full w-full bg-[rgba(10,10,10,0.3)]">
+      {/* 頁面內容 */}
+      <div className="h-full relative">
+        {currentPage === 1 && renderPageOne()}
+        {currentPage === 2 && renderPageTwo()}
+        {currentPage === 3 && renderPageThree()}
+
+        {/* 導航按鈕 */}
+        <div className="absolute bottom-8 right-6 flex gap-2">
+          {currentPage > 1 && (
+            <button 
+              onClick={goToPreviousPage}
+              className="group relative w-7 h-7 flex items-center justify-center"
+            >
+              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
+              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
+              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">←</span>
+            </button>
+          )}
+          {currentPage < totalPages && (
+            <button 
+              onClick={goToNextPage}
+              className="group relative w-7 h-7 flex items-center justify-center"
+            >
+              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
+              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
+              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
+            </button>
+          )}
+          {currentPage === totalPages && (
+            <button 
+              onClick={handleConfirmUpload}
+              className="group relative w-7 h-7 flex items-center justify-center"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
+              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
+              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
+              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
+            </button>
+          )}
+        </div>
+      </div>
+      
       <Toast
         message="網站上傳成功！"
         show={showToast}

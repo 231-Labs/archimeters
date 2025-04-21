@@ -27,7 +27,7 @@ const defaultWindowSizes = {
   'test-design-series': { width: 500, height: 600 },
   'elegant-page': { width: 900, height: 700 },
   'monochrome-page': { width: 900, height: 700 },
-  'website-upload': { width: 800, height: 600 },
+  'website-upload': { width: 1320, height: 720 },
 };
 
 interface WindowState {
