@@ -17,9 +17,7 @@ module archimeters::archimeters {
 
     public struct State has key {
         id: UID,
-        accounts: Table<address, ID>,
-        all_members: vector<ID>,
-        all_artliers: Table<address, ID>,
+        registered_users: Table<address, VecSet<ID>>,
     }
 
     public struct MemberShip has key, store {
@@ -68,36 +66,21 @@ module archimeters::archimeters {
 
         transfer::share_object(State {
             id: object::new(ctx),
-            accounts: table::new(ctx),
-            all_members: vector::empty(),
-            all_artliers: table::new(ctx),
+            registered_users: table::new(ctx),
         });
 
         transfer::public_transfer(publisher, ctx.sender());
         transfer::public_transfer(display, ctx.sender());
     }
 
-    // == Entry_functions ==
-
-    public fun owner(membership: &MemberShip): address {
-        membership.owner
-    }
-
-    public fun add_artlier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
-        vec_set::insert(&mut membership.artliers, design_series_id);
-    }
-
-    public fun add_artlier_to_state(state: &mut State, design_series_id: ID, ctx: &mut TxContext) {
-        table::add(&mut state.all_artliers, ctx.sender(), design_series_id);
-    }
-
+    // == Entry Functions ==
     public entry fun mint_membership(
         state: &mut State,
         username: String,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
-        assert!(!table::contains(&state.accounts, sender), Eregistered);
+        assert!(!table::contains(&state.registered_users, sender), Eregistered);
 
         let member = MemberShip {
             id: object::new(ctx),
@@ -108,9 +91,10 @@ module archimeters::archimeters {
         };
 
         let id_copy = object::uid_to_inner(&member.id);
-
-        vector::push_back(&mut state.all_members, id_copy);
-        table::add(&mut state.accounts, sender, id_copy);
+        
+        let mut ids = vec_set::empty();
+        vec_set::insert(&mut ids, id_copy);
+        table::add(&mut state.registered_users, sender, ids);
 
         transfer::public_transfer(member, sender);
 
@@ -118,6 +102,16 @@ module archimeters::archimeters {
             member_id: id_copy,
             username,
         });
+    }
+
+    // == Public Functions ==
+
+    public fun owner(membership: &MemberShip): address {
+        membership.owner
+    }
+
+    public fun add_artlier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
+        vec_set::insert(&mut membership.artliers, design_series_id);
     }
 }
 
