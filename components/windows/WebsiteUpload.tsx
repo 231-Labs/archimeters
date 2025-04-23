@@ -43,6 +43,13 @@ export default function WebsiteUpload() {
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
   const [algoRequired, setAlgoRequired] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{
+    image: 'pending' | 'uploading' | 'success' | 'error';
+    algo: 'pending' | 'uploading' | 'success' | 'error';
+  }>({
+    image: 'pending',
+    algo: 'pending'
+  });
 
   // Artwork info
   const [workName, setWorkName] = useState('Parametric Constellation #42');
@@ -84,7 +91,15 @@ export default function WebsiteUpload() {
 
   // Page control
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 3;
+  const totalPages = 4;
+
+  // Upload results
+  const [uploadResults, setUploadResults] = useState<{
+    imageBlobId: string;
+    algoBlobId: string;
+    success: boolean;
+    error?: string;
+  } | null>(null);
 
   // Parameter type mapping
   useEffect(() => {
@@ -302,58 +317,50 @@ export default function WebsiteUpload() {
       setIsLoading(true);
       setError('');
 
-      let imageBlobId = '';
-      let algoBlobId = '';
-
-      if (imageFile) {
-        const result = await uploadToWalrus(imageFile);
-        imageBlobId = result.blobId;
+      if (!imageFile || !algoFile) {
+        throw new Error('Both image and algorithm files are required');
       }
 
-      if (algoFile) {
-        const result = await uploadToWalrus(algoFile);
-        algoBlobId = result.blobId;
-      }
-      
-      const templateData = {
-        workName: workName || 'NoName',
-        description: description,
-        price: price || '0',
-        author: name || 'Anonymous',
-        social: social,
-        intro: intro,
-        imageBlobId: imageBlobId,
-        algoBlobId: algoBlobId,
-        style: style,
-        bgColor: '#f9d006',
-        fontColor: '#1a1310',
-        parameters: parameters,
-      };
-      
-      const response = await fetch('/api/walrus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(templateData),
+      // 更新上傳狀態
+      setUploadStatus({
+        image: 'uploading',
+        algo: 'uploading'
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Template generation failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setShowToast(true);
-      } else {
-        throw new Error('No preview URL returned');
-      }
+
+      // 同時上傳兩個檔案
+      const [imageResult, algoResult] = await Promise.all([
+        uploadToWalrus(imageFile).then(result => {
+          setUploadStatus(prev => ({ ...prev, image: 'success' }));
+          return result;
+        }).catch(error => {
+          setUploadStatus(prev => ({ ...prev, image: 'error' }));
+          throw error;
+        }),
+        uploadToWalrus(algoFile).then(result => {
+          setUploadStatus(prev => ({ ...prev, algo: 'success' }));
+          return result;
+        }).catch(error => {
+          setUploadStatus(prev => ({ ...prev, algo: 'error' }));
+          throw error;
+        })
+      ]);
+
+      setUploadResults({
+        imageBlobId: imageResult.blobId,
+        algoBlobId: algoResult.blobId,
+        success: true
+      });
+
+      setShowToast(true);
       
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Template generation failed');
-      alert('Template generation failed, please try again');
+      setUploadResults({
+        imageBlobId: '',
+        algoBlobId: '',
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed'
+      });
+      setError(error instanceof Error ? error.message : 'Upload failed');
     } finally {
       setIsLoading(false);
     }
@@ -401,6 +408,12 @@ export default function WebsiteUpload() {
 
     if (currentPage === 2 && !algoFile) {
       setAlgoRequired(true);
+      return;
+    }
+
+    if (currentPage === 3) {
+      setCurrentPage(4);
+      handleConfirmUpload();
       return;
     }
     
@@ -685,6 +698,128 @@ export default function WebsiteUpload() {
     </BaseTemplate>
   );
 
+  const renderPageFour = () => {
+    const getStatusIcon = (status: 'pending' | 'uploading' | 'success' | 'error') => {
+      switch (status) {
+        case 'pending':
+          return '○';
+        case 'uploading':
+          return '◎';
+        case 'success':
+          return '●';
+        case 'error':
+          return '×';
+      }
+    };
+
+    const getStatusColor = (status: 'pending' | 'uploading' | 'success' | 'error') => {
+      switch (status) {
+        case 'pending':
+          return 'text-white/30';
+        case 'uploading':
+          return 'text-white/60';
+        case 'success':
+          return 'text-green-400';
+        case 'error':
+          return 'text-red-400';
+      }
+    };
+
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="w-full max-w-2xl p-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl text-white/90 mb-3">
+              {isLoading ? 'Uploading to Walrus Network' : (uploadResults?.success ? 'Upload Complete!' : 'Upload Failed')}
+            </h2>
+            <p className="text-white/60">
+              {isLoading ? 'Please wait while your files are being processed...' : (
+                uploadResults?.success 
+                  ? 'Your artwork has been successfully uploaded to the Walrus Network'
+                  : 'An error occurred during the upload process, please try again'
+              )}
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Upload Status Indicators */}
+            <div className="space-y-4">
+              <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${uploadStatus.image === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
+                <div className="flex items-center space-x-3">
+                  <span className={`text-xl ${getStatusColor(uploadStatus.image)}`}>
+                    {getStatusIcon(uploadStatus.image)}
+                  </span>
+                  <span className="text-white/90">Image File</span>
+                </div>
+                <div className="text-right">
+                  {uploadStatus.image === 'success' && uploadResults?.imageBlobId && (
+                    <div className="text-xs font-mono text-white/50">
+                      {uploadResults.imageBlobId}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${uploadStatus.algo === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
+                <div className="flex items-center space-x-3">
+                  <span className={`text-xl ${getStatusColor(uploadStatus.algo)}`}>
+                    {getStatusIcon(uploadStatus.algo)}
+                  </span>
+                  <span className="text-white/90">Algorithm File</span>
+                </div>
+                <div className="text-right">
+                  {uploadStatus.algo === 'success' && uploadResults?.algoBlobId && (
+                    <div className="text-xs font-mono text-white/50">
+                      {uploadResults.algoBlobId}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {uploadResults?.error && (
+              <div className="bg-red-900/20 p-4 rounded-lg">
+                <div className="text-red-400">
+                  {uploadResults.error}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            {!isLoading && (
+              <div className="flex justify-center mt-8 space-x-4">
+                {uploadResults?.success ? (
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white/90 rounded-lg transition-colors"
+                  >
+                    Back to Home
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setCurrentPage(3)}
+                      className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white/90 rounded-lg transition-colors"
+                    >
+                      Go Back
+                    </button>
+                    <button
+                      onClick={handleConfirmUpload}
+                      className="px-6 py-2 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 text-white/90 rounded-lg hover:from-blue-500/60 hover:via-indigo-500/60 hover:to-purple-500/60 transition-colors"
+                    >
+                      Retry Upload
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Navigation buttons component
   const NavigationButtons = () => (
     <div className="fixed bottom-8 right-6 flex gap-2">
@@ -729,6 +864,7 @@ export default function WebsiteUpload() {
         {currentPage === 1 && renderPageOne()}
         {currentPage === 2 && renderPageTwo()}
         {currentPage === 3 && renderPageThree()}
+        {currentPage === 4 && renderPageFour()}
         <NavigationButtons />
       </div>
       
