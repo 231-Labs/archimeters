@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import Button from '../common/Button';
 import { useRouter } from 'next/navigation';
-import type { WindowName } from '@/types';
 import Toast from '../common/Toast';
 import ParametricScene from '../3d/ParametricScene';
+import BaseTemplate from '../templates/BaseTemplate';
+import DefaultTemplate from '../templates/DefaultTemplate';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -14,7 +14,6 @@ export default function WebsiteUpload() {
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>(''); 
-  const [imageBlobId, setImageBlobId] = useState<string>(''); 
   const [imageRequired, setImageRequired] = useState(false);
 
   // Algorithm 相關狀態
@@ -22,7 +21,6 @@ export default function WebsiteUpload() {
   const [algoResponse, setAlgoResponse] = useState<string>('');
   const [isAlgoLoading, setIsAlgoLoading] = useState(false);
   const [algoError, setAlgoError] = useState<string>('');
-  const [algoBlobId, setAlgoBlobId] = useState<string>(''); 
   const [algoFileName, setAlgoFileName] = useState<string | null>(null);
   
   // 解析出的參數
@@ -48,7 +46,7 @@ export default function WebsiteUpload() {
 
   // 作品相關資訊
   const [workName, setWorkName] = useState('Parametric Constellation #42');
-  const [description, setDescription] = useState('A generative artwork that explores the mathematical beauty of celestial patterns. This piece dynamically responds to parameter adjustments, creating unique constellations that reflect the harmony of algorithmic art and astronomical phenomena.');
+  const [description, setDescription] = useState('A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.');
   const [price, setPrice] = useState('1024');
 
   // 創作者資訊
@@ -58,8 +56,6 @@ export default function WebsiteUpload() {
 
   // 網站設計相關
   const [style, setStyle] = useState('dark');
-  const [bgColor, setBgColor] = useState('#f9d006');
-  const [fontColor, setFontColor] = useState('#1a1310');
   const [fontStyle, setFontStyle] = useState('sans');
 
   // 參數設定
@@ -86,6 +82,10 @@ export default function WebsiteUpload() {
   const [introRequired, setIntroRequired] = useState(false);
   const [priceError, setPriceError] = useState<string>('');
 
+  // 分頁控制
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 3;
+
   // 參數設定狀態
   useEffect(() => {
     if (hasExtractedParams && Object.keys(extractedParameters).length > 0) {
@@ -109,10 +109,6 @@ export default function WebsiteUpload() {
       }));
     }
   }, [hasExtractedParams, extractedParameters]);
-
-  // 分頁控制
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 3;
 
   // 檔案處理函數
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,8 +276,8 @@ export default function WebsiteUpload() {
       social: social,
       intro: intro,
       style: style,
-      bgColor: bgColor,
-      fontColor: fontColor,
+      bgColor: '#f9d006',
+      fontColor: '#1a1310',
       parameters: parameters,
       imageUrl: base64Image,
     };
@@ -348,8 +344,8 @@ export default function WebsiteUpload() {
         imageBlobId: imageBlobId,
         algoBlobId: algoBlobId,
         style: style,
-        bgColor: bgColor,
-        fontColor: fontColor,
+        bgColor: '#f9d006',
+        fontColor: '#1a1310',
         parameters: parameters,
       };
       
@@ -558,7 +554,7 @@ export default function WebsiteUpload() {
       {/* 右側 - 主視覺圖上傳 */}
       <div className="w-1/2 p-8 flex flex-col">
         <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
-        <div className="h-[calc(100vh-320px)] group relative">
+        <div className="h-[calc(100vh-480px)] group relative">
           <input
             type="file"
             onChange={(e) => {
@@ -589,7 +585,7 @@ export default function WebsiteUpload() {
       {/* 左側 - 演算法上傳和預覽 */}
       <div className="w-2/3 p-8 border-r border-white/5">
         <div className="text-white/50 text-sm mb-4">Algorithm File</div>
-        <div className="h-[calc(100vh-280px)] group relative">
+        <div className="h-[calc(100vh-480px)] group relative">
           {showPreview && Object.keys(previewParams).length > 0 ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
               <ParametricScene parameters={previewParams} />
@@ -682,288 +678,69 @@ export default function WebsiteUpload() {
   );
 
   const renderPageThree = () => (
-    <div className="h-full bg-black text-white overflow-auto hide-scrollbar">
-      {/* Grid overlay */}
-      <div className="fixed inset-0 bg-[url('/grid.png')] opacity-[0.03] pointer-events-none" />
-      <div className="fixed inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
+    <BaseTemplate
+      workName={workName}
+      description={description}
+      price={price}
+      author={name}
+      social={social}
+      intro={intro}
+      imageUrl={imageUrl}
+      parameters={extractedParameters}
+      previewParams={previewParams}
+      onParameterChange={handleParameterChange}
+      onMint={handleConfirmUpload}
+    >
+      <DefaultTemplate
+        workName={workName}
+        description={description}
+        price={price}
+        author={name}
+        social={social}
+        intro={intro}
+        imageUrl={imageUrl}
+        parameters={extractedParameters}
+        previewParams={previewParams}
+        onParameterChange={handleParameterChange}
+        onMint={handleConfirmUpload}
+      />
+    </BaseTemplate>
+  );
 
-      <div className="relative min-h-full max-w-[1800px] mx-auto p-6 pb-24 flex flex-col">
-        <header className="mb-6 relative text-center">
-          <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-32 h-32">
-            <div className="absolute inset-0 border border-white/10 rounded-sm"></div>
-            <div className="absolute inset-4 border border-white/5 rounded-sm"></div>
-          </div>
-          
-          <h1 className="text-4xl font-bold mb-3 tracking-tight">
-            <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/80">
-              {workName}
-            </span>
-          </h1>
-          <p className="text-base text-white/40 font-normal tracking-[0.5em] uppercase">
-            by {name} | @{social}
-          </p>
-
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-24">
-            <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            <div className="h-px mt-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-          </div>
-        </header>
-
-        <div className="flex-1 flex flex-col lg:flex-row gap-6">
-          {/* 左側 - 3D展示區 */}
-          <div className="lg:w-[55%] flex flex-col gap-4">
-            {/* 3D預覽 */}
-            <div className="flex-1 relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 min-h-[500px]">
-              <div className="relative bg-black/50 backdrop-blur-sm p-6 h-full">
-                <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-                <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-                <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-                <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
-
-                <div className="relative h-full bg-black/70 border border-white/10">
-                  {showPreview && Object.keys(previewParams).length > 0 ? (
-                    <ParametricScene parameters={previewParams} />
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* 作品資訊 */}
-            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-              <div className="relative bg-black/50 backdrop-blur-sm p-6">
-                <div className="space-y-6">
-                  {/* 作品描述和主視覺圖 */}
-                  <div className="flex gap-6">
-                    {/* 主視覺圖 */}
-                    <div className="w-1/2">
-                      <div className="relative aspect-square bg-black/70 border border-white/10 overflow-hidden">
-                        {imageUrl && (
-                          <div className="relative group h-full">
-                            <img 
-                              src={imageUrl} 
-                              alt={workName}
-                              className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 作品描述 */}
-                    <div className="w-1/2">
-                      <h2 className="text-lg font-semibold mb-2 text-white/90">Artwork Description</h2>
-                      <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
-                        {description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 藝術家介紹 */}
-                  <div className="border-t border-white/10 pt-6">
-                    <h2 className="text-lg font-semibold mb-2 text-white/90">Artist Statement</h2>
-                    <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
-                      {intro}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 右側 - 參數調整和Mint區 */}
-          <div className="lg:w-[45%] flex flex-col gap-4">
-            {/* 參數設定 */}
-            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-              <div className="relative bg-black/50 backdrop-blur-sm p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-white/90">Parameters</h2>
-                  <button 
-                    onClick={() => {
-                      const defaultParams = Object.fromEntries(
-                        Object.entries(extractedParameters).map(([key, value]) => [key, value.default])
-                      );
-                      setPreviewParams(defaultParams);
-                    }}
-                    className="text-sm text-white/50 hover:text-white/70 transition-colors"
-                  >
-                    Reset All
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  {Object.entries(extractedParameters).map(([key, paramDef]) => (
-                    <div key={key} className="bg-white/5 rounded-md p-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="text-white/60 capitalize text-sm">{paramDef.label || key}</div>
-                        <button 
-                          className="text-xs text-white/40 hover:text-white/60 transition-colors"
-                          onClick={() => handleParameterChange(key, paramDef.default)}
-                        >
-                          Reset
-                        </button>
-                      </div>
-                      {paramDef.type === 'number' ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min={paramDef.min || 0}
-                              max={paramDef.max || 100}
-                              step={paramDef.step || 1}
-                              value={previewParams[key] ?? paramDef.default}
-                              onChange={(e) => handleParameterChange(key, e.target.value)}
-                              className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                            />
-                            <input
-                              type="number"
-                              value={previewParams[key] ?? paramDef.default}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? '' : Number(e.target.value);
-                                handleParameterChange(key, value);
-                              }}
-                              className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
-                            />
-                          </div>
-                          <div className="flex justify-between text-[10px] text-white/30">
-                            <span>{paramDef.min || 0}</span>
-                            <span>{paramDef.max || 100}</span>
-                          </div>
-                        </div>
-                      ) : paramDef.type === 'color' ? (
-                        <div className="flex items-center gap-2 relative group">
-                          <button
-                            className="w-6 h-6 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors"
-                            onClick={(e) => {
-                              const input = e.currentTarget.nextElementSibling as HTMLInputElement;
-                              input?.click();
-                            }}
-                          >
-                            <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }}></div>
-                          </button>
-                          <input
-                            type="color"
-                            value={previewParams[key] || paramDef.default}
-                            onChange={(e) => handleParameterChange(key, e.target.value)}
-                            className="absolute opacity-0 pointer-events-none"
-                          />
-                          <input
-                            type="text"
-                            value={previewParams[key] || paramDef.default}
-                            onChange={(e) => handleParameterChange(key, e.target.value)}
-                            className="flex-1 bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
-                          />
-                        </div>
-                      ) : (
-                        <input
-                          type="text"
-                          value={previewParams[key] || paramDef.default}
-                          onChange={(e) => handleParameterChange(key, e.target.value)}
-                          className="w-full bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* NFT Minting Area */}
-            <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-              <div className="relative bg-black/50 backdrop-blur-sm p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-white/60 mb-1">Price</div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-light text-white/90">φ</span>
-                      <span className="text-3xl font-light bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80">
-                        {price}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="relative group">
-                    <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-indigo-500/50 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <button className="relative px-8 py-3 bg-black rounded-sm">
-                      <div className="flex flex-col items-center">
-                        <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
-                        <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Initialize Artwork</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 導航按鈕 */}
-      <div className="fixed bottom-8 right-6 flex gap-2">
-        {currentPage > 1 && (
-          <button 
-            onClick={goToPreviousPage}
-            className="group relative w-7 h-7 flex items-center justify-center"
-          >
-            <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-            <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-            <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">←</span>
-          </button>
-        )}
-        {currentPage < totalPages && (
-          <button 
-            onClick={goToNextPage}
-            className="group relative w-7 h-7 flex items-center justify-center"
-          >
-            <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-            <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-            <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
-          </button>
-        )}
-        {currentPage === totalPages && (
-          <button 
-            onClick={handleConfirmUpload}
-            className="group relative w-7 h-7 flex items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
-            <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
-            <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
-            <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
-          </button>
-        )}
-      </div>
-
-      <style jsx>{`
-        .hide-scrollbar {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 12px;
-          height: 12px;
-          background: white;
-          border-radius: 50%;
-          cursor: pointer;
-        }
-        input[type="color"] {
-          -webkit-appearance: none;
-          border: none;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper {
-          padding: 0;
-        }
-        input[type="color"]::-webkit-color-swatch {
-          border: none;
-          border-radius: 4px;
-        }
-        input[type="number"] {
-          -moz-appearance: textfield;
-        }
-      `}</style>
+  // 導航按鈕組件
+  const NavigationButtons = () => (
+    <div className="fixed bottom-8 right-6 flex gap-2">
+      {currentPage > 1 && (
+        <button 
+          onClick={goToPreviousPage}
+          className="group relative w-7 h-7 flex items-center justify-center"
+        >
+          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
+          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
+          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">←</span>
+        </button>
+      )}
+      {currentPage < totalPages && (
+        <button 
+          onClick={goToNextPage}
+          className="group relative w-7 h-7 flex items-center justify-center"
+        >
+          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
+          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
+          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
+        </button>
+      )}
+      {currentPage === totalPages && (
+        <button 
+          onClick={handleConfirmUpload}
+          className="group relative w-7 h-7 flex items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
+          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
+          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
+          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
+        </button>
+      )}
     </div>
   );
 
@@ -974,41 +751,7 @@ export default function WebsiteUpload() {
         {currentPage === 1 && renderPageOne()}
         {currentPage === 2 && renderPageTwo()}
         {currentPage === 3 && renderPageThree()}
-
-        {/* 導航按鈕 */}
-        <div className="absolute bottom-8 right-6 flex gap-2">
-          {currentPage > 1 && (
-            <button 
-              onClick={goToPreviousPage}
-              className="group relative w-7 h-7 flex items-center justify-center"
-            >
-              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">←</span>
-            </button>
-          )}
-          {currentPage < totalPages && (
-            <button 
-              onClick={goToNextPage}
-              className="group relative w-7 h-7 flex items-center justify-center"
-            >
-              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
-            </button>
-          )}
-          {currentPage === totalPages && (
-            <button 
-              onClick={handleConfirmUpload}
-              className="group relative w-7 h-7 flex items-center justify-center"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
-              <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
-              <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
-              <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
-            </button>
-          )}
-        </div>
+        <NavigationButtons />
       </div>
       
       <Toast
