@@ -5,6 +5,7 @@ module archimeters::archimeters {
         package,
         display,
         event,
+        clock,
         table::{ Self, Table },
         vec_set::{ Self, VecSet }
     };
@@ -26,6 +27,7 @@ module archimeters::archimeters {
         username: String,
         artliers: VecSet<ID>,
         gallery: vector<ID>,
+        registered_time: u64,
     }
 
     // == One Time Witness ==
@@ -77,10 +79,13 @@ module archimeters::archimeters {
     public entry fun mint_membership(
         state: &mut State,
         username: String,
+        clock: &clock::Clock,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
         assert!(!table::contains(&state.registered_users, sender), Eregistered);
+        
+        let now = clock::timestamp_ms(clock);
 
         let member = MemberShip {
             id: object::new(ctx),
@@ -88,6 +93,7 @@ module archimeters::archimeters {
             username,
             artliers: vec_set::empty(),
             gallery: vector::empty(),
+            registered_time: now,
         };
 
         let id_copy = object::uid_to_inner(&member.id);

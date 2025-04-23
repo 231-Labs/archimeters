@@ -30,6 +30,7 @@ module archimeters::design_series {
         data: String, // Walrus blob ID for the website
         algorithm: String, // Walrus blob ID for the algorithm file
         artificials: VecSet<ID>, // Collection of all items in the series
+        price: u64,
         publish_time: u64,
     }
 
@@ -80,13 +81,14 @@ module archimeters::design_series {
         vec_set::insert(table::borrow_mut(&mut artlier_state.all_artliers, sender), design_series_id);
     }
 
-    public entry fun mint(
+    public entry fun mint_design_series(
         artlier_state: &mut ArtlierState,
         membership: &mut MemberShip,
         photo: String,
         data: String,
         algorithm: String,
         clock: &clock::Clock,
+        price: u64,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
@@ -105,6 +107,7 @@ module archimeters::design_series {
             data,
             algorithm,
             artificials: vec_set::empty(),
+            price,
             publish_time: now,
         };
 
