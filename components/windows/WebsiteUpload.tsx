@@ -8,7 +8,7 @@ import DefaultTemplate from '../templates/DefaultTemplate';
 export default function WebsiteUpload() {
   const router = useRouter();
 
-  // Image 相關狀態
+  // Image states
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageResponse, setImageResponse] = useState<string>('');
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -16,14 +16,14 @@ export default function WebsiteUpload() {
   const [imageUrl, setImageUrl] = useState<string>(''); 
   const [imageRequired, setImageRequired] = useState(false);
 
-  // Algorithm 相關狀態
+  // Algorithm states
   const [algoFile, setAlgoFile] = useState<File | null>(null);
   const [algoResponse, setAlgoResponse] = useState<string>('');
   const [isAlgoLoading, setIsAlgoLoading] = useState(false);
   const [algoError, setAlgoError] = useState<string>('');
   const [algoFileName, setAlgoFileName] = useState<string | null>(null);
   
-  // 解析出的參數
+  // Parameter definitions
   interface CustomParameterDef {
     type: string;
     default: any;
@@ -38,27 +38,27 @@ export default function WebsiteUpload() {
   const [extractedParameters, setExtractedParameters] = useState<CustomParameters>({});
   const [hasExtractedParams, setHasExtractedParams] = useState(false);
 
-  // 網站和上傳相關狀態
+  // Upload states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
   const [algoRequired, setAlgoRequired] = useState(false);
 
-  // 作品相關資訊
+  // Artwork info
   const [workName, setWorkName] = useState('Parametric Constellation #42');
   const [description, setDescription] = useState('A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.');
   const [price, setPrice] = useState('1024');
 
-  // 創作者資訊
+  // Artist info
   const [name, setName] = useState('CryptoArtist#0042');
   const [social, setSocial] = useState('archimeters.lens');
   const [intro, setIntro] = useState('Digital artist exploring the intersection of mathematics and visual aesthetics through parametric art.');
 
-  // 網站設計相關
+  // Design settings
   const [style, setStyle] = useState('dark');
   const [fontStyle, setFontStyle] = useState('sans');
 
-  // 參數設定
+  // Parameter types
   type ParameterType = {
     amplitude: React.HTMLInputTypeAttribute;
     frequency: React.HTMLInputTypeAttribute;
@@ -71,25 +71,24 @@ export default function WebsiteUpload() {
     resolution: 'range',
   });
 
-  // 3D 預覽相關狀態
+  // 3D preview states
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [showPreview, setShowPreview] = useState(false);
 
-  // 必填欄位驗證狀態
+  // Validation states
   const [workNameRequired, setWorkNameRequired] = useState(false);
   const [descriptionRequired, setDescriptionRequired] = useState(false);
   const [priceRequired, setPriceRequired] = useState(false);
   const [introRequired, setIntroRequired] = useState(false);
   const [priceError, setPriceError] = useState<string>('');
 
-  // 分頁控制
+  // Page control
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 3;
 
-  // 參數設定狀態
+  // Parameter type mapping
   useEffect(() => {
     if (hasExtractedParams && Object.keys(extractedParameters).length > 0) {
-      // 從解析的參數更新界面參數
       const extractedTypes: Record<string, React.HTMLInputTypeAttribute> = {};
       
       Object.entries(extractedParameters).forEach(([key, paramDef]) => {
@@ -102,7 +101,6 @@ export default function WebsiteUpload() {
         }
       });
       
-      // 更新參數，但保留原始參數（如果沒有被替換的話）
       setParameters(prev => ({
         ...prev,
         ...extractedTypes,
@@ -110,7 +108,7 @@ export default function WebsiteUpload() {
     }
   }, [hasExtractedParams, extractedParameters]);
 
-  // 檔案處理函數
+  // File handlers
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -128,57 +126,44 @@ export default function WebsiteUpload() {
       setAlgoFileName(selectedFile.name);
       setHasExtractedParams(false);
       setAlgoError('');
-      setAlgoRequired(false); // 清除必填錯誤狀態
+      setAlgoRequired(false);
       
-      // 開始讀取文件內容
       const reader = new FileReader();
       
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
           setAlgoResponse(content.substring(0, 500));
-          
-          // 解析參數
           processSceneFile(content);
         } catch (error) {
-          setAlgoError('演算法檔案讀取失敗');
+          setAlgoError('Failed to read algorithm file');
           console.error('Error reading algorithm file:', error);
         }
       };
       
       reader.onerror = () => {
-        setAlgoError('演算法檔案讀取失敗');
+        setAlgoError('Failed to read algorithm file');
       };
       
       reader.readAsText(selectedFile);
     }
   };
 
-  // 處理演算法文件分析
+  // Algorithm file processing
   const processSceneFile = (code: string) => {
     try {
-      // 使用正則表達式提取 defaultParameters 或 parameters
       const parametersMatch = code.match(/export\s+const\s+(?:default)?[pP]arameters\s*=\s*({[\s\S]*?})(?:\s+as\s+const)?;/);
       
       if (parametersMatch && parametersMatch[1]) {
-        // 將提取的參數字符串轉換為有效的 JSON
         let paramStr = parametersMatch[1];
-        
-        // 1. 將屬性名稱轉換為帶雙引號的格式
         paramStr = paramStr.replace(/(\w+):/g, '"$1":');
-        
-        // 2. 將單引號字符串轉換為雙引號字符串
         paramStr = paramStr.replace(/'([^']*?)'/g, '"$1"');
-        
-        // 3. 處理尾隨逗號
         paramStr = paramStr.replace(/,(\s*[}\]])/g, '$1');
         
         console.log("Processed param string:", paramStr);
         
-        // 嘗試解析 JSON
         const extractedParams = JSON.parse(paramStr);
         
-        // 設置預覽參數
         const initialParams = Object.fromEntries(
           Object.entries(extractedParams).map(([key, value]: [string, any]) => [key, value.default])
         );
@@ -189,16 +174,16 @@ export default function WebsiteUpload() {
         setHasExtractedParams(true);
         setAlgoError('');
       } else {
-        throw new Error("無法從代碼中提取參數定義");
+        throw new Error("Failed to extract parameters from code");
       }
     } catch (err) {
-      console.error("處理演算法文件錯誤:", err);
-      setAlgoError(`解析參數失敗: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("Error processing algorithm file:", err);
+      setAlgoError(`Parameter parsing failed: ${err instanceof Error ? err.message : String(err)}`);
       setShowPreview(false);
     }
   };
 
-  // 更新處理演算法文件分析函數
+  // Parameter change handler
   const handleParameterChange = (key: string, value: string | number) => {
     const paramDef = extractedParameters[key];
     if (!paramDef) return;
@@ -209,13 +194,13 @@ export default function WebsiteUpload() {
       if (typeof processedValue === 'number' && isNaN(processedValue)) return;
     }
 
-    // 更新預覽參數
     setPreviewParams(prev => ({
       ...prev,
       [key]: processedValue
     }));
   };
 
+  // File upload handlers
   const handleImageUpload = async () => {
     if (!imageFile) return { success: false, previewUrl: '' };
 
@@ -225,9 +210,9 @@ export default function WebsiteUpload() {
     try {
       const url = URL.createObjectURL(imageFile);
       setImageUrl(url);
-      setImageResponse(`預覽用 URL: ${url}`);
+      setImageResponse(`Preview URL: ${url}`);
     } catch (error) {
-      setImageError('圖片預覽生成失敗');
+      setImageError('Failed to generate image preview');
     } finally {
       setIsImageLoading(false);
     }
@@ -241,15 +226,15 @@ export default function WebsiteUpload() {
 
     try {
       const text = await algoFile.text();
-      setAlgoResponse(text.substring(0, 500)); // 預覽用的前幾行
+      setAlgoResponse(text.substring(0, 500));
     } catch (error) {
-      setAlgoError('演算法檔案讀取失敗');
+      setAlgoError('Failed to read algorithm file');
     } finally {
       setIsAlgoLoading(false);
     }
   };
 
-  // 將圖片轉為 base64 字串
+  // File conversion utilities
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -259,9 +244,10 @@ export default function WebsiteUpload() {
     });
   };
 
+  // Preview handler
   const handlePreview = async () => {
     if (!imageFile) {
-      alert('請選擇圖片');
+      alert('Please select an image');
       return;
     }
 
@@ -286,33 +272,31 @@ export default function WebsiteUpload() {
     router.push(`/preview/${id}`);
   };
 
+  // Upload to Walrus
   const uploadToWalrus = async (file: File): Promise<{ blobId: string }> => {
     const formData = new FormData();
     formData.append('data', file);
     formData.append('epochs', '5');
 
-    // 傳送請求至 /api/walrus
     const response = await fetch('/api/walrus', {
       method: 'PUT',
       body: formData,
     });
 
-    // 檢查回應是否成功
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `上傳失敗: ${response.status}`);
+      throw new Error(errorData.error || `Upload failed: ${response.status}`);
     }  
 
     const result = await response.json();
-    
-    // 提取 blobId 並返回
     const blobId = result?.alreadyCertified?.blobId || null;
     
-    if (!blobId) throw new Error('沒有返回 blobId');
+    if (!blobId) throw new Error('No blobId returned');
 
     return { blobId };
   };
 
+  // Upload confirmation handler
   const handleConfirmUpload = async () => {
     try {
       setIsLoading(true);
@@ -321,19 +305,16 @@ export default function WebsiteUpload() {
       let imageBlobId = '';
       let algoBlobId = '';
 
-      // 正式上傳圖片
       if (imageFile) {
         const result = await uploadToWalrus(imageFile);
         imageBlobId = result.blobId;
       }
 
-      // 正式上傳演算法
       if (algoFile) {
         const result = await uploadToWalrus(algoFile);
         algoBlobId = result.blobId;
       }
       
-      // 使用 POST 請求來生成網站模板
       const templateData = {
         workName: workName || 'NoName',
         description: description,
@@ -359,7 +340,7 @@ export default function WebsiteUpload() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `網站模板生成失敗: ${response.status}`);
+        throw new Error(errorData.error || `Template generation failed: ${response.status}`);
       }
       
       const result = await response.json();
@@ -367,21 +348,20 @@ export default function WebsiteUpload() {
       if (result.success) {
         setShowToast(true);
       } else {
-        throw new Error('沒有返回預覽 URL');
+        throw new Error('No preview URL returned');
       }
       
     } catch (error) {
-      setError(error instanceof Error ? error.message : '網站模板生成失敗');
-      alert('網站模板生成失敗，請重試');
+      setError(error instanceof Error ? error.message : 'Template generation failed');
+      alert('Template generation failed, please try again');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 分頁導航
+  // Page navigation
   const goToNextPage = () => {
     if (currentPage === 1) {
-      // 檢查第一頁所有必填欄位
       let hasError = false;
       
       if (!workName.trim()) {
@@ -425,7 +405,6 @@ export default function WebsiteUpload() {
     }
     
     if (currentPage < totalPages) {
-      // 清除所有錯誤狀態
       setWorkNameRequired(false);
       setDescriptionRequired(false);
       setPriceRequired(false);
@@ -442,10 +421,9 @@ export default function WebsiteUpload() {
     }
   };
 
-  // 處理價格輸入
+  // Price input handler
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // 只允許輸入數字
     if (value === '' || /^\d+$/.test(value)) {
       setPrice(value);
       setPriceRequired(false);
@@ -453,13 +431,13 @@ export default function WebsiteUpload() {
     }
   };
 
-  // 渲染不同頁面的函數
+  // Page renderers
   const renderPageOne = () => (
     <div className="flex h-full">
-      {/* 左側 - 基本資訊 */}
+      {/* Left - Basic Info */}
       <div className="w-1/2 p-8 border-r border-white/5">
         <div className="max-w-lg space-y-12">
-          {/* 作品名稱區 */}
+          {/* Artwork Title */}
           <div>
             <input
               value={workName}
@@ -477,7 +455,7 @@ export default function WebsiteUpload() {
             )}
           </div>
 
-          {/* 作品描述區 */}
+          {/* Artwork Description */}
           <div>
             <div className="text-white/50 text-sm mb-3">Artwork Description</div>
             <textarea
@@ -496,7 +474,7 @@ export default function WebsiteUpload() {
             )}
           </div>
 
-          {/* 創作者資訊區 */}
+          {/* Artist Info */}
           <div className="space-y-4">
             <div className="text-white/50 text-sm mb-1">Artist Information</div>
             <div className="flex items-center space-x-3">
@@ -527,7 +505,7 @@ export default function WebsiteUpload() {
             )}
           </div>
 
-          {/* 作品價格 */}
+          {/* Artwork Price */}
           <div className="-mt-12">
             <div className="text-white/50 text-sm mb-3">Artwork Price</div>
             <div className="flex items-center">
@@ -551,7 +529,7 @@ export default function WebsiteUpload() {
         </div>
       </div>
 
-      {/* 右側 - 主視覺圖上傳 */}
+      {/* Right - Main Visual Upload */}
       <div className="w-1/2 p-8 flex flex-col">
         <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
         <div className="h-[calc(100vh-480px)] group relative">
@@ -582,7 +560,7 @@ export default function WebsiteUpload() {
 
   const renderPageTwo = () => (
     <div className="flex h-full">
-      {/* 左側 - 演算法上傳和預覽 */}
+      {/* Left - Algorithm Upload and Preview */}
       <div className="w-2/3 p-8 border-r border-white/5">
         <div className="text-white/50 text-sm mb-4">Algorithm File</div>
         <div className="h-[calc(100vh-480px)] group relative">
@@ -621,10 +599,10 @@ export default function WebsiteUpload() {
         </div>
       </div>
 
-      {/* 右側 - 參數設定 */}
+      {/* Right - Parameter Settings */}
       <div className="w-1/3 p-8">
         <div className="space-y-8">
-          {/* 參數列表 */}
+          {/* Parameter List */}
           {hasExtractedParams && (
             <div className="space-y-4">
               <div className="text-white/50 text-sm">Algorithm Parameters</div>
@@ -643,7 +621,7 @@ export default function WebsiteUpload() {
             </div>
           )}
 
-          {/* 網站設計選項 */}
+          {/* Design Options */}
           <div className="space-y-4">
             <div>
               <label className="text-white/60 text-sm block mb-2">Page Style</label>
@@ -707,7 +685,7 @@ export default function WebsiteUpload() {
     </BaseTemplate>
   );
 
-  // 導航按鈕組件
+  // Navigation buttons component
   const NavigationButtons = () => (
     <div className="fixed bottom-8 right-6 flex gap-2">
       {currentPage > 1 && (
@@ -746,7 +724,7 @@ export default function WebsiteUpload() {
 
   return (
     <div className="h-full w-full bg-[rgba(10,10,10,0.3)]">
-      {/* 頁面內容 */}
+      {/* Page content */}
       <div className="h-full relative">
         {currentPage === 1 && renderPageOne()}
         {currentPage === 2 && renderPageTwo()}
@@ -755,7 +733,7 @@ export default function WebsiteUpload() {
       </div>
       
       <Toast
-        message="網站上傳成功！"
+        message="Website uploaded successfully!"
         show={showToast}
         onClose={() => setShowToast(false)}
       />
