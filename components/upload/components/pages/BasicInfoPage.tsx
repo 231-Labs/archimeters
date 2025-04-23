@@ -1,0 +1,162 @@
+import { useState } from 'react';
+
+interface BasicInfoPageProps {
+  workName: string;
+  description: string;
+  price: string;
+  name: string;
+  social: string;
+  intro: string;
+  imageFile: File | null;
+  imageUrl: string;
+  onWorkNameChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onPriceChange: (value: string) => void;
+  onIntroChange: (value: string) => void;
+  onImageFileChange: (file: File) => void;
+  workNameRequired: boolean;
+  descriptionRequired: boolean;
+  priceRequired: boolean;
+  introRequired: boolean;
+  imageRequired: boolean;
+  priceError: string;
+}
+
+export const BasicInfoPage = ({
+  workName,
+  description,
+  price,
+  name,
+  social,
+  intro,
+  imageFile,
+  imageUrl,
+  onWorkNameChange,
+  onDescriptionChange,
+  onPriceChange,
+  onIntroChange,
+  onImageFileChange,
+  workNameRequired,
+  descriptionRequired,
+  priceRequired,
+  introRequired,
+  imageRequired,
+  priceError
+}: BasicInfoPageProps) => {
+  return (
+    <div className="flex h-full">
+      {/* Left - Basic Info */}
+      <div className="w-1/2 p-8 border-r border-white/5">
+        <div className="max-w-lg space-y-12">
+          {/* Artwork Title */}
+          <div>
+            <input
+              value={workName}
+              onChange={(e) => onWorkNameChange(e.target.value)}
+              className={`w-full bg-transparent text-white text-3xl font-light border-b ${workNameRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+              placeholder="Enter artwork title..."
+            />
+            {workNameRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artwork title is required
+              </div>
+            )}
+          </div>
+
+          {/* Artwork Description */}
+          <div>
+            <div className="text-white/50 text-sm mb-3">Artwork Description</div>
+            <textarea
+              value={description}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              className={`w-full h-32 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${descriptionRequired ? 'border-red-400' : 'border-white/20'}`}
+              placeholder="Describe your artwork and creative concept..."
+            />
+            {descriptionRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artwork description is required
+              </div>
+            )}
+          </div>
+
+          {/* Artist Info */}
+          <div className="space-y-4">
+            <div className="text-white/50 text-sm mb-1">Artist Information</div>
+            <div className="flex items-center space-x-3">
+              <div className="flex-1 text-white/90 pb-2">
+                {name}
+              </div>
+              <span className="text-white/30">|</span>
+              <div className="flex items-center flex-1">
+                <span className="text-white/50 mr-2">@</span>
+                <div className="text-white/90 pb-2">
+                  {social}
+                </div>
+              </div>
+            </div>
+            <textarea
+              value={intro}
+              onChange={(e) => onIntroChange(e.target.value)}
+              className={`w-full h-24 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${introRequired ? 'border-red-400' : 'border-white/20'}`}
+              placeholder="Introduce yourself as an artist..."
+            />
+            {introRequired && (
+              <div className="mt-2 text-red-400 text-sm">
+                Artist introduction is required
+              </div>
+            )}
+          </div>
+
+          {/* Artwork Price */}
+          <div className="-mt-12">
+            <div className="text-white/50 text-sm mb-3">Artwork Price</div>
+            <div className="flex items-center">
+              <span className="text-white/50 text-xl mr-3">φ</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="\d*"
+                value={price}
+                onChange={(e) => onPriceChange(e.target.value)}
+                className={`flex-1 bg-transparent text-white text-xl border-b ${priceRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+                placeholder="Set artwork price..."
+              />
+            </div>
+            {priceError && (
+              <div className="mt-2 text-red-400 text-sm">
+                {priceError}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right - Main Visual Upload */}
+      <div className="w-1/2 p-8 flex flex-col">
+        <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
+        <div className="h-[calc(100vh-480px)] group relative">
+          <input
+            type="file"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImageFileChange(file);
+            }}
+            className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
+          />
+          <div className={`h-full border border-dashed ${imageRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!imageRequired && 'group-hover:border-white/40'} transition-colors`}>
+            {imageFile ? (
+              <img src={imageUrl} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
+            ) : (
+              <div className="text-center">
+                <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
+                <div className={`text-sm ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>
+                  {imageRequired ? 'Main visual is required' : 'Click or drag to upload image'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}; 
