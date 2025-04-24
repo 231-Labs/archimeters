@@ -9,8 +9,8 @@ Archimeters OS 是一個基於 Next.js 的參數化設計平台，提供 3D 模�
 1. 克隆專案並安裝依賴：
 ```bash
 git clone https://github.com/231-Labs/archimeters.git
-cd archimeters
-npm install
+cd archimeters/frontend
+npm install --legacy-peer-deps
 ```
 
 2. 設置環境變數：
@@ -40,6 +40,8 @@ npm run dev
 - Tailwind CSS
 
 ## 開發 👩‍💻
+
+請確保在執行以下命令前，已切換到 `frontend` 目錄：
 
 ```bash
 # 運行開發服務器

@@ -9,8 +9,8 @@ A parametric design platform based on Next.js, providing 3D model configuration,
 1. Clone the project and install dependencies:
 ```bash
 git clone https://github.com/231-Labs/archimeters.git
-cd archimeters
-npm install
+cd archimeters/frontend
+npm install --legacy-peer-deps
 ```
 
 2. Set up environment variables:
@@ -40,6 +40,8 @@ npm run dev
 - Tailwind CSS
 
 ## Development 👩‍💻
+
+Make sure you are in the `frontend` directory before running these commands:
 
 ```bash
 # Run development server
