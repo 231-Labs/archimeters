@@ -2,19 +2,15 @@ import { useState } from 'react';
 import { UploadStatuses, UploadResults } from '../types';
 
 interface UseUploadProps {
-  onSuccess?: () => void;
+  onSuccess?: (results: UploadResults) => void;
   onError?: (error: string) => void;
 }
 
 export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
-  const [uploadStatus, setUploadStatus] = useState<UploadStatuses>({
-    image: 'pending',
-    algo: 'pending',
-    metadata: 'pending'
-  });
-  const [uploadResults, setUploadResults] = useState<UploadResults>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatuses>('pending');
+  const [uploadResults, setUploadResults] = useState<UploadResults | null>(null);
 
   const uploadToWalrus = async (file: File): Promise<{ blobId: string }> => {
     const formData = new FormData();
@@ -43,42 +39,21 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
     try {
       setIsLoading(true);
       setError('');
+      setUploadStatus('uploading');
 
       if (!imageFile || !algoFile) {
         throw new Error('Both image and algorithm files are required');
       }
 
-      setUploadStatus({
-        image: 'uploading',
-        algo: 'uploading',
-        metadata: 'uploading'
-      });
-
       const [imageResult, algoResult, metadataResult] = await Promise.all([
-        uploadToWalrus(imageFile).then(result => {
-          setUploadStatus(prev => ({ ...prev, image: 'success' }));
-          return result;
-        }).catch(error => {
-          setUploadStatus(prev => ({ ...prev, image: 'error' }));
-          throw error;
-        }),
-        uploadToWalrus(algoFile).then(result => {
-          setUploadStatus(prev => ({ ...prev, algo: 'success' }));
-          return result;
-        }).catch(error => {
-          setUploadStatus(prev => ({ ...prev, algo: 'error' }));
-          throw error;
-        }),
-        uploadToWalrus(metadataFile).then(result => {
-          setUploadStatus(prev => ({ ...prev, metadata: 'success' }));
-          return result;
-        }).catch(error => {
-          setUploadStatus(prev => ({ ...prev, metadata: 'error' }));
-          throw error;
-        })
+        uploadToWalrus(imageFile),
+        uploadToWalrus(algoFile),
+        uploadToWalrus(metadataFile)
       ]);
 
-      const results = {
+      setUploadStatus('success');
+
+      const results: UploadResults = {
         imageBlobId: imageResult.blobId,
         algoBlobId: algoResult.blobId,
         metadataBlobId: metadataResult.blobId,
@@ -86,17 +61,19 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
       };
 
       setUploadResults(results);
-      onSuccess?.();
+      onSuccess?.(results);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      setUploadResults({
+      setUploadStatus('error');
+      const errorResults: UploadResults = {
         imageBlobId: '',
         algoBlobId: '',
         metadataBlobId: '',
         success: false,
         error: errorMessage
-      });
+      };
+      setUploadResults(errorResults);
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {

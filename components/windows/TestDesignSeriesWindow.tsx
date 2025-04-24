@@ -1,8 +1,8 @@
-import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit';
 import { retroButtonStyles } from '@/styles/components';
-import { createDesignSeries } from '@/utils/transactions';
+import { createDesignSeries, PACKAGE_ID, ARTLIER_STATE_ID } from '@/utils/transactions';
 import { WindowName } from '@/types/index';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TestDesignSeriesWindowProps {
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
@@ -10,17 +10,45 @@ interface TestDesignSeriesWindowProps {
 
 export default function TestDesignSeriesWindow({ onDragStart }: TestDesignSeriesWindowProps) {
   const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [transactionDigest, setTransactionDigest] = useState<string>('');
   const [transactionError, setTransactionError] = useState<string>('');
+  const [membershipId, setMembershipId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchMembership = async () => {
+      if (!currentAccount?.address) return;
+
+      try {
+        const { data: objects } = await suiClient.getOwnedObjects({
+          owner: currentAccount.address,
+          filter: {
+            StructType: `${PACKAGE_ID}::archimeters::MemberShip`
+          },
+          options: {
+            showType: true,
+          }
+        });
+
+        if (objects && objects.length > 0) {
+          setMembershipId(objects[0].data?.objectId || '');
+        }
+      } catch (error) {
+        console.error('Error fetching membership:', error);
+      }
+    };
+
+    fetchMembership();
+  }, [currentAccount, suiClient]);
 
   const handleCreateDesignSeries = async () => {
-    if (!currentAccount?.address) return;
+    if (!currentAccount?.address || !membershipId) return;
 
     try {
       const testParams = {
-        artlierState: '0x61e379d23bb9a3baf6f1f8ed0bfe3fa7c659285024a3872bb69049d733f962be',
-        membershipId: '0xbdcf273707587bda6cf1ec8a62f4db02a2fbfc9eb68e95acedc369ea4ee3ba69',
+        artlierState: ARTLIER_STATE_ID,
+        membershipId,
         photo: 'C8oceDAg7Jo3n1B5c86qL_SBJBb_VfTzNj2oe2Wj7S0',
         data: '8DtG3IretlrZ7lyGTV2JTVmXDbG30winAJfxBbe6pAw',
         algorithm: 'Wh1Iu8x0QyP9NlaTx4f5BLPxPgaCJ8Fls3tChRKT078',
@@ -88,12 +116,23 @@ export default function TestDesignSeriesWindow({ onDragStart }: TestDesignSeries
               <div className="text-sm text-white/90">
                 Connected Address: {currentAccount.address}
               </div>
-              <button
-                onClick={handleCreateDesignSeries}
-                className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                Create Design Series
-              </button>
+              {membershipId ? (
+                <>
+                  <div className="text-sm text-white/90">
+                    Membership ID: {membershipId}
+                  </div>
+                  <button
+                    onClick={handleCreateDesignSeries}
+                    className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Create Design Series
+                  </button>
+                </>
+              ) : (
+                <div className="text-sm text-red-400">
+                  No membership found for this address
+                </div>
+              )}
 
               {transactionDigest && (
                 <div className="mt-4 p-4 bg-white/5 rounded-lg">

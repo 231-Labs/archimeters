@@ -1,19 +1,15 @@
 // Upload status types
 export type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
 
-export type UploadStatuses = {
-  image: UploadStatus;
-  algo: UploadStatus;
-  metadata: UploadStatus;
-};
+export type UploadStatuses = 'pending' | 'uploading' | 'success' | 'error';
 
-export type UploadResults = {
+export interface UploadResults {
   imageBlobId: string;
   algoBlobId: string;
   metadataBlobId: string;
   success: boolean;
   error?: string;
-} | null;
+}
 
 // Template types
 export type TemplateSeries = 'default' | 'minimal' | 'elegant';

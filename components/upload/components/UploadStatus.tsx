@@ -2,7 +2,7 @@ import { UploadStatuses, UploadResults, UploadStatus as StatusType } from '../ty
 
 interface UploadStatusProps {
   status: UploadStatuses;
-  results: UploadResults;
+  results: UploadResults | null;
   isLoading: boolean;
 }
 
@@ -35,15 +35,15 @@ export const UploadStatus = ({ status, results, isLoading }: UploadStatusProps) 
 
   return (
     <div className="space-y-4">
-      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status.image === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
+      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
         <div className="flex items-center space-x-3">
-          <span className={`text-xl ${getStatusColor(status.image)}`}>
-            {getStatusIcon(status.image)}
+          <span className={`text-xl ${getStatusColor(status)}`}>
+            {getStatusIcon(status)}
           </span>
           <span className="text-white/90">Image File</span>
         </div>
         <div className="text-right">
-          {status.image === 'success' && results?.imageBlobId && (
+          {status === 'success' && results?.imageBlobId && (
             <div className="text-xs font-mono text-white/50">
               {results.imageBlobId}
             </div>
@@ -51,15 +51,15 @@ export const UploadStatus = ({ status, results, isLoading }: UploadStatusProps) 
         </div>
       </div>
 
-      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status.algo === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
+      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
         <div className="flex items-center space-x-3">
-          <span className={`text-xl ${getStatusColor(status.algo)}`}>
-            {getStatusIcon(status.algo)}
+          <span className={`text-xl ${getStatusColor(status)}`}>
+            {getStatusIcon(status)}
           </span>
           <span className="text-white/90">Algorithm File</span>
         </div>
         <div className="text-right">
-          {status.algo === 'success' && results?.algoBlobId && (
+          {status === 'success' && results?.algoBlobId && (
             <div className="text-xs font-mono text-white/50">
               {results.algoBlobId}
             </div>
@@ -67,15 +67,15 @@ export const UploadStatus = ({ status, results, isLoading }: UploadStatusProps) 
         </div>
       </div>
 
-      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status.metadata === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
+      <div className={`flex items-center justify-between p-4 rounded-lg transition-colors ${status === 'error' ? 'bg-red-900/20' : 'bg-white/5'}`}>
         <div className="flex items-center space-x-3">
-          <span className={`text-xl ${getStatusColor(status.metadata)}`}>
-            {getStatusIcon(status.metadata)}
+          <span className={`text-xl ${getStatusColor(status)}`}>
+            {getStatusIcon(status)}
           </span>
           <span className="text-white/90">Metadata File</span>
         </div>
         <div className="text-right">
-          {status.metadata === 'success' && results?.metadataBlobId && (
+          {status === 'success' && results?.metadataBlobId && (
             <div className="text-xs font-mono text-white/50">
               {results.metadataBlobId}
             </div>

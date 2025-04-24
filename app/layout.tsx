@@ -5,8 +5,9 @@ import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getFullnodeUrl } from '@mysten/sui/client';
+import { getFullnodeUrl } from '@mysten/sui.js/client';
 import '@mysten/dapp-kit/dist/index.css';
+import { SuiClient } from '@mysten/sui.js/client';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,25 +20,28 @@ const spaceMono = Space_Mono({
   variable: '--font-space-mono',
 });
 
+const client = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' });
+
+const networks = {
+  testnet: {
+    url: getFullnodeUrl('testnet'),
+    websocketUrl: 'wss://fullnode.testnet.sui.io:443',
+  },
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   const queryClient = new QueryClient();
-  const networks = {
-    testnet: {
-      url: getFullnodeUrl('testnet'),
-      websocketUrl: getFullnodeUrl('testnet').replace('http', 'ws')
-    }
-  };
 
   return (
     <html lang="en">
       <body className={`${inter.variable} ${spaceMono.variable} font-mono antialiased`}>
         <QueryClientProvider client={queryClient}>
           <SuiClientProvider networks={networks} defaultNetwork="testnet">
-            <WalletProvider autoConnect>
+            <WalletProvider>
               {children}
             </WalletProvider>
           </SuiClientProvider>

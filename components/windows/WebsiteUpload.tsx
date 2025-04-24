@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Toast from '../common/Toast';
 import { BasicInfoPage } from '../upload/components/pages/BasicInfoPage';
@@ -7,7 +7,9 @@ import { PreviewPage } from '../upload/components/pages/PreviewPage';
 import { UploadStatusPage } from '../upload/components/pages/UploadStatusPage';
 import { useUpload } from '../upload/hooks/useUpload';
 import { createMetadataJson } from '../upload/utils/metadata';
-import { TemplateSeries, FontStyle } from '../upload/types';
+import { TemplateSeries, FontStyle, UploadResults } from '../upload/types';
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { createDesignSeries, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -56,11 +58,51 @@ export default function WebsiteUpload() {
 
   // Upload states
   const [error, setError] = useState<string>('');
-  const { isLoading, uploadStatus, uploadResults, handleUpload } = useUpload({
-    onSuccess: () => setShowToast(true),
+  const { isLoading, uploadStatus, uploadResults, handleUpload: uploadFiles } = useUpload({
+    onSuccess: (results) => {
+      console.log('Upload completed with results:', results);
+      if (results.success) {
+        handleMint(results);
+      }
+    },
     onError: (error) => setError(error)
   });
   const [showToast, setShowToast] = useState(false);
+
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [transactionDigest, setTransactionDigest] = useState<string>('');
+  const [transactionError, setTransactionError] = useState<string>('');
+
+  const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
+  const [membershipId, setMembershipId] = useState<string>('');
+
+  // 獲取 membership
+  useEffect(() => {
+    const fetchMembership = async () => {
+      if (!currentAccount?.address) return;
+
+      try {
+        const { data: objects } = await suiClient.getOwnedObjects({
+          owner: currentAccount.address,
+          filter: {
+            StructType: `${PACKAGE_ID}::archimeters::MemberShip`
+          },
+          options: {
+            showType: true,
+          }
+        });
+
+        if (objects && objects.length > 0) {
+          setMembershipId(objects[0].data?.objectId || '');
+        }
+      } catch (error) {
+        console.error('Error fetching membership:', error);
+      }
+    };
+
+    fetchMembership();
+  }, [currentAccount, suiClient]);
 
   // File handlers
   const handleImageFileChange = (file: File) => {
@@ -153,6 +195,101 @@ export default function WebsiteUpload() {
       setPrice(value);
       setPriceRequired(false);
       setPriceError('');
+    }
+  };
+
+  const handleMint = async (results?: UploadResults) => {
+    if (!membershipId) {
+      console.error('No membership ID available');
+      setTransactionError('Membership ID not found');
+      return;
+    }
+
+    const uploadData = results || uploadResults;
+    if (!uploadData) {
+      console.error('No upload results available');
+      setTransactionError('Upload results not found');
+      return;
+    }
+
+    // 直接使用 uploadResults 中的 blob IDs
+    const { imageBlobId, algoBlobId, metadataBlobId } = uploadData;
+
+    console.log('=== Transaction Parameters ===');
+    console.log(JSON.stringify({
+      artlierState: ARTLIER_STATE_ID,
+      membershipId,
+      imageBlobId,
+      websiteBlobId: metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
+      algorithmBlobId: algoBlobId,     // 使用 algoBlobId
+      clock: '0x6',
+      price: parseInt(price)
+    }, null, 2));
+
+    if (!imageBlobId || !algoBlobId || !metadataBlobId) {
+      const errorMsg = 'Missing blob IDs';
+      console.error(errorMsg);
+      setTransactionError(errorMsg);
+      return;
+    }
+
+    try {
+      const tx = await createDesignSeries(
+        ARTLIER_STATE_ID,
+        membershipId,
+        imageBlobId,
+        metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
+        algoBlobId,      // 使用 algoBlobId
+        '0x6',
+        parseInt(price)
+      );
+
+      console.log('=== Transaction Object ===');
+      console.log(JSON.stringify(tx, null, 2));
+
+      signAndExecuteTransaction(
+        {
+          transaction: tx as any,
+          chain: 'sui:testnet',
+        },
+        {
+          onSuccess: (result) => {
+            console.log('=== Transaction Result ===');
+            console.log(JSON.stringify(result, null, 2));
+            setTransactionDigest(result.digest);
+            setShowToast(true);
+          },
+          onError: (error) => {
+            console.error('=== Transaction Error ===');
+            console.error(error);
+            setTransactionError(error.message);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('=== Error in handleMint ===');
+      console.error(error);
+      setTransactionError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  // 修改 handleUpload 函數
+  const handleUpload = async (imageFile: File, algoFile: File, metadataFile: File) => {
+    try {
+      const metadata = createMetadataJson({
+        workName,
+        description,
+        style,
+        fontStyle,
+        name,
+        social,
+        intro
+      });
+      
+      await uploadFiles(imageFile, algoFile, metadata);
+    } catch (error) {
+      console.error('Error in handleUpload:', error);
+      setError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -341,6 +478,9 @@ export default function WebsiteUpload() {
             name={name}
             social={social}
             intro={intro}
+            price={price}
+            transactionDigest={transactionDigest}
+            transactionError={transactionError}
             onRetry={() => {
               const metadataFile = createMetadataJson({
                 workName,
