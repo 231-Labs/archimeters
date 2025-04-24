@@ -12,6 +12,7 @@ export interface TemplateProps {
   previewParams: Record<string, any>;
   onParameterChange: (key: string, value: string | number) => void;
   onMint: () => void;
+  preview3D?: ReactNode;
 }
 
 export interface BaseTemplateProps extends TemplateProps {

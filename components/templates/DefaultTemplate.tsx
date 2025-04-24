@@ -1,5 +1,4 @@
 import { TemplateProps } from '@/components/templates/BaseTemplate';
-import ParametricScene from '@/components/3d/ParametricScene';
 
 export default function DefaultTemplate({
   workName,
@@ -10,7 +9,8 @@ export default function DefaultTemplate({
   parameters,
   previewParams,
   onParameterChange,
-  onMint
+  onMint,
+  preview3D
 }: TemplateProps) {
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6">
@@ -25,7 +25,7 @@ export default function DefaultTemplate({
             <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
 
             <div className="relative h-full bg-black/70 border border-white/10">
-              <ParametricScene parameters={previewParams} />
+              {preview3D}
             </div>
           </div>
         </div>
