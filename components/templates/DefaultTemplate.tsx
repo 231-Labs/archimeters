@@ -1,12 +1,10 @@
-import { TemplateProps } from './BaseTemplate';
-import ParametricScene from '../3d/ParametricScene';
+import { TemplateProps } from '@/components/templates/BaseTemplate';
+import ParametricScene from '@/components/3d/ParametricScene';
 
 export default function DefaultTemplate({
   workName,
   description,
   price,
-  author,
-  social,
   intro,
   imageUrl,
   parameters,

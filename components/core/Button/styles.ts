@@ -1,0 +1,1 @@
+export const buttonStyles = "px-4 py-1.5 bg-[rgba(255,255,255,0.1)] text-white border border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.2)] hover:border-[rgba(255,255,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"; 

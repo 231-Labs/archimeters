@@ -1,3 +1,12 @@
+// File types
+export interface FileState {
+  imageFile: File | null;
+  imageUrl: string;
+  algoFile: File | null;
+  algoResponse: string;
+  algoError: string;
+}
+
 // Upload status types
 export type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
 
@@ -9,6 +18,14 @@ export interface UploadResults {
   metadataBlobId: string;
   success: boolean;
   error?: string;
+}
+
+// Parameter types
+export interface ParameterState {
+  extractedParameters: Record<string, any>;
+  hasExtractedParams: boolean;
+  previewParams: Record<string, any>;
+  showPreview: boolean;
 }
 
 // Template types
@@ -37,4 +54,33 @@ export type Template = {
   description: string;
   layouts: string[];
   components: TemplateComponents;
-}; 
+};
+
+// Artwork types
+export interface ArtworkInfo {
+  workName: string;
+  description: string;
+  price: string;
+}
+
+export interface ArtistInfo {
+  name: string;
+  social: string;
+  intro: string;
+}
+
+export interface DesignSettings {
+  style: TemplateSeries;
+  fontStyle: FontStyle;
+}
+
+// Validation types
+export interface ValidationState {
+  workNameRequired: boolean;
+  descriptionRequired: boolean;
+  priceRequired: boolean;
+  introRequired: boolean;
+  priceError: string;
+  imageRequired: boolean;
+  algoRequired: boolean;
+} 

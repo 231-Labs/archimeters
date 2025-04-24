@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { WindowName } from '../types/index';
+import { useEffect } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
@@ -10,25 +9,23 @@ import WebsiteUpload from '@/components/windows/WebsiteUpload';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
-import { Terminal } from '@/components/terminal';
-
-const defaultWindowSizes = {
-  entry: { width: 500, height: 600 },
-  'designer': { width: 800, height: 600 },
-  'website-upload': { width: 1145, height: 756 },
-};
-
-interface WindowState {
-  component: string;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  minimized: boolean;
-}
+import { Terminal } from '@/components/features/terminal';
+import { useWindowManager } from '@/hooks/useWindowManager';
 
 export default function Home() {
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
-  const [currentOsId, setCurrentOsId] = useState<string>('');
+  const {
+    openWindows,
+    activeWindow,
+    windowPositions,
+    windowSizes,
+    activateWindow,
+    openWindow,
+    closeWindow,
+    startDragging,
+    resizeWindow,
+  } = useWindowManager('entry');
 
   // 獲取用戶的 OS ID
   useEffect(() => {
@@ -42,7 +39,7 @@ export default function Home() {
         });
         
         if (objects && objects[0]) {
-          setCurrentOsId(objects[0].data?.objectId || '');
+          // setCurrentOsId(objects[0].data?.objectId || '');
         }
       } catch (error) {
         console.error('Error fetching OS ID:', error);
@@ -52,134 +49,11 @@ export default function Home() {
     fetchOsId();
   }, [currentAccount, suiClient]);
 
-  const entrySize = { width: 600, height: 600 };
-
-  const [openWindows, setOpenWindows] = useState<WindowName[]>(['entry']);
-  const [activeWindow, setActiveWindow] = useState<WindowName | null>('entry');
-  const [draggingWindow, setDraggingWindow] = useState<WindowName | null>(null);
-  const [windowPositions, setWindowPositions] = useState<Record<WindowName, { x: number; y: number }>>({
-    entry: { x: 0, y: 0 },
-    'designer': { x: 200, y: 200 },
-    'website-upload': { x: 0, y: 0 },
-  });
-  const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
-  const [windows, setWindows] = useState<Record<string, WindowState>>({});
-
-  // 計算視窗中心位置的函數
-  const getCenterPosition = (width: number, height: number) => {
-    if (typeof window === 'undefined') {
-      return { x: 0, y: 0 };
-    }
-    
-    const x = Math.max(0, Math.round((window.innerWidth - width) / 2));
-    const y = Math.max(0, Math.round((window.innerHeight - height - 48) / 2));
-    
-    return { x, y };
-  };
-
-  // 使用 useEffect 來設置 Entry 窗口的初始位置
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const centerPosition = getCenterPosition(entrySize.width, entrySize.height);
-    const websiteUploadCenter = getCenterPosition(defaultWindowSizes['website-upload'].width, defaultWindowSizes['website-upload'].height);
-    
-    setWindowPositions(prev => ({
-      ...prev,
-      entry: centerPosition,
-      'website-upload': websiteUploadCenter,
-    }));
-  }, []);
-
-  const handleWindowActivate = (name: WindowName) => {
-    setActiveWindow(name);
-    setOpenWindows(prev => [...prev.filter(w => w !== name), name]);
-  };
-
-  const handleOpenWindow = (name: WindowName) => {
-    if (!openWindows.includes(name)) {
-      setOpenWindows(current => [...current, name]);
-    }
-
-    handleWindowActivate(name);
-    
-    if (name === 'entry') {
-      const centerPosition = getCenterPosition(entrySize.width, entrySize.height);
-      setWindowPositions(prev => ({
-        ...prev,
-        entry: centerPosition,
-      }));
-    }
-  };
-
-  const handleCloseWindow = (name: WindowName) => {
-    setOpenWindows(prev => prev.filter(w => w !== name));
-    if (activeWindow === name) {
-      setActiveWindow(null);
-    }
-  };
-
-  const handleDragStart = (e: React.MouseEvent<Element>, windowName: WindowName) => {
-    e.preventDefault();
-    handleWindowActivate(windowName);
-    setDraggingWindow(windowName);
-    
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const windowWidth = windowSizes[windowName].width;
-      const windowHeight = windowSizes[windowName].height;
-      
-      const maxX = document.documentElement.clientWidth - windowWidth;
-      const maxY = document.documentElement.clientHeight - windowHeight - 48;
-      
-      const newX = Math.max(0, Math.min(e.clientX - offsetX, maxX));
-      const newY = Math.max(0, Math.min(e.clientY - offsetY, maxY));
-      
-      setWindowPositions(prev => ({...prev, [windowName]: { x: newX, y: newY }}));
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', () => {
-      setDraggingWindow(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-    });
-  };
-
-  const handleResize = (e: React.MouseEvent, name: WindowName) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = windowSizes[name].width;
-    const startHeight = windowSizes[name].height;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      e.preventDefault();
-      setWindowSizes(prev => ({
-        ...prev,
-        [name]: {
-          width: Math.max(200, startWidth + (e.clientX - startX)),
-          height: Math.max(100, startHeight + (e.clientY - startY)),
-        },
-      }));
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
   return (
     <>
       <div className="min-h-screen bg-black overflow-hidden">
         <Header />
-        <Dock onOpenWindow={handleOpenWindow} />
+        <Dock onOpenWindow={openWindow} />
         <div className="relative h-[calc(100vh-48px)]">
           <div className="h-full relative">
             {openWindows.map(name => {
@@ -193,13 +67,11 @@ export default function Home() {
                       position={windowPositions.entry}
                       size={windowSizes.entry}
                       isActive={activeWindow === 'entry'}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onClick={() => handleWindowActivate(name)}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
                     >
-                      <EntryWindow onDragStart={function (e: React.MouseEvent<Element>, name: WindowName): void {
-                        throw new Error('Function not implemented.');
-                      } } />
+                      <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
                     </Window>
                   );
                 case 'designer':
@@ -208,14 +80,14 @@ export default function Home() {
                       key={name}
                       name={name}
                       title="Parametric Terminal"
-                      position={windowPositions['designer']}
-                      size={windowSizes['designer']}
+                      position={windowPositions.designer}
+                      size={windowSizes.designer}
                       isActive={activeWindow === 'designer'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
                     >
                       <Terminal />
                     </Window>
@@ -229,15 +101,17 @@ export default function Home() {
                       position={windowPositions['website-upload']}
                       size={windowSizes['website-upload']}
                       isActive={activeWindow === 'website-upload'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
                     >
                       <WebsiteUpload />
                     </Window>
                   );
+                default:
+                  return null;
               }
             })}
           </div>

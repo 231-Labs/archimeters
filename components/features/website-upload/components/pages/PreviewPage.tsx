@@ -1,5 +1,5 @@
-import BaseTemplate from '../../../templates/BaseTemplate';
-import DefaultTemplate from '../../../templates/DefaultTemplate';
+import BaseTemplate from '@/components/templates/BaseTemplate'
+import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { useState } from 'react';
 
 interface PreviewPageProps {

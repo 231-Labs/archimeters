@@ -1,5 +1,5 @@
 import { TemplateSeries, FontStyle } from '../../types';
-import ParametricScene from '../../../3d/ParametricScene';
+import ParametricScene from '@/components/3d/ParametricScene';
 import { useState } from 'react';
 
 interface AlgorithmPageProps {
