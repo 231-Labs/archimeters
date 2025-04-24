@@ -21,15 +21,34 @@ export function RetroConsole({ currentStep, steps, txHash }: RetroConsoleProps) 
   const [blinkIndex, setBlinkIndex] = useState(0);
   const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
+  // 檢查是否所有步驟都完成
+  const isAllComplete = steps.length > 0 && steps.every(step => {
+    const mainStepComplete = step.status === 'success';
+    const subStepsComplete = !step.subSteps || 
+                           step.subSteps.every(subStep => subStep.status === 'success');
+    return mainStepComplete && subStepsComplete;
+  });
+
+  // 檢查交易步驟是否完成
+  const transactionStep = steps.find(step => step.id === 'transaction');
+  const isTransactionComplete = transactionStep?.status === 'success';
+
+  // 停止動畫的條件：所有步驟完成或交易步驟完成
+  const shouldStopAnimation = isAllComplete || isTransactionComplete;
+
   useEffect(() => {
+    // 如果需要停止動畫，則不設置interval
+    if (shouldStopAnimation) return;
+    
     const interval = setInterval(() => {
       setBlinkIndex(prev => (prev + 1) % spinnerFrames.length);
     }, 80);
     return () => clearInterval(interval);
-  }, [spinnerFrames.length]);
+  }, [spinnerFrames.length, shouldStopAnimation]);
 
   const StatusIndicator = ({ status, isActive }: { status: string; isActive: boolean }) => {
     if (status === 'success') return <>[DONE]</>;
+    if (status === 'error') return <>[ERROR]</>;
     if (status === 'processing' && isActive) {
       return (
         <>
@@ -37,28 +56,28 @@ export function RetroConsole({ currentStep, steps, txHash }: RetroConsoleProps) 
         </>
       );
     }
-    return null;
+    return <>[WAIT]</>;
   };
 
   const ProcessingMessage = ({ status, label }: { status: string; label: string }) => {
     if (status === 'processing') {
       const isAwaitingApproval = label.includes('EXECUTING MOVE FUNCTION');
       return (
-        <div className="text-xs text-white/40 font-mono">
-          {isAwaitingApproval ? 'PLEASE APPROVE' : 'PROCESSING REQUEST'} {spinnerFrames[blinkIndex]}
+        <div className="text-xs text-white/50 font-mono">
+          {isAwaitingApproval ? 'WAITING FOR APPROVAL' : 'PROCESSING REQUEST'} {spinnerFrames[blinkIndex]}
         </div>
       );
     }
     if (status === 'success') {
       return (
-        <div className="text-xs text-white/40 font-mono">
+        <div className="text-xs text-green-400/70 font-mono">
           OPERATION COMPLETE ▀▀▀
         </div>
       );
     }
     if (status === 'error') {
       return (
-        <div className="text-xs text-red-400/60 font-mono">
+        <div className="text-xs text-red-400/70 font-mono">
           OPERATION FAILED
         </div>
       );
@@ -66,28 +85,40 @@ export function RetroConsole({ currentStep, steps, txHash }: RetroConsoleProps) 
     return null;
   };
 
+  // 添加動態效果
+  const StepAnimation = ({ status, isActive, shouldStopAnimation }: { status: string; isActive: boolean; shouldStopAnimation: boolean }) => {
+    if (status === 'success') return <>[DONE]</>;
+    if (status === 'error') return <>[ERROR]</>;
+    if (status === 'processing' && isActive && !shouldStopAnimation) {
+      return (
+        <>
+          [<NoiseEffect size={3} color="#ffffff" className="mx-[-1px]" />]
+        </>
+      );
+    }
+    return <>[WAIT]</>;
+  };
+
   // 檢查當前步驟狀態
   const getCurrentSignalStatus = () => {
-    // 檢查是否所有步驟都完成
-    const isAllComplete = steps.length > 0 && steps.every(step => {
-      const mainStepComplete = step.status === 'success';
-      const subStepsComplete = !step.subSteps || 
-                             step.subSteps.every(subStep => subStep.status === 'success');
-      return mainStepComplete && subStepsComplete;
-    });
-
+    // 如果交易步驟完成，返回操作完成
+    if (isTransactionComplete) return 'OPERATION COMPLETE';
     if (isAllComplete) return 'OPERATION COMPLETE';
 
     const currentStepData = steps[currentStep];
     if (!currentStepData) return 'PROCESSING REQUEST';
 
-    // 檢查是否在執行 MOVE FUNCTION
-    const isExecutingMove = currentStepData.label.includes('EXECUTING MOVE FUNCTION') ||
-                          currentStepData.subSteps?.some(step => 
-                            step.status === 'processing' && step.label.includes('EXECUTING MOVE FUNCTION')
-                          );
-
-    if (isExecutingMove) return 'PLEASE APPROVE';
+    // 檢查當前步驟的狀態
+    if (currentStepData.status === 'processing') {
+      // 檢查是否在執行 Move 函數
+      if (currentStepData.label.includes('EXECUTING MOVE FUNCTION')) {
+        return 'WAITING FOR APPROVAL';
+      }
+      return 'PROCESSING REQUEST';
+    }
+    if (currentStepData.status === 'error') {
+      return 'OPERATION FAILED';
+    }
     
     return 'PROCESSING REQUEST';
   };
@@ -96,96 +127,84 @@ export function RetroConsole({ currentStep, steps, txHash }: RetroConsoleProps) 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPERATION COMPLETE':
-        return 'text-green-400/80';
+        return 'text-green-400';
       case 'PLEASE APPROVE':
-        return 'text-yellow-400/80';
+        return 'text-yellow-400';
       case 'PROCESSING REQUEST':
-        return 'text-blue-400/80';
+        return 'text-blue-400';
+      case 'OPERATION FAILED':
+        return 'text-red-400';
       default:
-        return 'text-white/50';
+        return 'text-white/70';
     }
   };
 
   const currentStatus = getCurrentSignalStatus();
   const isComplete = currentStatus === 'OPERATION COMPLETE';
+  const isFailed = currentStatus === 'OPERATION FAILED';
 
-  // 模擬成功的交易訊息（僅用於展示）
-  const mockSuccessTransaction = isComplete ? {
-    hash: '0x7d3a03ea447be5b43ea5edb41a7db13699780fbedf3e95dba4df4c5ba8118777',
+  // 交易訊息設置
+  const mockSuccessTransaction = (isComplete || isTransactionComplete) && txHash ? {
+    hash: txHash,
     status: 'SUCCESS',
     timestamp: new Date().toISOString()
   } : null;
 
   return (
-    <div className="font-mono space-y-4">
+    <div className={`font-mono space-y-4 ${shouldStopAnimation ? 'opacity-90' : ''}`}>
       {/* 電波圖 */}
-      <div className="bg-black/50 p-4 rounded-lg space-y-2 backdrop-blur-sm">
-        <div className="h-16 relative overflow-hidden rounded border border-white/10">
-          <WaveformDisplay isAnimating={!isComplete} />
+      <div className="bg-black/30 backdrop-blur-sm p-4 rounded-lg space-y-2 border border-white/10">
+        <div className="h-16 relative overflow-hidden rounded-sm border border-white/10">
+          <WaveformDisplay isAnimating={!shouldStopAnimation} />
           <div className="absolute top-2 left-2 text-xs flex items-center gap-2">
-            <span className="text-white/50">SIGNAL STATUS:</span>
+            <span className="text-white/70">SIGNAL STATUS:</span>
             <span className={getStatusColor(currentStatus)}>{currentStatus}</span>
           </div>
         </div>
       </div>
 
       {/* 步驟列表 */}
-      <div className="bg-white/5 p-4 rounded-lg space-y-3">
-        <div className="text-white/50 text-sm">Operation Steps</div>
+      <div className="backdrop-blur-sm bg-black/20 border border-white/10 p-4 rounded-lg space-y-3">
+        <div className="text-white/70 text-sm">Operation Steps</div>
         <div className="space-y-4">
           {steps.map((step, index) => (
             <div 
               key={step.id}
               className={`relative ${
-                currentStep === index ? 'text-white/90' : 
-                currentStep > index ? 'text-white/40' : 
-                'text-white/30'
+                shouldStopAnimation ? 'text-white/60' :
+                currentStep === index ? 'text-white' : 
+                currentStep > index ? 'text-white/60' : 
+                'text-white/40'
               }`}
             >
               {/* 主步驟 */}
               <div className="flex items-center gap-4">
                 <div className="w-24 text-right font-light shrink-0 font-mono flex items-center justify-end gap-1">
-                  {currentStep > index ? (
-                    <>[DONE]</>
-                  ) : currentStep === index ? (
-                    <>
-                      [<NoiseEffect size={3} color="#ffffff" className="mx-[-1px]" />]
-                    </>
-                  ) : (
-                    `[${(index + 1).toString().padStart(2, '0')}]`
-                  )}
+                  <StepAnimation status={step.status} isActive={currentStep === index} shouldStopAnimation={shouldStopAnimation} />
                 </div>
                 <div className="flex-1 font-light">
                   {step.label}
-                  {currentStep === index && !step.subSteps && (
+                  {currentStep === index && !step.subSteps && !shouldStopAnimation && (
                     <span className="opacity-50">{['.', '..', '...'][Math.floor(blinkIndex / 3) % 3]}</span>
                   )}
                 </div>
               </div>
 
               {/* 子步驟 */}
-              {step.subSteps && currentStep === index && (
+              {step.subSteps && (currentStep === index || currentStep > index) && (
                 <div className="mt-2 space-y-2">
                   {step.subSteps.map((subStep, subIndex) => (
                     <div key={subStep.id} className="flex items-start">
                       <div className="w-24 text-right font-light shrink-0 font-mono flex items-center justify-end">
-                        <span className="text-white/30 mr-2">
+                        <span className="text-white/50 mr-2">
                           {subIndex === step.subSteps!.length - 1 ? '└' : '├'}
                         </span>
                       </div>
-                      <div className="text-white/30 shrink-0">
+                      <div className="text-white/50 shrink-0">
                         ─
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {subStep.status === 'success' ? (
-                          <span className="font-mono">[DONE]</span>
-                        ) : subStep.status === 'processing' ? (
-                          <span className="font-mono">
-                            [<NoiseEffect size={3} color="#ffffff" className="mx-[-1px]" />]
-                          </span>
-                        ) : (
-                          <span className="font-mono">[WAIT]</span>
-                        )}
+                        <StepAnimation status={subStep.status} isActive={currentStep === index} shouldStopAnimation={shouldStopAnimation} />
                       </div>
                       <div className="flex-1 ml-2">
                         <div className="font-light">{subStep.label}</div>
@@ -209,39 +228,40 @@ export function RetroConsole({ currentStep, steps, txHash }: RetroConsoleProps) 
         </div>
       </div>
 
-      {/* 交易訊息區塊 */}
-      {mockSuccessTransaction && (
-        <div className="bg-white/5 p-4 rounded-lg space-y-2">
-          <div className="text-white/50 text-sm mb-2">Transaction Details</div>
-          <div className="font-mono text-xs space-y-2">
-            <div className="flex items-start gap-2">
-              <span className="text-white/40 shrink-0">TX Hash:</span>
-              <span className="text-green-400/80 break-all font-light">
-                {mockSuccessTransaction.hash}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white/40">Status:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400/80"></span>
-                <span className="text-green-400/80">{mockSuccessTransaction.status}</span>
+      {/* 交易訊息區塊 - 與 Operation Steps 風格一致 */}
+      {txHash && (isTransactionComplete || transactionStep?.status === 'error') && (
+        <div className="backdrop-blur-sm bg-black/20 border border-white/10 p-4 rounded-lg space-y-3">
+          <div className="text-white/70 text-sm">Transaction Details</div>
+          <div className="font-mono space-y-4">
+            <div className="flex items-start">
+              <div className="flex-1">
+                <div className="flex items-start">
+                  <span className="text-white/70 text-sm mr-2 w-16 shrink-0 text-right">Digest:</span>
+                  <span className={`${isTransactionComplete ? 'text-green-400' : 'text-red-400'} break-all font-medium text-sm`}>
+                    {txHash}
+                  </span>
+                </div>
+                <div className="mt-1 ml-[4.5rem]">
+                  {isTransactionComplete ? (
+                    <div className="text-xs text-green-400/70 font-mono">
+                      TRANSACTION COMPLETE
+                    </div>
+                  ) : (
+                    <div className="text-xs text-red-400/70 font-mono">
+                      TRANSACTION FAILED
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white/40">Time:</span>
-              <span className="text-white/60 font-light">
-                {new Date(mockSuccessTransaction.timestamp).toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/10">
+            <div className="flex items-center pt-2 mt-2 border-t border-white/10">
               <a 
-                href={`https://suiscan.xyz/testnet/tx/${mockSuccessTransaction.hash}`}
+                href={`https://suiscan.xyz/testnet/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400/70 hover:text-blue-400 transition-colors flex items-center gap-1"
+                className="text-white/70 hover:text-white/90 transition-colors flex items-center gap-1 text-sm ml-[4.5rem]"
               >
-                View on SuiScan
-                <span className="text-[10px] relative top-[1px]">↗</span>
+                {'>>'} Open in explorer
               </a>
             </div>
           </div>
