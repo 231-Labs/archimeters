@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x8271c9b1dff31d66b0eda3955abfd79ad629e8097d68214034857054243e4414';
-export const STATE_ID = '0x1e3bba394edf526162ec0b8671cad4f254808ca581f9cf827c5f7f9109138419';
-export const ARTLIER_STATE_ID = '0xcbea0187697a22ba9a78dea328c64ad4332d46bfb1547ac04506bf2d4fda0769';
+export const PACKAGE_ID = '0xae378bc06204b33b235b9bb02c54fee089761e42a0c5b09e01f04eecd90ac7e9';
+export const STATE_ID = '0x03e9918c9f0633b1a1447970f908312231259095483b018f190a18939fcee98c';
+export const ARTLIER_STATE_ID = '0x61e379d23bb9a3baf6f1f8ed0bfe3fa7c659285024a3872bb69049d733f962be';
 
 export const mintMembership = async (username: string) => {
   // console.log('mintOS params:', username);
@@ -14,25 +14,32 @@ export const mintMembership = async (username: string) => {
     arguments: [
       tx.object(STATE_ID),
       tx.pure(bcs.string().serialize(username).toBytes()),
+      tx.object('0x6'),
     ],
   });
   return tx;
 };
 
 export const createDesignSeries = async (
+  artlierState: string,
   membershipId: string,
   photo: string,
-  website: string,
+  data: string,
   algorithm: string,
+  clock: string,
+  price: number,
 ) => {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::design_series::mint`,
+    target: `${PACKAGE_ID}::design_series::mint_design_series`,
     arguments: [
+      tx.object(artlierState),
       tx.object(membershipId),
       tx.pure(bcs.string().serialize(photo).toBytes()),
-      tx.pure(bcs.string().serialize(website).toBytes()),
+      tx.pure(bcs.string().serialize(data).toBytes()),
       tx.pure(bcs.string().serialize(algorithm).toBytes()),
+      tx.object(clock),
+      tx.pure(bcs.u64().serialize(price).toBytes()),
     ],
   });
   return tx;

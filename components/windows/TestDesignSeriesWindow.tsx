@@ -2,6 +2,7 @@ import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction } from '
 import { retroButtonStyles } from '@/styles/components';
 import { createDesignSeries } from '@/utils/transactions';
 import { WindowName } from '@/types/index';
+import { useState } from 'react';
 
 interface TestDesignSeriesWindowProps {
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
@@ -10,25 +11,32 @@ interface TestDesignSeriesWindowProps {
 export default function TestDesignSeriesWindow({ onDragStart }: TestDesignSeriesWindowProps) {
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [transactionDigest, setTransactionDigest] = useState<string>('');
+  const [transactionError, setTransactionError] = useState<string>('');
 
   const handleCreateDesignSeries = async () => {
     if (!currentAccount?.address) return;
 
     try {
-      // 寫死的測試參數
-      const membershipId = '0x0949fabd63b4b98b67834fd2b9e120a9e1d15665bf368e16cde8fbce289b790d';
       const testParams = {
-        photo: 'https://example.com/test-photo.jpg',
-        website: 'https://example.com',
-        algorithm: 'test-algorithm',
+        artlierState: '0x61e379d23bb9a3baf6f1f8ed0bfe3fa7c659285024a3872bb69049d733f962be',
+        membershipId: '0xbdcf273707587bda6cf1ec8a62f4db02a2fbfc9eb68e95acedc369ea4ee3ba69',
+        photo: 'C8oceDAg7Jo3n1B5c86qL_SBJBb_VfTzNj2oe2Wj7S0',
+        data: '8DtG3IretlrZ7lyGTV2JTVmXDbG30winAJfxBbe6pAw',
+        algorithm: 'Wh1Iu8x0QyP9NlaTx4f5BLPxPgaCJ8Fls3tChRKT078',
+        clock: '0x6',
+        price: 1000,
       };
 
       // 創建交易
       const tx = await createDesignSeries(
-        membershipId,
+        testParams.artlierState,
+        testParams.membershipId,
         testParams.photo,
-        testParams.website,
-        testParams.algorithm
+        testParams.data,
+        testParams.algorithm,
+        testParams.clock,
+        testParams.price
       );
 
       // 執行交易
@@ -40,14 +48,17 @@ export default function TestDesignSeriesWindow({ onDragStart }: TestDesignSeries
         {
           onSuccess: (result) => {
             console.log('Transaction successful:', result);
+            setTransactionDigest(result.digest);
           },
           onError: (error) => {
             console.error('Transaction failed:', error);
+            setTransactionError(error.message);
           },
         }
       );
     } catch (error) {
       console.error('Error creating design series:', error);
+      setTransactionError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -83,6 +94,23 @@ export default function TestDesignSeriesWindow({ onDragStart }: TestDesignSeries
               >
                 Create Design Series
               </button>
+
+              {transactionDigest && (
+                <div className="mt-4 p-4 bg-white/5 rounded-lg">
+                  <div className="text-green-400 mb-2">Transaction Successful!</div>
+                  <div className="text-sm text-white/70">Transaction Digest:</div>
+                  <div className="font-mono text-sm text-white/90 break-all">
+                    {transactionDigest}
+                  </div>
+                </div>
+              )}
+
+              {transactionError && (
+                <div className="mt-4 p-4 bg-red-900/20 rounded-lg">
+                  <div className="text-red-400 mb-2">Transaction Failed</div>
+                  <div className="text-sm text-red-400">{transactionError}</div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-sm text-white/90">
