@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '../common/Toast';
 import { BasicInfoPage } from '../upload/components/pages/BasicInfoPage';
 import { AlgorithmPage } from '../upload/components/pages/AlgorithmPage';
 import { PreviewPage } from '../upload/components/pages/PreviewPage';
@@ -58,16 +57,36 @@ export default function WebsiteUpload() {
 
   // Upload states
   const [error, setError] = useState<string>('');
-  const { isLoading, uploadStatus, uploadResults, handleUpload: uploadFiles, resetUpload } = useUpload({
+  const { 
+    isLoading, 
+    uploadStatus, 
+    uploadResults, 
+    currentStep: uploadStep,
+    steps: uploadSteps,
+    handleUpload: uploadFiles, 
+    resetUpload
+  } = useUpload({
     onSuccess: (results) => {
       console.log('Upload completed with results:', results);
       if (results.success) {
+        // 上傳完成後，設置當前步驟為交易步驟
+        const transactionStepIndex = 2; // 交易步驟的索引
+        setCurrentStep(transactionStepIndex);
+        
+        // 更新交易步驟狀態為處理中
+        setSteps(prev => {
+          const newSteps = [...prev];
+          if (newSteps[transactionStepIndex]) {
+            newSteps[transactionStepIndex].status = 'processing';
+          }
+          return newSteps;
+        });
+        
         handleMint(results);
       }
     },
     onError: (error) => setError(error)
   });
-  const [showToast, setShowToast] = useState(false);
 
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [transactionDigest, setTransactionDigest] = useState<string>('');
@@ -76,6 +95,24 @@ export default function WebsiteUpload() {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
+
+  // 在每次 uploadStep 或 uploadSteps 變化時更新本地狀態
+  useEffect(() => {
+    if (uploadSteps) {
+      setCurrentStep(uploadStep);
+      setSteps(prev => {
+        // 保留 transaction 步驟（如果存在）
+        const transactionStep = prev.find(step => step.id === 'transaction');
+        const newSteps = [...uploadSteps];
+        
+        if (transactionStep && !newSteps.find(step => step.id === 'transaction')) {
+          newSteps.push(transactionStep);
+        }
+        
+        return newSteps;
+      });
+    }
+  }, [uploadStep, uploadSteps]);
 
   // Cleanup function
   useEffect(() => {
@@ -92,7 +129,6 @@ export default function WebsiteUpload() {
       // 重置所有狀態
       setCurrentPage(1);
       setError('');
-      setShowToast(false);
       setTransactionDigest('');
       setTransactionError('');
       resetUpload?.();
@@ -237,6 +273,17 @@ export default function WebsiteUpload() {
     if (!membershipId) {
       console.error('No membership ID available');
       setTransactionError('Membership ID not found');
+      
+      // 更新交易步驟狀態為錯誤
+      setSteps(prev => {
+        const newSteps = [...prev];
+        const transactionStep = newSteps.find(step => step.id === 'transaction');
+        if (transactionStep) {
+          transactionStep.status = 'error';
+        }
+        return newSteps;
+      });
+      
       return;
     }
 
@@ -244,6 +291,17 @@ export default function WebsiteUpload() {
     if (!uploadData) {
       console.error('No upload results available');
       setTransactionError('Upload results not found');
+      
+      // 更新交易步驟狀態為錯誤
+      setSteps(prev => {
+        const newSteps = [...prev];
+        const transactionStep = newSteps.find(step => step.id === 'transaction');
+        if (transactionStep) {
+          transactionStep.status = 'error';
+        }
+        return newSteps;
+      });
+      
       return;
     }
 
@@ -265,6 +323,17 @@ export default function WebsiteUpload() {
       const errorMsg = 'Missing blob IDs';
       console.error(errorMsg);
       setTransactionError(errorMsg);
+      
+      // 更新交易步驟狀態為錯誤
+      setSteps(prev => {
+        const newSteps = [...prev];
+        const transactionStep = newSteps.find(step => step.id === 'transaction');
+        if (transactionStep) {
+          transactionStep.status = 'error';
+        }
+        return newSteps;
+      });
+      
       return;
     }
 
@@ -292,12 +361,31 @@ export default function WebsiteUpload() {
             console.log('=== Transaction Result ===');
             console.log(JSON.stringify(result, null, 2));
             setTransactionDigest(result.digest);
-            setShowToast(true);
+            
+            // 更新交易步驟狀態為成功
+            setSteps(prev => {
+              const newSteps = [...prev];
+              const transactionStep = newSteps.find(step => step.id === 'transaction');
+              if (transactionStep) {
+                transactionStep.status = 'success';
+              }
+              return newSteps;
+            });
           },
           onError: (error) => {
             console.error('=== Transaction Error ===');
             console.error(error);
             setTransactionError(error.message);
+            
+            // 更新交易步驟狀態為錯誤
+            setSteps(prev => {
+              const newSteps = [...prev];
+              const transactionStep = newSteps.find(step => step.id === 'transaction');
+              if (transactionStep) {
+                transactionStep.status = 'error';
+              }
+              return newSteps;
+            });
           }
         }
       );
@@ -305,6 +393,16 @@ export default function WebsiteUpload() {
       console.error('=== Error in handleMint ===');
       console.error(error);
       setTransactionError(error instanceof Error ? error.message : String(error));
+      
+      // 更新交易步驟狀態為錯誤
+      setSteps(prev => {
+        const newSteps = [...prev];
+        const transactionStep = newSteps.find(step => step.id === 'transaction');
+        if (transactionStep) {
+          transactionStep.status = 'error';
+        }
+        return newSteps;
+      });
     }
   };
 
@@ -407,11 +505,11 @@ export default function WebsiteUpload() {
 
   // Navigation buttons component
   const NavigationButtons = () => (
-    <div className="fixed bottom-8 right-6 flex gap-2">
+    <div className="fixed bottom-6 right-6 flex gap-2 z-20">
       {currentPage > 1 && currentPage < 4 && (
         <button 
           onClick={goToPreviousPage}
-          className="group relative w-7 h-7 flex items-center justify-center"
+          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         >
           <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
           <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
@@ -421,7 +519,7 @@ export default function WebsiteUpload() {
       {currentPage < 3 && (
         <button 
           onClick={goToNextPage}
-          className="group relative w-7 h-7 flex items-center justify-center"
+          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         >
           <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
           <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
@@ -431,16 +529,61 @@ export default function WebsiteUpload() {
       {currentPage === 3 && (
         <button 
           onClick={goToNextPage}
-          className="group relative w-7 h-7 flex items-center justify-center"
+          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-indigo-500/50 to-purple-500/50 rounded-sm blur-sm transition-all duration-500 group-hover:blur-md"></div>
-          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors"></div>
+          <div className="absolute inset-0 bg-white/5 rounded-sm group-hover:bg-white/10 transition-all duration-300"></div>
+          <div className="absolute inset-0 border border-white/20 rotate-45 group-hover:border-white/30 transition-colors"></div>
           <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
-          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">✓</span>
+          <span className="relative text-sm text-white/80 group-hover:text-white transition-colors">✓</span>
         </button>
       )}
     </div>
   );
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [steps, setSteps] = useState<{
+    id: string;
+    label: string;
+    status: 'pending' | 'processing' | 'success' | 'error';
+    subSteps?: {
+      id: string;
+      label: string;
+      status: 'pending' | 'processing' | 'success' | 'error';
+    }[];
+  }[]>([
+    {
+      id: 'prepare',
+      label: 'PREPARING FILES FOR UPLOAD',
+      status: 'pending'
+    },
+    {
+      id: 'upload',
+      label: 'UPLOADING FILES TO WALRUS',
+      status: 'pending',
+      subSteps: [
+        {
+          id: 'upload-image',
+          label: 'IMAGE FILE',
+          status: 'pending'
+        },
+        {
+          id: 'upload-algorithm',
+          label: 'ALGORITHM FILE',
+          status: 'pending'
+        },
+        {
+          id: 'upload-metadata',
+          label: 'METADATA FILE',
+          status: 'pending'
+        }
+      ]
+    },
+    {
+      id: 'transaction',
+      label: 'EXECUTING MOVE FUNCTION',
+      status: 'pending'
+    }
+  ]);
 
   return (
     <div className="h-full w-full bg-[rgba(10,10,10,0.3)]">
@@ -506,6 +649,8 @@ export default function WebsiteUpload() {
             isLoading={isLoading}
             uploadStatus={uploadStatus}
             uploadResults={uploadResults}
+            currentStep={currentStep}
+            steps={steps}
             workName={workName}
             description={description}
             style={style}
@@ -516,28 +661,10 @@ export default function WebsiteUpload() {
             price={price}
             transactionDigest={transactionDigest}
             transactionError={transactionError}
-            onRetry={() => {
-              const metadataFile = createMetadataJson({
-                workName,
-                description,
-                style,
-                fontStyle,
-                name,
-                social,
-                intro
-              });
-              handleUpload(imageFile!, algoFile!, metadataFile);
-            }}
           />
         )}
         <NavigationButtons />
       </div>
-      
-      <Toast
-        message="Website uploaded successfully!"
-        show={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }
