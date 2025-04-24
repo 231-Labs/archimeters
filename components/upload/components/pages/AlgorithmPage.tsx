@@ -1,5 +1,6 @@
 import { TemplateSeries, FontStyle } from '../../types';
 import ParametricScene from '../../../3d/ParametricScene';
+import { useState } from 'react';
 
 interface AlgorithmPageProps {
   algoFile: File | null;
@@ -32,12 +33,14 @@ export const AlgorithmPage = ({
   onStyleChange,
   onFontStyleChange
 }: AlgorithmPageProps) => {
+  const [fileTypeError, setFileTypeError] = useState<string | null>(null);
+  
   return (
     <div className="flex h-full">
       {/* Left - Algorithm Upload and Preview */}
-      <div className="w-2/3 p-8 border-r border-white/5">
+      <div className="w-2/3 p-8 border-r border-white/5 flex flex-col">
         <div className="text-white/50 text-sm mb-4">Algorithm File</div>
-        <div className="h-[calc(100vh-480px)] group relative">
+        <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
           {showPreview && Object.keys(previewParams).length > 0 ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
               <ParametricScene parameters={previewParams} />
@@ -46,22 +49,33 @@ export const AlgorithmPage = ({
             <>
               <input
                 type="file"
+                accept=".tsx"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) onAlgoFileChange(file);
+                  if (file) {
+                    // 驗證文件副檔名
+                    if (file.name.toLowerCase().endsWith('.tsx')) {
+                      setFileTypeError(null);
+                      onAlgoFileChange(file);
+                    } else {
+                      // 如果不是 .tsx 文件，顯示錯誤消息
+                      setFileTypeError(`Invalid file type. Only .tsx files are allowed. You uploaded: ${file.name}`);
+                    }
+                  }
                 }}
                 className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
               />
-              <div className={`h-full border border-dashed ${algoRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!algoRequired && 'group-hover:border-white/40'} transition-colors`}>
+              <div className={`h-full border border-dashed ${algoRequired || fileTypeError ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!algoRequired && !fileTypeError && 'group-hover:border-white/40'} transition-colors overflow-hidden`}>
                 {algoFile ? (
                   <pre className="p-6 w-full h-full overflow-auto text-sm text-white/80 font-mono">
                     {algoResponse || '// Processing...'}
                   </pre>
                 ) : (
-                  <div className="text-center">
-                    <div className={`text-4xl mb-3 ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
-                    <div className={`text-sm ${algoRequired ? 'text-red-400' : 'text-white/40'}`}>
+                  <div className="text-center p-4">
+                    <div className={`text-4xl mb-3 ${algoRequired || fileTypeError ? 'text-red-400' : 'text-white/40'}`}>+</div>
+                    <div className={`text-sm ${algoRequired || fileTypeError ? 'text-red-400' : 'text-white/40'} flex flex-col gap-1`}>
                       {algoRequired ? 'Algorithm file is required' : 'Click or drag to upload algorithm'}
+                      <span className="text-xs text-white/30">Only .tsx files are allowed</span>
                     </div>
                   </div>
                 )}
@@ -73,12 +87,19 @@ export const AlgorithmPage = ({
               <span className="font-mono">Error: </span>{algoError}
             </div>
           )}
+          {fileTypeError && (
+            <div className="mt-2 text-red-400 text-sm">
+              <span className="font-mono">Error: </span>{fileTypeError}
+            </div>
+          )}
         </div>
+        {/* 底部留白，確保不會與底部導航按鈕重疊 */}
+        <div className="h-16"></div>
       </div>
 
       {/* Right - Parameter Settings */}
-      <div className="w-1/3 p-8">
-        <div className="space-y-8">
+      <div className="w-1/3 p-8 flex flex-col relative">
+        <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2">
           {/* Parameter List */}
           {Object.keys(extractedParameters).length > 0 && (
             <div className="space-y-4">
@@ -127,6 +148,8 @@ export const AlgorithmPage = ({
             </div>
           </div>
         </div>
+        {/* 底部留白，確保不會與底部導航按鈕重疊 */}
+        <div className="h-16"></div>
       </div>
     </div>
   );

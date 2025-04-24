@@ -46,8 +46,8 @@ export const BasicInfoPage = ({
   return (
     <div className="flex h-full">
       {/* Left - Basic Info */}
-      <div className="w-1/2 p-8 border-r border-white/5">
-        <div className="max-w-lg space-y-12">
+      <div className="w-1/2 p-8 border-r border-white/5 flex flex-col overflow-auto">
+        <div className="w-full space-y-8 flex-1 pb-16">
           {/* Artwork Title */}
           <div>
             <input
@@ -108,7 +108,7 @@ export const BasicInfoPage = ({
           </div>
 
           {/* Artwork Price */}
-          <div className="-mt-12">
+          <div className="">
             <div className="text-white/50 text-sm mb-3">Artwork Price</div>
             <div className="flex items-center">
               <span className="text-white/50 text-xl mr-3">φ</span>
@@ -132,9 +132,9 @@ export const BasicInfoPage = ({
       </div>
 
       {/* Right - Main Visual Upload */}
-      <div className="w-1/2 p-8 flex flex-col">
+      <div className="w-1/2 p-8 flex flex-col relative">
         <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
-        <div className="h-[calc(100vh-480px)] group relative">
+        <div className="flex-1 group relative max-h-[calc(100vh-360px)]">
           <input
             type="file"
             onChange={(e) => {
@@ -143,11 +143,11 @@ export const BasicInfoPage = ({
             }}
             className="w-full h-full opacity-0 absolute inset-0 z-10 cursor-pointer"
           />
-          <div className={`h-full border border-dashed ${imageRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!imageRequired && 'group-hover:border-white/40'} transition-colors`}>
+          <div className={`h-full border border-dashed ${imageRequired ? 'border-red-400' : 'border-white/20'} rounded-lg flex items-center justify-center ${!imageRequired && 'group-hover:border-white/40'} transition-colors overflow-hidden`}>
             {imageFile ? (
               <img src={imageUrl} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
             ) : (
-              <div className="text-center">
+              <div className="text-center p-4">
                 <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
                 <div className={`text-sm ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>
                   {imageRequired ? 'Main visual is required' : 'Click or drag to upload image'}
@@ -156,6 +156,8 @@ export const BasicInfoPage = ({
             )}
           </div>
         </div>
+        {/* 底部留白，確保不會與底部導航按鈕重疊 */}
+        <div className="h-16"></div>
       </div>
     </div>
   );

@@ -188,10 +188,9 @@ export default function DefaultTemplate({
               </div>
               
               <div className="relative group">
-                <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500/50 via-blue-500/50 to-indigo-500/50 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <button 
                   onClick={onMint}
-                  className="relative px-8 py-3 bg-black rounded-sm"
+                  className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors"
                 >
                   <div className="flex flex-col items-center">
                     <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
