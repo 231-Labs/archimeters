@@ -58,7 +58,7 @@ export default function WebsiteUpload() {
 
   // Upload states
   const [error, setError] = useState<string>('');
-  const { isLoading, uploadStatus, uploadResults, handleUpload: uploadFiles } = useUpload({
+  const { isLoading, uploadStatus, uploadResults, handleUpload: uploadFiles, resetUpload } = useUpload({
     onSuccess: (results) => {
       console.log('Upload completed with results:', results);
       if (results.success) {
@@ -76,6 +76,41 @@ export default function WebsiteUpload() {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      // 清除文件相關的狀態
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+      setImageFile(null);
+      setImageUrl('');
+      setAlgoFile(null);
+      setAlgoResponse('');
+      
+      // 重置所有狀態
+      setCurrentPage(1);
+      setError('');
+      setShowToast(false);
+      setTransactionDigest('');
+      setTransactionError('');
+      resetUpload?.();
+      
+      // 清除參數相關的狀態
+      setExtractedParameters({});
+      setHasExtractedParams(false);
+      setPreviewParams({});
+      setShowPreview(false);
+      
+      // 重置驗證狀態
+      setWorkNameRequired(false);
+      setDescriptionRequired(false);
+      setPriceRequired(false);
+      setIntroRequired(false);
+      setPriceError('');
+    };
+  }, []);
 
   // 獲取 membership
   useEffect(() => {

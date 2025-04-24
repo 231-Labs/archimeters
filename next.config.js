@@ -11,6 +11,7 @@ const nextConfig = {
       ...config.resolve.alias,
       'xterm': 'xterm/lib/xterm.js',
     };
+    config.devtool = 'source-map';
     return config;
   },
 }

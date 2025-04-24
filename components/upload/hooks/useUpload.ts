@@ -12,6 +12,13 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
   const [uploadStatus, setUploadStatus] = useState<UploadStatuses>('pending');
   const [uploadResults, setUploadResults] = useState<UploadResults | null>(null);
 
+  const resetUpload = () => {
+    setIsLoading(false);
+    setError('');
+    setUploadStatus('pending');
+    setUploadResults(null);
+  };
+
   const uploadToWalrus = async (file: File): Promise<{ blobId: string }> => {
     const formData = new FormData();
     formData.append('data', file);
@@ -28,7 +35,19 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
     }
 
     const result = await response.json();
-    const blobId = result?.alreadyCertified?.blobId || null;
+    console.log('Walrus upload response:', result);
+    
+    // 處理兩種可能的返回結構
+    let blobId = null;
+    if (result?.alreadyCertified?.blobId) {
+      console.log('File already certified, using existing blobId:', result.alreadyCertified.blobId);
+      blobId = result.alreadyCertified.blobId;
+    } else if (result?.newlyCreated?.blobObject?.blobId) {
+      console.log('File newly created, using new blobId:', result.newlyCreated.blobObject.blobId);
+      blobId = result.newlyCreated.blobObject.blobId;
+    } else {
+      console.error('Unexpected response structure:', result);
+    }
     
     if (!blobId) throw new Error('No blobId returned');
 
@@ -86,6 +105,7 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
     error,
     uploadStatus,
     uploadResults,
-    handleUpload
+    handleUpload,
+    resetUpload
   };
 }; 
