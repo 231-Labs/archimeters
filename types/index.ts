@@ -1,12 +1,6 @@
 export type WindowName = 
   | 'entry'
-  | 'walrus-upload'
-  | 'walrus-view'
-  | 'model-3d'
   | 'designer'
-  | 'test-design-series'
-  | 'elegant-page'
-  | 'monochrome-page'
   | 'website-upload';
 
 export interface WindowState {

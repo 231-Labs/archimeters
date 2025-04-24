@@ -5,13 +5,7 @@ import type { WindowName } from '../types/index';
 import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
-import WalrusUpload from '@/components/windows/WalrusUpload';
-import WalrusView from '@/components/windows/WalrusView';
 import EntryWindow from '@/components/windows/EntryWindow';
-import Model3DWindow from '@/components/windows/Model3DWindow';
-import TestDesignSeriesWindow from '@/components/windows/TestDesignSeriesWindow';
-import ElegantPage from '@/components/windows/ElegantPage';
-import MonochromePage from '@/components/windows/MonochromePage';
 import WebsiteUpload from '@/components/windows/WebsiteUpload';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
@@ -20,13 +14,7 @@ import { Terminal } from '@/components/terminal';
 
 const defaultWindowSizes = {
   entry: { width: 500, height: 600 },
-  'walrus-upload': { width: 540, height: 400 },
-  'walrus-view': { width: 365, height: 446 },
-  'model-3d': { width: 800, height: 600 },
   'designer': { width: 800, height: 600 },
-  'test-design-series': { width: 500, height: 600 },
-  'elegant-page': { width: 900, height: 700 },
-  'monochrome-page': { width: 900, height: 700 },
   'website-upload': { width: 1145, height: 756 },
 };
 
@@ -71,13 +59,7 @@ export default function Home() {
   const [draggingWindow, setDraggingWindow] = useState<WindowName | null>(null);
   const [windowPositions, setWindowPositions] = useState<Record<WindowName, { x: number; y: number }>>({
     entry: { x: 0, y: 0 },
-    'walrus-upload': { x: 350, y: 350 },
-    'walrus-view': { x: 400, y: 400 },
-    'model-3d': { x: 100, y: 100 },
     'designer': { x: 200, y: 200 },
-    'test-design-series': { x: 150, y: 150 },
-    'elegant-page': { x: 100, y: 50 },
-    'monochrome-page': { x: 700, y: 70 },
     'website-upload': { x: 0, y: 0 },
   });
   const [windowSizes, setWindowSizes] = useState(defaultWindowSizes);
@@ -220,62 +202,6 @@ export default function Home() {
                       } } />
                     </Window>
                   );
-                case 'walrus-upload':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Walrus Upload"
-                      position={windowPositions['walrus-upload']}
-                      size={windowSizes['walrus-upload']}
-                      isActive={activeWindow === 'walrus-upload'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                    >
-                      <WalrusUpload />
-                    </Window>
-                  );
-                case 'walrus-view':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Walrus View"
-                      position={windowPositions['walrus-view']}
-                      size={windowSizes['walrus-view']}
-                      isActive={activeWindow === 'walrus-view'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                    >
-                      <WalrusView />
-                    </Window>
-                  );
-                case 'model-3d':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="3D Model Editor"
-                      position={windowPositions['model-3d']}
-                      size={windowSizes['model-3d']}
-                      isActive={activeWindow === 'model-3d'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                    >
-                      <Model3DWindow 
-                        onClose={() => handleCloseWindow(name)}
-                      />
-                    </Window>
-                  );
                 case 'designer':
                   return (
                     <Window
@@ -292,62 +218,6 @@ export default function Home() {
                       onClick={() => handleWindowActivate(name)}
                     >
                       <Terminal />
-                    </Window>
-                  );
-                case 'test-design-series':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Test Design Series"
-                      position={windowPositions['test-design-series']}
-                      size={windowSizes['test-design-series']}
-                      isActive={activeWindow === 'test-design-series'}
-                      resizable={true}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onResize={(e) => handleResize(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                    >
-                      <TestDesignSeriesWindow 
-                        onDragStart={(e) => handleDragStart(e, name)}
-                      />
-                    </Window>
-                  );
-                case 'elegant-page':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Elegant Design"
-                      position={windowPositions['elegant-page']}
-                      size={windowSizes['elegant-page']}
-                      isActive={activeWindow === 'elegant-page'}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                      resizable
-                      onResize={(e) => handleResize(e, name)}
-                    >
-                      <ElegantPage />
-                    </Window>
-                  );
-                case 'monochrome-page':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Monochrome Design"
-                      position={windowPositions['monochrome-page']}
-                      size={windowSizes['monochrome-page']}
-                      isActive={activeWindow === 'monochrome-page'}
-                      onClose={() => handleCloseWindow(name)}
-                      onDragStart={(e) => handleDragStart(e, name)}
-                      onClick={() => handleWindowActivate(name)}
-                      resizable
-                      onResize={(e) => handleResize(e, name)}
-                    >
-                      <MonochromePage />
                     </Window>
                   );
                 case 'website-upload':
