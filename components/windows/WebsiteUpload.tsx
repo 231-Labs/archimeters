@@ -623,10 +623,14 @@ export default function WebsiteUpload() {
             extractedParameters={extractedParameters}
             style={style}
             fontStyle={fontStyle}
-            onAlgoFileChange={handleAlgoFileChange}
-            onParameterChange={handleParameterChange}
+            onFileChange={handleAlgoFileChange}
+            onUpdatePreviewParams={(params) => setPreviewParams(params)}
             onStyleChange={setStyle}
             onFontStyleChange={setFontStyle}
+            onExtractParameters={setExtractedParameters}
+            onTogglePreview={() => setShowPreview(!showPreview)}
+            onNext={goToNextPage}
+            onPrevious={goToPreviousPage}
           />
         )}
         {currentPage === 3 && (
@@ -661,6 +665,8 @@ export default function WebsiteUpload() {
             price={price}
             transactionDigest={transactionDigest}
             transactionError={transactionError}
+            onSubmit={() => handleMint()}
+            onPrevious={goToPreviousPage}
           />
         )}
         <NavigationButtons />

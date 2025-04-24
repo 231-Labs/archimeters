@@ -8,11 +8,11 @@ import { useFileUpload } from './hooks/useFileUpload';
 import { useArtworkForm } from './hooks/useArtworkForm';
 import { useValidation } from './hooks/useValidation';
 import { useParameters } from './hooks/useParameters';
-import { BasicInfoPage } from './components/pages/BasicInfoPage';
-import { AlgorithmPage } from './components/pages/AlgorithmPage';
-import { PreviewPage } from './components/pages/PreviewPage';
-import { UploadStatusPage } from './components/pages/UploadStatusPage';
-import type { UploadResults } from './types';
+import { BasicInfoPage } from './components/pages';
+import { AlgorithmPage } from './components/pages';
+import { PreviewPage } from './components/pages';
+import { UploadStatusPage } from './components/pages';
+import type { UploadResults, ArtworkInfo, ArtistInfo, DesignSettings } from './types';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -89,7 +89,10 @@ export default function WebsiteUpload() {
   // Fetch membership
   useEffect(() => {
     const fetchMembership = async () => {
-      if (!currentAccount?.address) return;
+      if (!currentAccount?.address) {
+        console.error('No wallet connected');
+        return;
+      }
 
       try {
         const { data: objects } = await suiClient.getOwnedObjects({
@@ -103,7 +106,15 @@ export default function WebsiteUpload() {
         });
 
         if (objects && objects.length > 0) {
-          setMembershipId(objects[0].data?.objectId || '');
+          const id = objects[0].data?.objectId;
+          if (id) {
+            console.log('Found membership ID:', id);
+            setMembershipId(id);
+          } else {
+            console.error('Membership object found but no ID');
+          }
+        } else {
+          console.error('No membership found for address:', currentAccount.address);
         }
       } catch (error) {
         console.error('Error fetching membership:', error);
@@ -125,19 +136,30 @@ export default function WebsiteUpload() {
   }, []);
 
   const handleMint = async (results?: UploadResults) => {
-    if (!results?.blobIds || !membershipId) return;
+    if (!membershipId) {
+      const error = 'No membership ID found. Please make sure you have a valid membership.';
+      console.error(error);
+      setTransactionError(error);
+      return;
+    }
+
+    if (!results?.imageBlobId || !results?.algoBlobId || !results?.metadataBlobId) {
+      const error = 'Missing required upload results';
+      console.error(error);
+      setTransactionError(error);
+      return;
+    }
 
     try {
-      const tx = await createDesignSeries({
+      const tx = await createDesignSeries(
+        ARTLIER_STATE_ID,
         membershipId,
-        artlierId: ARTLIER_STATE_ID,
-        name: artworkInfo.workName,
-        description: artworkInfo.description,
-        price: Number(artworkInfo.price),
-        imageId: results.blobIds.image,
-        algorithmId: results.blobIds.algorithm,
-        metadataId: results.blobIds.metadata,
-      });
+        results.imageBlobId,
+        results.metadataBlobId,
+        results.algoBlobId,
+        '0x6',
+        Number(artworkInfo.price)
+      );
 
       signAndExecuteTransaction(
         {
@@ -165,10 +187,13 @@ export default function WebsiteUpload() {
     if (!imageFile || !algoFile) return;
 
     const metadataJson = createMetadataJson({
-      artworkInfo,
-      artistInfo,
-      designSettings,
-      parameters: extractedParameters,
+      workName: artworkInfo.workName,
+      description: artworkInfo.description,
+      style: designSettings.style,
+      fontStyle: designSettings.fontStyle,
+      name: artistInfo.name,
+      social: artistInfo.social,
+      intro: artistInfo.intro
     });
 
     const metadataBlob = new Blob([JSON.stringify(metadataJson, null, 2)], {
@@ -198,27 +223,56 @@ export default function WebsiteUpload() {
     <div className="h-full flex flex-col">
       {currentPage === 1 && (
         <BasicInfoPage
-          artworkInfo={artworkInfo}
-          artistInfo={artistInfo}
-          designSettings={designSettings}
-          validationState={validationState}
-          onUpdateArtworkInfo={updateArtworkInfo}
-          onUpdateArtistInfo={updateArtistInfo}
-          onUpdateDesignSettings={updateDesignSettings}
-          onNext={goToNextPage}
+          workName={artworkInfo.workName}
+          description={artworkInfo.description}
+          price={artworkInfo.price}
+          name={artistInfo.name}
+          social={artistInfo.social}
+          intro={artistInfo.intro}
+          imageFile={imageFile}
+          imageUrl={imageUrl}
+          onWorkNameChange={(value) => updateArtworkInfo('workName', value)}
+          onDescriptionChange={(value) => updateArtworkInfo('description', value)}
+          onPriceChange={(value) => updateArtworkInfo('price', value)}
+          onIntroChange={(value) => updateArtistInfo('intro', value)}
+          onImageFileChange={handleImageFileChange}
+          workNameRequired={false}
+          descriptionRequired={false}
+          priceRequired={false}
+          introRequired={false}
+          imageRequired={false}
+          priceError=""
         />
       )}
 
       {currentPage === 2 && (
         <AlgorithmPage
-          imageFile={imageFile}
-          imageUrl={imageUrl}
           algoFile={algoFile}
           algoResponse={algoResponse}
           algoError={algoError}
-          validationState={validationState}
-          onImageChange={handleImageFileChange}
-          onAlgoChange={handleAlgoFileChange}
+          algoRequired={false}
+          showPreview={showPreview}
+          previewParams={previewParams}
+          extractedParameters={extractedParameters}
+          style={designSettings.style}
+          fontStyle={designSettings.fontStyle}
+          onFileChange={handleAlgoFileChange}
+          onExtractParameters={(params) => {
+            const extracted = processSceneFile(algoResponse);
+            if (extracted && typeof extracted === 'object') {
+              Object.entries(extracted).forEach(([key, value]) => {
+                updateParameter(key, value);
+              });
+            }
+          }}
+          onUpdatePreviewParams={(params) => {
+            Object.entries(params).forEach(([key, value]) => {
+              updateParameter(key, value);
+            });
+          }}
+          onTogglePreview={togglePreview}
+          onStyleChange={(style) => updateDesignSettings('style', style)}
+          onFontStyleChange={(font) => updateDesignSettings('fontStyle', font)}
           onNext={goToNextPage}
           onPrevious={goToPreviousPage}
         />
@@ -226,12 +280,17 @@ export default function WebsiteUpload() {
 
       {currentPage === 3 && (
         <PreviewPage
+          workName={artworkInfo.workName}
+          description={artworkInfo.description}
+          price={artworkInfo.price}
+          name={artistInfo.name}
+          social={artistInfo.social}
+          intro={artistInfo.intro}
+          imageUrl={imageUrl}
+          parameters={extractedParameters}
           previewParams={previewParams}
-          showPreview={showPreview}
           onParameterChange={updateParameter}
-          onTogglePreview={togglePreview}
-          onNext={goToNextPage}
-          onPrevious={goToPreviousPage}
+          onMint={goToNextPage}
         />
       )}
 
@@ -239,10 +298,20 @@ export default function WebsiteUpload() {
         <UploadStatusPage
           isLoading={isLoading}
           uploadStatus={uploadStatus}
-          error={error}
+          uploadResults={uploadResults}
+          currentStep={uploadStep}
+          steps={uploadSteps}
+          workName={artworkInfo.workName}
+          description={artworkInfo.description}
+          style={designSettings.style}
+          fontStyle={designSettings.fontStyle}
+          name={artistInfo.name}
+          social={artistInfo.social}
+          intro={artistInfo.intro}
+          price={artworkInfo.price}
           transactionDigest={transactionDigest}
           transactionError={transactionError}
-          onSubmit={handleUploadSubmit}
+          onSubmit={handleMint}
           onPrevious={goToPreviousPage}
         />
       )}

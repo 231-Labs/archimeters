@@ -1,5 +1,5 @@
 import Terminal from './Terminal';
-import Window from '../common/Window';
+import Window from '@/components/common/Window';
 import type { WindowName } from '@/types';
 
 /**

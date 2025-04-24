@@ -1,21 +1,22 @@
-import { TemplateSeries, FontStyle } from '../../types';
-import { useState, useEffect } from 'react';
+import { TemplateSeries, FontStyle, ParameterState } from '../../types';
+import { useState, useEffect, useCallback } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
 
-interface AlgorithmPageProps {
+interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' | 'previewParams' | 'showPreview'> {
   algoFile: File | null;
   algoResponse: string;
   algoError: string;
   algoRequired: boolean;
-  showPreview: boolean;
-  previewParams: Record<string, any>;
-  extractedParameters: Record<string, any>;
   style: TemplateSeries;
   fontStyle: FontStyle;
-  onAlgoFileChange: (file: File) => void;
-  onParameterChange: (key: string, value: any) => void;
+  onFileChange: (file: File) => void;
+  onExtractParameters: (params: Record<string, any>) => void;
+  onUpdatePreviewParams: (params: Record<string, any>) => void;
+  onTogglePreview: () => void;
   onStyleChange: (style: TemplateSeries) => void;
   onFontStyleChange: (style: FontStyle) => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
 const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => (
@@ -34,66 +35,45 @@ export const AlgorithmPage = ({
   extractedParameters,
   style,
   fontStyle,
-  onAlgoFileChange,
-  onParameterChange,
+  onFileChange,
+  onExtractParameters,
+  onUpdatePreviewParams,
+  onTogglePreview,
   onStyleChange,
-  onFontStyleChange
+  onFontStyleChange,
+  onNext,
+  onPrevious
 }: AlgorithmPageProps) => {
   const [fileTypeError, setFileTypeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (algoFile) {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const content = event.target?.result as string;
-          
-          // 使用正則表達式提取 defaultParameters
-          const parametersMatch = content.match(/export\s+const\s+defaultParameters\s*=\s*({[\s\S]*?});/);
-          
-          if (parametersMatch && parametersMatch[1]) {
-            try {
-              // 清理並解析參數對象
-              let paramStr = parametersMatch[1]
-                .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行註釋
-                .replace(/\/\/.*/g, '') // 移除單行註釋
-                .replace(/\s+/g, ' ') // 標準化空白
-                .replace(/(\w+):/g, '"$1":') // 將屬性名加上引號
-                .replace(/,(\s*[}\]])/g, '$1') // 移除尾隨逗號
-                .replace(/'/g, '"'); // 將單引號替換為雙引號
-
-              console.log('Cleaned parameter string:', paramStr);
-              
-              const extractedParams = JSON.parse(paramStr);
-              console.log('Parsed parameters:', extractedParams);
-
-              // 設置初始參數值
-              const initialParams = Object.fromEntries(
-                Object.entries(extractedParams).map(([key, value]: [string, any]) => [
-                  key,
-                  value.default
-                ])
-              );
-
-              onParameterChange('', initialParams);
-              setFileTypeError(null);
-            } catch (err: any) {
-              console.error('Error parsing parameters:', err);
-              setFileTypeError('Failed to parse parameters: ' + (err.message || String(err)));
-            }
-          } else {
-            setFileTypeError('No defaultParameters found in the file');
-          }
-        } catch (err: any) {
-          console.error('Error reading file:', err);
-          setFileTypeError('Failed to read file: ' + (err.message || String(err)));
-        }
-      };
-      
-      reader.readAsText(algoFile);
+    if (algoResponse) {
+      try {
+        const initialParams = JSON.parse(algoResponse);
+        onExtractParameters(initialParams);
+        setFileTypeError(null);
+      } catch (err: any) {
+        setFileTypeError(`Error parsing algorithm response: ${err.message}`);
+      }
     }
-  }, [algoFile]);
-  
+  }, [algoResponse, onExtractParameters]);
+
+  const handleDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts')) {
+        setFileTypeError(null);
+        onFileChange(file);
+      } else {
+        setFileTypeError(`Invalid file type. Only .tsx or .ts files are allowed. You uploaded: ${file.name}`);
+      }
+    }
+  }, [onFileChange]);
+
+  const handleParameterChange = useCallback((key: string, value: any) => {
+    onUpdatePreviewParams({ ...previewParams, [key]: value });
+  }, [previewParams, onUpdatePreviewParams]);
+
   return (
     <div className="flex h-full">
       {/* Left - Algorithm Upload and Preview */}
@@ -112,7 +92,7 @@ export const AlgorithmPage = ({
                   if (file) {
                     if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts')) {
                       setFileTypeError(null);
-                      onAlgoFileChange(file);
+                      onFileChange(file);
                     } else {
                       setFileTypeError(`Invalid file type. Only .tsx or .ts files are allowed. You uploaded: ${file.name}`);
                     }

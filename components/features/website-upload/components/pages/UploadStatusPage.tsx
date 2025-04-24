@@ -27,6 +27,8 @@ interface UploadStatusPageProps {
   price: string;
   transactionDigest?: string;
   transactionError?: string;
+  onSubmit: () => void;
+  onPrevious: () => void;
 }
 
 export function UploadStatusPage({
