@@ -6,7 +6,6 @@ export const STATE_ID = '0x03e9918c9f0633b1a1447970f908312231259095483b018f190a1
 export const ARTLIER_STATE_ID = '0x61e379d23bb9a3baf6f1f8ed0bfe3fa7c659285024a3872bb69049d733f962be';
 
 export const mintMembership = async (username: string) => {
-  // console.log('mintOS params:', username);
   
   const tx = new Transaction();
   tx.moveCall({
