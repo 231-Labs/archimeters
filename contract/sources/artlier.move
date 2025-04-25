@@ -1,48 +1,46 @@
-module archimeters::design_series {
+module archimeters::artlier {
     use archimeters::archimeters::{ Self, MemberShip };
     use std::string::{ String };
     use sui::{
         event,
         clock,
-        table,
         package,
         display,
-        table::{ Table },
-        vec_set::{ Self, VecSet }
     };
 
     // == Errors ==
     const ENO_MEMBERSHIP: u64 = 0;
 
     // == One Time Witness ==
-    public struct DESIGN_SERIES has drop {}
+    public struct ARTLIER has drop {}
 
     // == Structs ==
     public struct ArtlierState has key {
         id: UID,
-        all_artliers: Table<address, VecSet<ID>>,
+        all_artliers: vector<ID>,
     }
 
-    public struct Design_series has key, store {
+    public struct Artlier has key, store {
         id: UID,
-        owner: address,
+        name: String,
+        author: address,
         photo: String, // Walrus  blob ID for the main design image
         data: String, // Walrus blob ID for the website
         algorithm: String, // Walrus blob ID for the algorithm file
-        artificials: VecSet<ID>, // Collection of all items in the series
+        artificials: vector<ID>, // Collection of all items in the series
         price: u64,
         publish_time: u64,
     }
 
     // == Events ==
-    public struct New_design_series has copy, drop {
+    public struct New_artlier has copy, drop {
         id: ID,
     }
 
     // == Initializer ==
-    fun init(otw: DESIGN_SERIES, ctx: &mut TxContext) {
+    fun init(otw: ARTLIER, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        let mut display = display::new<Design_series>(&publisher, ctx);
+        let mut display = display::new<Artlier>(&publisher, ctx);
 
         display.add(
             b"name".to_string(),
@@ -65,25 +63,18 @@ module archimeters::design_series {
 
         transfer::share_object(ArtlierState {
             id: object::new(ctx),
-            all_artliers: table::new(ctx),
+            all_artliers: vector[],
         });
 
         transfer::public_transfer(publisher, ctx.sender());
         transfer::public_transfer(display, ctx.sender());
     }
 
-    // == Public Functions ==
-    public fun add_artlier_to_state(artlier_state: &mut ArtlierState, design_series_id: ID, ctx: &mut TxContext) {
-        let sender = tx_context::sender(ctx);
-        if (!table::contains(&artlier_state.all_artliers, sender)) {
-            table::add(&mut artlier_state.all_artliers, sender, vec_set::empty());
-        };
-        vec_set::insert(table::borrow_mut(&mut artlier_state.all_artliers, sender), design_series_id);
-    }
-
-    public entry fun mint_design_series(
+    // == Entry Functions ==
+    public entry fun mint_artlier(
         artlier_state: &mut ArtlierState,
         membership: &mut MemberShip,
+        name: String,
         photo: String,
         data: String,
         algorithm: String,
@@ -100,26 +91,32 @@ module archimeters::design_series {
         let id_inner = object::uid_to_inner(&id);
         let now = clock::timestamp_ms(clock);
         
-        let design_series = Design_series {
+        let artlier = Artlier {
             id,
-            owner: sender,
+            name,
+            author: sender,
             photo,
             data,
             algorithm,
-            artificials: vec_set::empty(),
+            artificials: vector[],
             price,
             publish_time: now,
         };
 
-        // Add Design Series ID to MemberShip and State
+        // Add Artlier ID to MemberShip and State
         archimeters::add_artlier_to_membership(membership, id_inner);
-        add_artlier_to_state(artlier_state, id_inner, ctx);
+        add_artlier_to_state(artlier_state, id_inner);
 
-        transfer::transfer(design_series, sender);
+        transfer::transfer(artlier, sender);
 
         // Emit the event at the end
-        event::emit(New_design_series {
+        event::emit(New_artlier {
             id: id_inner,
         });
+    }
+
+    // == Helper Functions ==
+    fun add_artlier_to_state(artlier_state: &mut ArtlierState, artlier_id: ID) {
+        artlier_state.all_artliers.push_back(artlier_id);
     }
 }
