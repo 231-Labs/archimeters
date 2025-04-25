@@ -15,4 +15,9 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 1280, height: 800 },
     resizable: true,
   },
+  browse: {
+    title: 'Browse Images',
+    defaultSize: { width: 1280, height: 800 },
+    resizable: true,
+  },
 }; 

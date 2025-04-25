@@ -2,7 +2,7 @@ import { ConnectButton, useCurrentAccount, useSuiClient, useSignAndExecuteTransa
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
-import { WindowName } from '@/types/index';
+import { WindowName } from '@/types';
 
 // 模擬用的臨時類型
 type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';

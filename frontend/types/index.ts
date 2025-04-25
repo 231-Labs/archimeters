@@ -1,7 +1,6 @@
-export type WindowName = 
-  | 'entry'
-  | 'designer'
-  | 'website-upload';
+import { WindowName } from './window';
+
+export type { WindowName };
 
 export interface WindowState {
   name: WindowName;

@@ -6,6 +6,7 @@ import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
 import WebsiteUpload from '@/components/windows/WebsiteUpload';
+import BrowseWindow from '@/components/windows/BrowseWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -108,6 +109,33 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                     >
                       <WebsiteUpload />
+                    </Window>
+                  );
+                case 'browse':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Browse Images"
+                      position={windowPositions.browse}
+                      size={windowSizes.browse}
+                      isActive={activeWindow === 'browse'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                    >
+                      <BrowseWindow
+                        name={name}
+                        position={windowPositions.browse}
+                        size={windowSizes.browse}
+                        isActive={activeWindow === 'browse'}
+                        onClose={closeWindow}
+                        onDragStart={startDragging}
+                        onResize={resizeWindow}
+                        onClick={() => activateWindow(name)}
+                      />
                     </Window>
                   );
                 default:

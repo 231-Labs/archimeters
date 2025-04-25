@@ -1,9 +1,13 @@
 import { ReactNode } from 'react';
 
+/**
+ * 所有可用的窗口名稱
+ */
 export type WindowName = 
-  | 'entry'
-  | 'designer'
-  | 'website-upload';
+  | 'entry'           // 入口窗口
+  | 'designer'        // 設計師終端
+  | 'website-upload'  // 網站上傳
+  | 'browse';         // 圖片瀏覽
 
 export interface WindowPosition {
   x: number;
