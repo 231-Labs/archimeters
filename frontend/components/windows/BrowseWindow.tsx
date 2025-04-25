@@ -6,24 +6,10 @@ import Masonry from 'react-masonry-css';
 
 interface BrowseWindowProps {
   name: WindowName;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  isActive?: boolean;
-  onClose: (name: WindowName) => void;
-  onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
-  onResize?: (e: React.MouseEvent, name: WindowName) => void;
-  onClick?: () => void;
 }
 
 export default function BrowseWindow({
   name,
-  position,
-  size,
-  isActive,
-  onClose,
-  onDragStart,
-  onResize,
-  onClick,
 }: BrowseWindowProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
