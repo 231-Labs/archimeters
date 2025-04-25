@@ -8,13 +8,21 @@ import { useSeriesImages } from '@/components/features/gallery/hooks/useSeriesIm
 
 interface BrowseWindowProps {
   name: WindowName;
+  onOpenWindow: (name: WindowName) => void;
 }
 
-interface ImageData {
+// 從 useSeriesImages 介面獲取 Artlier 類型
+interface Artlier {
   id: string;
+  photoBlobId: string;
+  algorithmBlobId: string;
+  dataBlobId: string;
   url: string | null;
+  algorithmContent: string | null;
+  configData: any | null;
   title: string;
-  social: string;
+  author: string;
+  price: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -24,16 +32,17 @@ const imageCache = new Map<string, string>();
 
 export default function BrowseWindow({
   name,
+  onOpenWindow,
 }: BrowseWindowProps) {
   const result = useSeriesImages();
   const images = result?.images || [];
   const isLoading = result?.isLoading || false;
   const error = result?.error || null;
   const [loadedImageIds, setLoadedImageIds] = useState<string[]>([]);
-
+  
   // 預加載並緩存圖片
   const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
-    if (imageCache.has(url)) {
+    if (!url || imageCache.has(url)) {
       return;
     }
 
@@ -65,9 +74,12 @@ export default function BrowseWindow({
     return imageCache.get(url) || url;
   }, []);
 
-  const handleImageClick = (image: ImageData) => {
-    // TODO: 實現圖片點擊功能
-    console.log('Image clicked:', image);
+  const handleImageClick = (artlier: Artlier) => {
+    console.log('Image clicked:', artlier);
+    // 將圖片數據保存到 sessionStorage 中
+    sessionStorage.setItem('selected-artlier', JSON.stringify(artlier));
+    // 使用 props 傳入的 onOpenWindow
+    onOpenWindow('artlier-viewer');
   };
 
   const breakpointColumns = {
@@ -75,6 +87,11 @@ export default function BrowseWindow({
     1400: 3,
     1100: 2,
     700: 1
+  };
+
+  // 檢查 Artlier 是否已完全加載
+  const isArtlierLoaded = (artlier: Artlier) => {
+    return !artlier.isLoading && !artlier.error && artlier.url !== null;
   };
 
   return (
@@ -101,51 +118,52 @@ export default function BrowseWindow({
             className="flex w-auto -ml-3"
             columnClassName="pl-3 bg-clip-padding"
           >
-            {images.map((image: ImageData) => (
-              <div key={image.id} className="mb-3">
-                {image.isLoading ? (
+            {images.map((artlier: Artlier) => (
+              <div key={artlier.id} className="mb-3">
+                {artlier.isLoading ? (
                   <div className="w-full aspect-square bg-neutral-800 animate-pulse rounded-sm" />
-                ) : image.error ? (
+                ) : artlier.error ? (
                   <div className="w-full aspect-square bg-red-900/20 flex items-center justify-center rounded-sm">
-                    <p className="text-red-500 text-sm">{image.error}</p>
+                    <p className="text-red-500 text-sm">{artlier.error}</p>
                   </div>
                 ) : (
                   <button
-                    onClick={() => handleImageClick(image)}
+                    onClick={() => handleImageClick(artlier)}
                     className="relative group w-full outline-none transition-all"
+                    disabled={!isArtlierLoaded(artlier)}
                   >
-                    {image.url ? (
+                    {artlier.url ? (
                       <div className="relative w-full">
                         <div className="relative w-full">
                           {/* 低質量預覽圖 */}
                           <Image
-                            src={getImageUrl(image.url)}
-                            alt={image.title}
+                            src={getImageUrl(artlier.url)}
+                            alt={artlier.title}
                             className={`w-full h-auto object-cover rounded-sm shadow-md blur-sm scale-110 ${
-                              loadedImageIds.includes(image.id) ? 'hidden' : 'block'
+                              loadedImageIds.includes(artlier.id) ? 'hidden' : 'block'
                             }`}
                             width={1200}
                             height={800}
                             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
                             quality={1}
-                            priority={!loadedImageIds.includes(image.id)}
+                            priority={!loadedImageIds.includes(artlier.id)}
                             style={{ height: 'auto' }}
                           />
                           {/* 高質量圖片 */}
                           <Image
-                            src={getImageUrl(image.url)}
-                            alt={image.title}
+                            src={getImageUrl(artlier.url)}
+                            alt={artlier.title}
                             className={`w-full h-auto object-cover rounded-sm shadow-md transition-all duration-300 group-hover:scale-[1.02] ${
-                              loadedImageIds.includes(image.id) ? 'block' : 'hidden'
+                              loadedImageIds.includes(artlier.id) ? 'block' : 'hidden'
                             }`}
                             width={1200}
                             height={800}
                             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
                             quality={90}
                             style={{ height: 'auto' }}
-                            onLoadingComplete={() => {
+                            onLoad={() => {
                               setLoadedImageIds(prev => 
-                                prev.includes(image.id) ? prev : [...prev, image.id]
+                                prev.includes(artlier.id) ? prev : [...prev, artlier.id]
                               );
                             }}
                           />
@@ -154,7 +172,10 @@ export default function BrowseWindow({
                         <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
                             <div className="text-sm text-white/95 font-medium">
-                              {image.title} | {image.social}
+                              {artlier.title} | @{artlier.author?.slice(0, 8)}
+                            </div>
+                            <div className="text-xs text-white/70">
+                              φ {artlier.price}
                             </div>
                           </div>
                         </div>

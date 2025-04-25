@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
 import WebsiteUpload from '@/components/windows/WebsiteUpload';
 import BrowseWindow from '@/components/windows/BrowseWindow';
+import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -128,14 +129,26 @@ export default function Home() {
                     >
                       <BrowseWindow
                         name={name}
-                        position={windowPositions.browse}
-                        size={windowSizes.browse}
-                        isActive={activeWindow === 'browse'}
-                        onClose={closeWindow}
-                        onDragStart={startDragging}
-                        onResize={resizeWindow}
-                        onClick={() => activateWindow(name)}
+                        onOpenWindow={openWindow}
                       />
+                    </Window>
+                  );
+                case 'artlier-viewer':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Artlier Viewer"
+                      position={windowPositions['artlier-viewer']}
+                      size={windowSizes['artlier-viewer']}
+                      isActive={activeWindow === 'artlier-viewer'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                    >
+                      <ArtlierViewerWindow name={name} />
                     </Window>
                   );
                 default:

@@ -20,4 +20,9 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 900, height: 600 },
     resizable: true,
   },
+  'artlier-viewer': {
+    title: 'Artlier Viewer',
+    defaultSize: { width: 800, height: 600 },
+    resizable: true,
+  },
 }; 
