@@ -46,18 +46,18 @@ export const BasicInfoPage = ({
   return (
     <div className="flex h-full">
       {/* Left - Basic Info */}
-      <div className="w-1/2 p-8 border-r border-white/5 flex flex-col overflow-auto">
-        <div className="w-full space-y-8 flex-1 pb-16">
+      <div className="w-1/2 px-7 py-5 border-r border-white/5 flex flex-col">
+        <div className="w-full space-y-5 flex-1">
           {/* Artwork Title */}
           <div>
             <input
               value={workName}
               onChange={(e) => onWorkNameChange(e.target.value)}
-              className={`w-full bg-transparent text-white text-3xl font-light border-b ${workNameRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+              className={`w-full bg-transparent text-white text-2xl font-light border-b ${workNameRequired ? 'border-red-400' : 'border-white/20'} pb-1.5 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
               placeholder="Enter artwork title..."
             />
             {workNameRequired && (
-              <div className="mt-2 text-red-400 text-sm">
+              <div className="mt-1.5 text-red-400 text-sm">
                 Artwork title is required
               </div>
             )}
@@ -65,31 +65,31 @@ export const BasicInfoPage = ({
 
           {/* Artwork Description */}
           <div>
-            <div className="text-white/50 text-sm mb-3">Artwork Description</div>
+            <div className="text-white/50 text-sm mb-2">Artwork Description</div>
             <textarea
               value={description}
               onChange={(e) => onDescriptionChange(e.target.value)}
-              className={`w-full h-32 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${descriptionRequired ? 'border-red-400' : 'border-white/20'}`}
+              className={`w-full h-24 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${descriptionRequired ? 'border-red-400' : 'border-white/20'}`}
               placeholder="Describe your artwork and creative concept..."
             />
             {descriptionRequired && (
-              <div className="mt-2 text-red-400 text-sm">
+              <div className="mt-1.5 text-red-400 text-sm">
                 Artwork description is required
               </div>
             )}
           </div>
 
           {/* Artist Info */}
-          <div className="space-y-4">
-            <div className="text-white/50 text-sm mb-1">Artist Information</div>
+          <div className="space-y-3">
+            <div className="text-white/50 text-sm">Artist Information</div>
             <div className="flex items-center space-x-3">
-              <div className="flex-1 text-white/90 pb-2">
+              <div className="flex-1 text-white/90 pb-1.5">
                 {name}
               </div>
               <span className="text-white/30">|</span>
               <div className="flex items-center flex-1">
                 <span className="text-white/50 mr-2">@</span>
-                <div className="text-white/90 pb-2">
+                <div className="text-white/90 pb-1.5">
                   {social}
                 </div>
               </div>
@@ -97,19 +97,19 @@ export const BasicInfoPage = ({
             <textarea
               value={intro}
               onChange={(e) => onIntroChange(e.target.value)}
-              className={`w-full h-24 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${introRequired ? 'border-red-400' : 'border-white/20'}`}
+              className={`w-full h-20 bg-transparent text-white/90 focus:outline-none resize-none placeholder:text-white/20 border-b ${introRequired ? 'border-red-400' : 'border-white/20'}`}
               placeholder="Introduce yourself as an artist..."
             />
             {introRequired && (
-              <div className="mt-2 text-red-400 text-sm">
+              <div className="mt-1.5 text-red-400 text-sm">
                 Artist introduction is required
               </div>
             )}
           </div>
 
           {/* Artwork Price */}
-          <div className="">
-            <div className="text-white/50 text-sm mb-3">Artwork Price</div>
+          <div>
+            <div className="text-white/50 text-sm mb-2">Artwork Price</div>
             <div className="flex items-center">
               <span className="text-white/50 text-xl mr-3">φ</span>
               <input
@@ -118,12 +118,12 @@ export const BasicInfoPage = ({
                 pattern="\d*"
                 value={price}
                 onChange={(e) => onPriceChange(e.target.value)}
-                className={`flex-1 bg-transparent text-white text-xl border-b ${priceRequired ? 'border-red-400' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
+                className={`flex-1 bg-transparent text-white text-xl border-b ${priceRequired ? 'border-red-400' : 'border-white/20'} pb-1.5 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
                 placeholder="Set artwork price..."
               />
             </div>
             {priceError && (
-              <div className="mt-2 text-red-400 text-sm">
+              <div className="mt-1.5 text-red-400 text-sm">
                 {priceError}
               </div>
             )}
@@ -132,9 +132,9 @@ export const BasicInfoPage = ({
       </div>
 
       {/* Right - Main Visual Upload */}
-      <div className="w-1/2 p-8 flex flex-col relative">
-        <div className="text-white/50 text-sm mb-4 mt-[12px]">Main Visual</div>
-        <div className="flex-1 group relative max-h-[calc(100vh-360px)]">
+      <div className="w-1/2 px-7 py-5 flex flex-col">
+        <div className="text-white/50 text-sm mb-3">Main Visual</div>
+        <div className="flex-1 group relative">
           <input
             type="file"
             onChange={(e) => {
@@ -148,7 +148,7 @@ export const BasicInfoPage = ({
               <img src={imageUrl} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
             ) : (
               <div className="text-center p-4">
-                <div className={`text-4xl mb-3 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
+                <div className={`text-4xl mb-2 ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>+</div>
                 <div className={`text-sm ${imageRequired ? 'text-red-400' : 'text-white/40'}`}>
                   {imageRequired ? 'Main visual is required' : 'Click or drag to upload image'}
                 </div>
@@ -156,8 +156,6 @@ export const BasicInfoPage = ({
             )}
           </div>
         </div>
-        {/* 底部留白，確保不會與底部導航按鈕重疊 */}
-        <div className="h-16"></div>
       </div>
     </div>
   );
