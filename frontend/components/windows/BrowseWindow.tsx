@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import type { WindowName } from '@/types';
 import Masonry from 'react-masonry-css';
 import { useSeriesImages } from '@/components/features/gallery/hooks/useSeriesImages';
@@ -25,13 +26,13 @@ export default function BrowseWindow({
   const images = result?.images || [];
   const isLoading = result?.isLoading || false;
   const error = result?.error || null;
+  const [loadedImageIds, setLoadedImageIds] = useState<string[]>([]);
 
   const handleImageClick = (image: ImageData) => {
     // TODO: 實現圖片點擊功能
     console.log('Image clicked:', image);
   };
 
-  // Masonry layout breakpoints
   const breakpointColumns = {
     default: 4,
     1400: 3,
@@ -75,38 +76,57 @@ export default function BrowseWindow({
                   <button
                     onClick={() => handleImageClick(image)}
                     className="relative group w-full outline-none transition-all"
-                    style={{ display: 'block' }}
                   >
                     {image.url ? (
-                      <>
-                        <img
-                          src={image.url}
-                          alt={image.title}
-                          className="w-full h-auto object-cover rounded-sm shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
-                          style={{ maxHeight: '80vh' }}
-                          onError={(e) => {
-                            console.error('Image failed to load:', image.url);
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                          onLoad={(e) => {
-                            console.log('Image loaded successfully:', image.url);
-                          }}
-                        />
-                      </>
+                      <div className="relative w-full">
+                        <div className="relative w-full">
+                          {/* 低質量預覽圖 */}
+                          <Image
+                            src={image.url}
+                            alt={image.title}
+                            className={`w-full h-auto object-cover rounded-sm shadow-md blur-sm scale-110 ${
+                              loadedImageIds.includes(image.id) ? 'hidden' : 'block'
+                            }`}
+                            width={1200}
+                            height={800}
+                            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
+                            quality={1}
+                            priority={!loadedImageIds.includes(image.id)}
+                            style={{ height: 'auto' }}
+                          />
+                          {/* 高質量圖片 */}
+                          <Image
+                            src={image.url}
+                            alt={image.title}
+                            className={`w-full h-auto object-cover rounded-sm shadow-md transition-all duration-300 group-hover:scale-[1.02] ${
+                              loadedImageIds.includes(image.id) ? 'block' : 'hidden'
+                            }`}
+                            width={1200}
+                            height={800}
+                            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
+                            quality={90}
+                            style={{ height: 'auto' }}
+                            onLoadingComplete={() => {
+                              setLoadedImageIds(prev => 
+                                prev.includes(image.id) ? prev : [...prev, image.id]
+                              );
+                            }}
+                          />
+                        </div>
+                        {/* Hover text */}
+                        <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
+                            <div className="text-sm text-white/95 font-medium">
+                              {image.title} | {image.social}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <div className="w-full aspect-square bg-gray-800 flex items-center justify-center rounded-sm">
                         <p className="text-gray-500 text-sm">No image URL</p>
                       </div>
                     )}
-                    {/* Hover text */}
-                    <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
-                        <div className="text-sm text-white/95 font-medium">
-                          {image.title} | {image.social}
-                        </div>
-                      </div>
-                    </div>
                   </button>
                 )}
               </div>
