@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import type { WindowName } from '@/types';
 import Masonry from 'react-masonry-css';
@@ -19,6 +19,9 @@ interface ImageData {
   error: string | null;
 }
 
+// 緩存圖片的 Map
+const imageCache = new Map<string, string>();
+
 export default function BrowseWindow({
   name,
 }: BrowseWindowProps) {
@@ -27,6 +30,40 @@ export default function BrowseWindow({
   const isLoading = result?.isLoading || false;
   const error = result?.error || null;
   const [loadedImageIds, setLoadedImageIds] = useState<string[]>([]);
+
+  // 預加載並緩存圖片
+  const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
+    if (imageCache.has(url)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        cache: 'force-cache',
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable'
+        }
+      });
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      imageCache.set(url, objectUrl);
+    } catch (error) {
+      console.error('Error caching image:', error);
+    }
+  }, []);
+
+  // 當圖片數據變化時預加載
+  useEffect(() => {
+    images.forEach(image => {
+      if (image.url) {
+        preloadAndCacheImage(image.url);
+      }
+    });
+  }, [images, preloadAndCacheImage]);
+
+  const getImageUrl = useCallback((url: string) => {
+    return imageCache.get(url) || url;
+  }, []);
 
   const handleImageClick = (image: ImageData) => {
     // TODO: 實現圖片點擊功能
@@ -82,7 +119,7 @@ export default function BrowseWindow({
                         <div className="relative w-full">
                           {/* 低質量預覽圖 */}
                           <Image
-                            src={image.url}
+                            src={getImageUrl(image.url)}
                             alt={image.title}
                             className={`w-full h-auto object-cover rounded-sm shadow-md blur-sm scale-110 ${
                               loadedImageIds.includes(image.id) ? 'hidden' : 'block'
@@ -96,7 +133,7 @@ export default function BrowseWindow({
                           />
                           {/* 高質量圖片 */}
                           <Image
-                            src={image.url}
+                            src={getImageUrl(image.url)}
                             alt={image.title}
                             className={`w-full h-auto object-cover rounded-sm shadow-md transition-all duration-300 group-hover:scale-[1.02] ${
                               loadedImageIds.includes(image.id) ? 'block' : 'hidden'
