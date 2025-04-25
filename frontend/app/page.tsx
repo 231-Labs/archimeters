@@ -56,7 +56,7 @@ export default function Home() {
     <>
       <div className="min-h-screen bg-black overflow-hidden">
         <Header />
-        <Dock onOpenWindow={openWindow} />
+        <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
           <div className="h-full relative">
             {openWindows.map(name => {

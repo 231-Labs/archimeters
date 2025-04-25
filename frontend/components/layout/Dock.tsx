@@ -3,9 +3,15 @@ import DesktopIcon from '../desktop/DesktopIcon';
 
 interface DockProps {
   onOpenWindow: (name: WindowName) => void;
+  onActivateWindow: (name: WindowName) => void;
 }
 
-export default function Dock({ onOpenWindow }: DockProps) {
+export default function Dock({ onOpenWindow, onActivateWindow }: DockProps) {
+  const handleIconClick = (name: WindowName) => {
+    onOpenWindow(name);
+    onActivateWindow(name);
+  };
+
   return (
     <div 
       className="fixed left-1/2 -translate-x-1/2 bottom-4 bg-[rgba(10,10,10,0.4)] backdrop-blur-xl border border-white/10 z-50 pointer-events-none"
@@ -17,7 +23,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="Entry"
-            onClick={() => onOpenWindow('entry')}
+            onClick={() => handleIconClick('entry')}
             icon="🎨"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
@@ -28,7 +34,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="Designer Terminal"
-            onClick={() => onOpenWindow('designer')}
+            onClick={() => handleIconClick('designer')}
             icon="💻"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
@@ -39,7 +45,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="Website Upload"
-            onClick={() => onOpenWindow('website-upload')}
+            onClick={() => handleIconClick('website-upload')}
             icon="🌐"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
@@ -50,7 +56,7 @@ export default function Dock({ onOpenWindow }: DockProps) {
           </div>
           <DesktopIcon
             label="Browse Images"
-            onClick={() => onOpenWindow('browse')}
+            onClick={() => handleIconClick('browse')}
             icon="🖼️"
             className="w-12 h-12 flex items-center justify-center transition-all duration-200"
           />
