@@ -1,7 +1,7 @@
 import { WindowName } from '@/types';
 import DesktopIcon from '../desktop/DesktopIcon';
 
-interface DockProps {
+export interface DockProps {
   onOpenWindow: (name: WindowName) => void;
   onActivateWindow: (name: WindowName) => void;
 }
