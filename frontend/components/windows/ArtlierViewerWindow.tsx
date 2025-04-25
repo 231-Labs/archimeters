@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { WindowName } from '@/types';
-import Image from 'next/image';
+import BaseTemplate from '@/components/templates/BaseTemplate';
+import DefaultTemplate from '@/components/templates/DefaultTemplate';
+import ParametricScene from '@/components/3d/ParametricScene';
 
 interface ArtlierViewerWindowProps {
   name: WindowName;
@@ -23,14 +25,35 @@ export default function ArtlierViewerWindow({
   name,
 }: ArtlierViewerWindowProps) {
   const [artlier, setArtlier] = useState<Artlier | null>(null);
+  const [parameters, setParameters] = useState<Record<string, any>>({});
+  const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
 
   useEffect(() => {
     // 從 sessionStorage 中讀取藝術品數據
     const storedArtlier = sessionStorage.getItem('selected-artlier');
     if (storedArtlier) {
-      setArtlier(JSON.parse(storedArtlier));
+      const parsedArtlier = JSON.parse(storedArtlier);
+      setArtlier(parsedArtlier);
+      
+      // 如果有 configData，設置參數
+      if (parsedArtlier.configData) {
+        setParameters(parsedArtlier.configData.parameters || {});
+        // 設置預覽參數的初始值
+        const initialPreviewParams = Object.fromEntries(
+          Object.entries(parsedArtlier.configData.parameters || {})
+            .map(([key, value]: [string, any]) => [key, value.default])
+        );
+        setPreviewParams(initialPreviewParams);
+      }
     }
   }, []);
+
+  const handleParameterChange = (key: string, value: string | number) => {
+    setPreviewParams(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
   if (!artlier) {
     return (
@@ -41,29 +64,33 @@ export default function ArtlierViewerWindow({
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a0a] text-white">
-      {/* 主圖區域 */}
-      <div className="flex-1 relative overflow-hidden">
-        {artlier.url && (
-          <Image
-            src={artlier.url}
-            alt={artlier.title}
-            className="w-full h-full object-contain"
-            width={1200}
-            height={800}
-            priority
-          />
-        )}
-      </div>
-
-      {/* 信息區域 */}
-      <div className="p-4 border-t border-white/10 bg-[#0a0a0a]">
-        <h2 className="text-lg font-bold mb-2">{artlier.title}</h2>
-        <div className="flex items-center justify-between text-sm text-white/70">
-          <div>@{artlier.author}</div>
-          <div>φ {artlier.price}</div>
-        </div>
-      </div>
-    </div>
+    <BaseTemplate
+      workName={artlier.title}
+      description=""
+      price={artlier.price}
+      author={artlier.author}
+      social={artlier.author?.slice(0, 8) || ''}
+      intro=""
+      imageUrl={artlier.url || ''}
+      parameters={parameters}
+      previewParams={previewParams}
+      onParameterChange={handleParameterChange}
+      onMint={() => {}}
+    >
+      <DefaultTemplate
+        workName={artlier.title}
+        description=""
+        price={artlier.price}
+        author={artlier.author}
+        social={artlier.author?.slice(0, 8) || ''}
+        intro=""
+        imageUrl={artlier.url || ''}
+        parameters={parameters}
+        previewParams={previewParams}
+        onParameterChange={handleParameterChange}
+        onMint={() => {}}
+        preview3D={<ParametricScene parameters={previewParams} />}
+      />
+    </BaseTemplate>
   );
 } 
