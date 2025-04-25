@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xae378bc06204b33b235b9bb02c54fee089761e42a0c5b09e01f04eecd90ac7e9';
-export const STATE_ID = '0x03e9918c9f0633b1a1447970f908312231259095483b018f190a18939fcee98c';
-export const ARTLIER_STATE_ID = '0x61e379d23bb9a3baf6f1f8ed0bfe3fa7c659285024a3872bb69049d733f962be';
+export const PACKAGE_ID = '0x160e93a55da86430e19cf55a7838cae399c104ab87482aadfdffb39f607c1f91';
+export const STATE_ID = '0xb1a5ae5a5f8ccb3a2dd96409064531ca73b34abfb97e9674bb781077120e23d5';
+export const ARTLIER_STATE_ID = '0x012cb23c2fa9504198ded490ffb436eb8dc81f57c5fe41c37a7c319150617bf0';
 
 export const mintMembership = async (username: string) => {
   
@@ -19,9 +19,10 @@ export const mintMembership = async (username: string) => {
   return tx;
 };
 
-export const createDesignSeries = async (
+export const createArtlier = async (
   artlierState: string,
   membershipId: string,
+  name: string,
   photo: string,
   data: string,
   algorithm: string,
@@ -30,10 +31,11 @@ export const createDesignSeries = async (
 ) => {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::design_series::mint_design_series`,
+    target: `${PACKAGE_ID}::artlier::mint_artlier`,
     arguments: [
       tx.object(artlierState),
       tx.object(membershipId),
+      tx.pure(bcs.string().serialize(name).toBytes()),
       tx.pure(bcs.string().serialize(photo).toBytes()),
       tx.pure(bcs.string().serialize(data).toBytes()),
       tx.pure(bcs.string().serialize(algorithm).toBytes()),

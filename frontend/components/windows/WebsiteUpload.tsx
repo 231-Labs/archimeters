@@ -8,7 +8,7 @@ import { useUpload } from '@/components/features/website-upload/hooks/useUpload'
 import { createMetadataJson } from '@/components/features/website-upload/utils/metadata';
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/website-upload/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createDesignSeries, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -338,9 +338,10 @@ export default function WebsiteUpload() {
     }
 
     try {
-      const tx = await createDesignSeries(
+      const tx = await createArtlier(
         ARTLIER_STATE_ID,
         membershipId,
+        workName,
         imageBlobId,
         metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
         algoBlobId,      // 使用 algoBlobId
