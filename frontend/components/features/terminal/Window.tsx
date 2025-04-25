@@ -33,6 +33,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({ onClose, name }) => {
       onClose={onClose}
       onDragStart={() => {}}
       onClick={() => {}}
+      zIndex={100}
     >
       <Terminal />
     </Window>

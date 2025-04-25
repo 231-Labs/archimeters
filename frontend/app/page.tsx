@@ -152,7 +152,9 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={windowZIndexes[name]}
+                      zIndex={name === 'artlier-viewer' && openWindows.indexOf('browse') !== -1 
+                        ? Math.max(openWindows.indexOf('browse') + 2, openWindows.indexOf(name) + 1)
+                        : openWindows.indexOf(name) + 1}
                     >
                       <ArtlierViewerWindow name={name} />
                     </Window>
