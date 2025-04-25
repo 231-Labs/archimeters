@@ -78,14 +78,14 @@ export default function BrowseWindow({
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4">
           <Masonry
             breakpointCols={breakpointColumns}
-            className="flex w-auto -ml-4"
-            columnClassName="pl-4 bg-clip-padding"
+            className="flex w-auto -ml-3"
+            columnClassName="pl-3 bg-clip-padding"
           >
             {placeholderImages.map((image) => (
-              <div key={image.id} className="mb-4">
+              <div key={image.id} className="mb-3">
                 <button
                   onClick={() => handleImageClick(image.url)}
                   className="relative group w-full outline-none transition-all"
@@ -94,12 +94,12 @@ export default function BrowseWindow({
                   <img
                     src={image.url}
                     alt={image.title}
-                    className="w-full rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
+                    className="w-full rounded-sm shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
                     style={{ height: `${image.height}px` }}
                   />
                   {/* Hover text */}
-                  <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-                    <div className='flex flex-col space-y-2 bg-black/60 px-4 py-2 rounded-lg w-fit'>
+                  <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-sm">
+                    <div className='flex flex-col space-y-2 bg-black/60 px-4 py-2 rounded-sm w-fit'>
                       <div className="text-sm text-white/90 font-mono">
                         {image.title} | {image.social}
                       </div>
