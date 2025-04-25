@@ -22,6 +22,7 @@ export default function Home() {
     activeWindow,
     windowPositions,
     windowSizes,
+    windowZIndexes,
     activateWindow,
     openWindow,
     closeWindow,
@@ -72,6 +73,7 @@ export default function Home() {
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
                     </Window>
@@ -90,6 +92,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <Terminal />
                     </Window>
@@ -108,6 +111,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <WebsiteUpload />
                     </Window>
@@ -126,6 +130,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <BrowseWindow
                         name={name}
@@ -147,6 +152,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={windowZIndexes[name]}
                     >
                       <ArtlierViewerWindow name={name} />
                     </Window>

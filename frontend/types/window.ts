@@ -49,6 +49,8 @@ export interface WindowManagerState {
   draggingWindow: WindowName | null;
   windowPositions: Record<WindowName, WindowPosition>;
   windowSizes: Record<WindowName, WindowSize>;
+  windowZIndexes: Record<WindowName, number>;
+  maxZIndex: number;
 }
 
 export interface WindowConfig {

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { WindowName, WindowPosition, WindowSize, WindowManagerState } from '@/types/window';
 import { defaultWindowConfigs } from '@/config/windows';
 
+const BASE_Z_INDEX = 100;  // 基礎 z-index 值
+
 export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
   const [state, setState] = useState<WindowManagerState>({
     openWindows: [initialOpenWindow],
@@ -15,6 +17,11 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
       ...acc,
       [name]: config.defaultSize
     }), {} as Record<WindowName, WindowSize>),
+    windowZIndexes: Object.keys(defaultWindowConfigs).reduce((acc, name) => ({
+      ...acc,
+      [name]: BASE_Z_INDEX
+    }), {} as Record<WindowName, number>),
+    maxZIndex: BASE_Z_INDEX,
   });
 
   // 計算視窗中心位置的函數
@@ -50,34 +57,55 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
 
   // 激活窗口
   const activateWindow = useCallback((name: WindowName) => {
-    setState(prev => ({
-      ...prev,
-      activeWindow: name,
-      openWindows: [...prev.openWindows.filter(w => w !== name), name],
-    }));
+    setState(prev => {
+      const newMaxZIndex = prev.maxZIndex + 1;
+      return {
+        ...prev,
+        activeWindow: name,
+        // 將激活的窗口移到數組末尾
+        openWindows: [...prev.openWindows.filter(w => w !== name), name],
+        maxZIndex: newMaxZIndex,
+        windowZIndexes: {
+          ...prev.windowZIndexes,
+          [name]: newMaxZIndex,
+        },
+      };
+    });
   }, []);
 
   // 打開窗口
   const openWindow = useCallback((name: WindowName) => {
     setState(prev => {
-      if (prev.openWindows.includes(name)) {
-        return {
-          ...prev,
-          activeWindow: name,
-          openWindows: [...prev.openWindows.filter(w => w !== name), name],
-        };
-      }
-
       const config = defaultWindowConfigs[name];
-      const centerPosition = getCenterPosition(config.defaultSize.width, config.defaultSize.height);
+      const basePosition = getCenterPosition(config.defaultSize.width, config.defaultSize.height);
+      
+      // 為新窗口添加一個小的偏移，避免完全重疊
+      const offset = prev.openWindows.length * 20;
+      const centerPosition = {
+        x: Math.min(basePosition.x + offset, window.innerWidth - config.defaultSize.width - 20),
+        y: Math.min(basePosition.y + offset, window.innerHeight - config.defaultSize.height - 68),
+      };
+
+      // 設置新的 z-index
+      const newMaxZIndex = prev.maxZIndex + 1;
+
+      // 如果窗口已經打開，保留在列表中的位置，只更新 z-index
+      const newOpenWindows = prev.openWindows.includes(name)
+        ? prev.openWindows
+        : [...prev.openWindows, name];
 
       return {
         ...prev,
         activeWindow: name,
-        openWindows: [...prev.openWindows, name],
+        openWindows: newOpenWindows,
         windowPositions: {
           ...prev.windowPositions,
           [name]: centerPosition,
+        },
+        maxZIndex: newMaxZIndex,
+        windowZIndexes: {
+          ...prev.windowZIndexes,
+          [name]: newMaxZIndex,
         },
       };
     });
