@@ -27,9 +27,11 @@ export default function WebsiteUpload() {
     algoFile,
     algoResponse,
     algoError,
+    userScript,
     handleImageFileChange,
     handleAlgoFileChange,
-    resetFiles
+    resetFiles,
+    setUserScript
   } = useFileUpload();
 
   const {
@@ -284,6 +286,8 @@ export default function WebsiteUpload() {
             onFontStyleChange={(font) => updateDesignSettings('fontStyle', font)}
             onNext={goToNextPage}
             onPrevious={goToPreviousPage}
+            userScript={userScript}
+            onUserScriptChange={setUserScript}
           />
         )}
 
@@ -300,10 +304,7 @@ export default function WebsiteUpload() {
             previewParams={previewParams}
             onParameterChange={updateParameter}
             onMint={goToNextPage}
-            userScript={algoFile ? {
-              code: algoResponse,
-              filename: algoFile.name
-            } : undefined}
+            userScript={userScript}
           />
         )}
 

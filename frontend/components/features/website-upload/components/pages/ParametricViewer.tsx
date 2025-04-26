@@ -22,7 +22,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
     return (
       <div className={className}>
         <div className="flex h-full items-center justify-center text-white/50">
-          未提供幾何體腳本
+          No geometry script provided
         </div>
       </div>
     );

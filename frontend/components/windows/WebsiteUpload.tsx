@@ -96,6 +96,9 @@ export default function WebsiteUpload() {
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
 
+  // 添加 userScript 狀態
+  const [userScript, setUserScript] = useState<{ code: string; filename: string } | null>(null);
+
   // 在每次 uploadStep 或 uploadSteps 變化時更新本地狀態
   useEffect(() => {
     if (uploadSteps) {
@@ -230,6 +233,11 @@ export default function WebsiteUpload() {
         try {
           const content = event.target?.result as string;
           setAlgoResponse(content.substring(0, 500));
+          // 設置 userScript
+          setUserScript({
+            code: content,
+            filename: file.name
+          });
           processSceneFile(content);
         } catch (error) {
           setAlgoError('Failed to read algorithm file');
@@ -824,6 +832,8 @@ export default function WebsiteUpload() {
             onTogglePreview={() => setShowPreview(!showPreview)}
             onNext={goToNextPage}
             onPrevious={goToPreviousPage}
+            userScript={userScript}
+            onUserScriptChange={setUserScript}
           />
         )}
         {currentPage === 3 && (
@@ -839,6 +849,7 @@ export default function WebsiteUpload() {
             previewParams={previewParams}
             onParameterChange={handleParameterChange}
             onMint={goToNextPage}
+            userScript={userScript}
           />
         )}
         {currentPage === 4 && (

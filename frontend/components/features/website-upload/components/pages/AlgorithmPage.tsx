@@ -31,12 +31,14 @@ interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' 
   algoRequired: boolean;
   style: TemplateSeries;
   fontStyle: FontStyle;
+  userScript: { code: string; filename: string } | null;
   onFileChange: (file: File) => void;
   onExtractParameters: (params: Record<string, any>) => void;
   onUpdatePreviewParams: (params: Record<string, any>) => void;
   onTogglePreview: () => void;
   onStyleChange: (style: TemplateSeries) => void;
   onFontStyleChange: (style: FontStyle) => void;
+  onUserScriptChange: (script: { code: string; filename: string } | null) => void;
   onNext: () => void;
   onPrevious: () => void;
 }
@@ -88,28 +90,6 @@ const defaultParameters: Parameters = {
   }
 };
 
-const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => {
-  const geometryScript = {
-    code: `
-      function createGeometry(THREE, params) {
-        return new THREE.TorusGeometry(
-          ${parameters.radius || 2},
-          ${parameters.tubeRadius || 0.5},
-          ${parameters.radialSegments || 16},
-          ${parameters.tubularSegments || 100}
-        );
-      }
-    `,
-    filename: 'preview.js'
-  };
-
-  return (
-    <div className="h-full rounded-lg overflow-hidden bg-black/30">
-      <ParametricViewer userScript={geometryScript} parameters={parameters} />
-    </div>
-  );
-};
-
 export const AlgorithmPage = ({
   algoFile,
   algoResponse,
@@ -120,12 +100,14 @@ export const AlgorithmPage = ({
   extractedParameters,
   style,
   fontStyle,
+  userScript,
   onFileChange,
   onExtractParameters,
   onUpdatePreviewParams,
   onTogglePreview,
   onStyleChange,
   onFontStyleChange,
+  onUserScriptChange,
   onNext,
   onPrevious
 }: AlgorithmPageProps) => {
@@ -205,6 +187,10 @@ export const AlgorithmPage = ({
       filename: algoFile?.name || 'preview.js'
     };
   }, [jsCode, previewParams, algoFile]);
+
+  useEffect(() => {
+    onUserScriptChange(geometryScript);
+  }, [geometryScript, onUserScriptChange]);
 
   return (
     <div className="flex h-full">

@@ -89,7 +89,7 @@ export default function ArtlierViewerWindow({
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
         onMint={() => {}}
-        preview3D={<ParametricScene parameters={previewParams} />}
+        preview3D={<ParametricScene parameters={previewParams} userScript={null} />} //FIXME: 需要從 artlier 中取得 userScript blob id 
       />
     </BaseTemplate>
   );
