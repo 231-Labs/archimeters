@@ -1,6 +1,6 @@
 import { TemplateSeries, FontStyle, ParameterState } from '../../types';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import ParametricScene from '@/components/3d/ParametricScene';
+import { ParametricViewer } from './ParametricViewer';
 
 interface NumberParameter {
   type: 'number';
@@ -91,7 +91,7 @@ const defaultParameters: Parameters = {
 const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => {
   const geometryScript = {
     code: `
-      function createGeometry(THREE) {
+      function createGeometry(THREE, params) {
         return new THREE.TorusGeometry(
           ${parameters.radius || 2},
           ${parameters.tubeRadius || 0.5},
@@ -105,7 +105,7 @@ const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) =
 
   return (
     <div className="h-full rounded-lg overflow-hidden bg-black/30">
-      <ParametricScene userScript={geometryScript} />
+      <ParametricViewer userScript={geometryScript} parameters={parameters} />
     </div>
   );
 };
@@ -214,7 +214,7 @@ export const AlgorithmPage = ({
         <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
           {showPreview ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
-              <ParametricScene 
+              <ParametricViewer 
                 userScript={geometryScript}
                 parameters={previewParams}
               />
@@ -269,65 +269,16 @@ export const AlgorithmPage = ({
           {/* Parameter List */}
           {Object.keys(extractedParameters).length > 0 ? (
             <div className="space-y-4">
-              <div className="text-white/50 text-sm">Algorithm Parameters</div>
-              <div className="space-y-4">
+              <div className="text-white/50 text-sm">Default Parameters</div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 {Object.entries(extractedParameters).map(([key, param]: [string, any]) => (
                   <div key={key} className="bg-white/5 rounded-md p-3">
-                    <label className="text-white/60 mb-2 block capitalize">{param.label || key}</label>
-                    {param.type === 'number' ? (
-                      <div className="space-y-2">
-                        <input
-                          type="range"
-                          min={param.min}
-                          max={param.max}
-                          step={0.1}
-                          value={previewParams[key] || param.default}
-                          onChange={(e) => onUpdatePreviewParams({
-                            ...previewParams,
-                            [key]: parseFloat(e.target.value)
-                          })}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between">
-                          <input
-                            type="number"
-                            min={param.min}
-                            max={param.max}
-                            step={0.1}
-                            value={previewParams[key] || param.default}
-                            onChange={(e) => onUpdatePreviewParams({
-                              ...previewParams,
-                              [key]: parseFloat(e.target.value)
-                            })}
-                            className="w-20 bg-white/10 rounded px-2 py-1 text-white text-sm"
-                          />
-                          <span className="text-white/40 text-sm">
-                            [{param.min} - {param.max}]
-                          </span>
-                        </div>
-                      </div>
-                    ) : param.type === 'color' ? (
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="color"
-                          value={previewParams[key] || param.default}
-                          onChange={(e) => onUpdatePreviewParams({
-                            ...previewParams,
-                            [key]: e.target.value
-                          })}
-                          className="w-8 h-8 rounded cursor-pointer bg-transparent"
-                        />
-                        <input
-                          type="text"
-                          value={previewParams[key] || param.default}
-                          onChange={(e) => onUpdatePreviewParams({
-                            ...previewParams,
-                            [key]: e.target.value
-                          })}
-                          className="flex-1 bg-white/10 rounded px-2 py-1 text-white text-sm"
-                        />
-                      </div>
-                    ) : null}
+                    <div className="text-white/60 mb-1 capitalize">{param.label || key}</div>
+                    <div className="text-white font-mono">
+                      {typeof param.default === 'object' 
+                        ? JSON.stringify(param.default) 
+                        : param.default}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -338,7 +289,7 @@ export const AlgorithmPage = ({
             </div>
           ) : (
             <div className="text-white/40 text-sm text-center py-8">
-              Upload an algorithm file to configure parameters
+              Upload an algorithm file to view parameters
             </div>
           )}
 

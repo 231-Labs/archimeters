@@ -20,7 +20,84 @@ export function useParameters() {
     hasExtractedParams: false,
     previewParams: {},
     showPreview: false,
+    customScript: null,
   });
+
+  // 創建兼容的腳本對象，保證符合ParametricViewer的要求
+  const createCompatibleScript = useCallback((code: string, filename: string = 'script.js') => {
+    console.log('Creating compatible script for:', filename);
+    
+    // 檢查代碼是否已包含createGeometry函數
+    if (code.includes('function createGeometry(') || code.includes('createGeometry = function(')) {
+      console.log('Using existing createGeometry function');
+      return { code, filename };
+    }
+    
+    // 判斷是否為模塊格式並提取必要代碼
+    if (code.includes('export') || code.includes('module.exports')) {
+      console.log('Converting module format to compatible script');
+      let wrappedCode = `
+// Original file: ${filename}
+// Wrapped for ParametricViewer compatibility
+${code}
+
+function createGeometry(THREE, params) {
+  // 使用params參數調用模塊中的函數或類
+  try {
+    // 嘗試ES模塊模式
+    if (typeof createMesh === 'function') {
+      return createMesh(THREE, params);
+    }
+    
+    // 嘗試CommonJS模式
+    if (typeof module !== 'undefined' && module.exports && typeof module.exports.createGeometry === 'function') {
+      return module.exports.createGeometry(THREE, params);
+    }
+    
+    // 默認返回一個基本幾何體
+    console.warn('Could not find geometry creation function, using fallback');
+    return new THREE.TorusGeometry(
+      params.radius || 2,
+      params.tubeRadius || 0.5,
+      params.radialSegments || 16,
+      params.tubularSegments || 100
+    );
+  } catch (error) {
+    console.error('Error in createGeometry wrapper:', error);
+    return new THREE.SphereGeometry(1, 32, 32);
+  }
+}`;
+      return { code: wrappedCode, filename };
+    }
+    
+    // 如果是普通代碼，也包裝為兼容格式
+    console.log('Wrapping plain code with createGeometry function');
+    let wrappedCode = `
+// Original code wrapped with createGeometry function
+${code}
+
+function createGeometry(THREE, params) {
+  // 使用上面原始代碼中的變量和函數
+  try {
+    // 如果代碼中定義了createMesh或類似函數，則調用它
+    if (typeof createMesh === 'function') {
+      return createMesh(THREE, params);
+    }
+    
+    // 默認返回一個基本幾何體
+    return new THREE.TorusGeometry(
+      params.radius || 2,
+      params.tubeRadius || 0.5,
+      params.radialSegments || 16,
+      params.tubularSegments || 100
+    );
+  } catch (error) {
+    console.error('Error in createGeometry wrapper:', error);
+    return new THREE.SphereGeometry(1, 32, 32);
+  }
+}`;
+    return { code: wrappedCode, filename };
+  }, []);
 
   const processSceneFile = useCallback((code: string) => {
     if (!code || typeof code !== 'string') {
@@ -29,8 +106,24 @@ export function useParameters() {
     }
 
     try {
-      console.log('Processing scene file');
+      console.log('====== Processing scene file ======');
       console.log('Code length:', code.length);
+      console.log('First 100 chars:', code.substring(0, 100));
+      console.log('File format detection...');
+      
+      // 簡單判斷檔案格式
+      if (code.includes('createGeometry')) {
+        console.log('✓ Found createGeometry function');
+      }
+      if (code.includes('export') || code.includes('import')) {
+        console.log('✓ Likely ES module format');
+      }
+      if (code.includes('module.exports') || code.includes('require(')) {
+        console.log('✓ Likely CommonJS format');
+      }
+      if (code.includes('parameters')) {
+        console.log('✓ Found parameters reference');
+      }
       
       // 支援更多參數定義格式
       const paramPatterns = [
@@ -49,11 +142,14 @@ export function useParameters() {
       for (const pattern of paramPatterns) {
         const match = code.match(pattern);
         if (match) {
+          console.log('Matched pattern:', pattern.toString().substring(0, 50));
           if (pattern.toString().includes('createGeometry')) {
             // 從 createGeometry 函數提取參數
             const geometryCode = match[0];
+            console.log('Extracted geometry code:', geometryCode.substring(0, 100));
             const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
             if (paramMatches) {
+              console.log('Found param matches in createGeometry:', paramMatches);
               const paramsObj: Record<string, any> = {};
               paramMatches.forEach(param => {
                 const [key, value] = param.split(':').map(s => s.trim());
@@ -74,6 +170,57 @@ export function useParameters() {
           } else {
             extractedCode = match[1];
             break;
+          }
+        }
+      }
+
+      if (!extractedCode) {
+        // 沒有找到模式匹配，嘗試從函數參數中提取
+        console.log('No pattern match, attempting to extract from function directly');
+        const funcMatch = code.match(/function\s+createGeometry\s*\(\s*THREE\s*(?:,\s*params)?\s*\)/);
+        if (funcMatch) {
+          console.log('Found createGeometry function, extracting default parameters');
+          // 從普通的參數聲明中提取
+          const paramExtractions = code.match(/(?:const|let|var)\s+(\w+)\s*=\s*params\.(\w+)\s*\|\|\s*([^;]+);/g);
+          if (paramExtractions && paramExtractions.length > 0) {
+            console.log('Found param declarations:', paramExtractions);
+            const paramsObj: Record<string, any> = {};
+            paramExtractions.forEach(extraction => {
+              const match = extraction.match(/(?:const|let|var)\s+(\w+)\s*=\s*params\.(\w+)\s*\|\|\s*([^;]+);/);
+              if (match) {
+                const [_, varName, paramName, defaultValue] = match;
+                console.log(`Found param: ${paramName} with default ${defaultValue}`);
+                let parsedValue: string | number = defaultValue.trim();
+                // 嘗試將數值字符串轉換為數字
+                if (!isNaN(Number(parsedValue)) && typeof parsedValue === 'string') {
+                  parsedValue = Number(parsedValue);
+                }
+                // 處理顏色值
+                if (typeof parsedValue === 'string' && parsedValue.startsWith('#')) {
+                  paramsObj[paramName] = {
+                    type: 'color',
+                    label: paramName,
+                    default: parsedValue,
+                    current: parsedValue
+                  };
+                } else {
+                  // 確保是數字類型
+                  paramsObj[paramName] = {
+                    type: 'number',
+                    label: paramName,
+                    default: typeof parsedValue === 'number' ? parsedValue : 0,
+                    min: 0,
+                    max: typeof parsedValue === 'number' ? parsedValue * 2 : 100,
+                    current: typeof parsedValue === 'number' ? parsedValue : 0
+                  };
+                }
+              }
+            });
+            
+            if (Object.keys(paramsObj).length > 0) {
+              console.log('Extracted params from declarations:', paramsObj);
+              extractedCode = JSON.stringify(paramsObj);
+            }
           }
         }
       }
@@ -217,6 +364,7 @@ export function useParameters() {
       hasExtractedParams: false,
       previewParams: {},
       showPreview: false,
+      customScript: null,
     });
   }, []);
 

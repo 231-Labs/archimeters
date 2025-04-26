@@ -11,11 +11,10 @@ export function useFileUpload() {
   });
 
   const handleImageFileChange = useCallback((file: File) => {
-    const url = URL.createObjectURL(file);
     setState(prev => ({
       ...prev,
       imageFile: file,
-      imageUrl: url,
+      imageUrl: URL.createObjectURL(file),
     }));
   }, []);
 
@@ -26,29 +25,24 @@ export function useFileUpload() {
       algoError: '',
     }));
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        console.log('讀取到的檔案內容:', content);
-        setState(prev => ({
-          ...prev,
-          algoResponse: content,
-        }));
-      } catch (error) {
-        console.error('讀取算法檔案時出錯:', error);
-        setState(prev => ({
-          ...prev,
-          algoError: '讀取算法檔案失敗',
-        }));
-      }
-    };
+    console.log('Algorithm file selected:', file.name, 'size:', file.size);
     
-    reader.onerror = (error) => {
-      console.error('檔案讀取錯誤:', error);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      console.log('File loaded, content length:', content.length);
+      console.log('Content preview:', content.substring(0, 100) + '...');
       setState(prev => ({
         ...prev,
-        algoError: '檔案讀取錯誤',
+        algoResponse: content,
+      }));
+    };
+    
+    reader.onerror = (e) => {
+      console.error('Error reading file:', e);
+      setState(prev => ({
+        ...prev,
+        algoError: 'Error reading file',
       }));
     };
     

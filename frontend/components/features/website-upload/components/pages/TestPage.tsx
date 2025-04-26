@@ -112,9 +112,9 @@ export const TestPage = () => {
   }, [previewParams]);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full overflow-hidden">
       {/* 左側 - 3D 預覽 */}
-      <div className="w-2/3 p-8 border-r border-white/5">
+      <div className="w-2/3 p-8 border-r border-white/5 overflow-hidden">
         <div className="text-white/50 text-sm mb-4">模型預覽</div>
         <div className="h-[calc(100vh-200px)] bg-black/30 rounded-lg overflow-hidden">
           <ParametricScene userScript={geometryScript} />
@@ -122,12 +122,12 @@ export const TestPage = () => {
       </div>
 
       {/* 右側 - 參數控制 */}
-      <div className="w-1/3 p-8 h-full overflow-y-auto">
-        <div className="text-white/50 text-sm mb-4">參數控制</div>
-        <div className="space-y-4">
+      <div className="w-1/3 p-8 h-full flex flex-col overflow-hidden">
+        <div className="text-white/50 text-sm mb-4 sticky top-0 bg-black/50 backdrop-blur-sm py-2 z-10 border-b border-white/10">參數控制</div>
+        <div className="space-y-4 flex-1 overflow-y-auto pr-4 pb-8 custom-scrollbar">
           {Object.entries(parameters).map(([key, param]) => (
-            <div key={key} className="space-y-2">
-              <label className="text-white/80 text-sm">{param.label}</label>
+            <div key={key} className="space-y-2 bg-black/20 p-4 rounded-lg hover:bg-black/30 transition-colors">
+              <label className="text-white/80 text-sm font-medium">{param.label}</label>
               {param.type === 'number' ? (
                 <div className="flex items-center space-x-4">
                   <input
@@ -137,7 +137,7 @@ export const TestPage = () => {
                     step={0.1}
                     value={param.current}
                     onChange={(e) => handleParameterChange(key as keyof Parameters, parseFloat(e.target.value))}
-                    className="flex-1"
+                    className="flex-1 accent-blue-500"
                   />
                   <input
                     type="number"
@@ -146,7 +146,7 @@ export const TestPage = () => {
                     step={0.1}
                     value={param.current}
                     onChange={(e) => handleParameterChange(key as keyof Parameters, parseFloat(e.target.value))}
-                    className="w-20 bg-white/5 rounded px-2 py-1 text-white text-sm"
+                    className="w-20 bg-white/5 rounded px-2 py-1 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               ) : param.type === 'color' ? (
@@ -161,14 +161,59 @@ export const TestPage = () => {
                     type="text"
                     value={param.current}
                     onChange={(e) => handleParameterChange(key as keyof Parameters, e.target.value)}
-                    className="flex-1 bg-white/5 rounded px-2 py-1 text-white text-sm"
+                    className="flex-1 bg-white/5 rounded px-2 py-1 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               ) : null}
             </div>
           ))}
+          
+          {/* 添加更多參數 - 示例 */}
+          <div className="pt-6 border-t border-white/10">
+            <h3 className="text-white/80 text-sm font-medium mb-4">高級參數</h3>
+            {[...Array(8)].map((_, i) => (
+              <div key={`advanced-${i}`} className="mb-6 bg-black/20 p-4 rounded-lg hover:bg-black/30 transition-colors">
+                <label className="text-white/80 text-sm font-medium">高級參數 {i+1}</label>
+                <div className="flex items-center space-x-4 mt-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    defaultValue={50}
+                    className="flex-1 accent-blue-500"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    defaultValue={50}
+                    className="w-20 bg-white/5 rounded px-2 py-1 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
     </div>
   );
 }; 

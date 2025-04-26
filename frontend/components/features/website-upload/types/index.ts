@@ -26,6 +26,7 @@ export interface ParameterState {
   hasExtractedParams: boolean;
   previewParams: Record<string, any>;
   showPreview: boolean;
+  customScript: { code: string; filename: string } | null;
 }
 
 // Template types

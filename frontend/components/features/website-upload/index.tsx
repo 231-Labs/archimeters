@@ -285,11 +285,15 @@ export default function WebsiteUpload() {
             fontStyle={designSettings.fontStyle}
             onFileChange={handleAlgoFileChange}
             onExtractParameters={(params) => {
-              const extracted = processSceneFile(algoResponse);
-              if (extracted && typeof extracted === 'object') {
-                Object.entries(extracted).forEach(([key, value]) => {
-                  updateParameter(key, value);
-                });
+              try {
+                const extracted = processSceneFile(algoResponse);
+                if (extracted && typeof extracted === 'object') {
+                  Object.entries(extracted).forEach(([key, value]) => {
+                    updateParameter(key, value);
+                  });
+                }
+              } catch (error) {
+                console.error('Failed to extract parameters:', error);
               }
             }}
             onUpdatePreviewParams={(params) => {
@@ -318,6 +322,10 @@ export default function WebsiteUpload() {
             previewParams={previewParams}
             onParameterChange={updateParameter}
             onMint={goToNextPage}
+            userScript={algoFile ? {
+              code: algoResponse,
+              filename: algoFile.name
+            } : undefined}
           />
         )}
 
