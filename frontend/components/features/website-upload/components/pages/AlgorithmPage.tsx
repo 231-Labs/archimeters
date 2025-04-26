@@ -1,7 +1,28 @@
 import { TemplateSeries, FontStyle, ParameterState } from '../../types';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
-import Sandbox3DIframe from '../../components/Sandbox3DIframe';
+
+interface NumberParameter {
+  type: 'number';
+  label: string;
+  default: number;
+  min: number;
+  max: number;
+  current: number;
+}
+
+interface ColorParameter {
+  type: 'color';
+  label: string;
+  default: string;
+  current: string;
+}
+
+type Parameter = NumberParameter | ColorParameter;
+
+interface Parameters {
+  [key: string]: Parameter;
+}
 
 interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' | 'previewParams' | 'showPreview'> {
   algoFile: File | null;
@@ -19,6 +40,53 @@ interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' 
   onNext: () => void;
   onPrevious: () => void;
 }
+
+const defaultParameters: Parameters = {
+  radius: {
+    type: 'number',
+    label: 'Radius',
+    default: 5,
+    min: 2,
+    max: 10,
+    current: 5
+  },
+  tubeRadius: {
+    type: 'number',
+    label: 'Tube Radius',
+    default: 1,
+    min: 0.5,
+    max: 3,
+    current: 1
+  },
+  radialSegments: {
+    type: 'number',
+    label: 'Radial Segments',
+    default: 30,
+    min: 8,
+    max: 50,
+    current: 30
+  },
+  tubularSegments: {
+    type: 'number',
+    label: 'Tubular Segments',
+    default: 50,
+    min: 8,
+    max: 100,
+    current: 50
+  },
+  color: {
+    type: 'color',
+    label: 'Color',
+    default: '#ff3366',
+    current: '#ff3366'
+  },
+  emissive: {
+    type: 'color',
+    label: 'Emissive Color',
+    default: '#000000',
+    current: '#000000'
+  }
+};
 
 const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => {
   const geometryScript = {
@@ -63,6 +131,7 @@ export const AlgorithmPage = ({
 }: AlgorithmPageProps) => {
   const [fileTypeError, setFileTypeError] = useState<string | null>(null);
   const [jsCode, setJsCode] = useState<string | null>(null);
+  const [parameters, setParameters] = useState<Parameters>({});
   const sandboxRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -88,9 +157,54 @@ export const AlgorithmPage = ({
     }
   }, [onFileChange]);
 
-  const handleParameterChange = useCallback((key: string, value: any) => {
-    onUpdatePreviewParams({ ...previewParams, [key]: value });
-  }, [previewParams, onUpdatePreviewParams]);
+  const handleParameterChange = useCallback((key: string, value: number | string) => {
+    setParameters((prev: Parameters) => {
+      const param = prev[key];
+      if (param.type === 'number') {
+        return {
+          ...prev,
+          [key]: {
+            ...param,
+            current: Number(value)
+          } as NumberParameter
+        };
+      } else {
+        return {
+          ...prev,
+          [key]: {
+            ...param,
+            current: value as string
+          } as ColorParameter
+        };
+      }
+    });
+    onUpdatePreviewParams((prev: Record<string, any>) => ({
+      ...prev,
+      [key]: value
+    }));
+  }, [onUpdatePreviewParams]);
+
+  const geometryScript = useMemo(() => {
+    if (!jsCode) {
+      return {
+        code: `
+          function createGeometry(THREE) {
+            return new THREE.TorusGeometry(
+              ${previewParams.radius || 2},
+              ${previewParams.tubeRadius || 0.5},
+              ${previewParams.radialSegments || 16},
+              ${previewParams.tubularSegments || 100}
+            );
+          }
+        `,
+        filename: 'preview.js'
+      };
+    }
+    return {
+      code: jsCode,
+      filename: algoFile?.name || 'preview.js'
+    };
+  }, [jsCode, previewParams, algoFile]);
 
   return (
     <div className="flex h-full">
@@ -98,14 +212,10 @@ export const AlgorithmPage = ({
       <div className="w-2/3 p-8 border-r border-white/5 flex flex-col">
         <div className="text-white/50 text-sm mb-4">Algorithm File</div>
         <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
-          {showPreview && Object.keys(previewParams).length > 0 ? (
-            <Sandbox3DIframe
-              ref={sandboxRef}
-              jsCode={jsCode}
-              parameters={previewParams}
-              onParametersExtracted={onExtractParameters}
-              onError={(err) => setFileTypeError(err)}
-            />
+          {showPreview ? (
+            <div className="h-full rounded-lg overflow-hidden bg-black/30">
+              <ParametricScene userScript={geometryScript} />
+            </div>
           ) : (
             <>
               <input
@@ -154,21 +264,78 @@ export const AlgorithmPage = ({
       <div className="w-1/3 p-8 flex flex-col relative">
         <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2">
           {/* Parameter List */}
-          {Object.keys(extractedParameters).length > 0 && (
+          {Object.keys(extractedParameters).length > 0 ? (
             <div className="space-y-4">
               <div className="text-white/50 text-sm">Algorithm Parameters</div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {Object.entries(extractedParameters).map(([key, paramDef]) => (
+              <div className="space-y-4">
+                {Object.entries(extractedParameters).map(([key, param]: [string, any]) => (
                   <div key={key} className="bg-white/5 rounded-md p-3">
-                    <div className="text-white/60 mb-1 capitalize">{paramDef.label || key}</div>
-                    <div className="text-white font-mono">
-                      {typeof paramDef.default === 'object' 
-                        ? JSON.stringify(paramDef.default) 
-                        : paramDef.default}
-                    </div>
+                    <label className="text-white/60 mb-2 block capitalize">{param.label || key}</label>
+                    {param.type === 'number' ? (
+                      <div className="space-y-2">
+                        <input
+                          type="range"
+                          min={param.min}
+                          max={param.max}
+                          step={0.1}
+                          value={previewParams[key] || param.default}
+                          onChange={(e) => onUpdatePreviewParams({
+                            ...previewParams,
+                            [key]: parseFloat(e.target.value)
+                          })}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between">
+                          <input
+                            type="number"
+                            min={param.min}
+                            max={param.max}
+                            step={0.1}
+                            value={previewParams[key] || param.default}
+                            onChange={(e) => onUpdatePreviewParams({
+                              ...previewParams,
+                              [key]: parseFloat(e.target.value)
+                            })}
+                            className="w-20 bg-white/10 rounded px-2 py-1 text-white text-sm"
+                          />
+                          <span className="text-white/40 text-sm">
+                            [{param.min} - {param.max}]
+                          </span>
+                        </div>
+                      </div>
+                    ) : param.type === 'color' ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="color"
+                          value={previewParams[key] || param.default}
+                          onChange={(e) => onUpdatePreviewParams({
+                            ...previewParams,
+                            [key]: e.target.value
+                          })}
+                          className="w-8 h-8 rounded cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={previewParams[key] || param.default}
+                          onChange={(e) => onUpdatePreviewParams({
+                            ...previewParams,
+                            [key]: e.target.value
+                          })}
+                          className="flex-1 bg-white/10 rounded px-2 py-1 text-white text-sm"
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
+            </div>
+          ) : algoFile ? (
+            <div className="text-white/40 text-sm text-center py-8">
+              Processing algorithm file...
+            </div>
+          ) : (
+            <div className="text-white/40 text-sm text-center py-8">
+              Upload an algorithm file to configure parameters
             </div>
           )}
 

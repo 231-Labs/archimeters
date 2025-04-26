@@ -252,30 +252,182 @@ export default function WebsiteUpload() {
   // Algorithm file processing
   const processSceneFile = (code: string) => {
     try {
-      const parametersMatch = code.match(/export\s+const\s+(?:default)?[pP]arameters\s*=\s*({[\s\S]*?})(?:\s+as\s+const)?;/);
+      // 支援多種參數定義格式
+      const paramPatterns = [
+        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // 對象格式
+        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // 陣列格式
+        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage 格式
+        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS 對象格式
+        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS 陣列格式
+        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // 直接從 createGeometry 函數提取
+      ];
+
+      let extractedCode = '';
       
-      if (parametersMatch && parametersMatch[1]) {
-        let paramStr = parametersMatch[1];
-        paramStr = paramStr.replace(/(\w+):/g, '"$1":');
-        paramStr = paramStr.replace(/'([^']*?)'/g, '"$1"');
-        paramStr = paramStr.replace(/,(\s*[}\]])/g, '$1');
-        
-        console.log("Processed param string:", paramStr);
-        
-        const extractedParams = JSON.parse(paramStr);
-        
-        const initialParams = Object.fromEntries(
-          Object.entries(extractedParams).map(([key, value]: [string, any]) => [key, value.default])
-        );
-        setPreviewParams(initialParams);
-        setShowPreview(true);
-        
-        setExtractedParameters(extractedParams);
-        setHasExtractedParams(true);
-        setAlgoError('');
-      } else {
+      // 嘗試所有模式
+      for (const pattern of paramPatterns) {
+        const match = code.match(pattern);
+        if (match) {
+          if (pattern.toString().includes('createGeometry')) {
+            // 從 createGeometry 函數提取參數
+            const geometryCode = match[0];
+            const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
+            if (paramMatches) {
+              const paramsObj: Record<string, any> = {};
+              paramMatches.forEach(param => {
+                const [key, value] = param.split(':').map(s => s.trim());
+                if (key && !['new', 'return', 'function'].includes(key)) {
+                  paramsObj[key] = {
+                    type: 'number',
+                    label: key,
+                    default: parseFloat(value) || 0,
+                    min: 0,
+                    max: 100,
+                    current: parseFloat(value) || 0
+                  };
+                }
+              });
+              extractedCode = JSON.stringify(paramsObj);
+              break;
+            }
+          } else {
+            extractedCode = match[1];
+            break;
+          }
+        }
+      }
+
+      if (!extractedCode) {
         throw new Error("Failed to extract parameters from code");
       }
+
+      console.log("Found parameters definition:", extractedCode);
+      
+      // 清理代碼
+      let cleanCode = extractedCode
+        .replace(/(\w+):/g, '"$1":')  // 將鍵名轉換為字符串
+        .replace(/'([^']*?)'/g, '"$1"')  // 將單引號轉換為雙引號
+        .replace(/,(\s*[}\]])/g, '$1')  // 移除尾隨逗號
+        .replace(/\/\/.*/g, '')  // 移除單行註釋
+        .replace(/\/\*[\s\S]*?\*\//g, ''); // 移除多行註釋
+      
+      console.log("Cleaned code:", cleanCode);
+      
+      let extractedParams: Record<string, any>;
+      
+      try {
+        // 先試用 JSON.parse
+        const parsedParams = JSON.parse(cleanCode);
+        
+        // 標準化參數格式
+        extractedParams = {};
+        
+        if (Array.isArray(parsedParams)) {
+          parsedParams.forEach((param: any, index: number) => {
+            const key = param.key || `param${index}`;
+            extractedParams[key] = {
+              type: param.type || 'number',
+              label: param.label || key,
+              default: param.default ?? 0,
+              min: param.min ?? 0,
+              max: param.max ?? 100,
+              current: param.default ?? 0
+            };
+          });
+        } else if (typeof parsedParams === 'object' && parsedParams !== null) {
+          Object.entries(parsedParams).forEach(([key, param]: [string, any]) => {
+            if (typeof param === 'object') {
+              extractedParams[key] = {
+                type: param.type || 'number',
+                label: param.label || key,
+                default: param.default ?? param.current ?? 0,
+                min: param.min ?? 0,
+                max: param.max ?? 100,
+                current: param.current ?? param.default ?? 0
+              };
+            } else {
+              // 如果參數是直接值
+              extractedParams[key] = {
+                type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
+                label: key,
+                default: param,
+                min: 0,
+                max: typeof param === 'number' ? param * 2 : 100,
+                current: param
+              };
+            }
+          });
+        } else {
+          throw new Error("Invalid parameters format");
+        }
+      } catch (parseError) {
+        console.error("JSON parsing failed, trying Function:", parseError);
+        try {
+          // 如果 JSON.parse 失敗，嘗試使用 Function
+          const func = new Function(`return ${extractedCode}`);
+          const funcParams = func();
+          
+          // 標準化參數格式
+          extractedParams = {};
+          
+          if (Array.isArray(funcParams)) {
+            funcParams.forEach((param: any, index: number) => {
+              const key = param.key || `param${index}`;
+              extractedParams[key] = {
+                type: param.type || 'number',
+                label: param.label || key,
+                default: param.default ?? 0,
+                min: param.min ?? 0,
+                max: param.max ?? 100,
+                current: param.default ?? 0
+              };
+            });
+          } else if (typeof funcParams === 'object' && funcParams !== null) {
+            Object.entries(funcParams).forEach(([key, param]: [string, any]) => {
+              if (typeof param === 'object') {
+                extractedParams[key] = {
+                  type: param.type || 'number',
+                  label: param.label || key,
+                  default: param.default ?? param.current ?? 0,
+                  min: param.min ?? 0,
+                  max: param.max ?? 100,
+                  current: param.current ?? param.default ?? 0
+                };
+              } else {
+                // 如果參數是直接值
+                extractedParams[key] = {
+                  type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
+                  label: key,
+                  default: param,
+                  min: 0,
+                  max: typeof param === 'number' ? param * 2 : 100,
+                  current: param
+                };
+              }
+            });
+          } else {
+            throw new Error("Invalid parameters format");
+          }
+        } catch (funcError) {
+          console.error("Function parsing failed:", funcError);
+          throw new Error("Failed to parse parameters");
+        }
+      }
+      
+      if (Object.keys(extractedParams).length === 0) {
+        throw new Error("No valid parameters found in code");
+      }
+      
+      const initialParams = Object.fromEntries(
+        Object.entries(extractedParams).map(([key, value]) => [key, value.default])
+      );
+      
+      setPreviewParams(initialParams);
+      setShowPreview(true);
+      
+      setExtractedParameters(extractedParams);
+      setHasExtractedParams(true);
+      setAlgoError('');
     } catch (err) {
       console.error("Error processing algorithm file:", err);
       setAlgoError(`Parameter parsing failed: ${err instanceof Error ? err.message : String(err)}`);
