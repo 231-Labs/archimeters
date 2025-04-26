@@ -61,11 +61,11 @@ export const AlgorithmPage = ({
   const handleDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts')) {
+      if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts') || file.name.toLowerCase().endsWith('.js')) {
         setFileTypeError(null);
         onFileChange(file);
       } else {
-        setFileTypeError(`Invalid file type. Only .tsx or .ts files are allowed. You uploaded: ${file.name}`);
+        setFileTypeError(`Invalid file type. Only .tsx, .ts or .js files are allowed. You uploaded: ${file.name}`);
       }
     }
   }, [onFileChange]);
@@ -86,15 +86,15 @@ export const AlgorithmPage = ({
             <>
               <input
                 type="file"
-                accept=".tsx,.ts"
+                accept=".tsx,.ts,.js"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts')) {
+                    if (file.name.toLowerCase().endsWith('.tsx') || file.name.toLowerCase().endsWith('.ts') || file.name.toLowerCase().endsWith('.js')) {
                       setFileTypeError(null);
                       onFileChange(file);
                     } else {
-                      setFileTypeError(`Invalid file type. Only .tsx or .ts files are allowed. You uploaded: ${file.name}`);
+                      setFileTypeError(`Invalid file type. Only .tsx, .ts or .js files are allowed. You uploaded: ${file.name}`);
                     }
                   }
                 }}
@@ -110,7 +110,7 @@ export const AlgorithmPage = ({
                     <div className={`text-4xl mb-3 ${algoRequired || fileTypeError ? 'text-red-400' : 'text-white/40'}`}>+</div>
                     <div className={`text-sm ${algoRequired || fileTypeError ? 'text-red-400' : 'text-white/40'} flex flex-col gap-1`}>
                       {algoRequired ? 'Algorithm file is required' : 'Click or drag to upload algorithm'}
-                      <span className="text-xs text-white/30">Only .tsx or .ts files are allowed</span>
+                      <span className="text-xs text-white/30">Only .tsx, .ts or .js files are allowed</span>
                     </div>
                   </div>
                 )}

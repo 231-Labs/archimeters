@@ -177,36 +177,76 @@ export default function WebsiteUpload() {
 
   // File handlers
   const handleImageFileChange = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setImageFile(file);
-    setImageUrl(url);
-    setImageRequired(false);
+    try {
+      // 驗證文件類型
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setImageRequired(true);
+        throw new Error('只支持 JPG、PNG 和 GIF 格式的圖片');
+      }
+
+      // 驗證文件大小
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setImageRequired(true);
+        throw new Error(`圖片大小不能超過 ${maxSize / 1024 / 1024}MB`);
+      }
+
+      const url = URL.createObjectURL(file);
+      setImageFile(file);
+      setImageUrl(url);
+      setImageRequired(false);
+    } catch (error) {
+      console.error('圖片上傳錯誤:', error);
+      setImageRequired(true);
+      setError(error instanceof Error ? error.message : '圖片上傳失敗');
+    }
   };
 
   const handleAlgoFileChange = (file: File) => {
-    setAlgoFile(file);
-    setHasExtractedParams(false);
-    setAlgoError('');
-    setAlgoRequired(false);
-    
-    const reader = new FileReader();
-    
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        setAlgoResponse(content.substring(0, 500));
-        processSceneFile(content);
-      } catch (error) {
-        setAlgoError('Failed to read algorithm file');
-        console.error('Error reading algorithm file:', error);
+    try {
+      // 驗證文件類型
+      const allowedTypes = ['text/javascript', 'application/javascript'];
+      if (!allowedTypes.includes(file.type)) {
+        setAlgoRequired(true);
+        throw new Error('只支持 JavaScript 文件');
       }
-    };
-    
-    reader.onerror = () => {
-      setAlgoError('Failed to read algorithm file');
-    };
-    
-    reader.readAsText(file);
+
+      // 驗證文件大小
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        setAlgoRequired(true);
+        throw new Error(`算法文件大小不能超過 ${maxSize / 1024 / 1024}MB`);
+      }
+
+      setAlgoFile(file);
+      setHasExtractedParams(false);
+      setAlgoError('');
+      setAlgoRequired(false);
+      
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          setAlgoResponse(content.substring(0, 500));
+          processSceneFile(content);
+        } catch (error) {
+          setAlgoError('Failed to read algorithm file');
+          console.error('Error reading algorithm file:', error);
+        }
+      };
+      
+      reader.onerror = () => {
+        setAlgoError('Failed to read algorithm file');
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('算法文件上傳錯誤:', error);
+      setAlgoRequired(true);
+      setAlgoError(error instanceof Error ? error.message : '算法文件上傳失敗');
+    }
   };
 
   // Algorithm file processing
