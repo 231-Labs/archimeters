@@ -13,14 +13,12 @@ import { AlgorithmPage } from './components/pages';
 import { PreviewPage } from './components/pages';
 import { UploadStatusPage } from './components/pages';
 import type { UploadResults, ArtworkInfo, ArtistInfo, DesignSettings } from './types';
-import { TestPage } from './components/pages/TestPage';
 
 export default function WebsiteUpload() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string>('');
   const totalPages = 4;
-  const [isTestMode, setIsTestMode] = useState(false);
 
   // Custom hooks
   const {
@@ -222,30 +220,10 @@ export default function WebsiteUpload() {
     }
   };
 
-  if (isTestMode) {
-    return (
-      <div className="relative">
-        <button
-          onClick={() => setIsTestMode(false)}
-          className="absolute top-4 right-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm"
-        >
-          返回上傳模式
-        </button>
-        <TestPage />
-      </div>
-    );
-  }
-
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl text-white">參數化模型上傳</h1>
-        <button
-          onClick={() => setIsTestMode(true)}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm"
-        >
-          進入測試模式
-        </button>
       </div>
       <div className="h-full flex flex-col">
         {currentPage === 1 && (

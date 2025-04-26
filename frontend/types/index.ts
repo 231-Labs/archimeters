@@ -3,7 +3,6 @@ export type WindowName =
   | 'designer'
   | 'website-upload'
   | 'browse'
-  | 'parameter-test'
   | 'artlier-viewer';
 
 export interface WindowConfig {

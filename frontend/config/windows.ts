@@ -25,9 +25,4 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 800, height: 600 },
     resizable: true,
   },
-  'parameter-test': {
-    title: '參數測試',
-    defaultSize: { width: 1200, height: 800 },
-    resizable: true,
-  },
 }; 
