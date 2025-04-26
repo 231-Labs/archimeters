@@ -188,12 +188,12 @@ export const AlgorithmPage = ({
     if (!jsCode) {
       return {
         code: `
-          function createGeometry(THREE) {
+          function createGeometry(THREE, params) {
             return new THREE.TorusGeometry(
-              ${previewParams.radius || 2},
-              ${previewParams.tubeRadius || 0.5},
-              ${previewParams.radialSegments || 16},
-              ${previewParams.tubularSegments || 100}
+              params.radius || 2,
+              params.tubeRadius || 0.5,
+              params.radialSegments || 16,
+              params.tubularSegments || 100
             );
           }
         `,
@@ -214,7 +214,10 @@ export const AlgorithmPage = ({
         <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
           {showPreview ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
-              <ParametricScene userScript={geometryScript} />
+              <ParametricScene 
+                userScript={geometryScript}
+                parameters={previewParams}
+              />
             </div>
           ) : (
             <>
