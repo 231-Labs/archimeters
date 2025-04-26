@@ -30,16 +30,26 @@ export function useFileUpload() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string;
+        console.log('讀取到的檔案內容:', content);
         setState(prev => ({
           ...prev,
-          algoResponse: content.substring(0, 500),
+          algoResponse: content,
         }));
       } catch (error) {
+        console.error('讀取算法檔案時出錯:', error);
         setState(prev => ({
           ...prev,
-          algoError: 'Failed to read algorithm file',
+          algoError: '讀取算法檔案失敗',
         }));
       }
+    };
+    
+    reader.onerror = (error) => {
+      console.error('檔案讀取錯誤:', error);
+      setState(prev => ({
+        ...prev,
+        algoError: '檔案讀取錯誤',
+      }));
     };
     
     reader.readAsText(file);

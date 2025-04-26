@@ -8,7 +8,8 @@ export type WindowName =
   | 'designer'        // 設計師終端
   | 'website-upload'  // 網站上傳
   | 'browse'          // 圖片瀏覽
-  | 'artlier-viewer'; // 藝術品查看器
+  | 'artlier-viewer'  // 藝術品查看器
+  | 'parameter-test'; // 參數測試
 
 export interface WindowPosition {
   x: number;

@@ -8,6 +8,7 @@ import EntryWindow from '@/components/windows/EntryWindow';
 import WebsiteUpload from '@/components/windows/WebsiteUpload';
 import BrowseWindow from '@/components/windows/BrowseWindow';
 import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
+import ParameterTestWindow from '@/components/windows/ParameterTestWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -157,6 +158,25 @@ export default function Home() {
                         : openWindows.indexOf(name) + 1}
                     >
                       <ArtlierViewerWindow name={name} />
+                    </Window>
+                  );
+                case 'parameter-test':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="參數測試"
+                      position={windowPositions['parameter-test']}
+                      size={windowSizes['parameter-test']}
+                      isActive={activeWindow === 'parameter-test'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
+                    >
+                      <ParameterTestWindow />
                     </Window>
                   );
                 default:

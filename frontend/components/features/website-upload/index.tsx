@@ -13,12 +13,14 @@ import { AlgorithmPage } from './components/pages';
 import { PreviewPage } from './components/pages';
 import { UploadStatusPage } from './components/pages';
 import type { UploadResults, ArtworkInfo, ArtistInfo, DesignSettings } from './types';
+import { TestPage } from './components/pages/TestPage';
 
 export default function WebsiteUpload() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string>('');
   const totalPages = 4;
+  const [isTestMode, setIsTestMode] = useState(false);
 
   // Custom hooks
   const {
@@ -220,102 +222,127 @@ export default function WebsiteUpload() {
     }
   };
 
-  return (
-    <div className="h-full flex flex-col">
-      {currentPage === 1 && (
-        <BasicInfoPage
-          workName={artworkInfo.workName}
-          description={artworkInfo.description}
-          price={artworkInfo.price}
-          name={artistInfo.name}
-          social={artistInfo.social}
-          intro={artistInfo.intro}
-          imageFile={imageFile}
-          imageUrl={imageUrl}
-          onWorkNameChange={(value) => updateArtworkInfo('workName', value)}
-          onDescriptionChange={(value) => updateArtworkInfo('description', value)}
-          onPriceChange={(value) => updateArtworkInfo('price', value)}
-          onIntroChange={(value) => updateArtistInfo('intro', value)}
-          onImageFileChange={handleImageFileChange}
-          workNameRequired={false}
-          descriptionRequired={false}
-          priceRequired={false}
-          introRequired={false}
-          imageRequired={false}
-          priceError=""
-        />
-      )}
+  if (isTestMode) {
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setIsTestMode(false)}
+          className="absolute top-4 right-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm"
+        >
+          返回上傳模式
+        </button>
+        <TestPage />
+      </div>
+    );
+  }
 
-      {currentPage === 2 && (
-        <AlgorithmPage
-          algoFile={algoFile}
-          algoResponse={algoResponse}
-          algoError={algoError}
-          algoRequired={false}
-          showPreview={showPreview}
-          previewParams={previewParams}
-          extractedParameters={extractedParameters}
-          style={designSettings.style}
-          fontStyle={designSettings.fontStyle}
-          onFileChange={handleAlgoFileChange}
-          onExtractParameters={(params) => {
-            const extracted = processSceneFile(algoResponse);
-            if (extracted && typeof extracted === 'object') {
-              Object.entries(extracted).forEach(([key, value]) => {
+  return (
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl text-white">參數化模型上傳</h1>
+        <button
+          onClick={() => setIsTestMode(true)}
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm"
+        >
+          進入測試模式
+        </button>
+      </div>
+      <div className="h-full flex flex-col">
+        {currentPage === 1 && (
+          <BasicInfoPage
+            workName={artworkInfo.workName}
+            description={artworkInfo.description}
+            price={artworkInfo.price}
+            name={artistInfo.name}
+            social={artistInfo.social}
+            intro={artistInfo.intro}
+            imageFile={imageFile}
+            imageUrl={imageUrl}
+            onWorkNameChange={(value) => updateArtworkInfo('workName', value)}
+            onDescriptionChange={(value) => updateArtworkInfo('description', value)}
+            onPriceChange={(value) => updateArtworkInfo('price', value)}
+            onIntroChange={(value) => updateArtistInfo('intro', value)}
+            onImageFileChange={handleImageFileChange}
+            workNameRequired={false}
+            descriptionRequired={false}
+            priceRequired={false}
+            introRequired={false}
+            imageRequired={false}
+            priceError=""
+          />
+        )}
+
+        {currentPage === 2 && (
+          <AlgorithmPage
+            algoFile={algoFile}
+            algoResponse={algoResponse}
+            algoError={algoError}
+            algoRequired={false}
+            showPreview={showPreview}
+            previewParams={previewParams}
+            extractedParameters={extractedParameters}
+            style={designSettings.style}
+            fontStyle={designSettings.fontStyle}
+            onFileChange={handleAlgoFileChange}
+            onExtractParameters={(params) => {
+              const extracted = processSceneFile(algoResponse);
+              if (extracted && typeof extracted === 'object') {
+                Object.entries(extracted).forEach(([key, value]) => {
+                  updateParameter(key, value);
+                });
+              }
+            }}
+            onUpdatePreviewParams={(params) => {
+              Object.entries(params).forEach(([key, value]) => {
                 updateParameter(key, value);
               });
-            }
-          }}
-          onUpdatePreviewParams={(params) => {
-            Object.entries(params).forEach(([key, value]) => {
-              updateParameter(key, value);
-            });
-          }}
-          onTogglePreview={togglePreview}
-          onStyleChange={(style) => updateDesignSettings('style', style)}
-          onFontStyleChange={(font) => updateDesignSettings('fontStyle', font)}
-          onNext={goToNextPage}
-          onPrevious={goToPreviousPage}
-        />
-      )}
+            }}
+            onTogglePreview={togglePreview}
+            onStyleChange={(style) => updateDesignSettings('style', style)}
+            onFontStyleChange={(font) => updateDesignSettings('fontStyle', font)}
+            onNext={goToNextPage}
+            onPrevious={goToPreviousPage}
+          />
+        )}
 
-      {currentPage === 3 && (
-        <PreviewPage
-          workName={artworkInfo.workName}
-          description={artworkInfo.description}
-          price={artworkInfo.price}
-          name={artistInfo.name}
-          social={artistInfo.social}
-          intro={artistInfo.intro}
-          imageUrl={imageUrl}
-          parameters={extractedParameters}
-          previewParams={previewParams}
-          onParameterChange={updateParameter}
-          onMint={goToNextPage}
-        />
-      )}
+        {currentPage === 3 && (
+          <PreviewPage
+            workName={artworkInfo.workName}
+            description={artworkInfo.description}
+            price={artworkInfo.price}
+            name={artistInfo.name}
+            social={artistInfo.social}
+            intro={artistInfo.intro}
+            imageUrl={imageUrl}
+            parameters={extractedParameters}
+            previewParams={previewParams}
+            onParameterChange={updateParameter}
+            onMint={goToNextPage}
+          />
+        )}
 
-      {currentPage === 4 && (
-        <UploadStatusPage
-          isLoading={isLoading}
-          uploadStatus={uploadStatus}
-          uploadResults={uploadResults}
-          currentStep={uploadStep}
-          steps={uploadSteps}
-          workName={artworkInfo.workName}
-          description={artworkInfo.description}
-          style={designSettings.style}
-          fontStyle={designSettings.fontStyle}
-          name={artistInfo.name}
-          social={artistInfo.social}
-          intro={artistInfo.intro}
-          price={artworkInfo.price}
-          transactionDigest={transactionDigest}
-          transactionError={transactionError}
-          onSubmit={handleMint}
-          onPrevious={goToPreviousPage}
-        />
-      )}
+        {currentPage === 4 && (
+          <UploadStatusPage
+            isLoading={isLoading}
+            uploadStatus={uploadStatus}
+            uploadResults={uploadResults}
+            currentStep={uploadStep}
+            steps={uploadSteps}
+            workName={artworkInfo.workName}
+            description={artworkInfo.description}
+            style={designSettings.style}
+            fontStyle={designSettings.fontStyle}
+            name={artistInfo.name}
+            social={artistInfo.social}
+            intro={artistInfo.intro}
+            price={artworkInfo.price}
+            transactionDigest={transactionDigest}
+            transactionError={transactionError}
+            onSubmit={handleMint}
+            onPrevious={goToPreviousPage}
+          />
+        )}
+      </div>
     </div>
   );
 } 

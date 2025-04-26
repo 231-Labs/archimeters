@@ -4,103 +4,70 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// Define parameters and their default values
-export const defaultParameters = {
-  amplitude: {
-    type: 'number',
-    default: 1,
-    label: 'Amplitude',
-  },
-  frequency: {
-    type: 'number',
-    default: 1,
-    label: 'Frequency',
-  },
-  resolution: {
-    type: 'number',
-    default: 20,
-    label: 'Resolution',
-  },
-  heightScale: {
-    type: 'number',
-    default: 1,
-    label: 'Height Scale',
-  },
-  heightSdcale: {
-    type: 'number',
-    default: 1,
-    label: 'Height Scaledddd',
-  },
-  color: {
-    type: 'color',
-    default: '#f5f5dc',
-    label: 'Color',
-  },
-} as const;
-
-// Generate parameter types from default parameter definitions
-export type Parameters = {
-  [K in keyof typeof defaultParameters]: 
-    typeof defaultParameters[K]['type'] extends 'number' ? number :
-    typeof defaultParameters[K]['type'] extends 'color' ? string :
-    never;
-};
-
-export interface ParametricSceneProps {
-  parameters: Partial<Parameters>;
+interface GeometryScript {
+  code: string;
+  filename: string;
 }
 
-const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) => {
-  const parameters = {
-    ...Object.fromEntries(
-      Object.entries(defaultParameters).map(([key, value]) => [key, value.default])
-    ),
-    ...userParameters
-  } as Parameters;
+export interface ParametricSceneProps {
+  userScript: GeometryScript | null;
+}
 
+const ParametricScene = ({ userScript }: ParametricSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const surfaceRef = useRef<THREE.Mesh | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const geometryRef = useRef<THREE.BufferGeometry | null>(null);
+  const meshRef = useRef<THREE.Mesh | null>(null);
 
-  // Initialize scene, camera, and controls - runs once when component mounts
+  // 初始化場景、相機和控制器
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create scene
+    // 創建場景
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Create camera
+    // 創建相機
     const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 1000);
-    camera.position.set(5, 5, 10);
+    camera.position.set(5, 5, 5);
+    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
-    // Create renderer
+    // 創建渲染器
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Add orbit controls
+    // 添加軌道控制器
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controlsRef.current = controls;
 
-    // Add lights
+    // 添加環境光
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
+    // 添加點光源
     const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(10, 10, 10);
+    pointLight.position.set(5, 5, 5);
     scene.add(pointLight);
 
-    // Animation loop
+    // 添加網格輔助線
+    const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444);
+    scene.add(gridHelper);
+
+    // 添加座標軸
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
+    // 動畫循環
     function animate() {
       animationFrameRef.current = requestAnimationFrame(animate);
       controls.update();
@@ -108,7 +75,7 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
     }
     animate();
 
-    // Handle window resize
+    // 處理視窗大小變化
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       
@@ -120,13 +87,13 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       rendererRef.current.setSize(width, height);
     };
 
-    // Use ResizeObserver to monitor container size changes
+    // 使用 ResizeObserver 監控容器大小變化
     const resizeObserver = new ResizeObserver(handleResize);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
 
-    // Cleanup function
+    // 清理函數
     return () => {
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -140,79 +107,64 @@ const ParametricScene = ({ parameters: userParameters }: ParametricSceneProps) =
       }
       rendererRef.current?.dispose();
     };
-  }, []); // Empty dependency array - runs once on mount
+  }, []);
 
-  // Update parametric surface - runs when parameters change
+  // 處理用戶腳本
   useEffect(() => {
-    if (!sceneRef.current) return;
+    if (!sceneRef.current || !userScript) return;
 
-    // Remove old surface
-    if (surfaceRef.current) {
-      sceneRef.current.remove(surfaceRef.current);
-      surfaceRef.current.geometry.dispose();
-      if (Array.isArray(surfaceRef.current.material)) {
-        surfaceRef.current.material.forEach(material => material.dispose());
-      } else {
-        surfaceRef.current.material.dispose();
-      }
-    }
-
-    // Create parametric surface
-    const createParametricSurface = () => {
-      const geometry = new THREE.BufferGeometry();
-      const vertices = [];
-      const indices = [];
-
-      const size = parameters.resolution;
-      const step = 10 / size;
-
-      // Generate vertices
-      for (let i = 0; i <= size; i++) {
-        for (let j = 0; j <= size; j++) {
-          const x = i * step - 5;
-          const y = j * step - 5;
-          const z = parameters.heightScale * parameters.amplitude * Math.sin(
-            parameters.frequency * Math.sqrt(x * x + y * y)
-          );
-          vertices.push(x, z, y);
+    try {
+      // 移除現有的幾何體
+      if (meshRef.current) {
+        sceneRef.current.remove(meshRef.current);
+        if (geometryRef.current) {
+          geometryRef.current.dispose();
+        }
+        if (meshRef.current.material instanceof THREE.Material) {
+          meshRef.current.material.dispose();
+        } else if (Array.isArray(meshRef.current.material)) {
+          meshRef.current.material.forEach(m => m.dispose());
         }
       }
 
-      // Generate indices
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-          const a = i * (size + 1) + j;
-          const b = a + 1;
-          const c = (i + 1) * (size + 1) + j;
-          const d = c + 1;
+      // 準備執行環境
+      const scriptContent = `
+        ${userScript.code}
+        return createGeometry(THREE);
+      `;
 
-          indices.push(a, b, d);
-          indices.push(a, d, c);
-        }
+      // 創建一個安全的執行環境並執行代碼
+      const createGeometry = new Function('THREE', scriptContent);
+      const geometry = createGeometry(THREE);
+
+      if (!(geometry instanceof THREE.BufferGeometry)) {
+        throw new Error('腳本必須返回一個 Three.js 幾何體');
       }
 
-      geometry.setIndex(indices);
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-      geometry.computeVertexNormals();
-
+      // 創建材質和網格
       const material = new THREE.MeshStandardMaterial({
-        color: parameters.color,
-        wireframe: true,
+        color: 0x3366ff,
+        metalness: 0.5,
+        roughness: 0.5,
         side: THREE.DoubleSide,
       });
 
-      return new THREE.Mesh(geometry, material);
-    };
+      const mesh = new THREE.Mesh(geometry, material);
+      sceneRef.current.add(mesh);
+      
+      // 保存引用以便清理
+      geometryRef.current = geometry;
+      meshRef.current = mesh;
 
-    const surface = createParametricSurface();
-    sceneRef.current.add(surface);
-    surfaceRef.current = surface;
-    
-    // Trigger a render
-    if (cameraRef.current && rendererRef.current) {
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      // 觸發一次渲染
+      if (rendererRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+
+    } catch (error) {
+      console.error('執行幾何體腳本時出錯:', error);
     }
-  }, [parameters]); // Only runs when parameters change
+  }, [userScript]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };

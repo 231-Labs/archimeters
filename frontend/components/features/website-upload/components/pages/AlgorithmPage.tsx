@@ -1,6 +1,7 @@
 import { TemplateSeries, FontStyle, ParameterState } from '../../types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
+import Sandbox3DIframe from '../../components/Sandbox3DIframe';
 
 interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' | 'previewParams' | 'showPreview'> {
   algoFile: File | null;
@@ -45,18 +46,19 @@ export const AlgorithmPage = ({
   onPrevious
 }: AlgorithmPageProps) => {
   const [fileTypeError, setFileTypeError] = useState<string | null>(null);
+  const [jsCode, setJsCode] = useState<string | null>(null);
+  const sandboxRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    if (algoResponse) {
-      try {
-        const initialParams = JSON.parse(algoResponse);
-        onExtractParameters(initialParams);
-        setFileTypeError(null);
-      } catch (err: any) {
-        setFileTypeError(`Error parsing algorithm response: ${err.message}`);
-      }
+    if (algoFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setJsCode(content);
+      };
+      reader.readAsText(algoFile);
     }
-  }, [algoResponse, onExtractParameters]);
+  }, [algoFile]);
 
   const handleDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -81,7 +83,13 @@ export const AlgorithmPage = ({
         <div className="text-white/50 text-sm mb-4">Algorithm File</div>
         <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
           {showPreview && Object.keys(previewParams).length > 0 ? (
-            <PreviewComponent parameters={previewParams} />
+            <Sandbox3DIframe
+              ref={sandboxRef}
+              jsCode={jsCode}
+              parameters={previewParams}
+              onParametersExtracted={onExtractParameters}
+              onError={(err) => setFileTypeError(err)}
+            />
           ) : (
             <>
               <input
