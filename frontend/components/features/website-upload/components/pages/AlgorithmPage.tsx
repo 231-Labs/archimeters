@@ -20,11 +20,27 @@ interface AlgorithmPageProps extends Pick<ParameterState, 'extractedParameters' 
   onPrevious: () => void;
 }
 
-const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => (
-  <div className="h-full rounded-lg overflow-hidden bg-black/30">
-    <ParametricScene parameters={parameters} />
-  </div>
-);
+const PreviewComponent = ({ parameters }: { parameters: Record<string, any> }) => {
+  const geometryScript = {
+    code: `
+      function createGeometry(THREE) {
+        return new THREE.TorusGeometry(
+          ${parameters.radius || 2},
+          ${parameters.tubeRadius || 0.5},
+          ${parameters.radialSegments || 16},
+          ${parameters.tubularSegments || 100}
+        );
+      }
+    `,
+    filename: 'preview.js'
+  };
+
+  return (
+    <div className="h-full rounded-lg overflow-hidden bg-black/30">
+      <ParametricScene userScript={geometryScript} />
+    </div>
+  );
+};
 
 export const AlgorithmPage = ({
   algoFile,

@@ -1,113 +1,180 @@
 import { useState, useCallback } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
 
-interface GeometryScript {
-  code: string;
-  filename: string;
+interface Parameter {
+  label: string;
+  type: 'number' | 'color';
+  default: number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  current?: number | string;
+}
+
+interface Parameters {
+  [key: string]: Parameter;
 }
 
 export default function ParameterTest() {
-  const [script, setScript] = useState<GeometryScript | null>(null);
+  const [parameters, setParameters] = useState<Parameters>({});
+  const [currentParams, setCurrentParams] = useState<Record<string, any>>({});
+  const [geometryScript, setGeometryScript] = useState<{ code: string; filename: string } | null>(null);
   const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
 
+  // 處理文件上傳
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsLoading(true);
-    setError('');
+    // 檢查文件類型
+    if (!file.name.endsWith('.js')) {
+      setError('只支持 .js 文件');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      const code = e.target?.result as string;
+      setGeometryScript({ code, filename: file.name });
+
       try {
-        const code = e.target?.result as string;
-        // 檢查代碼是否包含必要的函數
-        if (!code.includes('function createGeometry')) {
-          throw new Error('檔案必須包含 createGeometry 函數');
+        // 解析參數定義
+        const parametersMatch = code.match(/const parameters = ({[\s\S]*?});/);
+        if (parametersMatch) {
+          // 安全地評估參數對象
+          const paramsDef = new Function(`return ${parametersMatch[1]}`)();
+          setParameters(paramsDef);
+          // 設置初始值
+          const initialParams = Object.entries(paramsDef).reduce((acc, [key, value]) => {
+            acc[key] = (value as Parameter).default;
+            return acc;
+          }, {} as Record<string, any>);
+          setCurrentParams(initialParams);
+          setError('');
+        } else {
+          setError('未找到參數定義，請確保文件包含正確的參數格式');
         }
-        setScript({
-          code,
-          filename: file.name
-        });
-        setError('');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '檔案讀取錯誤');
-        setScript(null);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        console.error('解析參數時出錯:', error);
+        setError('解析參數時出錯');
       }
     };
+
     reader.onerror = () => {
-      setError('檔案讀取錯誤');
-      setScript(null);
-      setIsLoading(false);
+      setError('讀取文件時出錯');
     };
+
     reader.readAsText(file);
   }, []);
+
+  const handleParameterChange = (key: string, value: number | string) => {
+    setCurrentParams(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
   return (
     <div className="flex h-full">
       {/* 左側 - 3D 預覽 */}
-      <div className="w-2/3 border-r border-white/5">
-        <div className="h-full bg-black/30 overflow-hidden">
-          <ParametricScene userScript={script} />
+      <div className="w-2/3 p-8 border-r border-white/5">
+        <div className="text-white/50 text-sm mb-4">模型預覽</div>
+        <div className="h-[calc(100vh-200px)] bg-black/30 rounded-lg overflow-hidden">
+          {geometryScript ? (
+            <ParametricScene
+              userScript={geometryScript}
+              parameters={currentParams}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-white/30">
+              請上傳幾何體文件
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 右側 - 檔案上傳和狀態 */}
-      <div className="w-1/3 p-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="block text-white/80 text-sm font-medium">
-              上傳幾何體描述檔案
-            </label>
+      {/* 右側 - 參數控制 */}
+      <div className="w-1/3 p-8">
+        {/* 文件上傳區域 */}
+        <div className="mb-8">
+          <div className="text-white/50 text-sm mb-4">上傳幾何體文件</div>
+          <div className="relative">
             <input
               type="file"
               accept=".js"
               onChange={handleFileUpload}
-              disabled={isLoading}
               className="block w-full text-sm text-white/60
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-full file:border-0
                 file:text-sm file:font-semibold
                 file:bg-white/10 file:text-white
-                hover:file:bg-white/20
-                disabled:opacity-50"
+                hover:file:bg-white/20"
             />
-          </div>
-
-          {isLoading && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-              <p className="text-blue-500 text-sm">正在載入檔案...</p>
-            </div>
-          )}
-
-          {script && !error && (
-            <div className="space-y-2">
-              <h3 className="text-white/80 text-sm font-medium">當前檔案</h3>
-              <div className="bg-white/5 rounded p-2">
-                <p className="text-white/60 text-sm">{script.filename}</p>
+            {error && (
+              <div className="mt-2 text-red-500 text-sm">{error}</div>
+            )}
+            {geometryScript && (
+              <div className="mt-2 text-green-500 text-sm">
+                已加載: {geometryScript.filename}
               </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded p-2">
-              <p className="text-red-500 text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <h3 className="text-white/80 text-sm font-medium">使用說明</h3>
-            <div className="bg-white/5 rounded p-3 text-white/60 text-sm space-y-2">
-              <p>1. 上傳的 JS 檔案需要導出一個 createGeometry 函數</p>
-              <p>2. 函數必須接收 THREE 作為參數</p>
-              <p>3. 函數必須返回一個 Three.js 幾何體</p>
-              <p>4. 支持所有 Three.js 的基礎幾何體</p>
-            </div>
+            )}
           </div>
         </div>
+
+        {/* 參數控制區域 */}
+        {Object.keys(parameters).length > 0 ? (
+          <>
+            <div className="text-white/50 text-sm mb-4">參數控制</div>
+            <div className="space-y-4">
+              {Object.entries(parameters).map(([key, param]) => (
+                <div key={key} className="space-y-2">
+                  <label className="text-white/80 text-sm">{param.label}</label>
+                  {param.type === 'number' ? (
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="range"
+                        min={param.min}
+                        max={param.max}
+                        step={param.step || 0.1}
+                        value={currentParams[key] || param.default}
+                        onChange={(e) => handleParameterChange(key, parseFloat(e.target.value))}
+                        className="flex-1"
+                      />
+                      <input
+                        type="number"
+                        min={param.min}
+                        max={param.max}
+                        step={param.step || 0.1}
+                        value={currentParams[key] || param.default}
+                        onChange={(e) => handleParameterChange(key, parseFloat(e.target.value))}
+                        className="w-20 bg-white/5 rounded px-2 py-1 text-white text-sm"
+                      />
+                    </div>
+                  ) : param.type === 'color' ? (
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="color"
+                        value={currentParams[key] || param.default}
+                        onChange={(e) => handleParameterChange(key, e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={currentParams[key] || param.default}
+                        onChange={(e) => handleParameterChange(key, e.target.value)}
+                        className="flex-1 bg-white/5 rounded px-2 py-1 text-white text-sm"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-white/30 text-center py-8">
+            上傳文件後將顯示可調整的參數
+          </div>
+        )}
       </div>
     </div>
   );

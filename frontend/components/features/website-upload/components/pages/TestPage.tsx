@@ -122,7 +122,7 @@ export const TestPage = () => {
       </div>
 
       {/* 右側 - 參數控制 */}
-      <div className="w-1/3 p-8">
+      <div className="w-1/3 p-8 h-full overflow-y-auto">
         <div className="text-white/50 text-sm mb-4">參數控制</div>
         <div className="space-y-4">
           {Object.entries(parameters).map(([key, param]) => (
