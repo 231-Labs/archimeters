@@ -33,12 +33,13 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
 
     // 創建相機
     const camera = new THREE.PerspectiveCamera(
-      75,
+      50,
       containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.z = 5;
+    camera.position.set(8, 8, 8);
+    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
     // 創建渲染器
@@ -51,6 +52,9 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
     // 創建控制器
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.8;
+    controls.target.set(0, 0, 0);
     controlsRef.current = controls;
 
     // 添加網格
@@ -62,13 +66,24 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
     scene.add(axesHelper);
 
     // 添加環境光
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
-    // 添加方向光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
+    // 添加主要方向光 (斜上方)
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    mainLight.position.set(5, 8, 5);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    // 添加填充光 (側面)
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight.position.set(-8, 0, 0);
+    scene.add(fillLight);
+
+    // 添加背光 (後方)
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    backLight.position.set(0, 2, -10);
+    scene.add(backLight);
 
     // 動畫循環
     function animate() {
@@ -130,7 +145,7 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
         emissive: parameters.emissive || 0x000000,
         roughness: parameters.roughness || 0.5,
         metalness: parameters.metalness || 0,
-        wireframe: parameters.wireframe || false,
+        wireframe: true,
         transparent: parameters.opacity !== undefined && parameters.opacity < 1,
         opacity: parameters.opacity || 1.0,
         side: THREE.DoubleSide,

@@ -1,7 +1,7 @@
 // 定義參數
 const parameters = {
   height: {
-    label: '杯子高度',
+    label: 'Cup Height',
     type: 'number',
     default: 3.0,
     min: 2.0,
@@ -9,7 +9,7 @@ const parameters = {
     step: 0.1
   },
   topRadius: {
-    label: '頂部半徑',
+    label: 'Top Radius',
     type: 'number',
     default: 2.0,
     min: 1.5,
@@ -17,7 +17,7 @@ const parameters = {
     step: 0.1
   },
   bottomRadius: {
-    label: '底部半徑',
+    label: 'Bottom Radius',
     type: 'number',
     default: 1.5,
     min: 1.0,
@@ -25,7 +25,7 @@ const parameters = {
     step: 0.1
   },
   thickness: {
-    label: '杯壁厚度',
+    label: 'Wall Thickness',
     type: 'number',
     default: 0.2,
     min: 0.15,
@@ -33,7 +33,7 @@ const parameters = {
     step: 0.05
   },
   facets: {
-    label: '幾何面數',
+    label: 'Facet Count',
     type: 'number',
     default: 6,
     min: 4,
@@ -41,7 +41,7 @@ const parameters = {
     step: 1
   },
   twistAngle: {
-    label: '扭轉角度',
+    label: 'Twist Angle',
     type: 'number',
     default: 45,
     min: 0,
@@ -49,7 +49,7 @@ const parameters = {
     step: 5
   },
   waveHeight: {
-    label: '波紋高度',
+    label: 'Wave Height',
     type: 'number',
     default: 0.15,
     min: 0,
@@ -57,7 +57,7 @@ const parameters = {
     step: 0.05
   },
   waveCount: {
-    label: '波紋數量',
+    label: 'Wave Count',
     type: 'number',
     default: 3,
     min: 0,
@@ -65,37 +65,24 @@ const parameters = {
     step: 1
   },
   wireframe: {
-    label: '網格顯示',
+    label: 'Wireframe Mode',
     type: 'boolean',
-    default: true
-  },
-  color: {
-    label: '顏色',
-    type: 'color',
-    default: '#4080ff'
-  },
-  opacity: {
-    label: '透明度',
-    type: 'number',
-    default: 1.0,
-    min: 0.0,
-    max: 1.0,
-    step: 0.1
+    default: false
   },
   wireframeLinewidth: {
-    label: '網格線寬',
+    label: 'Wireframe Width',
     type: 'number',
     default: 1,
-    min: 0.5,
-    max: 2.0,
-    step: 0.1
+    min: 1,
+    max: 3,
+    step: 0.5
   },
   wireframeSegments: {
-    label: '網格密度',
+    label: 'Wireframe Detail',
     type: 'number',
-    default: 2,
+    default: 1,
     min: 1,
-    max: 4,
+    max: 3,
     step: 1
   }
 };
@@ -111,7 +98,8 @@ function createGeometry(THREE, params = {}) {
   const twistAngle = (params.twistAngle ?? parameters.twistAngle.default) * Math.PI / 180;
   const waveHeight = params.waveHeight ?? parameters.waveHeight.default;
   const waveCount = params.waveCount ?? parameters.waveCount.default;
-  const wireframe = params.wireframe ?? parameters.wireframe.default;
+  
+  // 設定線框參數 - 但不直接強制使用
   const wireframeLinewidth = params.wireframeLinewidth ?? parameters.wireframeLinewidth.default;
   const wireframeSegments = params.wireframeSegments ?? parameters.wireframeSegments.default;
 
@@ -284,6 +272,6 @@ function createGeometry(THREE, params = {}) {
   // 計算法向量
   geometry.computeVertexNormals();
 
-  // 直接返回幾何體，不返回渲染配置
+  // 直接返回幾何體
   return geometry;
 } 
