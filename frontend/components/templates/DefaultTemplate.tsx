@@ -177,8 +177,8 @@ export default function DefaultTemplate({
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-white/60 mb-1">Price</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-light text-white/90">φ</span>
+                <div className="flex items-baseline gap-4">
+                  <img src="/Sui_Symbol_White.png" alt="Sui Symbol" width={18} height={30} />
                   <span className="text-3xl font-light bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80">
                     {price}
                   </span>
