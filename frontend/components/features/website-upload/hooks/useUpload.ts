@@ -271,87 +271,141 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
 
   // 單個文件上傳函數
   const uploadToWalrus = async (file: File, fileType: 'image' | 'algorithm' | 'metadata'): Promise<string> => {
-    try {
-      // 發送請求前，立即將狀態設為處理中
-      console.log(`[${fileType}] 即將發送請求，更新狀態為 processing`);
-      
-      // 首先更新 ref，以便效果器能夠捕獲這個改變
-      uploadStateRef.current[fileType].status = 'processing';
-      uploadStateRef.current[fileType].startTime = Date.now();
-      
-      // 然後立即更新 UI
-      updateSubStepStatus(fileType, 'processing');
-      
-      const formData = new FormData();
-      formData.append('data', file);
-      formData.append('epochs', '5');
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError: Error | null = null;
 
-      console.log(`[${fileType}] 開始發送請求...`);
-      
-      const response = await fetch('/api/walrus', {
-        method: 'PUT',
-        body: formData,
-      });
-
-      console.log(`[${fileType}] 收到請求回應，狀態: ${response.status}`);
-      
-      if (!response.ok) {
-        console.error(`[${fileType}] 錯誤回應: ${response.status}`);
-        uploadStateRef.current[fileType].status = 'error';
-        updateSubStepStatus(fileType, 'error');
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-
-      console.log(`[${fileType}] 回應正常，解析中...`);
-      const responseText = await response.text();
-      
-      let result;
+    while (retryCount < maxRetries) {
       try {
-        result = JSON.parse(responseText);
-        console.log(`[${fileType}] JSON 解析成功`);
-      } catch (err) {
-        console.error(`[${fileType}] JSON 解析失敗:`, err);
-        uploadStateRef.current[fileType].status = 'error';
-        updateSubStepStatus(fileType, 'error');
-        throw new Error('Failed to parse response JSON');
-      }
-      
-      let blobId = null;
-      if (result?.alreadyCertified?.blobId) {
-        blobId = result.alreadyCertified.blobId;
-        console.log(`[${fileType}] 回應內容: ${JSON.stringify(result).substring(0, 100)}...`);
-      } else if (result?.newlyCreated?.blobObject?.blobId) {
-        blobId = result.newlyCreated.blobObject.blobId;
-        console.log(`[${fileType}] 回應內容: ${JSON.stringify(result).substring(0, 100)}...`);
-      }
-      
-      if (!blobId || typeof blobId !== 'string' || blobId.trim() === '') {
-        console.error(`[${fileType}] 未獲取到有效的 blobId`);
-        uploadStateRef.current[fileType].status = 'error';
-        updateSubStepStatus(fileType, 'error');
-        throw new Error('No valid blobId returned');
-      }
+        // 驗證文件類型
+        if (!file || !(file instanceof File)) {
+          throw new Error('無效的文件');
+        }
 
-      console.log(`[${fileType}] 文件已認證，blobId: "${blobId}"`);
-      console.log(`[${fileType}] 成功獲取有效的 blobId: "${blobId}"`);
-      
-      // 延遲更新狀態以便 UI 顯示
-      console.log(`[${fileType}] 等待更新狀態...`);
-      await new Promise(resolve => setTimeout(resolve, 800)); // 略微延長時間，讓用戶有更好的視覺體驗
-      
-      console.log(`[${fileType}] 更新狀態為 success`);
-      uploadStateRef.current[fileType].blobId = blobId;
-      uploadStateRef.current[fileType].status = 'success';
-      uploadStateRef.current[fileType].endTime = Date.now();
-      updateSubStepStatus(fileType, 'success');
-      
-      return blobId;
-    } catch (error: any) {
-      console.error(`[${fileType}] 錯誤:`, error);
-      uploadStateRef.current[fileType].status = 'error';
-      updateSubStepStatus(fileType, 'error');
-      throw error;
+        // 驗證文件大小
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          throw new Error(`文件大小超過限制 (${maxSize / 1024 / 1024}MB)`);
+        }
+
+        // 驗證文件類型
+        const allowedTypes = {
+          image: ['image/jpeg', 'image/png', 'image/gif'],
+          algorithm: ['text/javascript', 'application/javascript'],
+          metadata: ['application/json']
+        };
+
+        if (!allowedTypes[fileType].includes(file.type)) {
+          throw new Error(`不支持的文件類型: ${file.type}`);
+        }
+
+        // 發送請求前，立即將狀態設為處理中
+        console.log(`[${fileType}] 即將發送請求，更新狀態為 processing (嘗試 ${retryCount + 1}/${maxRetries})`);
+        
+        // 首先更新 ref，以便效果器能夠捕獲這個改變
+        uploadStateRef.current[fileType].status = 'processing';
+        uploadStateRef.current[fileType].startTime = Date.now();
+        
+        // 然後立即更新 UI
+        updateSubStepStatus(fileType, 'processing');
+        
+        const formData = new FormData();
+        formData.append('data', file);
+        formData.append('epochs', '5');
+
+        console.log(`[${fileType}] 開始發送請求...`);
+        
+        const response = await fetch('/api/walrus', {
+          method: 'PUT',
+          body: formData,
+        });
+
+        console.log(`[${fileType}] 收到請求回應，狀態: ${response.status}`);
+        
+        if (!response.ok) {
+          // 如果是 500 錯誤，可能是暫時性的，我們會重試
+          if (response.status === 500) {
+            console.log(`[${fileType}] 收到 500 錯誤，準備重試...`);
+            lastError = new Error(`HTTP error: ${response.status}`);
+            retryCount++;
+            // 等待一段時間後重試
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+            continue;
+          }
+          
+          // 其他錯誤直接拋出
+          console.error(`[${fileType}] 錯誤回應: ${response.status}`);
+          uploadStateRef.current[fileType].status = 'error';
+          updateSubStepStatus(fileType, 'error');
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        console.log(`[${fileType}] 回應正常，解析中...`);
+        const responseText = await response.text();
+        
+        let result;
+        try {
+          result = JSON.parse(responseText);
+          console.log(`[${fileType}] JSON 解析成功`);
+        } catch (err) {
+          console.error(`[${fileType}] JSON 解析失敗:`, err);
+          uploadStateRef.current[fileType].status = 'error';
+          updateSubStepStatus(fileType, 'error');
+          throw new Error('Failed to parse response JSON');
+        }
+        
+        let blobId = null;
+        if (result?.alreadyCertified?.blobId) {
+          blobId = result.alreadyCertified.blobId;
+          console.log(`[${fileType}] 回應內容: ${JSON.stringify(result).substring(0, 100)}...`);
+        } else if (result?.newlyCreated?.blobObject?.blobId) {
+          blobId = result.newlyCreated.blobObject.blobId;
+          console.log(`[${fileType}] 回應內容: ${JSON.stringify(result).substring(0, 100)}...`);
+        }
+        
+        if (!blobId || typeof blobId !== 'string' || blobId.trim() === '') {
+          console.error(`[${fileType}] 未獲取到有效的 blobId`);
+          uploadStateRef.current[fileType].status = 'error';
+          updateSubStepStatus(fileType, 'error');
+          throw new Error('No valid blobId returned');
+        }
+
+        console.log(`[${fileType}] 文件已認證，blobId: "${blobId}"`);
+        console.log(`[${fileType}] 成功獲取有效的 blobId: "${blobId}"`);
+        
+        // 延遲更新狀態以便 UI 顯示
+        console.log(`[${fileType}] 等待更新狀態...`);
+        await new Promise(resolve => setTimeout(resolve, 800)); // 略微延長時間，讓用戶有更好的視覺體驗
+        
+        console.log(`[${fileType}] 更新狀態為 success`);
+        uploadStateRef.current[fileType].blobId = blobId;
+        uploadStateRef.current[fileType].status = 'success';
+        uploadStateRef.current[fileType].endTime = Date.now();
+        updateSubStepStatus(fileType, 'success');
+        
+        return blobId;
+      } catch (error: any) {
+        console.error(`[${fileType}] 錯誤:`, error);
+        
+        // 如果是網絡錯誤或 500 錯誤，且還有重試次數，則繼續重試
+        if ((error.message.includes('Failed to fetch') || error.message.includes('HTTP error: 500')) && retryCount < maxRetries - 1) {
+          console.log(`[${fileType}] 準備重試... (${retryCount + 1}/${maxRetries})`);
+          lastError = error;
+          retryCount++;
+          // 等待一段時間後重試
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          continue;
+        }
+        
+        // 如果重試次數用完或不是可重試的錯誤，則標記為錯誤
+        uploadStateRef.current[fileType].status = 'error';
+        updateSubStepStatus(fileType, 'error');
+        throw lastError || error;
+      }
     }
+
+    // 如果所有重試都失敗了
+    throw lastError || new Error('上傳失敗，已達到最大重試次數');
   };
 
   const handleUpload = async (imageFile: File, algoFile: File, metadataFile: File) => {

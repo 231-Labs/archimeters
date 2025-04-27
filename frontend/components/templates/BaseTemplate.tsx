@@ -35,10 +35,6 @@ export default function BaseTemplate({
 }: BaseTemplateProps) {
   return (
     <div className="h-full bg-black text-white overflow-auto hide-scrollbar">
-      {/* Grid overlay */}
-      <div className="fixed inset-0 bg-[url('/grid.png')] opacity-[0.03] pointer-events-none" />
-      <div className="fixed inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
-
       <div className="relative min-h-full max-w-[1800px] mx-auto p-6 pb-24 flex flex-col">
         <header className="mb-6 relative text-center">
           <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-32 h-32">

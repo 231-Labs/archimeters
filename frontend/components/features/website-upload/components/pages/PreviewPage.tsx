@@ -1,7 +1,8 @@
 import BaseTemplate from '@/components/templates/BaseTemplate'
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
-import ParametricScene from '@/components/3d/ParametricScene';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { ParametricViewer } from './ParametricViewer';
+
 
 interface PreviewPageProps {
   workName: string;
@@ -15,6 +16,7 @@ interface PreviewPageProps {
   previewParams: Record<string, any>;
   onParameterChange: (key: string, value: string | number) => void;
   onMint: () => void;
+  userScript: { code: string; filename: string } | null;
 }
 
 export const PreviewPage = ({
@@ -29,6 +31,7 @@ export const PreviewPage = ({
   previewParams,
   onParameterChange,
   onMint,
+  userScript,
 }: PreviewPageProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   
@@ -103,7 +106,7 @@ export const PreviewPage = ({
           previewParams={previewParams}
           onParameterChange={onParameterChange}
           onMint={handleMintClick}
-          preview3D={<ParametricScene parameters={previewParams} />}
+          preview3D={<ParametricViewer userScript={userScript} parameters={previewParams} />}
         />
       </BaseTemplate>
     </>

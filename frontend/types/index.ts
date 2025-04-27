@@ -1,7 +1,17 @@
 export type WindowName = 
   | 'entry'
   | 'designer'
-  | 'website-upload';
+  | 'website-upload'
+  | 'browse'
+  | 'artlier-viewer';
+
+export interface WindowConfig {
+  title: string;
+  component: React.ComponentType;
+  defaultPosition: { x: number; y: number };
+  defaultSize: { width: number; height: number };
+  resizable?: boolean;
+}
 
 export interface WindowState {
   name: WindowName;

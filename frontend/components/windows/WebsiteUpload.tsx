@@ -8,7 +8,7 @@ import { useUpload } from '@/components/features/website-upload/hooks/useUpload'
 import { createMetadataJson } from '@/components/features/website-upload/utils/metadata';
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/website-upload/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createDesignSeries, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -96,6 +96,9 @@ export default function WebsiteUpload() {
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
 
+  // 添加 userScript 狀態
+  const [userScript, setUserScript] = useState<{ code: string; filename: string } | null>(null);
+
   // 在每次 uploadStep 或 uploadSteps 變化時更新本地狀態
   useEffect(() => {
     if (uploadSteps) {
@@ -177,65 +180,262 @@ export default function WebsiteUpload() {
 
   // File handlers
   const handleImageFileChange = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setImageFile(file);
-    setImageUrl(url);
-    setImageRequired(false);
+    try {
+      // 驗證文件類型
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setImageRequired(true);
+        throw new Error('只支持 JPG、PNG 和 GIF 格式的圖片');
+      }
+
+      // 驗證文件大小
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setImageRequired(true);
+        throw new Error(`圖片大小不能超過 ${maxSize / 1024 / 1024}MB`);
+      }
+
+      const url = URL.createObjectURL(file);
+      setImageFile(file);
+      setImageUrl(url);
+      setImageRequired(false);
+    } catch (error) {
+      console.error('圖片上傳錯誤:', error);
+      setImageRequired(true);
+      setError(error instanceof Error ? error.message : '圖片上傳失敗');
+    }
   };
 
   const handleAlgoFileChange = (file: File) => {
-    setAlgoFile(file);
-    setHasExtractedParams(false);
-    setAlgoError('');
-    setAlgoRequired(false);
-    
-    const reader = new FileReader();
-    
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        setAlgoResponse(content.substring(0, 500));
-        processSceneFile(content);
-      } catch (error) {
-        setAlgoError('Failed to read algorithm file');
-        console.error('Error reading algorithm file:', error);
+    try {
+      // 驗證文件類型
+      const allowedTypes = ['text/javascript', 'application/javascript'];
+      if (!allowedTypes.includes(file.type)) {
+        setAlgoRequired(true);
+        throw new Error('只支持 JavaScript 文件');
       }
-    };
-    
-    reader.onerror = () => {
-      setAlgoError('Failed to read algorithm file');
-    };
-    
-    reader.readAsText(file);
+
+      // 驗證文件大小
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        setAlgoRequired(true);
+        throw new Error(`算法文件大小不能超過 ${maxSize / 1024 / 1024}MB`);
+      }
+
+      setAlgoFile(file);
+      setHasExtractedParams(false);
+      setAlgoError('');
+      setAlgoRequired(false);
+      
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          setAlgoResponse(content.substring(0, 500));
+          // 設置 userScript
+          setUserScript({
+            code: content,
+            filename: file.name
+          });
+          processSceneFile(content);
+        } catch (error) {
+          setAlgoError('Failed to read algorithm file');
+          console.error('Error reading algorithm file:', error);
+        }
+      };
+      
+      reader.onerror = () => {
+        setAlgoError('Failed to read algorithm file');
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('算法文件上傳錯誤:', error);
+      setAlgoRequired(true);
+      setAlgoError(error instanceof Error ? error.message : '算法文件上傳失敗');
+    }
   };
 
   // Algorithm file processing
   const processSceneFile = (code: string) => {
     try {
-      const parametersMatch = code.match(/export\s+const\s+(?:default)?[pP]arameters\s*=\s*({[\s\S]*?})(?:\s+as\s+const)?;/);
+      // 支援多種參數定義格式
+      const paramPatterns = [
+        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // 對象格式
+        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // 陣列格式
+        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage 格式
+        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS 對象格式
+        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS 陣列格式
+        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // 直接從 createGeometry 函數提取
+      ];
+
+      let extractedCode = '';
       
-      if (parametersMatch && parametersMatch[1]) {
-        let paramStr = parametersMatch[1];
-        paramStr = paramStr.replace(/(\w+):/g, '"$1":');
-        paramStr = paramStr.replace(/'([^']*?)'/g, '"$1"');
-        paramStr = paramStr.replace(/,(\s*[}\]])/g, '$1');
-        
-        console.log("Processed param string:", paramStr);
-        
-        const extractedParams = JSON.parse(paramStr);
-        
-        const initialParams = Object.fromEntries(
-          Object.entries(extractedParams).map(([key, value]: [string, any]) => [key, value.default])
-        );
-        setPreviewParams(initialParams);
-        setShowPreview(true);
-        
-        setExtractedParameters(extractedParams);
-        setHasExtractedParams(true);
-        setAlgoError('');
-      } else {
+      // 嘗試所有模式
+      for (const pattern of paramPatterns) {
+        const match = code.match(pattern);
+        if (match) {
+          if (pattern.toString().includes('createGeometry')) {
+            // 從 createGeometry 函數提取參數
+            const geometryCode = match[0];
+            const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
+            if (paramMatches) {
+              const paramsObj: Record<string, any> = {};
+              paramMatches.forEach(param => {
+                const [key, value] = param.split(':').map(s => s.trim());
+                if (key && !['new', 'return', 'function'].includes(key)) {
+                  paramsObj[key] = {
+                    type: 'number',
+                    label: key,
+                    default: parseFloat(value) || 0,
+                    min: 0,
+                    max: 100,
+                    current: parseFloat(value) || 0
+                  };
+                }
+              });
+              extractedCode = JSON.stringify(paramsObj);
+              break;
+            }
+          } else {
+            extractedCode = match[1];
+            break;
+          }
+        }
+      }
+
+      if (!extractedCode) {
         throw new Error("Failed to extract parameters from code");
       }
+
+      console.log("Found parameters definition:", extractedCode);
+      
+      // 清理代碼
+      let cleanCode = extractedCode
+        .replace(/(\w+):/g, '"$1":')  // 將鍵名轉換為字符串
+        .replace(/'([^']*?)'/g, '"$1"')  // 將單引號轉換為雙引號
+        .replace(/,(\s*[}\]])/g, '$1')  // 移除尾隨逗號
+        .replace(/\/\/.*/g, '')  // 移除單行註釋
+        .replace(/\/\*[\s\S]*?\*\//g, ''); // 移除多行註釋
+      
+      console.log("Cleaned code:", cleanCode);
+      
+      let extractedParams: Record<string, any>;
+      
+      try {
+        // 先試用 JSON.parse
+        const parsedParams = JSON.parse(cleanCode);
+        
+        // 標準化參數格式
+        extractedParams = {};
+        
+        if (Array.isArray(parsedParams)) {
+          parsedParams.forEach((param: any, index: number) => {
+            const key = param.key || `param${index}`;
+            extractedParams[key] = {
+              type: param.type || 'number',
+              label: param.label || key,
+              default: param.default ?? 0,
+              min: param.min ?? 0,
+              max: param.max ?? 100,
+              current: param.default ?? 0
+            };
+          });
+        } else if (typeof parsedParams === 'object' && parsedParams !== null) {
+          Object.entries(parsedParams).forEach(([key, param]: [string, any]) => {
+            if (typeof param === 'object') {
+              extractedParams[key] = {
+                type: param.type || 'number',
+                label: param.label || key,
+                default: param.default ?? param.current ?? 0,
+                min: param.min ?? 0,
+                max: param.max ?? 100,
+                current: param.current ?? param.default ?? 0
+              };
+            } else {
+              // 如果參數是直接值
+              extractedParams[key] = {
+                type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
+                label: key,
+                default: param,
+                min: 0,
+                max: typeof param === 'number' ? param * 2 : 100,
+                current: param
+              };
+            }
+          });
+        } else {
+          throw new Error("Invalid parameters format");
+        }
+      } catch (parseError) {
+        console.error("JSON parsing failed, trying Function:", parseError);
+        try {
+          // 如果 JSON.parse 失敗，嘗試使用 Function
+          const func = new Function(`return ${extractedCode}`);
+          const funcParams = func();
+          
+          // 標準化參數格式
+          extractedParams = {};
+          
+          if (Array.isArray(funcParams)) {
+            funcParams.forEach((param: any, index: number) => {
+              const key = param.key || `param${index}`;
+              extractedParams[key] = {
+                type: param.type || 'number',
+                label: param.label || key,
+                default: param.default ?? 0,
+                min: param.min ?? 0,
+                max: param.max ?? 100,
+                current: param.default ?? 0
+              };
+            });
+          } else if (typeof funcParams === 'object' && funcParams !== null) {
+            Object.entries(funcParams).forEach(([key, param]: [string, any]) => {
+              if (typeof param === 'object') {
+                extractedParams[key] = {
+                  type: param.type || 'number',
+                  label: param.label || key,
+                  default: param.default ?? param.current ?? 0,
+                  min: param.min ?? 0,
+                  max: param.max ?? 100,
+                  current: param.current ?? param.default ?? 0
+                };
+              } else {
+                // 如果參數是直接值
+                extractedParams[key] = {
+                  type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
+                  label: key,
+                  default: param,
+                  min: 0,
+                  max: typeof param === 'number' ? param * 2 : 100,
+                  current: param
+                };
+              }
+            });
+          } else {
+            throw new Error("Invalid parameters format");
+          }
+        } catch (funcError) {
+          console.error("Function parsing failed:", funcError);
+          throw new Error("Failed to parse parameters");
+        }
+      }
+      
+      if (Object.keys(extractedParams).length === 0) {
+        throw new Error("No valid parameters found in code");
+      }
+      
+      const initialParams = Object.fromEntries(
+        Object.entries(extractedParams).map(([key, value]) => [key, value.default])
+      );
+      
+      setPreviewParams(initialParams);
+      setShowPreview(true);
+      
+      setExtractedParameters(extractedParams);
+      setHasExtractedParams(true);
+      setAlgoError('');
     } catch (err) {
       console.error("Error processing algorithm file:", err);
       setAlgoError(`Parameter parsing failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -338,9 +538,10 @@ export default function WebsiteUpload() {
     }
 
     try {
-      const tx = await createDesignSeries(
+      const tx = await createArtlier(
         ARTLIER_STATE_ID,
         membershipId,
+        workName,
         imageBlobId,
         metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
         algoBlobId,      // 使用 algoBlobId
@@ -631,6 +832,8 @@ export default function WebsiteUpload() {
             onTogglePreview={() => setShowPreview(!showPreview)}
             onNext={goToNextPage}
             onPrevious={goToPreviousPage}
+            userScript={userScript}
+            onUserScriptChange={setUserScript}
           />
         )}
         {currentPage === 3 && (
@@ -646,6 +849,7 @@ export default function WebsiteUpload() {
             previewParams={previewParams}
             onParameterChange={handleParameterChange}
             onMint={goToNextPage}
+            userScript={userScript}
           />
         )}
         {currentPage === 4 && (

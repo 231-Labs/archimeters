@@ -27,6 +27,7 @@
     "next": "^14.2.27",
     "react": "^18",
     "react-dom": "^18",
+    "react-masonry-css": "^1.0.16",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.175.0",

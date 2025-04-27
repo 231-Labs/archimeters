@@ -8,6 +8,7 @@ interface WindowProps {
   size: { width: number; height: number };
   isActive?: boolean;
   resizable?: boolean;
+  zIndex: number;
   onClose: (name: WindowName) => void;
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
   onResize?: (e: React.MouseEvent, name: WindowName) => void;
@@ -23,6 +24,7 @@ const Window: React.FC<WindowProps> = ({
   size,
   isActive,
   resizable = false,
+  zIndex,
   onClose,
   onDragStart,
   onResize,
@@ -45,19 +47,22 @@ const Window: React.FC<WindowProps> = ({
 
   return (
     <div
-      className={`absolute flex flex-col ${
-        isActive ? 'z-50' : 'z-0'
-      } window-shadow retro-border bg-[#0a0a0a]`}
+      className={`absolute flex flex-col window-shadow retro-border bg-[#0a0a0a] ${
+        isActive ? 'ring-1 ring-white/20' : ''
+      }`}
       style={{
         width: `${windowSize.width}px`,
         height: `${windowSize.height}px`,
         transform: `translate(${position.x}px, ${position.y}px)`,
+        zIndex: zIndex,
       }}
       onClick={onClick}
     >
       {/* 標題欄 */}
       <div
-        className="h-6 px-2 flex items-center justify-between border-b border-[rgba(255,255,255,0.2)] bg-[#141414]"
+        className={`h-6 px-2 flex items-center justify-between border-b border-[rgba(255,255,255,0.2)] ${
+          isActive ? 'bg-[#1a1a1a]' : 'bg-[#141414]'
+        }`}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           onDragStart(e, name);

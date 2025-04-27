@@ -1,5 +1,13 @@
 import { useState, useCallback } from 'react';
-import type { FileState } from '@/components/features/website-upload/types';
+
+interface FileState {
+  imageFile: File | null;
+  imageUrl: string;
+  algoFile: File | null;
+  algoResponse: string;
+  algoError: string;
+  userScript: { code: string; filename: string } | null;
+}
 
 export function useFileUpload() {
   const [state, setState] = useState<FileState>({
@@ -8,41 +16,47 @@ export function useFileUpload() {
     algoFile: null,
     algoResponse: '',
     algoError: '',
+    userScript: null,
   });
 
   const handleImageFileChange = useCallback((file: File) => {
-    const url = URL.createObjectURL(file);
     setState(prev => ({
       ...prev,
       imageFile: file,
-      imageUrl: url,
+      imageUrl: URL.createObjectURL(file),
     }));
   }, []);
 
   const handleAlgoFileChange = useCallback((file: File) => {
-    setState(prev => ({
-      ...prev,
-      algoFile: file,
-      algoError: '',
-    }));
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        setState(prev => ({
-          ...prev,
-          algoResponse: content.substring(0, 500),
-        }));
-      } catch (error) {
-        setState(prev => ({
-          ...prev,
-          algoError: 'Failed to read algorithm file',
-        }));
-      }
-    };
-    
-    reader.readAsText(file);
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          setState(prev => ({
+            ...prev,
+            algoResponse: content,
+            userScript: {
+              code: content,
+              filename: file.name
+            }
+          }));
+        } catch (error) {
+          setState(prev => ({
+            ...prev,
+            algoError: 'Failed to read algorithm file'
+          }));
+          console.error('Error reading algorithm file:', error);
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        algoError: 'Failed to read algorithm file'
+      }));
+      console.error('Error reading algorithm file:', error);
+    }
   }, []);
 
   const resetFiles = useCallback(() => {
@@ -55,13 +69,22 @@ export function useFileUpload() {
       algoFile: null,
       algoResponse: '',
       algoError: '',
+      userScript: null,
     });
   }, [state.imageUrl]);
+
+  const setUserScript = useCallback((script: { code: string; filename: string } | null) => {
+    setState(prev => ({
+      ...prev,
+      userScript: script
+    }));
+  }, []);
 
   return {
     ...state,
     handleImageFileChange,
     handleAlgoFileChange,
     resetFiles,
+    setUserScript
   };
 } 

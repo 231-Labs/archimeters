@@ -6,6 +6,8 @@ import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
 import WebsiteUpload from '@/components/windows/WebsiteUpload';
+import BrowseWindow from '@/components/windows/BrowseWindow';
+import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -20,6 +22,7 @@ export default function Home() {
     activeWindow,
     windowPositions,
     windowSizes,
+    windowZIndexes,
     activateWindow,
     openWindow,
     closeWindow,
@@ -53,7 +56,7 @@ export default function Home() {
     <>
       <div className="min-h-screen bg-black overflow-hidden">
         <Header />
-        <Dock onOpenWindow={openWindow} />
+        <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
           <div className="h-full relative">
             {openWindows.map(name => {
@@ -70,6 +73,7 @@ export default function Home() {
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
                     </Window>
@@ -88,6 +92,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <Terminal />
                     </Window>
@@ -106,8 +111,52 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
                     >
                       <WebsiteUpload />
+                    </Window>
+                  );
+                case 'browse':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Browse Images"
+                      position={windowPositions.browse}
+                      size={windowSizes.browse}
+                      isActive={activeWindow === 'browse'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                      zIndex={openWindows.indexOf(name) + 1}
+                    >
+                      <BrowseWindow
+                        name={name}
+                        onOpenWindow={openWindow}
+                      />
+                    </Window>
+                  );
+                case 'artlier-viewer':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="Artlier Viewer"
+                      position={windowPositions['artlier-viewer']}
+                      size={windowSizes['artlier-viewer']}
+                      isActive={activeWindow === 'artlier-viewer'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                      zIndex={name === 'artlier-viewer' && openWindows.indexOf('browse') !== -1 
+                        ? Math.max(openWindows.indexOf('browse') + 2, openWindows.indexOf(name) + 1)
+                        : openWindows.indexOf(name) + 1}
+                    >
+                      <ArtlierViewerWindow name={name} />
                     </Window>
                   );
                 default:

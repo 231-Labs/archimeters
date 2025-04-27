@@ -1,4 +1,4 @@
-import { WindowName } from '@/types/index';
+import { WindowName } from '@/types';
 
 export type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 
