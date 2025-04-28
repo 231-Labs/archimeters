@@ -5,7 +5,7 @@ import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
-import WebsiteUpload from '@/components/windows/WebsiteUpload';
+import DesignPublisher from '@/components/windows/DesignPublisher';
 import BrowseWindow from '@/components/windows/BrowseWindow';
 import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
@@ -113,7 +113,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={openWindows.indexOf(name) + 1}
                     >
-                      <WebsiteUpload />
+                      <DesignPublisher />
                     </Window>
                   );
                 case 'browse':

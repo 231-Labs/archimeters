@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BasicInfoPage } from '@/components/features/website-upload/components/pages/BasicInfoPage';
-import { AlgorithmPage } from '@/components/features/website-upload/components/pages/AlgorithmPage';
-import { PreviewPage } from '@/components/features/website-upload/components/pages/PreviewPage';
-import { UploadStatusPage } from '@/components/features/website-upload/components/pages/UploadStatusPage';
-import { useUpload } from '@/components/features/website-upload/hooks/useUpload';
-import { createMetadataJson } from '@/components/features/website-upload/utils/metadata';
-import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/website-upload/types';
+import { BasicInfoPage } from '@/components/features/design-publisher/components/pages/BasicInfoPage';
+import { AlgorithmPage } from '@/components/features/design-publisher/components/pages/AlgorithmPage';
+import { PreviewPage } from '@/components/features/design-publisher/components/pages/PreviewPage';
+import { UploadStatusPage } from '@/components/features/design-publisher/components/pages/UploadStatusPage';
+import { useUpload } from '@/components/features/design-publisher/hooks/useUpload';
+import { createMetadataJson } from '@/components/features/design-publisher/utils/metadata';
+import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 

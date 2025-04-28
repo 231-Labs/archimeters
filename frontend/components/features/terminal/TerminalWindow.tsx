@@ -15,7 +15,6 @@ interface TerminalWindowProps {
  * Terminal window component that wraps the Terminal component in a window
  */
 const TerminalWindow: React.FC<TerminalWindowProps> = ({ onClose, name }) => {
-  // 確保配置存在
   if (!defaultWindowConfigs[name]) {
     throw new Error(`Window configuration not found for window type: ${name}`);
   }
