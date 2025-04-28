@@ -78,15 +78,15 @@ export default function Home() {
                       <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
                     </Window>
                   );
-                case 'designer':
+                case 'terminal':
                   return (
                     <Window
                       key={name}
                       name={name}
                       title="Parametric Terminal"
-                      position={windowPositions.designer}
-                      size={windowSizes.designer}
-                      isActive={activeWindow === 'designer'}
+                      position={windowPositions.terminal}
+                      size={windowSizes.terminal}
+                      isActive={activeWindow === 'terminal'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}

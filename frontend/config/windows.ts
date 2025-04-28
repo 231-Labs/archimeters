@@ -5,9 +5,9 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     title: 'Entry',
     defaultSize: { width: 500, height: 500 },
   },
-  designer: {
-    title: 'Parametric Terminal',
-    defaultSize: { width: 640, height: 660 },
+  terminal: {
+    title: 'Terminal',
+    defaultSize: { width: 600, height: 600 },
     resizable: true,
   },
   'website-upload': {

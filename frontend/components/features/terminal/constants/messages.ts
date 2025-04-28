@@ -1,15 +1,19 @@
 export const WELCOME_MESSAGES = {
-  TITLE: 'ARCHIMETERS DESIGN LAB',
+  TITLE: 'ARCHIMETERS',
   SUBTITLE: 'PARAMETRIC TERMINAL',
-  WELCOME: 'Welcome to the Design Interface',
-  TAGLINE: 'Bridging Reality & Digital Geometry',
-  HELP_HINT: '💫 Type "help" or "-h" to explore commands',
+  WELCOME: 'Welcome to Archimeters OS',
+  HELP_HINT: 'Type "help" for available commands',
   CURRENT_ACCOUNT: 'Current Account:',
   ACCOUNT_STATUS: {
     CONNECTED: 'Connected',
-    NOT_CONNECTED: 'Not connected'
+    NOT_CONNECTED: 'Not Connected'
   },
-  WALLET_SWITCH_HINT: '💡 To switch wallet, please use the Entry Window'
+  WALLET_SWITCH_HINT: 'Switch your wallet to connect to Archimeters OS'
+};
+
+export const ERROR_MESSAGES = {
+  UNKNOWN_COMMAND: (command: string) => `⚠️  Unknown command: ${command}`,
+  HELP_HINT: '💡 Type "help" or "-h" for available commands'
 };
 
 export const COMMAND_HELP = {
@@ -34,11 +38,6 @@ export const COMMAND_HELP = {
     ARROWS: '↑↓            ',
     ARROWS_DESC: 'History       '
   }
-};
-
-export const ERROR_MESSAGES = {
-  UNKNOWN_COMMAND: (command: string) => `⚠️  Unknown command: ${command}`,
-  HELP_HINT: '💡 Type "help" or "-h" for available commands'
 };
 
 export const UPLOAD_MESSAGES = {

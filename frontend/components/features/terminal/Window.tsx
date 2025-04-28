@@ -1,39 +1,40 @@
 import Terminal from './Terminal';
 import Window from '@/components/common/Window';
 import type { WindowName } from '@/types';
+import { defaultWindowConfigs } from '@/config/windows';
 
 /**
  * Props for the TerminalWindow component
  */
 interface TerminalWindowProps {
   onClose: () => void;
-  name: WindowName;
+  name: Extract<WindowName, 'terminal'>;  // 限制只能使用 'terminal' 類型
 }
-
-/**
- * Default size for the terminal window
- */
-const DEFAULT_SIZE = {
-  width: 800,
-  height: 600
-};
 
 /**
  * Terminal window component that wraps the Terminal component in a window
  */
 const TerminalWindow: React.FC<TerminalWindowProps> = ({ onClose, name }) => {
+  // 確保配置存在
+  if (!defaultWindowConfigs[name]) {
+    throw new Error(`Window configuration not found for window type: ${name}`);
+  }
+
+  const config = defaultWindowConfigs[name];
+
   return (
     <Window
       name={name}
-      title="Archimeters Terminal"
+      title={config.title}
       position={{ x: 100, y: 100 }}
-      size={DEFAULT_SIZE}
+      size={config.defaultSize}
       isActive={true}
-      resizable={true}
+      resizable={config.resizable ?? true}
       onClose={onClose}
       onDragStart={() => {}}
       onClick={() => {}}
       zIndex={100}
+      className="bg-black"
     >
       <Terminal />
     </Window>

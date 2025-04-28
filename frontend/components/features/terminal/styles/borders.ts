@@ -9,7 +9,8 @@ export const BOX_STYLES = {
   verticalLeft: '┤',
   horizontalDown: '┬',
   horizontalUp: '┴',
-  cross: '┼'
+  cross: '┼',
+  separator: '────────────────────────────────────────────────────────────────────────────'
 };
 
 export const GEOMETRIC_BORDER = '─'.repeat(80);
