@@ -1,4 +1,4 @@
-import Terminal from './Terminal';
+import Terminal from '../features/terminal/Terminal';
 import Window from '@/components/common/Window';
 import type { WindowName } from '@/types';
 import { defaultWindowConfigs } from '@/config/windows';
@@ -8,7 +8,7 @@ import { defaultWindowConfigs } from '@/config/windows';
  */
 interface TerminalWindowProps {
   onClose: () => void;
-  name: Extract<WindowName, 'terminal'>;  // 限制只能使用 'terminal' 類型
+  name: Extract<WindowName, 'terminal'>;
 }
 
 /**
