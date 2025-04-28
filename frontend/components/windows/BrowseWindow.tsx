@@ -31,7 +31,6 @@ interface Artlier {
 const imageCache = new Map<string, string>();
 
 export default function BrowseWindow({
-  name,
   onOpenWindow,
 }: BrowseWindowProps) {
   const result = useSeriesImages();
