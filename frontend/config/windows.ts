@@ -11,7 +11,7 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     resizable: true,
   },
   'website-upload': {
-    title: 'Website Upload',
+    title: 'Design Publisher',
     defaultSize: { width: 1140, height: 600 },
     resizable: true,
   },

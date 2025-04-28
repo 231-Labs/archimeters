@@ -54,11 +54,11 @@ module archimeters::archimeters {
         );
         display.add(
             b"link".to_string(),
-            b"https://archimeters.xyz".to_string() // TODO: change to realsite
+            b"https://archimeters.vercel.app".to_string()
         );
         display.add(
             b"description".to_string(),
-            b"Your pass to the parametric design world".to_string() // TODO: change to realsite
+            b"Your access to the parametric design world".to_string()
         );
         display.add(
             b"image_url".to_string(),

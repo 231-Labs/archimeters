@@ -13,6 +13,7 @@ import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/features/terminal';
 import { useWindowManager } from '@/hooks/useWindowManager';
+import { defaultWindowConfigs } from '@/config/windows';
 
 export default function Home() {
   const suiClient = useSuiClient();
@@ -102,7 +103,7 @@ export default function Home() {
                     <Window
                       key={name}
                       name={name}
-                      title="Website Upload"
+                      title={defaultWindowConfigs['website-upload'].title}
                       position={windowPositions['website-upload']}
                       size={windowSizes['website-upload']}
                       isActive={activeWindow === 'website-upload'}

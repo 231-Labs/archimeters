@@ -9,10 +9,12 @@ import { createMetadataJson } from '@/components/features/design-publisher/utils
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { defaultWindowConfigs } from '@/config/windows';
 
 export default function WebsiteUpload() {
   const router = useRouter();
 
+  // State Management Section
   // Image states
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -30,12 +32,12 @@ export default function WebsiteUpload() {
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [showPreview, setShowPreview] = useState(false);
 
-  // Artwork info
+  // Artwork information
   const [workName, setWorkName] = useState('Parametric Constellation #42');
   const [description, setDescription] = useState('A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.');
   const [price, setPrice] = useState('1024');
 
-  // Artist info
+  // Artist information
   const [name, setName] = useState('CryptoArtist#0042');
   const [social, setSocial] = useState('archimeters.lens');
   const [intro, setIntro] = useState('Digital artist exploring the intersection of mathematics and visual aesthetics through parametric art.');
@@ -57,6 +59,8 @@ export default function WebsiteUpload() {
 
   // Upload states
   const [error, setError] = useState<string>('');
+
+  // Upload hook configuration
   const { 
     isLoading, 
     uploadStatus, 
@@ -69,11 +73,11 @@ export default function WebsiteUpload() {
     onSuccess: (results) => {
       console.log('Upload completed with results:', results);
       if (results.success) {
-        // 上傳完成後，設置當前步驟為交易步驟
-        const transactionStepIndex = 2; // 交易步驟的索引
+        // Set current step to transaction step after upload completion
+        const transactionStepIndex = 2; // Index of transaction step
         setCurrentStep(transactionStepIndex);
         
-        // 更新交易步驟狀態為處理中
+        // Update transaction step status to processing
         setSteps(prev => {
           const newSteps = [...prev];
           if (newSteps[transactionStepIndex]) {
@@ -88,23 +92,25 @@ export default function WebsiteUpload() {
     onError: (error) => setError(error)
   });
 
+  // Transaction states
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [transactionDigest, setTransactionDigest] = useState<string>('');
   const [transactionError, setTransactionError] = useState<string>('');
 
+  // User account states
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
 
-  // 添加 userScript 狀態
+  // User script state
   const [userScript, setUserScript] = useState<{ code: string; filename: string } | null>(null);
 
-  // 在每次 uploadStep 或 uploadSteps 變化時更新本地狀態
+  // Update local state when uploadStep or uploadSteps change
   useEffect(() => {
     if (uploadSteps) {
       setCurrentStep(uploadStep);
       setSteps(prev => {
-        // 保留 transaction 步驟（如果存在）
+        // Preserve transaction step if exists
         const transactionStep = prev.find(step => step.id === 'transaction');
         const newSteps = [...uploadSteps];
         
@@ -120,7 +126,7 @@ export default function WebsiteUpload() {
   // Cleanup function
   useEffect(() => {
     return () => {
-      // 清除文件相關的狀態
+      // Clear file-related states
       if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
@@ -129,20 +135,20 @@ export default function WebsiteUpload() {
       setAlgoFile(null);
       setAlgoResponse('');
       
-      // 重置所有狀態
+      // Reset all states
       setCurrentPage(1);
       setError('');
       setTransactionDigest('');
       setTransactionError('');
       resetUpload?.();
       
-      // 清除參數相關的狀態
+      // Clear parameter-related states
       setExtractedParameters({});
       setHasExtractedParams(false);
       setPreviewParams({});
       setShowPreview(false);
       
-      // 重置驗證狀態
+      // Reset validation states
       setWorkNameRequired(false);
       setDescriptionRequired(false);
       setPriceRequired(false);
@@ -151,7 +157,7 @@ export default function WebsiteUpload() {
     };
   }, []);
 
-  // 獲取 membership
+  // Fetch membership
   useEffect(() => {
     const fetchMembership = async () => {
       if (!currentAccount?.address) return;
@@ -181,18 +187,18 @@ export default function WebsiteUpload() {
   // File handlers
   const handleImageFileChange = (file: File) => {
     try {
-      // 驗證文件類型
+      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(file.type)) {
         setImageRequired(true);
-        throw new Error('只支持 JPG、PNG 和 GIF 格式的圖片');
+        throw new Error('Only JPG, PNG and GIF formats are supported');
       }
 
-      // 驗證文件大小
+      // Validate file size
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         setImageRequired(true);
-        throw new Error(`圖片大小不能超過 ${maxSize / 1024 / 1024}MB`);
+        throw new Error(`Image size cannot exceed ${maxSize / 1024 / 1024}MB`);
       }
 
       const url = URL.createObjectURL(file);
@@ -200,26 +206,26 @@ export default function WebsiteUpload() {
       setImageUrl(url);
       setImageRequired(false);
     } catch (error) {
-      console.error('圖片上傳錯誤:', error);
+      console.error('Image upload error:', error);
       setImageRequired(true);
-      setError(error instanceof Error ? error.message : '圖片上傳失敗');
+      setError(error instanceof Error ? error.message : 'Image upload failed');
     }
   };
 
   const handleAlgoFileChange = (file: File) => {
     try {
-      // 驗證文件類型
+      // Validate file type
       const allowedTypes = ['text/javascript', 'application/javascript'];
       if (!allowedTypes.includes(file.type)) {
         setAlgoRequired(true);
-        throw new Error('只支持 JavaScript 文件');
+        throw new Error('Only JavaScript files are supported');
       }
 
-      // 驗證文件大小
+      // Validate file size
       const maxSize = 1 * 1024 * 1024; // 1MB
       if (file.size > maxSize) {
         setAlgoRequired(true);
-        throw new Error(`算法文件大小不能超過 ${maxSize / 1024 / 1024}MB`);
+        throw new Error(`Algorithm file size cannot exceed ${maxSize / 1024 / 1024}MB`);
       }
 
       setAlgoFile(file);
@@ -233,7 +239,7 @@ export default function WebsiteUpload() {
         try {
           const content = event.target?.result as string;
           setAlgoResponse(content.substring(0, 500));
-          // 設置 userScript
+          // Set userScript
           setUserScript({
             code: content,
             filename: file.name
@@ -251,33 +257,33 @@ export default function WebsiteUpload() {
       
       reader.readAsText(file);
     } catch (error) {
-      console.error('算法文件上傳錯誤:', error);
+      console.error('Algorithm file upload error:', error);
       setAlgoRequired(true);
-      setAlgoError(error instanceof Error ? error.message : '算法文件上傳失敗');
+      setAlgoError(error instanceof Error ? error.message : 'Algorithm file upload failed');
     }
   };
 
   // Algorithm file processing
   const processSceneFile = (code: string) => {
     try {
-      // 支援多種參數定義格式
+      // Support multiple parameter definition formats
       const paramPatterns = [
-        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // 對象格式
-        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // 陣列格式
-        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage 格式
-        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS 對象格式
-        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS 陣列格式
-        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // 直接從 createGeometry 函數提取
+        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // Object format
+        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // Array format
+        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage format
+        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS object format
+        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS array format
+        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // Extract directly from createGeometry function
       ];
 
       let extractedCode = '';
       
-      // 嘗試所有模式
+      // Try all patterns
       for (const pattern of paramPatterns) {
         const match = code.match(pattern);
         if (match) {
           if (pattern.toString().includes('createGeometry')) {
-            // 從 createGeometry 函數提取參數
+            // Extract parameters from createGeometry function
             const geometryCode = match[0];
             const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
             if (paramMatches) {
@@ -311,23 +317,23 @@ export default function WebsiteUpload() {
 
       console.log("Found parameters definition:", extractedCode);
       
-      // 清理代碼
+      // Clean code
       let cleanCode = extractedCode
-        .replace(/(\w+):/g, '"$1":')  // 將鍵名轉換為字符串
-        .replace(/'([^']*?)'/g, '"$1"')  // 將單引號轉換為雙引號
-        .replace(/,(\s*[}\]])/g, '$1')  // 移除尾隨逗號
-        .replace(/\/\/.*/g, '')  // 移除單行註釋
-        .replace(/\/\*[\s\S]*?\*\//g, ''); // 移除多行註釋
+        .replace(/(\w+):/g, '"$1":')  // Convert key names to strings
+        .replace(/'([^']*?)'/g, '"$1"')  // Convert single quotes to double quotes
+        .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
+        .replace(/\/\/.*/g, '')  // Remove single-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, ''); // Remove multi-line comments
       
       console.log("Cleaned code:", cleanCode);
       
       let extractedParams: Record<string, any>;
       
       try {
-        // 先試用 JSON.parse
+        // Try JSON.parse first
         const parsedParams = JSON.parse(cleanCode);
         
-        // 標準化參數格式
+        // Standardize parameter format
         extractedParams = {};
         
         if (Array.isArray(parsedParams)) {
@@ -354,7 +360,7 @@ export default function WebsiteUpload() {
                 current: param.current ?? param.default ?? 0
               };
             } else {
-              // 如果參數是直接值
+              // If parameter is a direct value
               extractedParams[key] = {
                 type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
                 label: key,
@@ -371,11 +377,11 @@ export default function WebsiteUpload() {
       } catch (parseError) {
         console.error("JSON parsing failed, trying Function:", parseError);
         try {
-          // 如果 JSON.parse 失敗，嘗試使用 Function
+          // If JSON.parse fails, try using Function
           const func = new Function(`return ${extractedCode}`);
           const funcParams = func();
           
-          // 標準化參數格式
+          // Standardize parameter format
           extractedParams = {};
           
           if (Array.isArray(funcParams)) {
@@ -402,7 +408,7 @@ export default function WebsiteUpload() {
                   current: param.current ?? param.default ?? 0
                 };
               } else {
-                // 如果參數是直接值
+                // If parameter is a direct value
                 extractedParams[key] = {
                   type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
                   label: key,
@@ -474,7 +480,7 @@ export default function WebsiteUpload() {
       console.error('No membership ID available');
       setTransactionError('Membership ID not found');
       
-      // 更新交易步驟狀態為錯誤
+      // Update transaction step status to error
       setSteps(prev => {
         const newSteps = [...prev];
         const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -492,7 +498,7 @@ export default function WebsiteUpload() {
       console.error('No upload results available');
       setTransactionError('Upload results not found');
       
-      // 更新交易步驟狀態為錯誤
+      // Update transaction step status to error
       setSteps(prev => {
         const newSteps = [...prev];
         const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -505,7 +511,7 @@ export default function WebsiteUpload() {
       return;
     }
 
-    // 直接使用 uploadResults 中的 blob IDs
+    // Directly use blob IDs from uploadResults
     const { imageBlobId, algoBlobId, metadataBlobId } = uploadData;
 
     console.log('=== Transaction Parameters ===');
@@ -513,8 +519,8 @@ export default function WebsiteUpload() {
       artlierState: ARTLIER_STATE_ID,
       membershipId,
       imageBlobId,
-      websiteBlobId: metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
-      algorithmBlobId: algoBlobId,     // 使用 algoBlobId
+      websiteBlobId: metadataBlobId,  // Use metadata blobId as website blobId
+      algorithmBlobId: algoBlobId,     // Use algoBlobId
       clock: '0x6',
       price: parseInt(price)
     }, null, 2));
@@ -524,7 +530,7 @@ export default function WebsiteUpload() {
       console.error(errorMsg);
       setTransactionError(errorMsg);
       
-      // 更新交易步驟狀態為錯誤
+      // Update transaction step status to error
       setSteps(prev => {
         const newSteps = [...prev];
         const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -543,8 +549,8 @@ export default function WebsiteUpload() {
         membershipId,
         workName,
         imageBlobId,
-        metadataBlobId,  // 使用 metadata 的 blobId 作為 website blobId
-        algoBlobId,      // 使用 algoBlobId
+        metadataBlobId,  // Use metadata blobId as website blobId
+        algoBlobId,      // Use algoBlobId
         '0x6',
         parseInt(price)
       );
@@ -563,7 +569,7 @@ export default function WebsiteUpload() {
             console.log(JSON.stringify(result, null, 2));
             setTransactionDigest(result.digest);
             
-            // 更新交易步驟狀態為成功
+            // Update transaction step status to success
             setSteps(prev => {
               const newSteps = [...prev];
               const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -578,7 +584,7 @@ export default function WebsiteUpload() {
             console.error(error);
             setTransactionError(error.message);
             
-            // 更新交易步驟狀態為錯誤
+            // Update transaction step status to error
             setSteps(prev => {
               const newSteps = [...prev];
               const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -595,7 +601,7 @@ export default function WebsiteUpload() {
       console.error(error);
       setTransactionError(error instanceof Error ? error.message : String(error));
       
-      // 更新交易步驟狀態為錯誤
+      // Update transaction step status to error
       setSteps(prev => {
         const newSteps = [...prev];
         const transactionStep = newSteps.find(step => step.id === 'transaction');
@@ -607,7 +613,7 @@ export default function WebsiteUpload() {
     }
   };
 
-  // 修改 handleUpload 函數
+  // Modify handleUpload function
   const handleUpload = async (imageFile: File, algoFile: File, metadataFile: File) => {
     try {
       const metadata = createMetadataJson({
