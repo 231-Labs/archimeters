@@ -14,6 +14,9 @@ import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/features/terminal';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
+import GalaxyEffect from '@/components/background_animations/GalaxyEffect';
+import SpaceRoom from '@/components/background_animations/SpaceRoom';
+import Noise from '@/components/background_animations/NoiseEffect';
 
 export default function Home() {
   const suiClient = useSuiClient();
@@ -56,6 +59,9 @@ export default function Home() {
   return (
     <>
       <div className="min-h-screen bg-black overflow-hidden">
+        <SpaceRoom />
+        {/* <Noise /> */}
+        <GalaxyEffect />
         <Header />
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
