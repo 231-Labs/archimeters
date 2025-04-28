@@ -7,11 +7,11 @@ export function useMembership(onSuccess?: () => void) {
   const [digest, setDigest] = useState('');
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
-  const handleInitializeOS = async (username: string) => {
-    if (!currentAccount?.address || !username.trim()) return;
+  const handleInitializeOS = async (username: string, description: string) => {
+    if (!currentAccount?.address || !username.trim() || !description.trim()) return;
 
     try {
-      const tx = await mintMembership(username);
+      const tx = await mintMembership(username, description);
 
       signAndExecuteTransaction(
         {

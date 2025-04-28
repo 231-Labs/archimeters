@@ -87,6 +87,11 @@ export default function WebsiteUpload() {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
+  const [membershipData, setMembershipData] = useState<{
+    username: string;
+    description: string;
+    address: string;
+  } | null>(null);
 
   // Fetch membership
   useEffect(() => {
@@ -195,7 +200,7 @@ export default function WebsiteUpload() {
       style: designSettings.style,
       fontStyle: designSettings.fontStyle,
       name: artistInfo.name,
-      social: artistInfo.social,
+      address: currentAccount?.address || '',
       intro: artistInfo.intro
     });
 
@@ -243,6 +248,7 @@ export default function WebsiteUpload() {
             onPriceChange={(value) => updateArtworkInfo('price', value)}
             onIntroChange={(value) => updateArtistInfo('intro', value)}
             onImageFileChange={handleImageFileChange}
+            onMembershipDataChange={setMembershipData}
             workNameRequired={false}
             descriptionRequired={false}
             priceRequired={false}
@@ -305,6 +311,7 @@ export default function WebsiteUpload() {
             onParameterChange={updateParameter}
             onMint={goToNextPage}
             userScript={userScript}
+            membershipData={membershipData}
           />
         )}
 
