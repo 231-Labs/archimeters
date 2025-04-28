@@ -3,7 +3,7 @@ import { WindowName, WindowConfig } from '@/types/window';
 export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   entry: {
     title: 'Entry',
-    defaultSize: { width: 400, height: 500 },
+    defaultSize: { width: 500, height: 500 },
   },
   designer: {
     title: 'Parametric Terminal',

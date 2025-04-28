@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
 import { WindowName } from '@/types';
 
-// 模擬用的臨時類型
+// Wallet connection status types
 type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 
-// NFT 類型常量
+// NFT type constant
 const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 interface EntryWindowProps {
@@ -15,19 +15,61 @@ interface EntryWindowProps {
 }
 
 export default function EntryWindow({ onDragStart }: EntryWindowProps) {
+  // Wallet and NFT states
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
-  const [username, setUsername] = useState('');
-  const [digest, setDigest] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isMinting, setIsMinting] = useState(false);
-  const [welcomeGifUrl, setWelcomeGifUrl] = useState<string>('');
-  const [isGifLoading, setIsGifLoading] = useState(false);
-  const [gifError, setGifError] = useState<string>('');
-
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
+  // User input states
+  const [username, setUsername] = useState('');
+  const [description, setDescription] = useState('');
+  const [inputStage, setInputStage] = useState<'username' | 'description' | 'confirm'>('username');
+
+  // Transaction states
+  const [digest, setDigest] = useState('');
+  const [isMinting, setIsMinting] = useState(false);
+
+  // Terminal animation states
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingText, setTypingText] = useState('');
+  const [showCursor, setShowCursor] = useState(true);
+  const [typingComplete, setTypingComplete] = useState(false);
+  const [hasPlayedTyping, setHasPlayedTyping] = useState(false);
+
+  // Reset all states to initial values
+  const resetAllStates = () => {
+    setUsername('');
+    setDescription('');
+    setDigest('');
+    setIsMinting(false);
+    setInputStage('username');
+    setTypingComplete(false);
+    setHasPlayedTyping(false);
+  };
+
+  // Reset states when wallet disconnects
+  useEffect(() => {
+    if (!currentAccount) {
+      resetAllStates();
+    }
+  }, [currentAccount]);
+
+  // Reset states when window is hidden/closed
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resetAllStates();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Check if user owns the membership NFT
   const checkNFTOwnership = async () => {
     if (!currentAccount) {
       setWalletStatus('disconnected');
@@ -62,12 +104,13 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     }
   };
 
+  // Initialize OS (mint NFT)
   const handleInitializeOS = async () => {
     if (!currentAccount?.address || !username.trim()) return;
 
     try {
       setIsMinting(true);
-      const tx = await mintMembership(username);
+      const tx = await mintMembership(username, description);
 
       signAndExecuteTransaction(
         {
@@ -79,11 +122,11 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
             console.log("Transaction successful:", result);
             setDigest(result.digest);
             
-            // 交易成功後等待 2 秒再檢查一次
+            // Check NFT ownership after transaction
             setTimeout(async () => {
               const hasNFT = await checkNFTOwnership();
               
-              // 如果第一次檢查沒找到 NFT，最多再重試 3 次
+              // Retry up to 3 times if NFT is not found
               if (!hasNFT) {
                 let attempts = 0;
                 const maxAttempts = 3;
@@ -110,38 +153,94 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     }
   };
 
+  // Check NFT ownership on account change
   useEffect(() => {
     checkNFTOwnership();
   }, [currentAccount, suiClient]);
 
-  // 添加鍵盤事件監聽
+  // Typewriter effect
+  useEffect(() => {
+    if (hasPlayedTyping) return;
+
+    let welcomeText = '';
+    if (walletStatus === 'disconnected') {
+      welcomeText = '> WELCOME TO ARCHIMETERS \n> PLEASE CONNECT YOUR WALLET TO CONTINUE';
+    } else if (walletStatus === 'connected-no-nft') {
+      if (inputStage === 'username') {
+        welcomeText = '> ACCESS GRANTED\n> INITIATING IDENTITY MINTING PROTOCOL\n> AWAITING DESIGNATION INPUT\n> ENTER YOUR CODENAME (3-20 CHARACTERS)_';
+      } else if (inputStage === 'description') {
+        welcomeText = `> CODENAME "${username}" ACKNOWLEDGED\n> PERSONAL PROFILE REQUIRED\n> ENTER YOUR BIO (MAX 100 CHARACTERS)_`;
+      } else if (inputStage === 'confirm') {
+        welcomeText = `> IDENTITY PARAMETERS RECEIVED\n> CODENAME: ${username}\n> BIO: ${description}\n> CONFIRM IDENTITY PARAMETERS [ENTER]_`;
+      }
+    }
+
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex < welcomeText.length) {
+        setTypingText(welcomeText.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setTypingComplete(true);
+        setHasPlayedTyping(true);
+        clearInterval(typingInterval);
+      }
+    }, 30);
+
+    return () => clearInterval(typingInterval);
+  }, [walletStatus, inputStage, username, description]);
+
+  // Handle keyboard input
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (walletStatus !== 'connected-no-nft') return;
       
       if (e.key === 'Enter') {
-        handleInitializeOS();
-        return;
+        if (inputStage === 'username' && username.trim()) {
+          setInputStage('description');
+          setHasPlayedTyping(false);
+          return;
+        }
+        if (inputStage === 'description') {
+          setInputStage('confirm');
+          setHasPlayedTyping(false);
+          return;
+        }
+        if (inputStage === 'confirm') {
+          handleInitializeOS();
+          return;
+        }
       }
       
       if (e.key === 'Backspace') {
-        setUsername(prev => prev.slice(0, -1));
+        if (inputStage === 'username') {
+          setUsername(prev => prev.slice(0, -1));
+        } else if (inputStage === 'description') {
+          setDescription(prev => prev.slice(0, -1));
+        }
         return;
       }
       
-      if (e.key.length === 1) {
-        setUsername(prev => prev + e.key);
+      // Allow only letters, numbers, and basic punctuation
+      if (e.key.length === 1 && /^[a-zA-Z0-9\s.,!?-]$/.test(e.key)) {
+        if (inputStage === 'username') {
+          setUsername(prev => prev + e.key);
+        } else if (inputStage === 'description') {
+          setDescription(prev => prev + e.key);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [walletStatus, username]);
+  }, [walletStatus, username, description, inputStage]);
 
+  // Handle ESC key to cancel minting
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isMinting) {
-        handleCancelMint();
+        setIsMinting(false);
+        setDigest('');
       }
     };
 
@@ -149,154 +248,131 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     return () => window.removeEventListener('keydown', handleEscKey);
   }, [isMinting]);
 
-  // 添加取消 mint 的功能
-  const handleCancelMint = () => {
-    setIsMinting(false);
-    setDigest('');
-    setUsername('');
-  };
-
-  // 添加獲取 GIF 的 useEffect
+  // Cursor blink effect
   useEffect(() => {
-    const fetchWelcomeGif = async () => {
-      setIsGifLoading(true);
-      setGifError('');
-      
-      try {
-        const blobId = 'yy3Ngjkh5O1Vg7GWp9R96pGsJ8fzNbvnopia9dc9uMw';
-        const response = await fetch(`/api/walrus/blob/${blobId}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to load animation');
-        }
-        
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setWelcomeGifUrl(url);
-      } catch (err) {
-        console.error('Error loading welcome animation:', err);
-        setGifError('Failed to load welcome animation');
-      } finally {
-        setIsGifLoading(false);
-      }
-    };
+    const cursorInterval = setInterval(() => {
+      setShowCursor(prev => !prev);
+    }, 500);
 
-    fetchWelcomeGif();
-
-    // 清理函數
-    return () => {
-      if (welcomeGifUrl) {
-        URL.revokeObjectURL(welcomeGifUrl);
-      }
-    };
+    return () => clearInterval(cursorInterval);
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Connect Button 區域 */}
-      <div className="pt-6 px-4 flex justify-center">
-        <ConnectButton 
-          style={retroButtonStyles.button} 
-          onMouseOver={e => Object.assign(e.currentTarget.style, retroButtonStyles.buttonHover)}
-          onMouseOut={e => Object.assign(e.currentTarget.style, retroButtonStyles.button)}
-          connectText="Connect Wallet"
-          className="retro-button"
+    <div className="flex flex-col h-full bg-opacity-90 backdrop-blur-sm">
+      {/* Background Image */}
+      <div className={`absolute inset-0 z-0 ${walletStatus === 'connected-with-nft' ? 'opacity-100' : 'opacity-20'}`}>
+        <img
+          src="/archimeters.png"
+          alt="Archimeters Background"
+          className="w-full h-full object-cover"
         />
       </div>
 
-      {/* 主要內容區域 */}
-      <div className="flex-1 px-4 pb-4">
-        {walletStatus === 'disconnected' && (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="font-mono text-lg text-white mb-8">
-              <span>Welcome to the Artlier!</span>
-              <span className="cursor-blink">_</span>
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col h-full p-6">
+        {/* Connect Button Area */}
+        <div className="flex justify-end mb-8">
+          <ConnectButton 
+            style={{
+              ...retroButtonStyles.button,
+              backgroundColor: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
+              background: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
+              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)'}`,
+              color: '#ffffff',
+              fontWeight: 'bold',
+              padding: '8px 16px',
+              backdropFilter: walletStatus === 'disconnected' ? 'blur(4px)' : 'none',
+              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 10px rgba(0, 0, 0, 0.5)',
+            }}
+            onMouseOver={e => Object.assign(e.currentTarget.style, {
+              ...retroButtonStyles.buttonHover,
+              backgroundColor: walletStatus === 'disconnected' ? 'rgba(0, 0, 0, 0.3)' : '#1a1a1a !important',
+              background: walletStatus === 'disconnected' ? 'rgba(0, 0, 0, 0.3)' : '#1a1a1a !important',
+              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.8)'}`,
+              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 15px rgba(0, 0, 0, 0.7)',
+            })}
+            onMouseOut={e => Object.assign(e.currentTarget.style, {
+              ...retroButtonStyles.button,
+              backgroundColor: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
+              background: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
+              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)'}`,
+              color: '#ffffff',
+              fontWeight: 'bold',
+              padding: '8px 16px',
+              backdropFilter: walletStatus === 'disconnected' ? 'blur(4px)' : 'none',
+              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 10px rgba(0, 0, 0, 0.5)',
+            })}
+            connectText="CONNECT_WALLET"
+            className="retro-button"
+          />
+        </div>
+
+        {/* Terminal Display Area */}
+        <div className="flex-1 font-mono text-sm overflow-hidden">
+          {walletStatus !== 'connected-with-nft' && (
+            <div className="terminal-text whitespace-pre-wrap">
+              {typingText}
+              {typingComplete && (walletStatus === 'disconnected' || (walletStatus === 'connected-no-nft' && inputStage === 'confirm')) && (
+                <span className={`inline-block w-2 h-5 bg-white ml-1 align-middle ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
+              )}
+              {!typingComplete && <span className="text-white">█</span>}
             </div>
-            <p className="text-sm text-white/90 mb-4">Please connect your wallet to continue</p>
-          </div>
-        )}
+          )}
 
-        {walletStatus === 'connected-no-nft' && (
-          <div className="flex flex-col items-center justify-center h-full font-mono">
-            {!isMinting ? (
-              <>
-                <div className="text-lg text-white mb-4">
-                  <span>Initializing Art Space...</span>
-                </div>
-                
-                <div className="text-sm text-white/90 mb-8">
-                  <span>Please enter your artist name to continue.</span>
-                </div>
-
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="text-sm text-white/90">Enter your name:</div>
+          {/* Input Area */}
+          {walletStatus === 'connected-no-nft' && typingComplete && !isMinting && (
+            <div className="mt-4">
+              {inputStage !== 'confirm' && (
+                <>
+                  <div className="text-white mb-2 font-bold">
+                    &gt; {inputStage === 'username' ? 'ENTER YOUR CODENAME:' : 'ENTER YOUR BIO:'}
+                  </div>
                   <div className="flex items-center">
-                    <span className="text-lg text-white"> {username}</span>
-                    <span className={`ml-1 inline-block w-2 h-5 bg-white ${isTyping ? 'animate-pulse' : 'animate-blink'}`}>
+                    <span className="text-green-400">&gt;</span>
+                    <span className="text-white ml-2">
+                      {inputStage === 'username' ? username : description}
+                      <span className={`inline-block w-2 h-5 bg-white ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
                     </span>
                   </div>
-                </div>
-
-                <div className="mt-8 text-xs text-white/90">
-                  Press [Enter] to continue
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center space-y-4">
-                {!digest ? (
-                  <>
-                    <div className="text-lg text-white">
-                      <span>Initializing Art Space...</span>
+                  {inputStage === 'username' && (
+                    <div className="mt-2 text-xs text-white/50">
+                      &gt; {username.length === 0 ? 'WAITING FOR INPUT...' : 
+                          username.length < 3 ? 'MINIMUM LENGTH NOT MET (3-20 CHARACTERS)' : 
+                          username.length > 20 ? 'MAXIMUM LENGTH EXCEEDED (3-20 CHARACTERS)' : 
+                          'VALID CODENAME FORMAT'}
                     </div>
-                    <div className="text-sm text-white/90">
-                      system {`>`} creating art space for: {username}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-lg text-green-400">
-                      <span>Art Space Initialized</span>
-                      <span className="cursor-blink">_</span>
-                    </div>
-                    <div className="text-sm text-white/90">
-                      system {`>`} art space created for: {username}
-                    </div>
-                    <div className="text-sm text-white/90">
-                      system {`>`} transaction digest:
-                    </div>
-                    <div className="text-sm font-mono break-all max-w-md text-white/80">
-                      {digest}
-                    </div>
-                    <div className="mt-4 text-xs text-white/90">
-                      Loading art space...
-                      <span className="cursor-blink">_</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {walletStatus === 'connected-with-nft' && (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="font-mono text-lg text-white mb-2">
-              <span>Art Space Active</span>
-              <span className="cursor-blink">_</span>
+                  )}
+                </>
+              )}
             </div>
-            
-            <div className="relative h-80">
-              {gifError ? (
-                <div className="text-red-400 text-sm">{gifError}</div>
-              ) : isGifLoading ? (
-                <div className="text-white/90">Loading welcome animation...</div>
-              ) : welcomeGifUrl ? (
-                <img
-                  src={welcomeGifUrl}
-                  alt="Welcome Animation"
-                  className="artlier-image w-full h-full object-contain border-black"
-                />
-              ) : null}
+          )}
+
+          {/* Minting Status Display */}
+          {isMinting && (
+            <div className="mt-4 text-green-400">
+              {!digest ? (
+                <>
+                  <div>&gt; INITIALIZING ARTIST PROFILE...</div>
+                  <div className="animate-pulse">&gt; PLEASE WAIT...</div>
+                </>
+              ) : (
+                <>
+                  <div>&gt; PROFILE CREATED SUCCESSFULLY</div>
+                  <div>&gt; TRANSACTION DIGEST:</div>
+                  <div className="text-xs break-all mt-2">{digest}</div>
+                  <div className="animate-pulse mt-2">&gt; LOADING ARTSPACE...</div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* NFT Verified Status */}
+        {walletStatus === 'connected-with-nft' && (
+          <div className="flex flex-col items-center">
+            <div className="text-green-400 text-base mt-12 bg-black px-4 py-2 flex items-center">
+              &gt; IDENTITY VERIFIED - WELCOME BACK
+              <span className={`inline-block w-2 h-5 bg-green-400 ml-2 ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
             </div>
           </div>
         )}
@@ -304,10 +380,3 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     </div>
   );
 }
-
-// 添加類型定義
-interface ArtlierData {
-  name: string;
-  description: string;
-  traits: string[];
-} 
