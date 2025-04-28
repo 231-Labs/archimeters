@@ -101,6 +101,11 @@ export default function WebsiteUpload() {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [membershipId, setMembershipId] = useState<string>('');
+  const [membershipData, setMembershipData] = useState<{
+    username: string;
+    description: string;
+    address: string;
+  } | null>(null);
 
   // User script state
   const [userScript, setUserScript] = useState<{ code: string; filename: string } | null>(null);
@@ -157,7 +162,7 @@ export default function WebsiteUpload() {
     };
   }, []);
 
-  // Fetch membership
+  // Fetch membership ID only
   useEffect(() => {
     const fetchMembership = async () => {
       if (!currentAccount?.address) return;
@@ -622,8 +627,9 @@ export default function WebsiteUpload() {
         style,
         fontStyle,
         name,
-        social,
-        intro
+        address: currentAccount?.address || '',
+        intro,
+        membershipData: membershipData
       });
       
       await uploadFiles(imageFile, algoFile, metadata);
@@ -686,7 +692,7 @@ export default function WebsiteUpload() {
         style,
         fontStyle,
         name,
-        social,
+        address: currentAccount?.address || '',
         intro
       });
       handleUpload(imageFile!, algoFile!, metadataFile);
@@ -811,6 +817,7 @@ export default function WebsiteUpload() {
             onPriceChange={handlePriceChange}
             onIntroChange={setIntro}
             onImageFileChange={handleImageFileChange}
+            onMembershipDataChange={setMembershipData}
             workNameRequired={workNameRequired}
             descriptionRequired={descriptionRequired}
             priceRequired={priceRequired}
@@ -856,6 +863,7 @@ export default function WebsiteUpload() {
             onParameterChange={handleParameterChange}
             onMint={goToNextPage}
             userScript={userScript}
+            membershipData={membershipData}
           />
         )}
         {currentPage === 4 && (

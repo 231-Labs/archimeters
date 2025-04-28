@@ -16,6 +16,7 @@ interface BasicInfoPageProps {
   onPriceChange: (value: string) => void;
   onIntroChange: (value: string) => void;
   onImageFileChange: (file: File) => void;
+  onMembershipDataChange: (data: MembershipData | null) => void;
   workNameRequired: boolean;
   descriptionRequired: boolean;
   priceRequired: boolean;
@@ -46,6 +47,7 @@ export const BasicInfoPage = ({
   onPriceChange,
   onIntroChange,
   onImageFileChange,
+  onMembershipDataChange,
   workNameRequired,
   descriptionRequired,
   priceRequired,
@@ -77,11 +79,13 @@ export const BasicInfoPage = ({
           const membership = objects[0].data?.content;
           if (membership && 'fields' in membership) {
             const fields = membership.fields as Record<string, unknown>;
-            setMembershipData({
+            const data = {
               username: String(fields.username || ''),
               description: String(fields.description || ''),
               address: currentAccount.address
-            });
+            };
+            setMembershipData(data);
+            onMembershipDataChange(data);
           }
         }
       } catch (error) {
@@ -90,7 +94,7 @@ export const BasicInfoPage = ({
     };
 
     fetchMembershipData();
-  }, [currentAccount, suiClient]);
+  }, [currentAccount, suiClient, onMembershipDataChange]);
 
   return (
     <div className="flex h-full">
