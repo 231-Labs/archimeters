@@ -75,16 +75,16 @@ const GalaxyEffect3D = () => {
       const count = Math.floor(Math.random() * 3) + 1;
       distortionLines = Array.from({ length: count }, () => ({
         y: Math.floor(Math.random() * height),
-        height: Math.floor(Math.random() * 6) + 1,
-        alpha: Math.random() * 0.08 + 0.05,
-        colorShift: Math.random() > 0.85,
+        height: Math.floor(Math.random() * 3) + 3,
+        alpha: Math.random() * 0.3 + 0.1,
+        colorShift: Math.random() > 1,
       }));
 
       setTimeout(() => {
         distortionLines = [];
-      }, 120 + Math.random() * 300);
+      }, 500 + Math.random() * 2000);
 
-      const next = Math.random() * 1000 + 400;
+      const next = Math.random() * 4000 + 4000;
       setTimeout(triggerDistortionlight, next);
     };
 
@@ -123,8 +123,11 @@ const GalaxyEffect3D = () => {
     };
 
     triggerDistortionlight();
-    triggerDistortionheavy();
-    triggerDistortionheavyheavy();
+    triggerDistortionlight();
+    triggerDistortionlight();
+    triggerDistortionlight();
+    // triggerDistortionheavy();
+    // triggerDistortionheavyheavy();
 
     return () => {};
   }, []);
