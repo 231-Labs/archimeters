@@ -17,7 +17,7 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   browse: {
     title: 'Browse Images',
-    defaultSize: { width: 900, height: 600 },
+    defaultSize: { width: 520, height: 660 },
     resizable: true,
   },
   'artlier-viewer': {

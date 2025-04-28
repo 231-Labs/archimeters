@@ -1,6 +1,6 @@
 import BaseTemplate from '@/components/templates/BaseTemplate'
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { ParametricViewer } from './ParametricViewer';
 
 
