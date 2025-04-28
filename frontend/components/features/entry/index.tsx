@@ -1,3 +1,4 @@
+// EntryWindow component - Initial window for user entry
 import { ConnectButton } from '@mysten/dapp-kit';
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
