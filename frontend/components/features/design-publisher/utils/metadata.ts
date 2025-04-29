@@ -49,8 +49,8 @@ export const createMetadataJson = ({
   };
 
   // TODO: Test Only
-  console.log('=== Metadata Content ===');
-  console.log(JSON.stringify(metadata, null, 2));
+  // console.log('=== Metadata Content ===');
+  // console.log(JSON.stringify(metadata, null, 2));
 
   return new File(
     [JSON.stringify(metadata, null, 2)],

@@ -34,7 +34,6 @@ export default function Home() {
     resizeWindow,
   } = useWindowManager('entry');
 
-  // 獲取用戶的 OS ID
   useEffect(() => {
     const fetchOsId = async () => {
       if (!currentAccount) return;
@@ -59,9 +58,9 @@ export default function Home() {
   return (
     <>
       <div className="min-h-screen bg-black overflow-hidden">
-        <SpaceRoom />
+        {/* <SpaceRoom /> */}
         {/* <Noise /> */}
-        <GalaxyEffect />
+        {/* <GalaxyEffect /> */}
         <Header />
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
