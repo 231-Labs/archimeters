@@ -1,6 +1,6 @@
 export type WindowName = 
   | 'entry'
-  | 'designer'
+  | 'terminal'
   | 'website-upload'
   | 'browse'
   | 'artlier-viewer';

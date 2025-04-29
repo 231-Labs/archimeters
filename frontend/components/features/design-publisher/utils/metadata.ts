@@ -7,8 +7,13 @@ interface MetadataParams {
   style: TemplateSeries;
   fontStyle: FontStyle;
   name: string;
-  social: string;
+  address: string;
   intro: string;
+  membershipData?: {
+    username: string;
+    description: string;
+    address: string;
+  } | null;
 }
 
 export const createMetadataJson = ({
@@ -17,8 +22,9 @@ export const createMetadataJson = ({
   style,
   fontStyle,
   name,
-  social,
-  intro
+  address,
+  intro,
+  membershipData
 }: MetadataParams): File => {
   const metadata = {
     artwork: {
@@ -36,11 +42,15 @@ export const createMetadataJson = ({
       }
     },
     artist: {
-      name: name,
-      social: social,
-      introduction: intro
+      name: membershipData?.username || name,
+      address: membershipData?.address || address,
+      introduction: membershipData?.description || intro
     }
   };
+
+  // TODO: Test Only
+  // console.log('=== Metadata Content ===');
+  // console.log(JSON.stringify(metadata, null, 2));
 
   return new File(
     [JSON.stringify(metadata, null, 2)],
@@ -55,7 +65,7 @@ export const getCurrentMetadata = ({
   style,
   fontStyle,
   name,
-  social,
+  address,
   intro
 }: MetadataParams) => {
   return {
@@ -75,7 +85,7 @@ export const getCurrentMetadata = ({
     },
     artist: {
       name: name,
-      social: social,
+      address: address,
       introduction: intro
     }
   };

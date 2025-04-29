@@ -1,39 +1,42 @@
 export const TERMINAL_THEME = {
-  background: '#0a0a0a',
-  foreground: '#ffffff',
-  cursor: '#ffffff',
-  cursorAccent: '#0a0a0a',
-  selection: 'rgba(255, 255, 255, 0.3)',
-  black: '#000000',
-  red: '#ff3f3f',
-  green: '#ffffff',
-  yellow: '#ffffff',
-  blue: '#e6e6e6',
-  magenta: '#f0f0f0',
-  cyan: '#ffffff',
-  white: '#ffffff',
-  brightBlack: '#666666',
-  brightRed: '#ff5555',
-  brightGreen: '#ffffff',
-  brightYellow: '#ffffff',
-  brightBlue: '#f0f0f0',
-  brightMagenta: '#ffffff',
-  brightCyan: '#ffffff',
-  brightWhite: '#ffffff'
+  background: '#181c20',
+  foreground: '#c9d1d9',
+  cursor: '#8ab4f8',
+  cursorAccent: '#181c20',
+  selection: 'rgba(138, 180, 248, 0.15)',
+  black: '#181c20',
+  red: '#e06c75',
+  green: '#98c379',
+  yellow: '#e5c07b',
+  blue: '#61afef',
+  magenta: '#c678dd',
+  cyan: '#56b6c2',
+  white: '#c9d1d9'
 };
 
 export const terminalStyles = {
-  '.xterm-viewport::-webkit-scrollbar': {
-    display: 'none',
+  '.xterm': {
+    'font-family': 'JetBrains Mono, monospace',
+    'font-size': '14px',
+    'line-height': '1.2',
+    'padding': '1rem',
+    'background-color': '#181c20',
+    'border': '1px solid #3a4250',
+    'border-radius': '8px',
   },
   '.xterm-viewport': {
-    msOverflowStyle: 'none',
-    scrollbarWidth: 'none',
+    'scrollbar-width': 'thin',
+    'scrollbar-color': '#3a4250 #181c20',
+    'background-color': '#181c20',
   },
-  '@font-face': {
-    fontFamily: 'JetBrains Mono',
-    src: 'url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff2/JetBrainsMono-Regular.woff2) format("woff2")',
-    fontWeight: 'normal',
-    fontStyle: 'normal',
+  '.xterm-viewport::-webkit-scrollbar': {
+    'width': '8px',
   },
+  '.xterm-viewport::-webkit-scrollbar-track': {
+    'background': '#181c20',
+  },
+  '.xterm-viewport::-webkit-scrollbar-thumb': {
+    'background-color': '#3a4250',
+    'border-radius': '4px',
+  }
 } as const; 

@@ -25,6 +25,7 @@ module archimeters::archimeters {
         id: UID,
         owner: address,
         username: String,
+        description: String,
         artliers: VecSet<ID>,
         gallery: vector<ID>,
         registered_time: u64,
@@ -53,11 +54,11 @@ module archimeters::archimeters {
         );
         display.add(
             b"link".to_string(),
-            b"https://archimeters.xyz".to_string() // TODO: change to realsite
+            b"https://archimeters.vercel.app".to_string()
         );
         display.add(
             b"description".to_string(),
-            b"Your pass to the parametric design world".to_string() // TODO: change to realsite
+            b"Your access to the parametric design world".to_string()
         );
         display.add(
             b"image_url".to_string(),
@@ -79,6 +80,7 @@ module archimeters::archimeters {
     public entry fun mint_membership(
         state: &mut State,
         username: String,
+        description: String,
         clock: &clock::Clock,
         ctx: &mut TxContext
     ) {
@@ -91,6 +93,7 @@ module archimeters::archimeters {
             id: object::new(ctx),
             owner: sender,
             username,
+            description,
             artliers: vec_set::empty(),
             gallery: vector::empty(),
             registered_time: now,

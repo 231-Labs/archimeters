@@ -5,7 +5,7 @@ import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
-import WebsiteUpload from '@/components/windows/WebsiteUpload';
+import DesignPublisher from '@/components/windows/DesignPublisher';
 import BrowseWindow from '@/components/windows/BrowseWindow';
 import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
@@ -13,6 +13,10 @@ import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/features/terminal';
 import { useWindowManager } from '@/hooks/useWindowManager';
+import { defaultWindowConfigs } from '@/config/windows';
+import GalaxyEffect from '@/components/background_animations/GalaxyEffect';
+import SpaceRoom from '@/components/background_animations/SpaceRoom';
+import Noise from '@/components/background_animations/NoiseEffect';
 
 export default function Home() {
   const suiClient = useSuiClient();
@@ -30,7 +34,6 @@ export default function Home() {
     resizeWindow,
   } = useWindowManager('entry');
 
-  // 獲取用戶的 OS ID
   useEffect(() => {
     const fetchOsId = async () => {
       if (!currentAccount) return;
@@ -55,6 +58,9 @@ export default function Home() {
   return (
     <>
       <div className="min-h-screen bg-black overflow-hidden">
+        {/* <SpaceRoom /> */}
+        {/* <Noise /> */}
+        {/* <GalaxyEffect /> */}
         <Header />
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
@@ -78,15 +84,15 @@ export default function Home() {
                       <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
                     </Window>
                   );
-                case 'designer':
+                case 'terminal':
                   return (
                     <Window
                       key={name}
                       name={name}
                       title="Parametric Terminal"
-                      position={windowPositions.designer}
-                      size={windowSizes.designer}
-                      isActive={activeWindow === 'designer'}
+                      position={windowPositions.terminal}
+                      size={windowSizes.terminal}
+                      isActive={activeWindow === 'terminal'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
@@ -102,7 +108,7 @@ export default function Home() {
                     <Window
                       key={name}
                       name={name}
-                      title="Website Upload"
+                      title={defaultWindowConfigs['website-upload'].title}
                       position={windowPositions['website-upload']}
                       size={windowSizes['website-upload']}
                       isActive={activeWindow === 'website-upload'}
@@ -113,7 +119,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={openWindows.indexOf(name) + 1}
                     >
-                      <WebsiteUpload />
+                      <DesignPublisher />
                     </Window>
                   );
                 case 'browse':

@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
  */
 export type WindowName = 
   | 'entry'           // 入口窗口
-  | 'designer'        // 設計師終端
+  | 'terminal'        // 終端
   | 'website-upload'  // 網站上傳
   | 'browse'          // 圖片瀏覽
   | 'artlier-viewer'; // 藝術品查看器

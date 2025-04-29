@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { ArtworkInfo, ArtistInfo, DesignSettings } from '../types';
 
+// TODO: empty default values
 const defaultArtworkInfo: ArtworkInfo = {
   workName: 'Parametric Constellation #42',
   description: 'A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.',

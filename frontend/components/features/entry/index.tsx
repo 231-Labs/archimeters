@@ -1,3 +1,4 @@
+// EntryWindow component - Initial window for user entry
 import { ConnectButton } from '@mysten/dapp-kit';
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import { useMembership } from './hooks/useMembership';
 
 export default function EntryWindow({ onDragStart }: EntryWindowProps) {
   const [username, setUsername] = useState('');
+  const [description, setDescription] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [welcomeGifUrl, setWelcomeGifUrl] = useState<string>('');
   const [isGifLoading, setIsGifLoading] = useState(false);
@@ -40,23 +42,31 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
       if (walletStatus !== 'connected-no-nft') return;
       
       if (e.key === 'Enter') {
-        handleInitializeOS(username);
+        handleInitializeOS(username, description);
         return;
       }
       
       if (e.key === 'Backspace') {
-        setUsername(prev => prev.slice(0, -1));
+        if (description) {
+          setDescription(prev => prev.slice(0, -1));
+        } else {
+          setUsername(prev => prev.slice(0, -1));
+        }
         return;
       }
       
       if (e.key.length === 1) {
-        setUsername(prev => prev + e.key);
+        if (description) {
+          setDescription(prev => prev + e.key);
+        } else {
+          setUsername(prev => prev + e.key);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [walletStatus, username]);
+  }, [walletStatus, username, description]);
 
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {

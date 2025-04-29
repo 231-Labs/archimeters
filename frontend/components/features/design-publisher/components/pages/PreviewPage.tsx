@@ -1,6 +1,6 @@
 import BaseTemplate from '@/components/templates/BaseTemplate'
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { ParametricViewer } from './ParametricViewer';
 
 
@@ -17,6 +17,11 @@ interface PreviewPageProps {
   onParameterChange: (key: string, value: string | number) => void;
   onMint: () => void;
   userScript: { code: string; filename: string } | null;
+  membershipData: {
+    username: string;
+    description: string;
+    address: string;
+  } | null;
 }
 
 export const PreviewPage = ({
@@ -32,6 +37,7 @@ export const PreviewPage = ({
   onParameterChange,
   onMint,
   userScript,
+  membershipData
 }: PreviewPageProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   
@@ -85,9 +91,9 @@ export const PreviewPage = ({
         workName={workName}
         description={description}
         price={price}
-        author={name}
-        social={social}
-        intro={intro}
+        author={membershipData?.username || name}
+        social={membershipData?.address ? membershipData.address.slice(0, 6) + '...' + membershipData.address.slice(-4) : social}
+        intro={membershipData?.description || intro}
         imageUrl={imageUrl}
         parameters={parameters}
         previewParams={previewParams}
@@ -98,9 +104,9 @@ export const PreviewPage = ({
           workName={workName}
           description={description}
           price={price}
-          author={name}
-          social={social}
-          intro={intro}
+          author={membershipData?.username || name}
+          social={membershipData?.address ? membershipData.address.slice(0, 6) + '...' + membershipData.address.slice(-4) : social}
+          intro={membershipData?.description || intro}
           imageUrl={imageUrl}
           parameters={parameters}
           previewParams={previewParams}

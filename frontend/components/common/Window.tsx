@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { WindowName } from '@/types';
 
 interface WindowProps {
@@ -49,7 +49,7 @@ const Window: React.FC<WindowProps> = ({
     <div
       className={`absolute flex flex-col window-shadow retro-border bg-[#0a0a0a] ${
         isActive ? 'ring-1 ring-white/20' : ''
-      }`}
+      } ${className || ''}`}
       style={{
         width: `${windowSize.width}px`,
         height: `${windowSize.height}px`,

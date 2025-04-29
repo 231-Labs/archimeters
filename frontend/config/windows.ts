@@ -3,21 +3,21 @@ import { WindowName, WindowConfig } from '@/types/window';
 export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   entry: {
     title: 'Entry',
-    defaultSize: { width: 400, height: 500 },
+    defaultSize: { width: 500, height: 500 },
   },
-  designer: {
-    title: 'Parametric Terminal',
-    defaultSize: { width: 640, height: 660 },
+  terminal: {
+    title: 'Terminal',
+    defaultSize: { width: 600, height: 600 },
     resizable: true,
   },
   'website-upload': {
-    title: 'Website Upload',
+    title: 'Design Publisher',
     defaultSize: { width: 1140, height: 600 },
     resizable: true,
   },
   browse: {
     title: 'Browse Images',
-    defaultSize: { width: 900, height: 600 },
+    defaultSize: { width: 520, height: 660 },
     resizable: true,
   },
   'artlier-viewer': {

@@ -1,6 +1,5 @@
 import { Terminal } from '@xterm/xterm';
 import { BOX_STYLES } from './styles/borders';
-import { LOADING_FRAMES } from './styles/animations';
 import { WELCOME_MESSAGES } from './constants/messages';
 import { createLayout } from './constants/layouts';
 import { COLORS } from './constants/colors';
@@ -29,16 +28,6 @@ export const drawBox = (terminal: Terminal | null, title: string, content: strin
 };
 
 /**
- * Displays a progress bar in the terminal
- */
-export const showProgressBar = (terminal: Terminal | null, progress: number, message: string) => {
-  const width = 20;
-  const filled = Math.floor(progress * width);
-  const bar = '█'.repeat(filled) + '░'.repeat(width - filled);
-  terminal?.write(`\r\x1B[K[${bar}] ${(progress * 100).toFixed(0)}% ${message}`);
-};
-
-/**
  * Draws the application logo in the terminal
  */
 export const drawLogo = (terminal: Terminal | null) => {
@@ -49,28 +38,4 @@ export const drawLogo = (terminal: Terminal | null) => {
     logo.frame.content,
     logo.frame.bottom
   ], COLORS.DEFAULT);
-};
-
-let loadingInterval: NodeJS.Timeout | null = null;
-
-/**
- * Starts a loading animation in the terminal
- */
-export const startLoading = (terminal: Terminal | null, message: string) => {
-  let frame = 0;
-  loadingInterval = setInterval(() => {
-    terminal?.write('\r\x1B[K');
-    terminal?.write(`\x1B[${COLORS.WARNING}m${LOADING_FRAMES[frame]} ${message}\x1B[0m`);
-    frame = (frame + 1) % LOADING_FRAMES.length;
-  }, 100);
-};
-
-/**
- * Stops the loading animation in the terminal
- */
-export const stopLoading = (terminal: Terminal | null) => {
-  if (loadingInterval) {
-    clearInterval(loadingInterval);
-    terminal?.write('\r\x1B[K');
-  }
 }; 

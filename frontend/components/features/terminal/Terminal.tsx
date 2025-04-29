@@ -1,16 +1,26 @@
 'use client';
 
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Terminal as XTerm } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
 import { TERMINAL_THEME, terminalStyles } from './styles/theme';
-import { GEOMETRIC_BORDER } from './styles/borders';
-import { handleCommand } from './commands';
-import { drawLogo, writeLine } from './utils';
-import { WELCOME_MESSAGES } from './constants/messages';
+import { writeLine } from './utils';
 import { COLORS } from './constants/colors';
+import DocumentViewer from './DocumentViewer';
+import { BOX_STYLES }  from './styles/borders';
 import '@xterm/xterm/css/xterm.css';
+
+const DOCS = [
+  { name: 'readme', title: 'README.md', content: 'This is the project README.\n...\n' },
+  { name: 'guide', title: 'User Guide', content: 'This is the quick start guide.\n...\n' },
+  { name: 'api', title: 'API Reference', content: 'This is the API documentation.\n...\n' },
+];
+const TEAM = [
+  { name: 'Alice', role: 'Product Manager', contact: 'alice@example.com' },
+  { name: 'Bob', role: 'Frontend Engineer', contact: 'bob@example.com' },
+  { name: 'Carol', role: 'Designer', contact: 'carol@example.com' },
+];
 
 const ArchimetersTerminal = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -19,6 +29,8 @@ const ArchimetersTerminal = () => {
   const inputBuffer = useRef<string>('');
   const initialized = useRef<boolean>(false);
   const currentAccount = useCurrentAccount();
+  const [isViewingDoc, setIsViewingDoc] = useState(false);
+  const [currentDoc, setCurrentDoc] = useState<{ content: string; title: string } | null>(null);
 
   useEffect(() => {
     if (!terminalRef.current || typeof window === 'undefined' || initialized.current) return;
@@ -81,32 +93,65 @@ const ArchimetersTerminal = () => {
         }
       }, 0);
 
-      // Display welcome messages
-      drawLogo(terminal.current);
+      // Print TUI style content
       writeLine(terminal.current, '', COLORS.DEFAULT);
-      writeLine(terminal.current, `                         ${WELCOME_MESSAGES.WELCOME}                          `, COLORS.DEFAULT);
-      writeLine(terminal.current, `                     ${WELCOME_MESSAGES.TAGLINE}                      `, COLORS.DEFAULT);
-      writeLine(terminal.current, GEOMETRIC_BORDER, COLORS.INFO);
-      writeLine(terminal.current, '', COLORS.DEFAULT);
-      writeLine(terminal.current, `${WELCOME_MESSAGES.CURRENT_ACCOUNT} ${currentAccount?.address || WELCOME_MESSAGES.ACCOUNT_STATUS.NOT_CONNECTED}`, COLORS.INFO);
-      writeLine(terminal.current, WELCOME_MESSAGES.WALLET_SWITCH_HINT, COLORS.INFO);
-      writeLine(terminal.current, '', COLORS.DEFAULT);
-      writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
-      writeLine(terminal.current, '', COLORS.DEFAULT);
+      writeLine(terminal.current, '✨ ARCHIMETERS TERMINAL', COLORS.INFO);
+      writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+      writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
+      writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+      writeLine(terminal.current, '📖 Available Commands:', COLORS.DEFAULT);
+      writeLine(terminal.current, '  📄 docs         List all documents', COLORS.DEFAULT);
+      writeLine(terminal.current, '  👥 team         Show team members', COLORS.DEFAULT);
+      writeLine(terminal.current, '  📑 read <name>  Read document', COLORS.DEFAULT);
+      writeLine(terminal.current, '  🧹 clear        Clear terminal', COLORS.DEFAULT);
+      writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
       showPrompt();
 
       // Handle input
       const handleData = (data: string) => {
-        // handle copy and paste
         if (data.length > 1) {
           inputBuffer.current += data;
           terminal.current?.write(data);
           return;
         }
-
         if (data === '\r') { // Enter key
           terminal.current?.writeln('');
-          handleCommand(terminal.current, inputBuffer.current);
+          const command = inputBuffer.current.trim();
+          if (command === 'docs') {
+            writeLine(terminal.current, '📄 DOCUMENTS', COLORS.INFO);
+            DOCS.forEach(d => writeLine(terminal.current, `  ${d.name.padEnd(10)} - ${d.title}`, COLORS.INFO));
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+          } else if (command === 'team') {
+            writeLine(terminal.current, '👥 TEAM', COLORS.INFO);
+            TEAM.forEach(m => writeLine(terminal.current, `  ${m.name.padEnd(12)} | ${m.role.padEnd(18)} | ${m.contact}`, COLORS.INFO));
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+          } else if (command.startsWith('read ')) {
+            const docName = command.slice(5);
+            const doc = DOCS.find(d => d.name === docName);
+            if (doc) {
+              setCurrentDoc({ content: doc.content, title: doc.title });
+              setIsViewingDoc(true);
+            } else {
+              writeLine(terminal.current, `❌ ERROR: Document not found: ${docName}`, COLORS.ERROR);
+              writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            }
+          } else if (command === 'clear') {
+            terminal.current?.clear();
+            writeLine(terminal.current, '', COLORS.DEFAULT);
+            writeLine(terminal.current, '✨ ARCHIMETERS TERMINAL', COLORS.INFO);
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            writeLine(terminal.current, '📖 Available Commands:', COLORS.DEFAULT);
+            writeLine(terminal.current, '  📄 docs         List all documents', COLORS.DEFAULT);
+            writeLine(terminal.current, '  👥 team         Show team members', COLORS.DEFAULT);
+            writeLine(terminal.current, '  📑 read <name>  Read document', COLORS.DEFAULT);
+            writeLine(terminal.current, '  🧹 clear        Clear terminal', COLORS.DEFAULT);
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+          } else if (command) {
+            writeLine(terminal.current, `❌ ERROR: Unknown command: ${command}`, COLORS.ERROR);
+            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+          }
           inputBuffer.current = '';
           showPrompt();
         } else if (data === '\u007f') { // Backspace
@@ -119,7 +164,6 @@ const ArchimetersTerminal = () => {
           terminal.current?.write(data);
         }
       };
-
       terminal.current.onData(handleData);
 
       // Handle window resize
@@ -132,43 +176,43 @@ const ArchimetersTerminal = () => {
           }
         }
       };
-
       window.addEventListener('resize', handleResize);
-
-      // Return cleanup function
       return () => {
         window.removeEventListener('resize', handleResize);
         terminal.current?.dispose();
         styleSheet.remove();
       };
     };
-
     initializeTerminal();
   }, [currentAccount]);
 
   useEffect(() => {
     if (!terminal.current) return;
-
     terminal.current.write('\x1B[2K\r');
     terminal.current.write('\x1B[1A');
     terminal.current.write('\x1B[2K\r');
-    writeLine(terminal.current, `${WELCOME_MESSAGES.CURRENT_ACCOUNT} ${currentAccount?.address || WELCOME_MESSAGES.ACCOUNT_STATUS.NOT_CONNECTED}`, COLORS.INFO);
-    writeLine(terminal.current, WELCOME_MESSAGES.WALLET_SWITCH_HINT, COLORS.INFO);
-    writeLine(terminal.current, '', COLORS.DEFAULT);
-    writeLine(terminal.current, WELCOME_MESSAGES.HELP_HINT, COLORS.DEFAULT);
+    writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
     showPrompt();
   }, [currentAccount]);
 
   const showPrompt = () => {
-    terminal.current?.write('\x1B[1;37m∆ \x1B[0m');
+    terminal.current?.write('\x1B[1;34m> \x1B[0m');
   };
+
+  if (isViewingDoc && currentDoc) {
+    return (
+      <div className="h-full w-full">
+        <DocumentViewer content={currentDoc.content} title={currentDoc.title} />
+      </div>
+    );
+  }
 
   return (
     <div 
       ref={terminalRef}
-      className="h-full w-full overflow-hidden bg-[#0a0a0a] font-mono"
+      className="h-full w-full overflow-hidden bg-black font-mono"
       style={{
-        padding: '0.5rem',
+        padding: '1rem',
       }}
     />
   );
