@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
+import * as THREE from 'three';
 
 interface ParametricViewerProps {
   userScript: {
@@ -8,6 +9,7 @@ interface ParametricViewerProps {
   } | null;
   parameters: Record<string, any>;
   className?: string;
+  onSceneReady?: (scene: THREE.Scene) => void;
 }
 
 /**
@@ -16,8 +18,17 @@ interface ParametricViewerProps {
 export const ParametricViewer: React.FC<ParametricViewerProps> = ({
   userScript,
   parameters,
-  className = "h-full rounded-lg overflow-hidden bg-black/30"
+  className = "h-full rounded-lg overflow-hidden bg-black/30",
+  onSceneReady
 }) => {
+  const sceneRef = useRef<THREE.Scene | null>(null);
+
+  useEffect(() => {
+    if (sceneRef.current && onSceneReady) {
+      onSceneReady(sceneRef.current);
+    }
+  }, [onSceneReady]);
+
   if (!userScript) {
     return (
       <div className={className}>
@@ -32,7 +43,16 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
   
   return (
     <div className={className}>
-      <ParametricScene userScript={userScript} parameters={parameters} />
+      <ParametricScene 
+        userScript={userScript} 
+        parameters={parameters}
+        onSceneReady={(scene) => {
+          sceneRef.current = scene;
+          if (onSceneReady) {
+            onSceneReady(scene);
+          }
+        }}
+      />
     </div>
   );
 }; 

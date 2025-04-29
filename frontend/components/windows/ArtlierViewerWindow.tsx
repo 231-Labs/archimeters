@@ -1,8 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { WindowName } from '@/types';
 import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import * as THREE from 'three';
 
 interface ArtlierViewerWindowProps {
   name: WindowName;
@@ -33,6 +35,7 @@ export default function ArtlierViewerWindow({
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
 
   // 從 Walrus 獲取圖片
   const fetchImageFromWalrus = async (blobId: string) => {
@@ -369,6 +372,65 @@ export default function ArtlierViewerWindow({
     }));
   };
 
+  const handleExportSTL = useCallback(() => {
+    if (!artlier?.algorithmContent || !sceneRef.current) return;
+
+    try {
+      // 獲取當前場景中的所有網格
+      const meshes: THREE.Mesh[] = [];
+      sceneRef.current.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          meshes.push(object);
+        }
+      });
+
+      if (meshes.length === 0) {
+        throw new Error('No mesh found in scene');
+      }
+
+      // 創建一個新的場景用於導出
+      const exportScene = new THREE.Scene();
+      
+      // 處理每個網格
+      meshes.forEach(mesh => {
+        // 克隆網格以避免修改原始場景
+        const clonedMesh = mesh.clone();
+        
+        // 確保網格是封閉的
+        if (clonedMesh.geometry instanceof THREE.BufferGeometry) {
+          // 計算法線
+          clonedMesh.geometry.computeVertexNormals();
+          
+          // 確保面是雙面的
+          if (clonedMesh.material instanceof THREE.Material) {
+            clonedMesh.material.side = THREE.DoubleSide;
+          }
+        }
+        
+        // 添加到導出場景
+        exportScene.add(clonedMesh);
+      });
+
+      // 創建 STL 導出器
+      const exporter = new STLExporter();
+      const stlString = exporter.parse(exportScene, { binary: false });
+
+      // 創建 Blob 並下載
+      const blob = new Blob([stlString], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${artlier.title}_${Date.now()}.stl`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting STL:', error);
+      setError('Failed to export STL file');
+    }
+  }, [artlier]);
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -428,7 +490,7 @@ export default function ArtlierViewerWindow({
       parameters={parameters}
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
-      onMint={() => {}}
+      onMint={handleExportSTL}
     >
       <DefaultTemplate
         workName={artlier.title}
@@ -441,8 +503,16 @@ export default function ArtlierViewerWindow({
         parameters={parameters}
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
-        onMint={() => {}}
-        preview3D={<ParametricViewer userScript={userScript} parameters={previewParams} />}
+        onMint={handleExportSTL}
+        preview3D={
+          <ParametricViewer 
+            userScript={userScript} 
+            parameters={previewParams}
+            onSceneReady={(scene) => {
+              sceneRef.current = scene;
+            }}
+          />
+        }
       />
     </BaseTemplate>
   );

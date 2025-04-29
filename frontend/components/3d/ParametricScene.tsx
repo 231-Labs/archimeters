@@ -12,9 +12,10 @@ interface UserScript {
 interface ParametricSceneProps {
   userScript: UserScript | null;
   parameters?: Record<string, any>;
+  onSceneReady?: (scene: THREE.Scene) => void;
 }
 
-export default function ParametricScene({ userScript, parameters = {} }: ParametricSceneProps) {
+export default function ParametricScene({ userScript, parameters = {}, onSceneReady }: ParametricSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -22,10 +23,12 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
   const controlsRef = useRef<OrbitControls | null>(null);
   const geometryRef = useRef<THREE.BufferGeometry | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
+  const hasInitializedRef = useRef(false);
 
   // 初始化場景
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
     // 創建場景
     const scene = new THREE.Scene();
@@ -85,6 +88,11 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
     backLight.position.set(0, 2, -10);
     scene.add(backLight);
 
+    // 通知場景已準備就緒
+    if (onSceneReady) {
+      onSceneReady(scene);
+    }
+
     // 動畫循環
     function animate() {
       requestAnimationFrame(animate);
@@ -97,6 +105,7 @@ export default function ParametricScene({ userScript, parameters = {} }: Paramet
     return () => {
       renderer.dispose();
       containerRef.current?.removeChild(renderer.domElement);
+      hasInitializedRef.current = false;
     };
   }, []);
 
