@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x70ecee76b3d969c03b815f076dc8b564187c0bdadcc71d88bfe73520dfe3330c';
-export const STATE_ID = '0x3fe441509c952974c79fff70add9c5b6d27d6639846243f26db30c895cddd913';
-export const ARTLIER_STATE_ID = '0x5b74cb137f44aba814e07b8329bc404715a4225085c33512b955389a461c3db1';
+export const PACKAGE_ID = '0x6746cdfc93c969e0bbdf6325d2236620b859840b49584c5cefde1c545cf99e53';
+export const STATE_ID = '0xd04e83ddb9b00fe26c7c74256b563c80f6ec538bbbe18427ecb41b2dd3ba9b9d';
+export const ARTLIER_STATE_ID = '0x53a8aad48039095f3d56dcb6f976bf08609d27560d8e2432d316a73a7676bfbe';
 
 export const mintMembership = async (username: string, description: string) => {
   

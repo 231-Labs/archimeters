@@ -393,6 +393,13 @@ export default function ArtlierViewerWindow({
     );
   }
 
+  // 縮放 Sui Price
+  const scaleSuiPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseInt(price) : price;
+    const scaled = Math.floor(numPrice / 1_000_000_000).toString();
+    return scaled;
+  };
+
   // 將 algorithmContent 轉換為 ParametricViewer 需要的格式
   const userScript = artlier.algorithmContent ? {
     code: artlier.algorithmContent,
@@ -413,7 +420,7 @@ export default function ArtlierViewerWindow({
     <BaseTemplate
       workName={artlier.title}
       description={artlier.description || ''}
-      price={artlier.price}
+      price={scaleSuiPrice(artlier.price)}
       author={artlier.artistName || artlier.author}
       social={formatAddress(artlier.artistAddress || '')}
       intro={formatText(artlier.artistStatement || '')}
@@ -426,7 +433,7 @@ export default function ArtlierViewerWindow({
       <DefaultTemplate
         workName={artlier.title}
         description={artlier.description || ''}
-        price={artlier.price}
+        price={scaleSuiPrice(artlier.price)}
         author={artlier.artistName || artlier.author}
         social={formatAddress(artlier.artistAddress || '')}
         intro={formatText(artlier.artistStatement || '')}
