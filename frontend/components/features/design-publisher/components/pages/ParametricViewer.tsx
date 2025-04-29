@@ -10,6 +10,8 @@ interface ParametricViewerProps {
   parameters: Record<string, any>;
   className?: string;
   onSceneReady?: (scene: THREE.Scene) => void;
+  onRendererReady?: (renderer: THREE.WebGLRenderer) => void;
+  onCameraReady?: (camera: THREE.Camera) => void;
 }
 
 /**
@@ -19,7 +21,9 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
   userScript,
   parameters,
   className = "h-full rounded-lg overflow-hidden bg-black/30",
-  onSceneReady
+  onSceneReady,
+  onRendererReady,
+  onCameraReady
 }) => {
   const sceneRef = useRef<THREE.Scene | null>(null);
 
@@ -52,6 +56,8 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
             onSceneReady(scene);
           }
         }}
+        onRendererReady={onRendererReady}
+        onCameraReady={onCameraReady}
       />
     </div>
   );

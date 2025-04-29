@@ -35,9 +35,13 @@ export default function ArtlierViewerWindow({
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.Camera | null>(null);
 
-  // 從 Walrus 獲取圖片
+  // Fetch image from Walrus storage
   const fetchImageFromWalrus = async (blobId: string) => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
@@ -52,7 +56,7 @@ export default function ArtlierViewerWindow({
     }
   };
 
-  // 從 Walrus 獲取演算法內容
+  // Fetch algorithm content from Walrus storage
   const fetchAlgorithmFromWalrus = async (blobId: string) => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
@@ -66,7 +70,7 @@ export default function ArtlierViewerWindow({
     }
   };
 
-  // 從 Walrus 獲取配置文件
+  // Fetch configuration data from Walrus storage
   const fetchConfigDataFromWalrus = async (blobId: string) => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
@@ -81,7 +85,7 @@ export default function ArtlierViewerWindow({
     }
   };
 
-  // 處理演算法文件並提取參數
+  // Process algorithm file and extract parameters
   const processSceneFile = useCallback((code: string) => {
     if (!code || typeof code !== 'string') {
       console.error('Invalid code input:', { code });
@@ -94,7 +98,7 @@ export default function ArtlierViewerWindow({
       console.log('First 100 chars:', code.substring(0, 100));
       console.log('File format detection...');
       
-      // 簡單判斷檔案格式
+      // Simple file format detection
       if (code.includes('createGeometry')) {
         console.log('✓ Found createGeometry function');
       }
@@ -108,26 +112,26 @@ export default function ArtlierViewerWindow({
         console.log('✓ Found parameters reference');
       }
       
-      // 支援更多參數定義格式
+      // Support more parameter definition formats
       const paramPatterns = [
-        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // 對象格式
-        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // 陣列格式
-        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage 格式
-        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS 對象格式
-        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS 陣列格式
-        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // 直接從 createGeometry 函數提取
+        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // Object format
+        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // Array format
+        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage format
+        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS Object format
+        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS Array format
+        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // Extract directly from createGeometry function
       ];
 
       let parametersMatch = null;
       let extractedCode = '';
 
-      // 嘗試所有模式
+      // Try all patterns
       for (const pattern of paramPatterns) {
         const match = code.match(pattern);
         if (match) {
           console.log('Matched pattern:', pattern.toString().substring(0, 50));
           if (pattern.toString().includes('createGeometry')) {
-            // 從 createGeometry 函數提取參數
+            // Extract parameters from createGeometry function
             const geometryCode = match[0];
             console.log('Extracted geometry code:', geometryCode.substring(0, 100));
             const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
@@ -158,12 +162,12 @@ export default function ArtlierViewerWindow({
       }
 
       if (!extractedCode) {
-        // 沒有找到模式匹配，嘗試從函數參數中提取
+        // No pattern match, attempt to extract from function directly
         console.log('No pattern match, attempting to extract from function directly');
         const funcMatch = code.match(/function\s+createGeometry\s*\(\s*THREE\s*(?:,\s*params)?\s*\)/);
         if (funcMatch) {
           console.log('Found createGeometry function, extracting default parameters');
-          // 從普通的參數聲明中提取
+          // Extract from regular parameter declarations
           const paramExtractions = code.match(/(?:const|let|var)\s+(\w+)\s*=\s*params\.(\w+)\s*\|\|\s*([^;]+);/g);
           if (paramExtractions && paramExtractions.length > 0) {
             console.log('Found param declarations:', paramExtractions);
@@ -174,11 +178,11 @@ export default function ArtlierViewerWindow({
                 const [_, varName, paramName, defaultValue] = match;
                 console.log(`Found param: ${paramName} with default ${defaultValue}`);
                 let parsedValue: string | number = defaultValue.trim();
-                // 嘗試將數值字符串轉換為數字
+                // Try to convert string value to number
                 if (!isNaN(Number(parsedValue)) && typeof parsedValue === 'string') {
                   parsedValue = Number(parsedValue);
                 }
-                // 處理顏色值
+                // Handle color values
                 if (typeof parsedValue === 'string' && parsedValue.startsWith('#')) {
                   paramsObj[paramName] = {
                     type: 'color',
@@ -187,7 +191,7 @@ export default function ArtlierViewerWindow({
                     current: parsedValue
                   };
                 } else {
-                  // 確保是數字類型
+                  // Ensure it's a number type
                   paramsObj[paramName] = {
                     type: 'number',
                     label: paramName,
@@ -217,13 +221,13 @@ export default function ArtlierViewerWindow({
 
       let parameters: Record<string, any> | any[];
       try {
-        // 清理代碼
+        // Clean code
         let cleanCode = extractedCode
-          .replace(/(\w+):/g, '"$1":')  // 將鍵名轉換為字符串
-          .replace(/'([^']*?)'/g, '"$1"')  // 將單引號轉換為雙引號
-          .replace(/,(\s*[}\]])/g, '$1')  // 移除尾隨逗號
-          .replace(/\/\/.*/g, '')  // 移除單行註釋
-          .replace(/\/\*[\s\S]*?\*\//g, ''); // 移除多行註釋
+          .replace(/(\w+):/g, '"$1":')  // Convert key names to string
+          .replace(/'([^']*?)'/g, '"$1"')  // Convert single quotes to double quotes
+          .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing comma
+          .replace(/\/\/.*/g, '')  // Remove single-line comments
+          .replace(/\/\*[\s\S]*?\*\//g, ''); // Remove multi-line comments
         
         console.log('Cleaned code:', cleanCode);
         
@@ -238,7 +242,7 @@ export default function ArtlierViewerWindow({
         }
       }
 
-      // 標準化參數格式
+      // Standardize parameter format
       const extractedParams: Record<string, any> = {};
       
       if (Array.isArray(parameters)) {
@@ -283,7 +287,7 @@ export default function ArtlierViewerWindow({
         throw new Error('No valid parameters found in code');
       }
 
-      // 更新參數狀態
+      // Update parameter state
       setParameters(extractedParams);
       setPreviewParams(Object.fromEntries(
         Object.entries(extractedParams).map(([key, value]) => [key, value.default])
@@ -299,7 +303,7 @@ export default function ArtlierViewerWindow({
   useEffect(() => {
     const fetchArtlierData = async () => {
       try {
-        // 從 sessionStorage 中讀取藝術品數據
+        // Read artlier data from sessionStorage
         const storedArtlier = sessionStorage.getItem('selected-artlier');
         if (!storedArtlier) {
           throw new Error('No artlier data found');
@@ -308,14 +312,14 @@ export default function ArtlierViewerWindow({
         const parsedArtlier = JSON.parse(storedArtlier);
         setArtlier(parsedArtlier);
 
-        // 並行獲取所有需要的數據
+        // Fetch all required data concurrently
         const [imageUrl, algorithmContent, configData] = await Promise.all([
           fetchImageFromWalrus(parsedArtlier.photoBlobId),
           fetchAlgorithmFromWalrus(parsedArtlier.algorithmBlobId),
           fetchConfigDataFromWalrus(parsedArtlier.dataBlobId)
         ]);
 
-        // 更新狀態
+        // Update state
         setArtlier(prev => ({
           ...prev!,
           url: imageUrl,
@@ -327,10 +331,10 @@ export default function ArtlierViewerWindow({
           artistAddress: configData.artist?.address
         }));
 
-        // 如果有 configData，設置參數
+        // If there's configData, set parameters
         if (configData) {
           setParameters(configData.parameters || {});
-          // 設置預覽參數的初始值
+          // Set initial values for preview parameters
           const initialPreviewParams = Object.fromEntries(
             Object.entries(configData.parameters || {})
               .map(([key, value]: [string, any]) => [key, value.default])
@@ -338,7 +342,7 @@ export default function ArtlierViewerWindow({
           setPreviewParams(initialPreviewParams);
         }
 
-        // 如果有演算法內容，處理參數
+        // If there's algorithm content, process parameters
         if (algorithmContent) {
           try {
             processSceneFile(algorithmContent);
@@ -357,7 +361,7 @@ export default function ArtlierViewerWindow({
 
     fetchArtlierData();
 
-    // 清理函數
+    // Cleanup function
     return () => {
       if (artlier?.url) {
         URL.revokeObjectURL(artlier.url);
@@ -365,6 +369,7 @@ export default function ArtlierViewerWindow({
     };
   }, [processSceneFile]);
 
+  // Handle parameter changes from UI controls
   const handleParameterChange = (key: string, value: string | number) => {
     setPreviewParams(prev => ({
       ...prev,
@@ -372,11 +377,15 @@ export default function ArtlierViewerWindow({
     }));
   };
 
-  const handleExportSTL = useCallback(() => {
+  // Export current 3D model as STL and upload to Walrus
+  const handleExportSTL = useCallback(async () => {
     if (!artlier?.algorithmContent || !sceneRef.current) return;
 
     try {
-      // 獲取當前場景中的所有網格
+      setUploadStatus('uploading');
+      setUploadProgress('Generating STL file...');
+
+      // Collect all meshes from the current scene
       const meshes: THREE.Mesh[] = [];
       sceneRef.current.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -388,35 +397,78 @@ export default function ArtlierViewerWindow({
         throw new Error('No mesh found in scene');
       }
 
-      // 創建一個新的場景用於導出
+      // Create a new scene for export
       const exportScene = new THREE.Scene();
       
-      // 處理每個網格
+      // Process each mesh
       meshes.forEach(mesh => {
-        // 克隆網格以避免修改原始場景
+        // Clone mesh to avoid modifying the original scene
         const clonedMesh = mesh.clone();
         
-        // 確保網格是封閉的
+        // Ensure mesh is watertight
         if (clonedMesh.geometry instanceof THREE.BufferGeometry) {
-          // 計算法線
+          // Compute vertex normals
           clonedMesh.geometry.computeVertexNormals();
           
-          // 確保面是雙面的
+          // Ensure faces are double-sided
           if (clonedMesh.material instanceof THREE.Material) {
             clonedMesh.material.side = THREE.DoubleSide;
           }
         }
         
-        // 添加到導出場景
+        // Add to export scene
         exportScene.add(clonedMesh);
       });
 
-      // 創建 STL 導出器
+      // Create STL exporter
       const exporter = new STLExporter();
       const stlString = exporter.parse(exportScene, { binary: false });
 
-      // 創建 Blob 並下載
+      // Create file from STL data
       const blob = new Blob([stlString], { type: 'application/octet-stream' });
+      const file = new File([blob], `${artlier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
+
+      setUploadProgress('Uploading STL file to Walrus...');
+
+      // Upload to Walrus
+      const formData = new FormData();
+      formData.append('data', file);
+      formData.append('epochs', '5');
+
+      const response = await fetch('/api/walrus', {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (err) {
+        throw new Error('Failed to parse response JSON');
+      }
+
+      let blobId = null;
+      if (result?.alreadyCertified?.blobId) {
+        blobId = result.alreadyCertified.blobId;
+      } else if (result?.newlyCreated?.blobObject?.blobId) {
+        blobId = result.newlyCreated.blobObject.blobId;
+      }
+
+      if (!blobId) {
+        throw new Error('No valid blobId returned');
+      }
+
+      console.log('STL file uploaded successfully, blobId:', blobId);
+      setUploadStatus('success');
+      setUploadProgress('STL file uploaded successfully!');
+
+      // Commented out download functionality for future use
+      /*
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -425,9 +477,49 @@ export default function ArtlierViewerWindow({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      */
+
     } catch (error) {
-      console.error('Error exporting STL:', error);
-      setError('Failed to export STL file');
+      console.error('Error exporting/uploading STL:', error);
+      setError('Failed to export/upload STL file');
+      setUploadStatus('error');
+      setUploadProgress('Upload failed');
+    }
+  }, [artlier]);
+
+  // Capture and upload screenshot
+  const handleScreenshot = useCallback(async () => {
+    if (!sceneRef.current || !rendererRef.current || !cameraRef.current || !artlier) return;
+
+    try {
+      setUploadStatus('uploading');
+      setUploadProgress('Capturing screenshot...');
+
+      // 確保場景已經渲染完成
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      
+      // 等待一幀以確保渲染完成
+      await new Promise(requestAnimationFrame);
+      
+      // 捕獲截圖
+      const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
+      
+      // 創建下載連結
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${artlier.title}_screenshot_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setUploadStatus('success');
+      setUploadProgress('Screenshot saved successfully!');
+
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+      setError('Failed to capture screenshot');
+      setUploadStatus('error');
+      setUploadProgress('Capture failed');
     }
   }, [artlier]);
 
@@ -455,25 +547,25 @@ export default function ArtlierViewerWindow({
     );
   }
 
-  // 縮放 Sui Price
+  // Scale SUI price for display
   const scaleSuiPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseInt(price) : price;
     const scaled = Math.floor(numPrice / 1_000_000_000).toString();
     return scaled;
   };
 
-  // 將 algorithmContent 轉換為 ParametricViewer 需要的格式
+  // Convert algorithm content to ParametricViewer format
   const userScript = artlier.algorithmContent ? {
     code: artlier.algorithmContent,
     filename: 'algorithm.js'
   } : null;
 
-  // 格式化地址顯示
+  // Format address for display
   const formatAddress = (address: string) => {
     return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
   };
 
-  // 格式化文本，確保換行符被正確處理
+  // Format text with proper line breaks
   const formatText = (text: string) => {
     return text ? text.replace(/\n/g, '\n') : '';
   };
@@ -490,7 +582,10 @@ export default function ArtlierViewerWindow({
       parameters={parameters}
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
-      onMint={handleExportSTL}
+      onMint={async () => {
+        await handleScreenshot();
+        await handleExportSTL();
+      }}
     >
       <DefaultTemplate
         workName={artlier.title}
@@ -503,7 +598,10 @@ export default function ArtlierViewerWindow({
         parameters={parameters}
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
-        onMint={handleExportSTL}
+        onMint={async () => {
+          await handleScreenshot();
+          await handleExportSTL();
+        }}
         preview3D={
           <ParametricViewer 
             userScript={userScript} 
@@ -511,9 +609,55 @@ export default function ArtlierViewerWindow({
             onSceneReady={(scene) => {
               sceneRef.current = scene;
             }}
+            onRendererReady={(renderer) => {
+              rendererRef.current = renderer;
+            }}
+            onCameraReady={(camera) => {
+              cameraRef.current = camera;
+            }}
           />
         }
       />
+      {/* Upload status notification */}
+      {uploadStatus !== 'idle' && (
+        <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg">
+          <div className="flex items-center gap-3">
+            {uploadStatus === 'uploading' && (
+              <div className="relative w-4 h-4">
+                <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
+                <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-white/70 rounded-full animate-pulse" />
+                </div>
+              </div>
+            )}
+            {uploadStatus === 'success' && (
+              <div className="relative w-4 h-4">
+                <div className="absolute inset-0 border-2 border-green-500/50 rounded-full animate-pulse" />
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+            {uploadStatus === 'error' && (
+              <div className="relative w-4 h-4">
+                <div className="absolute inset-0 border-2 border-red-500/50 rounded-full animate-pulse" />
+                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
+              {uploadStatus === 'uploading' && (
+                <span className="text-white/40 text-xs font-mono tracking-wider mt-0.5">
+                  {uploadProgress === 'Generating STL file...' ? 'PROCESSING' : 'UPLOADING'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </BaseTemplate>
   );
 } 
