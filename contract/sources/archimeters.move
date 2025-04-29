@@ -7,7 +7,7 @@ module archimeters::archimeters {
         event,
         clock,
         table::{ Self, Table },
-        vec_set::{ Self, VecSet }
+        vec_set::{ Self, VecSet },
     };
 
     // == Errors ==
@@ -62,7 +62,7 @@ module archimeters::archimeters {
         );
         display.add(
             b"image_url".to_string(),
-            b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/jBwMThR7sKzyZAeuDla4lPSJ-AW4f6irNQKsY3OdwwU".to_string() // TODO: change to realsite
+            b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/d3ElFh07L2aZFHgFASwsIkn_WHnjnNHSz0U8SlbTi_Q".to_string()
         );
 
         display.update_version();
@@ -121,6 +121,10 @@ module archimeters::archimeters {
 
     public fun add_artlier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
         vec_set::insert(&mut membership.artliers, design_series_id);
+    }
+
+    public fun add_bottega_to_membership(membership: &mut MemberShip, bottega_id: ID) {
+        vector::push_back(&mut membership.gallery, bottega_id);
     }
 }
 

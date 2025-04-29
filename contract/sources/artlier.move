@@ -6,10 +6,18 @@ module archimeters::artlier {
         clock,
         package,
         display,
+        coin::{ Self },
+        balance::{ Self, Balance },
+        sui::SUI,
     };
+
+    // == Constants ==
+    const ONE_SUI: u64 = 1_000_000_000;
 
     // == Errors ==
     const ENO_MEMBERSHIP: u64 = 0;
+    const ENO_PERMISSION: u64 = 1;
+    const ENO_AMOUNT: u64 = 2;
 
     // == One Time Witness ==
     public struct ARTLIER has drop {}
@@ -29,12 +37,22 @@ module archimeters::artlier {
         algorithm: String, // Walrus blob ID for the algorithm file
         artificials: vector<ID>, // Collection of all items in the series
         price: u64,
+        pool: Balance<SUI>,
         publish_time: u64,
+    }
+
+    public struct ArtlierCap has key, store {
+        id: UID,
+        artlier_id: ID,
     }
 
     // == Events ==
     public struct New_artlier has copy, drop {
         id: ID,
+    }
+
+    public struct WithdrawPool has copy, drop {
+        amount: u64,
     }
 
     // == Initializer ==
@@ -48,15 +66,15 @@ module archimeters::artlier {
         );
         display.add(
             b"link".to_string(),
-            b"https://archimeters.xyz".to_string() // TODO: change to realsite
+            b"https://archimeters.vercel.app/".to_string() 
         );
         display.add(
             b"description".to_string(),
-            b"Your Artlier is here".to_string() // TODO: change to realsite
+            b"Artlier Published by Archimeters".to_string()
         );
         display.add(
             b"image_url".to_string(),
-            b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/jBwMThR7sKzyZAeuDla4lPSJ-AW4f6irNQKsY3OdwwU".to_string() // TODO: change to realsite
+            b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/zw47vReyw9PXRYjIrtMFhgFF8O3nv26nWCJFY6QEiDI".to_string()
         );
 
         display.update_version();
@@ -99,15 +117,23 @@ module archimeters::artlier {
             data,
             algorithm,
             artificials: vector[],
-            price,
+            price: price * ONE_SUI,
+            pool: balance::zero<SUI>(),
             publish_time: now,
+        };
+
+        // Create ArtlierCap
+        let cap = ArtlierCap {
+            id: object::new(ctx),
+            artlier_id: id_inner,
         };
 
         // Add Artlier ID to MemberShip and State
         archimeters::add_artlier_to_membership(membership, id_inner);
         add_artlier_to_state(artlier_state, id_inner);
 
-        transfer::transfer(artlier, sender);
+        transfer::share_object(artlier);
+        transfer::transfer(cap, sender);
 
         // Emit the event at the end
         event::emit(New_artlier {
@@ -115,7 +141,49 @@ module archimeters::artlier {
         });
     }
 
-    // == Helper Functions ==
+    public entry fun withdraw_pool(
+        artlier: &mut Artlier,
+        cap: &ArtlierCap,
+        amount: u64,
+        ctx: &mut TxContext
+    ) {
+        let sender = tx_context::sender(ctx);
+        let artlier_id = object::uid_to_inner(&artlier.id);
+        
+        // Verify artlier_id match and amount
+        assert!(cap.artlier_id == artlier_id, ENO_PERMISSION);
+        assert!(amount > 0, ENO_AMOUNT);
+        
+        let coin = coin::from_balance(balance::split(&mut artlier.pool, amount), ctx);
+        transfer::public_transfer(coin, sender);
+        
+        event::emit(WithdrawPool {
+            amount,
+        });
+    }
+
+    // == Getter Functions ==
+
+    public fun get_author(artlier: &Artlier): address {
+        artlier.author
+    }
+
+    public fun get_price(artlier: &Artlier): u64 {
+        artlier.price
+    }
+
+    public fun get_pool(artlier: &Artlier): &Balance<SUI> {
+        &artlier.pool
+    }
+
+    public fun add_to_pool(artlier: &mut Artlier, fee: Balance<SUI>) {
+        balance::join(&mut artlier.pool, fee);
+    }
+
+    public fun add_bottega_to_artlier(artlier: &mut Artlier, bottega_id: ID) {
+        vector::push_back(&mut artlier.artificials, bottega_id);
+    }
+
     fun add_artlier_to_state(artlier_state: &mut ArtlierState, artlier_id: ID) {
         artlier_state.all_artliers.push_back(artlier_id);
     }
