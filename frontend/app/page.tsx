@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
 import EntryWindow from '@/components/windows/EntryWindow';
+import { WalletStatus } from '@/components/windows/EntryWindow';
 import DesignPublisher from '@/components/windows/DesignPublisher';
 import BrowseWindow from '@/components/windows/BrowseWindow';
 import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
@@ -17,8 +18,15 @@ import { defaultWindowConfigs } from '@/config/windows';
 import GalaxyEffect from '@/components/background_animations/GalaxyEffect';
 import SpaceRoom from '@/components/background_animations/SpaceRoom';
 import Noise from '@/components/background_animations/NoiseEffect';
+import Background from '@/components/background_animations/Background';
+
+interface Props {
+  walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
+}
 
 export default function Home() {
+  const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
+  {console.log('Wallet status1:', walletStatus)}
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const {
@@ -58,10 +66,8 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-screen bg-black overflow-hidden">
-        <SpaceRoom />
-        {/* <Noise /> */}
-        <GalaxyEffect />
+      <div className="min-h-screen bg-black overflow-hidden relative">
+        <Background walletStatus={walletStatus} />
         <Header />
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="relative h-[calc(100vh-48px)]">
@@ -82,7 +88,12 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       zIndex={openWindows.indexOf(name) + 1}
                     >
-                      <EntryWindow onDragStart={(e, name) => startDragging(e, name)} />
+                      <EntryWindow
+                        onDragStart={(e, name) => startDragging(e, name)}
+                        walletStatus={walletStatus}
+                        setWalletStatus={setWalletStatus}
+                      />
+
                     </Window>
                   );
                 case 'terminal':
