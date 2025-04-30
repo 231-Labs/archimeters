@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, ReactNode } from 'react';
+import { useEffect, useState, useCallback, useRef, ReactNode, useMemo } from 'react';
 import type { WindowName } from '@/types';
 import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
@@ -391,12 +391,52 @@ export default function ArtlierViewerWindow({
   }, [processSceneFile]);
 
   // Handle parameter changes from UI controls
-  const handleParameterChange = (key: string, value: string | number) => {
+  const handleParameterChange = useCallback((key: string, value: string | number) => {
+    console.log('Parameter change:', key, value);
     setPreviewParams(prev => ({
       ...prev,
       [key]: value
     }));
-  };
+  }, []);
+
+  // Memoize the ParametricViewer component props
+  const viewerProps = useMemo(() => {
+    console.log('Updating viewer props:', {
+      hasAlgorithm: !!artlier?.algorithmContent,
+      parameters: previewParams
+    });
+
+    return {
+      userScript: artlier?.algorithmContent ? {
+        code: artlier.algorithmContent,
+        filename: `algorithm_${artlier.id}.js` // Use unique filename
+      } : null,
+      parameters: previewParams,
+      onSceneReady: (scene: THREE.Scene) => {
+        console.log('Scene ready in ArtlierViewer');
+        sceneRef.current = scene;
+      },
+      onRendererReady: (renderer: THREE.WebGLRenderer) => {
+        console.log('Renderer ready in ArtlierViewer');
+        rendererRef.current = renderer;
+      },
+      onCameraReady: (camera: THREE.Camera) => {
+        console.log('Camera ready in ArtlierViewer');
+        cameraRef.current = camera;
+      }
+    };
+  }, [artlier?.algorithmContent, artlier?.id, previewParams]);
+
+  // Monitor scene state
+  useEffect(() => {
+    console.log('ArtlierViewer scene state:', {
+      hasScene: !!sceneRef.current,
+      hasRenderer: !!rendererRef.current,
+      hasCamera: !!cameraRef.current,
+      hasAlgorithm: !!artlier?.algorithmContent,
+      parameters: previewParams
+    });
+  }, [artlier?.algorithmContent, previewParams]);
 
   // 添加上傳到 Walrus 的通用函數
   const uploadToWalrus = async (file: File, fileType: string): Promise<string> => {
@@ -835,12 +875,6 @@ export default function ArtlierViewerWindow({
     return scaled;
   };
 
-  // Convert algorithm content to ParametricViewer format
-  const userScript = artlier.algorithmContent ? {
-    code: artlier.algorithmContent,
-    filename: 'algorithm.js'
-  } : null;
-
   // Format address for display
   const formatAddress = (address: string) => {
     return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
@@ -930,19 +964,9 @@ export default function ArtlierViewerWindow({
           ) : null
         }}
         preview3D={
-          <ParametricViewer 
-            userScript={userScript} 
-            parameters={previewParams}
-            onSceneReady={(scene) => {
-              sceneRef.current = scene;
-            }}
-            onRendererReady={(renderer) => {
-              rendererRef.current = renderer;
-            }}
-            onCameraReady={(camera) => {
-              cameraRef.current = camera;
-            }}
-          />
+          <div className="w-full h-full">
+            <ParametricViewer {...viewerProps} />
+          </div>
         }
       />
       {/* Upload and mint status notification */}

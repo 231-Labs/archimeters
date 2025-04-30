@@ -34,6 +34,13 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     target: new THREE.Vector3(0, 0, 0)
   });
 
+  // 渲染函數
+  const render = useCallback(() => {
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+    }
+  }, []);
+
   // 清理所有 Three.js 資源
   const cleanupResources = useCallback(() => {
     // 取消動畫幀
@@ -115,9 +122,14 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
   // 更新幾何體而不重新創建整個場景
   const updateGeometry = useCallback(() => {
-    if (!userScript || !sceneRef.current) return;
+    if (!userScript || !sceneRef.current) {
+      console.log('Cannot update geometry: missing userScript or scene');
+      return;
+    }
 
     try {
+      console.log('Updating geometry with parameters:', parameters);
+      
       // 評估用戶代碼
       const createGeometry = new Function('THREE', 'params', `
         ${userScript.code}
@@ -126,27 +138,44 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
       // 創建新的幾何體
       const geometry = createGeometry(THREE, parameters);
+      console.log('Geometry created successfully');
 
       // 如果已有網格，更新其幾何體和材質
       if (meshRef.current) {
-        // 清理舊的幾何體
-        if (meshRef.current.geometry) {
-          meshRef.current.geometry.dispose();
-        }
+        console.log('Updating existing mesh');
+        // 保存舊的材質和幾何體
+        const oldMaterial = meshRef.current.material;
+        const oldGeometry = meshRef.current.geometry;
+        
+        // 創建新的材質
+        const material = new THREE.MeshPhongMaterial({
+          color: parameters.color || 0xff3366,
+          emissive: parameters.emissive || 0x000000,
+          specular: 0x111111,
+          shininess: 30,
+          wireframe: false,
+          transparent: parameters.opacity !== undefined && parameters.opacity < 1,
+          opacity: parameters.opacity || 1.0,
+          side: THREE.DoubleSide,
+        });
 
-        // 更新幾何體
+        // 更新網格
         meshRef.current.geometry = geometry;
+        meshRef.current.material = material;
 
-        // 更新材質屬性
-        if (meshRef.current.material && !Array.isArray(meshRef.current.material)) {
-          const material = meshRef.current.material as THREE.MeshPhongMaterial;
-          material.color.setHex(parameters.color || 0xff3366);
-          material.emissive.setHex(parameters.emissive || 0x000000);
-          material.transparent = parameters.opacity !== undefined && parameters.opacity < 1;
-          material.opacity = parameters.opacity || 1.0;
-          material.needsUpdate = true;
+        // 清理舊的資源
+        if (oldGeometry) {
+          oldGeometry.dispose();
+        }
+        if (oldMaterial) {
+          if (Array.isArray(oldMaterial)) {
+            oldMaterial.forEach(mat => mat.dispose());
+          } else {
+            oldMaterial.dispose();
+          }
         }
       } else {
+        console.log('Creating new mesh');
         // 如果沒有網格，創建新的
         const material = new THREE.MeshPhongMaterial({
           color: parameters.color || 0xff3366,
@@ -172,23 +201,26 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       }
 
       // 確保渲染器更新
-      if (rendererRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
+      render();
+
+      console.log('Geometry update completed successfully');
 
     } catch (error) {
       console.error('Error updating geometry:', error);
     }
-  }, [userScript, parameters]);
+  }, [userScript, parameters, render]);
 
   // 初始化場景
   useEffect(() => {
     if (!containerRef.current || hasInitializedRef.current) {
+      console.log('Scene initialization skipped:', {
+        hasContainer: !!containerRef.current,
+        isInitialized: hasInitializedRef.current
+      });
       return;
     }
 
-    // 確保在重新初始化之前清理舊的資源
-    cleanupResources();
+    console.log('Initializing scene');
 
     // 創建場景
     const scene = new THREE.Scene();
@@ -226,11 +258,12 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     controls.target.copy(cameraStateRef.current.target);
     controls.update();
 
-    // 保存相機狀態
+    // 保存相機狀態並觸發渲染
     controls.addEventListener('change', () => {
       if (camera) {
         cameraStateRef.current.position.copy(camera.position);
         cameraStateRef.current.target.copy(controls.target);
+        render();
       }
     });
 
@@ -270,26 +303,53 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     if (onSceneReady) onSceneReady(scene);
 
     hasInitializedRef.current = true;
+    console.log('Scene initialization completed');
+
+    let isAnimating = true;
 
     // 動畫循環
     function animate() {
-      if (!controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+      if (!isAnimating) return;
+
+      if (!controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+        console.log('Animation frame skipped: missing required refs');
+        return;
+      }
       
       animationFrameIdRef.current = requestAnimationFrame(animate);
       controlsRef.current.update();
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      render();
     }
     animate();
 
+    // 初始渲染
+    render();
+
     // 清理函數
     return () => {
-      cleanupResources();
+      console.log('Cleaning up scene');
+      isAnimating = false;
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+      // 只有在組件真正卸載時才清理資源
+      if (containerRef.current) {
+        cleanupResources();
+      }
     };
-  }, [onSceneReady, onRendererReady, onCameraReady, cleanupResources]);
+  }, [onSceneReady, onRendererReady, onCameraReady, cleanupResources, render]);
 
   // 更新幾何體
   useEffect(() => {
-    updateGeometry();
+    console.log('Geometry update effect triggered', {
+      hasInitialized: hasInitializedRef.current,
+      hasUserScript: !!userScript,
+      hasScene: !!sceneRef.current
+    });
+    
+    if (hasInitializedRef.current && sceneRef.current) {
+      updateGeometry();
+    }
   }, [updateGeometry]);
 
   // Handle window size change

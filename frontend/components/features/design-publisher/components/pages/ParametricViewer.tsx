@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import ParametricScene from '@/components/3d/ParametricScene';
 import * as THREE from 'three';
 
@@ -26,12 +26,44 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
   onCameraReady
 }) => {
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.Camera | null>(null);
 
-  useEffect(() => {
-    if (sceneRef.current && onSceneReady) {
-      onSceneReady(sceneRef.current);
+  // Memoize the scene callbacks
+  const callbacks = useMemo(() => ({
+    onSceneReady: (scene: THREE.Scene) => {
+      console.log('Scene ready callback triggered');
+      sceneRef.current = scene;
+      if (onSceneReady) {
+        onSceneReady(scene);
+      }
+    },
+    onRendererReady: (renderer: THREE.WebGLRenderer) => {
+      console.log('Renderer ready callback triggered');
+      rendererRef.current = renderer;
+      if (onRendererReady) {
+        onRendererReady(renderer);
+      }
+    },
+    onCameraReady: (camera: THREE.Camera) => {
+      console.log('Camera ready callback triggered');
+      cameraRef.current = camera;
+      if (onCameraReady) {
+        onCameraReady(camera);
+      }
     }
-  }, [onSceneReady]);
+  }), [onSceneReady, onRendererReady, onCameraReady]);
+
+  // Monitor scene state
+  useEffect(() => {
+    console.log('ParametricViewer scene state:', {
+      hasScene: !!sceneRef.current,
+      hasRenderer: !!rendererRef.current,
+      hasCamera: !!cameraRef.current,
+      hasUserScript: !!userScript,
+      parameters
+    });
+  }, [userScript, parameters]);
 
   if (!userScript) {
     return (
@@ -48,16 +80,10 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = ({
   return (
     <div className={className}>
       <ParametricScene 
+        key={userScript.filename} // Force remount when script changes
         userScript={userScript} 
         parameters={parameters}
-        onSceneReady={(scene) => {
-          sceneRef.current = scene;
-          if (onSceneReady) {
-            onSceneReady(scene);
-          }
-        }}
-        onRendererReady={onRendererReady}
-        onCameraReady={onCameraReady}
+        {...callbacks}
       />
     </div>
   );

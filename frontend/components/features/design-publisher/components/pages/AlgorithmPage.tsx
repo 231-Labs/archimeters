@@ -1,6 +1,7 @@
 import { TemplateSeries, FontStyle, ParameterState } from '../../types';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ParametricViewer } from './ParametricViewer';
+import * as THREE from 'three';
 
 interface NumberParameter {
   type: 'number';
@@ -115,6 +116,9 @@ export const AlgorithmPage = ({
   const [jsCode, setJsCode] = useState<string | null>(null);
   const [parameters, setParameters] = useState<Parameters>({});
   const sandboxRef = useRef<HTMLIFrameElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.Camera | null>(null);
 
   useEffect(() => {
     if (algoFile) {
@@ -167,6 +171,11 @@ export const AlgorithmPage = ({
   }, [onUpdatePreviewParams]);
 
   const geometryScript = useMemo(() => {
+    console.log('Updating geometry script:', {
+      hasJsCode: !!jsCode,
+      filename: algoFile?.name
+    });
+
     if (!jsCode) {
       return {
         code: `
@@ -179,16 +188,53 @@ export const AlgorithmPage = ({
             );
           }
         `,
-        filename: 'preview.js'
+        filename: 'default_preview.js'
       };
     }
     return {
       code: jsCode,
       filename: algoFile?.name || 'preview.js'
     };
-  }, [jsCode, previewParams, algoFile]);
+  }, [jsCode, algoFile]);
+
+  // Memoize the ParametricViewer props
+  const viewerProps = useMemo(() => {
+    console.log('Updating viewer props:', {
+      hasGeometryScript: !!geometryScript,
+      parameters: previewParams
+    });
+
+    return {
+      userScript: geometryScript,
+      parameters: previewParams,
+      onSceneReady: (scene: THREE.Scene) => {
+        console.log('Scene ready in AlgorithmPage');
+        sceneRef.current = scene;
+      },
+      onRendererReady: (renderer: THREE.WebGLRenderer) => {
+        console.log('Renderer ready in AlgorithmPage');
+        rendererRef.current = renderer;
+      },
+      onCameraReady: (camera: THREE.Camera) => {
+        console.log('Camera ready in AlgorithmPage');
+        cameraRef.current = camera;
+      }
+    };
+  }, [geometryScript, previewParams]);
+
+  // Monitor scene state
+  useEffect(() => {
+    console.log('AlgorithmPage scene state:', {
+      hasScene: !!sceneRef.current,
+      hasRenderer: !!rendererRef.current,
+      hasCamera: !!cameraRef.current,
+      hasGeometryScript: !!geometryScript,
+      parameters: previewParams
+    });
+  }, [geometryScript, previewParams]);
 
   useEffect(() => {
+    console.log('Updating user script');
     onUserScriptChange(geometryScript);
   }, [geometryScript, onUserScriptChange]);
 
@@ -200,10 +246,7 @@ export const AlgorithmPage = ({
         <div className="flex-1 group relative max-h-[calc(100vh-200px)]">
           {showPreview ? (
             <div className="h-full rounded-lg overflow-hidden bg-black/30">
-              <ParametricViewer 
-                userScript={geometryScript}
-                parameters={previewParams}
-              />
+              <ParametricViewer {...viewerProps} />
             </div>
           ) : (
             <>
