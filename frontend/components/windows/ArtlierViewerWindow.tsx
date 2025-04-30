@@ -47,19 +47,13 @@ export default function ArtlierViewerWindow({
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState<string>('');
-  const [mintBlobIds, setMintBlobIds] = useState<{
-    screenshotBlobId: string | null;
-    stlBlobId: string | null;
-  }>({
-    screenshotBlobId: null,
-    stlBlobId: null,
-  });
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [mintStatus, setMintStatus] = useState<'idle' | 'preparing' | 'minting' | 'success' | 'error'>('idle');
   const [mintError, setMintError] = useState<string | null>(null);
+  const [txDigest, setTxDigest] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [hasMembership, setHasMembership] = useState(false);
@@ -113,7 +107,7 @@ export default function ArtlierViewerWindow({
     }
   };
 
-  // Process algorithm file and extract parameters
+  // Process algorithm file and extract parameters TODO: test logs
   const processSceneFile = useCallback((code: string) => {
     if (!code || typeof code !== 'string') {
       console.error('Invalid code input:', { code });
@@ -150,7 +144,6 @@ export default function ArtlierViewerWindow({
         /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // Extract directly from createGeometry function
       ];
 
-      let parametersMatch = null;
       let extractedCode = '';
 
       // Try all patterns
@@ -421,7 +414,7 @@ export default function ArtlierViewerWindow({
       try {
         console.log(`[${fileType}] 嘗試上傳 (${retryCount + 1}/${maxRetries})`);
         setUploadStatus('uploading');
-        setUploadProgress(`Uploading ${fileType}... (Attempt ${retryCount + 1}/${maxRetries})`);
+        setUploadProgress(`Uploading ${fileType}...`);
 
         const formData = new FormData();
         formData.append('data', file);
@@ -603,7 +596,7 @@ export default function ArtlierViewerWindow({
         const tx = await mintBottega(
           artlier.id,
           membershipId,
-          screenshotBlobId,
+          `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
           stlBlobId,
           artlier.payment,
         );
@@ -616,6 +609,7 @@ export default function ArtlierViewerWindow({
           {
             onSuccess: (result) => {
               console.log('Mint 交易成功:', result);
+              setTxDigest(result.digest);
               setMintStatus('success');
             },
             onError: (error) => {
@@ -956,78 +950,90 @@ export default function ArtlierViewerWindow({
         <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg">
           <div className="flex flex-col gap-2">
             {/* Upload status */}
-            {uploadStatus !== 'idle' && (
+            {uploadStatus === 'uploading' && (
               <div className="flex items-center gap-3">
-                {uploadStatus === 'uploading' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
-                    <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-1 h-1 bg-white/70 rounded-full animate-pulse" />
-                    </div>
-                  </div>
-                )}
-                {uploadStatus === 'success' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-green-500/50 rounded-full animate-pulse" />
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-                {uploadStatus === 'error' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-red-500/50 rounded-full animate-pulse" />
-                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
+                  <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
                 </div>
+                <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
               </div>
             )}
             
-            {/* Mint status */}
-            {mintStatus !== 'idle' && (
+            {/* Upload success */}
+            {uploadStatus === 'success' && mintStatus !== 'success' && (
               <div className="flex items-center gap-3">
-                {mintStatus === 'preparing' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
-                    <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-                {mintStatus === 'minting' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-yellow-500/50 rounded-full animate-pulse" />
-                    <div className="absolute inset-0 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-                {mintStatus === 'success' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-green-500/50 rounded-full" />
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-                {mintStatus === 'error' && (
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 border-2 border-red-500/50 rounded-full" />
-                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="text-white/90 text-sm font-mono tracking-wider">
-                    {mintStatus === 'preparing' && 'Preparing files...'}
-                    {mintStatus === 'minting' && 'Minting Bottega...'}
-                    {mintStatus === 'success' && 'Bottega minted successfully!'}
-                    {mintStatus === 'error' && mintError}
-                  </span>
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-green-500/50 rounded-full" />
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
+                <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
+              </div>
+            )}
+
+            {/* Upload error */}
+            {uploadStatus === 'error' && (
+              <div className="flex items-center gap-3">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-red-500/50 rounded-full" />
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
+              </div>
+            )}
+            
+            {/* Mint preparing/minting status */}
+            {(mintStatus === 'preparing' || mintStatus === 'minting') && (
+              <div className="flex items-center gap-3">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
+                  <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                </div>
+                <span className="text-white/90 text-sm font-mono tracking-wider">
+                  {mintStatus === 'preparing' ? 'Preparing files...' : 'Minting Bottega...'}
+                </span>
+              </div>
+            )}
+
+            {/* Mint success */}
+            {mintStatus === 'success' && (
+              <div className="flex items-center gap-3">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-green-500/50 rounded-full" />
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-white/90 text-sm font-mono tracking-wider">Bottega minted successfully!</span>
+                  {txDigest && (
+                    <a
+                      href={`https://suiexplorer.com/txblock/${txDigest}?network=testnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+                    >
+                      View Transaction
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mint error */}
+            {mintStatus === 'error' && (
+              <div className="flex items-center gap-3">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border-2 border-red-500/50 rounded-full" />
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <span className="text-white/90 text-sm font-mono tracking-wider">{mintError}</span>
               </div>
             )}
           </div>
