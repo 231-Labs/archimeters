@@ -4,6 +4,7 @@ import { Transaction } from "@mysten/sui/transactions";
 export const PACKAGE_ID = '0x6746cdfc93c969e0bbdf6325d2236620b859840b49584c5cefde1c545cf99e53';
 export const STATE_ID = '0xd04e83ddb9b00fe26c7c74256b563c80f6ec538bbbe18427ecb41b2dd3ba9b9d';
 export const ARTLIER_STATE_ID = '0x53a8aad48039095f3d56dcb6f976bf08609d27560d8e2432d316a73a7676bfbe';
+export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export const mintMembership = async (username: string, description: string) => {
   
@@ -42,6 +43,29 @@ export const createArtlier = async (
       tx.pure(bcs.string().serialize(algorithm).toBytes()),
       tx.object(clock),
       tx.pure(bcs.u64().serialize(price).toBytes()),
+    ],
+  });
+  return tx;
+};
+
+export const mintBottega = async (
+  artlierId: string,
+  membershipId: string,
+  blueprint: string,
+  structure: string,
+  payment: string,
+  clock: string = '0x6',
+) => {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::bottega::mint_bottega`,
+    arguments: [
+      tx.object(artlierId),
+      tx.object(membershipId),
+      tx.pure(bcs.string().serialize(blueprint).toBytes()),
+      tx.pure(bcs.string().serialize(structure).toBytes()),
+      tx.object(payment),
+      tx.object(clock),
     ],
   });
   return tx;

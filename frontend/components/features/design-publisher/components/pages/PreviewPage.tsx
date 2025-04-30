@@ -1,7 +1,8 @@
 import BaseTemplate from '@/components/templates/BaseTemplate'
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ParametricViewer } from './ParametricViewer';
+import * as THREE from 'three';
 
 
 interface PreviewPageProps {
@@ -40,9 +41,18 @@ export const PreviewPage = ({
   membershipData
 }: PreviewPageProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.Camera | null>(null);
+  
+  // Preview mode button state
+  const mintButtonState = {
+    disabled: false,
+    tooltip: 'Preview Mode: Click to see how minting works'
+  };
   
   // 自訂的 mint 處理函數
-  const handleMintClick = (e?: React.MouseEvent) => {
+  const handleMintClick = async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -99,6 +109,7 @@ export const PreviewPage = ({
         previewParams={previewParams}
         onParameterChange={onParameterChange}
         onMint={handleMintClick}
+        mintButtonState={mintButtonState}
       >
         <DefaultTemplate
           workName={workName}
@@ -112,7 +123,22 @@ export const PreviewPage = ({
           previewParams={previewParams}
           onParameterChange={onParameterChange}
           onMint={handleMintClick}
-          preview3D={<ParametricViewer userScript={userScript} parameters={previewParams} />}
+          mintButtonState={mintButtonState}
+          preview3D={
+            <ParametricViewer 
+              userScript={userScript} 
+              parameters={previewParams}
+              onSceneReady={(scene) => {
+                sceneRef.current = scene;
+              }}
+              onRendererReady={(renderer) => {
+                rendererRef.current = renderer;
+              }}
+              onCameraReady={(camera) => {
+                cameraRef.current = camera;
+              }}
+            />
+          }
         />
       </BaseTemplate>
     </>

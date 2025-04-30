@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import type { WindowName } from '@/types';
 import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import * as THREE from 'three';
+import { mintBottega } from '@/utils/transactions';
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { MEMBERSHIP_TYPE } from '@/utils/transactions';
 
 interface ArtlierViewerWindowProps {
   name: WindowName;
@@ -21,10 +24,17 @@ interface Artlier {
   title: string;
   author: string;
   price: string;
+  payment?: string;
   description?: string;
   artistStatement?: string;
   artistName?: string;
   artistAddress?: string;
+}
+
+interface MintButtonState {
+  disabled: boolean;
+  tooltip: string;
+  tooltipComponent?: ReactNode;
 }
 
 export default function ArtlierViewerWindow({
@@ -37,9 +47,27 @@ export default function ArtlierViewerWindow({
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [mintBlobIds, setMintBlobIds] = useState<{
+    screenshotBlobId: string | null;
+    stlBlobId: string | null;
+  }>({
+    screenshotBlobId: null,
+    stlBlobId: null,
+  });
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [mintStatus, setMintStatus] = useState<'idle' | 'preparing' | 'minting' | 'success' | 'error'>('idle');
+  const [mintError, setMintError] = useState<string | null>(null);
+  const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
+  const [hasMembership, setHasMembership] = useState(false);
+  const [suiBalance, setSuiBalance] = useState<bigint>(BigInt(0));
+  const [mintButtonState, setMintButtonState] = useState<MintButtonState>({
+    disabled: true,
+    tooltip: 'Please connect your wallet'
+  });
 
   // Fetch image from Walrus storage
   const fetchImageFromWalrus = async (blobId: string) => {
@@ -377,151 +405,410 @@ export default function ArtlierViewerWindow({
     }));
   };
 
-  // Export current 3D model as STL and upload to Walrus
-  const handleExportSTL = useCallback(async () => {
-    if (!artlier?.algorithmContent || !sceneRef.current) return;
+  // 添加上傳到 Walrus 的通用函數
+  const uploadToWalrus = async (file: File, fileType: string): Promise<string> => {
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError: Error | null = null;
 
-    try {
-      setUploadStatus('uploading');
-      setUploadProgress('Generating STL file...');
+    console.log(`[${fileType}] 開始上傳流程`, {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
 
-      // Collect all meshes from the current scene
-      const meshes: THREE.Mesh[] = [];
-      sceneRef.current.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          meshes.push(object);
-        }
-      });
-
-      if (meshes.length === 0) {
-        throw new Error('No mesh found in scene');
-      }
-
-      // Create a new scene for export
-      const exportScene = new THREE.Scene();
-      
-      // Process each mesh
-      meshes.forEach(mesh => {
-        // Clone mesh to avoid modifying the original scene
-        const clonedMesh = mesh.clone();
-        
-        // Ensure mesh is watertight
-        if (clonedMesh.geometry instanceof THREE.BufferGeometry) {
-          // Compute vertex normals
-          clonedMesh.geometry.computeVertexNormals();
-          
-          // Ensure faces are double-sided
-          if (clonedMesh.material instanceof THREE.Material) {
-            clonedMesh.material.side = THREE.DoubleSide;
-          }
-        }
-        
-        // Add to export scene
-        exportScene.add(clonedMesh);
-      });
-
-      // Create STL exporter
-      const exporter = new STLExporter();
-      const stlString = exporter.parse(exportScene, { binary: false });
-
-      // Create file from STL data
-      const blob = new Blob([stlString], { type: 'application/octet-stream' });
-      const file = new File([blob], `${artlier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
-
-      setUploadProgress('Uploading STL file to Walrus...');
-
-      // Upload to Walrus
-      const formData = new FormData();
-      formData.append('data', file);
-      formData.append('epochs', '5');
-
-      const response = await fetch('/api/walrus', {
-        method: 'PUT',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-
-      const responseText = await response.text();
-      let result;
+    while (retryCount < maxRetries) {
       try {
-        result = JSON.parse(responseText);
-      } catch (err) {
-        throw new Error('Failed to parse response JSON');
+        console.log(`[${fileType}] 嘗試上傳 (${retryCount + 1}/${maxRetries})`);
+        setUploadStatus('uploading');
+        setUploadProgress(`Uploading ${fileType}... (Attempt ${retryCount + 1}/${maxRetries})`);
+
+        const formData = new FormData();
+        formData.append('data', file);
+        formData.append('epochs', '5');
+
+        console.log(`[${fileType}] 發送請求到 Walrus API`);
+        const response = await fetch('/api/walrus', {
+          method: 'PUT',
+          body: formData,
+        });
+
+        console.log(`[${fileType}] 收到回應:`, {
+          status: response.status,
+          statusText: response.statusText
+        });
+
+        if (!response.ok) {
+          if (response.status === 500) {
+            console.log(`[${fileType}] 收到 500 錯誤，準備重試`);
+            lastError = new Error(`HTTP error: ${response.status}`);
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+            continue;
+          }
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        console.log(`[${fileType}] 回應內容:`, responseText.substring(0, 200));
+
+        let result;
+        try {
+          result = JSON.parse(responseText);
+          console.log(`[${fileType}] 解析 JSON 成功:`, result);
+        } catch (err) {
+          console.error(`[${fileType}] JSON 解析失敗:`, err);
+          throw new Error('Failed to parse response JSON');
+        }
+
+        let blobId = result?.alreadyCertified?.blobId || result?.newlyCreated?.blobObject?.blobId;
+        console.log(`[${fileType}] 獲取到 blobId:`, blobId);
+
+        if (!blobId || typeof blobId !== 'string' || blobId.trim() === '') {
+          console.error(`[${fileType}] 無效的 blobId`);
+          throw new Error('No valid blobId returned');
+        }
+
+        console.log(`[${fileType}] 等待確認 blob 可用性`);
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        console.log(`[${fileType}] 上傳成功完成！blobId:`, blobId);
+        setUploadStatus('success');
+        setUploadProgress(`${fileType} uploaded successfully!`);
+        return blobId;
+
+      } catch (error: any) {
+        console.error(`[${fileType}] 錯誤:`, {
+          message: error.message,
+          stack: error.stack,
+          attempt: retryCount + 1
+        });
+        
+        if ((error.message.includes('Failed to fetch') || error.message.includes('HTTP error: 500')) && retryCount < maxRetries - 1) {
+          lastError = error;
+          retryCount++;
+          console.log(`[${fileType}] 準備重試 (${retryCount}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          continue;
+        }
+        
+        setUploadStatus('error');
+        setUploadProgress(`Failed to upload ${fileType}`);
+        throw lastError || error;
       }
-
-      let blobId = null;
-      if (result?.alreadyCertified?.blobId) {
-        blobId = result.alreadyCertified.blobId;
-      } else if (result?.newlyCreated?.blobObject?.blobId) {
-        blobId = result.newlyCreated.blobObject.blobId;
-      }
-
-      if (!blobId) {
-        throw new Error('No valid blobId returned');
-      }
-
-      console.log('STL file uploaded successfully, blobId:', blobId);
-      setUploadStatus('success');
-      setUploadProgress('STL file uploaded successfully!');
-
-      // Commented out download functionality for future use
-      /*
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${artlier.title}_${Date.now()}.stl`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      */
-
-    } catch (error) {
-      console.error('Error exporting/uploading STL:', error);
-      setError('Failed to export/upload STL file');
-      setUploadStatus('error');
-      setUploadProgress('Upload failed');
     }
-  }, [artlier]);
 
-  // Capture and upload screenshot
-  const handleScreenshot = useCallback(async () => {
-    if (!sceneRef.current || !rendererRef.current || !cameraRef.current || !artlier) return;
+    console.error(`[${fileType}] 達到最大重試次數，上傳失敗`);
+    throw lastError || new Error('Upload failed after maximum retries');
+  };
+
+  const handleMint = useCallback(async () => {
+    if (!artlier) return;
 
     try {
-      setUploadStatus('uploading');
-      setUploadProgress('Capturing screenshot...');
+      console.log('開始 Mint 流程');
+      setMintStatus('preparing');
+      setMintError(null);
 
-      // 確保場景已經渲染完成
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-      
-      // 等待一幀以確保渲染完成
-      await new Promise(requestAnimationFrame);
-      
-      // 捕獲截圖
-      const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
-      
-      // 創建下載連結
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `${artlier.title}_screenshot_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // 1. 捕獲截圖並上傳到 Walrus
+      try {
+        console.log('準備捕獲截圖');
+        if (!sceneRef.current || !rendererRef.current || !cameraRef.current) {
+          throw new Error('3D scene not ready');
+        }
 
-      setUploadStatus('success');
-      setUploadProgress('Screenshot saved successfully!');
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        await new Promise(requestAnimationFrame);
+        
+        console.log('生成截圖');
+        const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
+        const blob = await (await fetch(dataUrl)).blob();
+        const screenshotFile = new File([blob], `${artlier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
+        console.log('截圖檔案已準備', { fileName: screenshotFile.name, size: screenshotFile.size });
+
+        const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
+        console.log('截圖上傳成功，blobId:', screenshotBlobId);
+
+        // 2. 導出 STL 並上傳到 Walrus
+        console.log('準備導出 STL');
+        if (!sceneRef.current) {
+          throw new Error('3D scene not ready for STL export');
+        }
+
+        const meshes: THREE.Mesh[] = [];
+        sceneRef.current.traverse((object) => {
+          if (object instanceof THREE.Mesh) meshes.push(object);
+        });
+        console.log('找到網格數量:', meshes.length);
+
+        if (meshes.length === 0) {
+          throw new Error('No mesh found in scene');
+        }
+
+        const exportScene = new THREE.Scene();
+        meshes.forEach(mesh => {
+          const clonedMesh = mesh.clone();
+          if (clonedMesh.geometry instanceof THREE.BufferGeometry) {
+            clonedMesh.geometry.computeVertexNormals();
+            if (clonedMesh.material instanceof THREE.Material) {
+              clonedMesh.material.side = THREE.DoubleSide;
+            }
+          }
+          exportScene.add(clonedMesh);
+        });
+
+        console.log('開始導出 STL');
+        const exporter = new STLExporter();
+        const stlString = exporter.parse(exportScene, { binary: false });
+        console.log('STL 導出完成，大小:', stlString.length);
+
+        const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
+        const stlFile = new File([blob2], `${artlier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
+        console.log('STL 檔案已準備', { fileName: stlFile.name, size: stlFile.size });
+
+        const stlBlobId = await uploadToWalrus(stlFile, 'STL');
+        console.log('STL 上傳成功，blobId:', stlBlobId);
+
+        // 確保兩個 blob ID 都已獲取
+        if (!screenshotBlobId || !stlBlobId) {
+          throw new Error('Failed to get blob IDs');
+        }
+
+        console.log('所有檔案上傳成功，準備執行交易', {
+          screenshotBlobId,
+          stlBlobId
+        });
+
+        setMintStatus('minting');
+
+        // 3. 準備交易
+        const membershipId = sessionStorage.getItem('membership-id');
+        if (!membershipId) {
+          throw new Error('No membership ID found');
+        }
+
+        if (!artlier.payment) {
+          throw new Error('No payment coin selected');
+        }
+
+        // 4. 執行交易
+        console.log('交易參數:', {
+          artlierId: artlier.id,
+          membershipId,
+          screenshotBlobId,
+          stlBlobId,
+          payment: artlier.payment
+        });
+
+        const tx = await mintBottega(
+          artlier.id,
+          membershipId,
+          screenshotBlobId,
+          stlBlobId,
+          artlier.payment,
+        );
+
+        signAndExecuteTransaction(
+          {
+            transaction: tx as any,
+            chain: 'sui:testnet',
+          },
+          {
+            onSuccess: (result) => {
+              console.log('Mint 交易成功:', result);
+              setMintStatus('success');
+            },
+            onError: (error) => {
+              console.error('Mint 交易失敗:', error);
+              setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+              setMintStatus('error');
+            }
+          }
+        );
+
+      } catch (error) {
+        console.error('Mint 流程失敗:', error);
+        setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+        setMintStatus('error');
+      }
 
     } catch (error) {
-      console.error('Error capturing screenshot:', error);
-      setError('Failed to capture screenshot');
-      setUploadStatus('error');
-      setUploadProgress('Capture failed');
+      console.error('Mint 流程失敗:', error);
+      setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+      setMintStatus('error');
     }
-  }, [artlier]);
+  }, [artlier, sceneRef, rendererRef, cameraRef, signAndExecuteTransaction]);
+
+  // 檢查用戶是否擁有 Membership NFT
+  const checkMembershipNFT = useCallback(async () => {
+    if (!currentAccount) {
+      setHasMembership(false);
+      sessionStorage.removeItem('membership-id');
+      return false;
+    }
+
+    try {
+      const { data: objects } = await suiClient.getOwnedObjects({
+        owner: currentAccount.address,
+        filter: {
+          StructType: MEMBERSHIP_TYPE
+        },
+        options: {
+          showType: true,
+        }
+      });
+
+      const hasNFT = objects && objects.length > 0;
+      setHasMembership(hasNFT);
+      
+      if (hasNFT && objects[0].data?.objectId) {
+        console.log('找到 Membership ID:', objects[0].data.objectId);
+        sessionStorage.setItem('membership-id', objects[0].data.objectId);
+      } else {
+        console.log('未找到 Membership ID');
+        sessionStorage.removeItem('membership-id');
+      }
+      
+      return hasNFT;
+    } catch (error) {
+      console.error('Error checking NFT ownership:', error);
+      setHasMembership(false);
+      sessionStorage.removeItem('membership-id');
+      return false;
+    }
+  }, [currentAccount, suiClient]);
+
+  // Find suitable coin for payment
+  const findSuitableCoin = useCallback(async () => {
+    if (!currentAccount || !artlier) return null;
+
+    try {
+      const price = BigInt(artlier.price);
+      const { data: coins } = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: '0x2::sui::SUI'
+      });
+
+      // Find a coin with sufficient balance
+      const suitableCoin = coins.find(coin => BigInt(coin.balance) >= price);
+      
+      if (suitableCoin) {
+        // Update artlier with the selected coin ID
+        setArtlier(prev => prev ? {
+          ...prev,
+          payment: suitableCoin.coinObjectId
+        } : null);
+        return suitableCoin.coinObjectId;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding suitable coin:', error);
+      return null;
+    }
+  }, [currentAccount, artlier, suiClient]);
+
+  // Check SUI balance and find suitable coin
+  useEffect(() => {
+    const checkBalanceAndCoin = async () => {
+      if (!currentAccount) {
+        setSuiBalance(BigInt(0));
+        return;
+      }
+
+      try {
+        const { totalBalance } = await suiClient.getBalance({
+          owner: currentAccount.address,
+          coinType: '0x2::sui::SUI'
+        });
+
+        setSuiBalance(BigInt(totalBalance));
+
+        // If we have sufficient total balance and no payment coin selected yet, find a suitable coin
+        if (artlier && BigInt(totalBalance) >= BigInt(artlier.price) && !artlier.payment) {
+          await findSuitableCoin();
+        }
+      } catch (error) {
+        console.error('Error checking SUI balance:', error);
+        setSuiBalance(BigInt(0));
+      }
+    };
+
+    checkBalanceAndCoin();
+  }, [currentAccount, suiClient, artlier?.price]);
+
+  // Update button state
+  useEffect(() => {
+    if (!currentAccount) {
+      setMintButtonState({
+        disabled: true,
+        tooltip: 'Please connect your wallet'
+      });
+      return;
+    }
+
+    if (!hasMembership) {
+      setMintButtonState({
+        disabled: true,
+        tooltip: 'Membership NFT required'
+      });
+      return;
+    }
+
+    if (!artlier) {
+      setMintButtonState({
+        disabled: true,
+        tooltip: 'Loading artwork information'
+      });
+      return;
+    }
+
+    // Check if we have the balance information
+    if (suiBalance === BigInt(0)) {
+      setMintButtonState({
+        disabled: true,
+        tooltip: 'Loading balance information...'
+      });
+      return;
+    }
+
+    try {
+      const price = BigInt(artlier.price);
+      if (suiBalance < price) {
+        const formattedPrice = (Number(price) / 1_000_000_000).toFixed(2);
+        setMintButtonState({
+          disabled: true,
+          tooltip: `Insufficient balance`
+        });
+        return;
+      }
+
+      // If we have sufficient balance but no payment coin selected yet
+      if (!artlier.payment) {
+        setMintButtonState({
+          disabled: true,
+          tooltip: 'Selecting payment coin...'
+        });
+        return;
+      }
+
+      setMintButtonState({
+        disabled: false,
+        tooltip: 'Click to mint NFT'
+      });
+    } catch (error) {
+      console.error('Error checking balance:', error);
+      setMintButtonState({
+        disabled: true,
+        tooltip: 'Error checking price'
+      });
+    }
+  }, [currentAccount, hasMembership, suiBalance, artlier?.price, artlier?.payment]);
+
+  // 在組件掛載和錢包狀態改變時檢查
+  useEffect(() => {
+    checkMembershipNFT();
+  }, [currentAccount, checkMembershipNFT]);
 
   if (isLoading) {
     return (
@@ -582,9 +869,32 @@ export default function ArtlierViewerWindow({
       parameters={parameters}
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
-      onMint={async () => {
-        await handleScreenshot();
-        await handleExportSTL();
+      onMint={handleMint}
+      mintButtonState={{
+        ...mintButtonState,
+        tooltipComponent: mintButtonState.disabled ? (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <div className="flex items-center gap-2">
+              {!currentAccount && (
+                <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              {currentAccount && !hasMembership && (
+                <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              )}
+              {currentAccount && hasMembership && suiBalance < BigInt(artlier?.price || 0) && (
+                <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <span className="text-sm font-mono text-white/90">{mintButtonState.tooltip}</span>
+            </div>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-black/90 border-r border-b border-white/10"></div>
+          </div>
+        ) : null
       }}
     >
       <DefaultTemplate
@@ -598,9 +908,32 @@ export default function ArtlierViewerWindow({
         parameters={parameters}
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
-        onMint={async () => {
-          await handleScreenshot();
-          await handleExportSTL();
+        onMint={handleMint}
+        mintButtonState={{
+          ...mintButtonState,
+          tooltipComponent: mintButtonState.disabled ? (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="flex items-center gap-2">
+                {!currentAccount && (
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+                {currentAccount && !hasMembership && (
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                )}
+                {currentAccount && hasMembership && suiBalance < BigInt(artlier?.price || 0) && (
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+                <span className="text-sm font-mono text-white/90">{mintButtonState.tooltip}</span>
+              </div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-black/90 border-r border-b border-white/10"></div>
+            </div>
+          ) : null
         }}
         preview3D={
           <ParametricViewer 
@@ -618,43 +951,85 @@ export default function ArtlierViewerWindow({
           />
         }
       />
-      {/* Upload status notification */}
-      {uploadStatus !== 'idle' && (
+      {/* Upload and mint status notification */}
+      {(uploadStatus !== 'idle' || mintStatus !== 'idle') && (
         <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg">
-          <div className="flex items-center gap-3">
-            {uploadStatus === 'uploading' && (
-              <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
-                <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-1 h-1 bg-white/70 rounded-full animate-pulse" />
+          <div className="flex flex-col gap-2">
+            {/* Upload status */}
+            {uploadStatus !== 'idle' && (
+              <div className="flex items-center gap-3">
+                {uploadStatus === 'uploading' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
+                    <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-1 h-1 bg-white/70 rounded-full animate-pulse" />
+                    </div>
+                  </div>
+                )}
+                {uploadStatus === 'success' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-green-500/50 rounded-full animate-pulse" />
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+                {uploadStatus === 'error' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-red-500/50 rounded-full animate-pulse" />
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
                 </div>
               </div>
             )}
-            {uploadStatus === 'success' && (
-              <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border-2 border-green-500/50 rounded-full animate-pulse" />
-                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            
+            {/* Mint status */}
+            {mintStatus !== 'idle' && (
+              <div className="flex items-center gap-3">
+                {mintStatus === 'preparing' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
+                    <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                {mintStatus === 'minting' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-yellow-500/50 rounded-full animate-pulse" />
+                    <div className="absolute inset-0 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                {mintStatus === 'success' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-green-500/50 rounded-full" />
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+                {mintStatus === 'error' && (
+                  <div className="relative w-4 h-4">
+                    <div className="absolute inset-0 border-2 border-red-500/50 rounded-full" />
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-white/90 text-sm font-mono tracking-wider">
+                    {mintStatus === 'preparing' && 'Preparing files...'}
+                    {mintStatus === 'minting' && 'Minting Bottega...'}
+                    {mintStatus === 'success' && 'Bottega minted successfully!'}
+                    {mintStatus === 'error' && mintError}
+                  </span>
+                </div>
               </div>
             )}
-            {uploadStatus === 'error' && (
-              <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border-2 border-red-500/50 rounded-full animate-pulse" />
-                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className="text-white/90 text-sm font-mono tracking-wider">{uploadProgress}</span>
-              {uploadStatus === 'uploading' && (
-                <span className="text-white/40 text-xs font-mono tracking-wider mt-0.5">
-                  {uploadProgress === 'Generating STL file...' ? 'PROCESSING' : 'UPLOADING'}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       )}

@@ -113,6 +113,74 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     };
   }, [cleanupResources]);
 
+  // 更新幾何體而不重新創建整個場景
+  const updateGeometry = useCallback(() => {
+    if (!userScript || !sceneRef.current) return;
+
+    try {
+      // 評估用戶代碼
+      const createGeometry = new Function('THREE', 'params', `
+        ${userScript.code}
+        return createGeometry(THREE, params);
+      `);
+
+      // 創建新的幾何體
+      const geometry = createGeometry(THREE, parameters);
+
+      // 如果已有網格，更新其幾何體和材質
+      if (meshRef.current) {
+        // 清理舊的幾何體
+        if (meshRef.current.geometry) {
+          meshRef.current.geometry.dispose();
+        }
+
+        // 更新幾何體
+        meshRef.current.geometry = geometry;
+
+        // 更新材質屬性
+        if (meshRef.current.material && !Array.isArray(meshRef.current.material)) {
+          const material = meshRef.current.material as THREE.MeshPhongMaterial;
+          material.color.setHex(parameters.color || 0xff3366);
+          material.emissive.setHex(parameters.emissive || 0x000000);
+          material.transparent = parameters.opacity !== undefined && parameters.opacity < 1;
+          material.opacity = parameters.opacity || 1.0;
+          material.needsUpdate = true;
+        }
+      } else {
+        // 如果沒有網格，創建新的
+        const material = new THREE.MeshPhongMaterial({
+          color: parameters.color || 0xff3366,
+          emissive: parameters.emissive || 0x000000,
+          specular: 0x111111,
+          shininess: 30,
+          wireframe: false,
+          transparent: parameters.opacity !== undefined && parameters.opacity < 1,
+          opacity: parameters.opacity || 1.0,
+          side: THREE.DoubleSide,
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        sceneRef.current.add(mesh);
+        meshRef.current = mesh;
+      }
+
+      // 計算法線以確保正確的光照
+      if (geometry instanceof THREE.BufferGeometry) {
+        geometry.computeVertexNormals();
+      }
+
+      // 確保渲染器更新
+      if (rendererRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+
+    } catch (error) {
+      console.error('Error updating geometry:', error);
+    }
+  }, [userScript, parameters]);
+
   // 初始化場景
   useEffect(() => {
     if (!containerRef.current || hasInitializedRef.current) {
@@ -219,6 +287,11 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     };
   }, [onSceneReady, onRendererReady, onCameraReady, cleanupResources]);
 
+  // 更新幾何體
+  useEffect(() => {
+    updateGeometry();
+  }, [updateGeometry]);
+
   // Handle window size change
   useEffect(() => {
     function handleResize() {
@@ -236,72 +309,6 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Update geometry
-  useEffect(() => {
-    if (!userScript || !sceneRef.current) return;
-
-    try {
-      // Remove old mesh
-      if (meshRef.current) {
-        sceneRef.current.remove(meshRef.current);
-        if (meshRef.current.geometry) {
-          meshRef.current.geometry.dispose();
-        }
-        if (meshRef.current.material) {
-          if (Array.isArray(meshRef.current.material)) {
-            meshRef.current.material.forEach(mat => mat.dispose());
-          } else {
-            meshRef.current.material.dispose();
-          }
-        }
-      }
-
-      // Evaluate user code
-      const createGeometry = new Function('THREE', 'params', `
-        ${userScript.code}
-        return createGeometry(THREE, params);
-      `);
-
-      // Create new geometry
-      const geometry = createGeometry(THREE, parameters);
-
-      // Create material
-      const material = new THREE.MeshPhongMaterial({
-        color: parameters.color || 0xff3366,
-        emissive: parameters.emissive || 0x000000,
-        specular: 0x111111,
-        shininess: 30,
-        wireframe: false,
-        transparent: parameters.opacity !== undefined && parameters.opacity < 1,
-        opacity: parameters.opacity || 1.0,
-        side: THREE.DoubleSide,
-      });
-
-      // Create mesh
-      const mesh = new THREE.Mesh(geometry, material);
-      
-      // 計算法線以確保正確的光照
-      if (geometry instanceof THREE.BufferGeometry) {
-        geometry.computeVertexNormals();
-      }
-
-      // 添加陰影
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-
-      sceneRef.current.add(mesh);
-      meshRef.current = mesh;
-
-      // 確保渲染器更新
-      if (rendererRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current!);
-      }
-
-    } catch (error) {
-      console.error('Error creating geometry:', error);
-    }
-  }, [userScript, parameters]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 } 
