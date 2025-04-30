@@ -1,6 +1,7 @@
 module archimeters::bottega {
     use std::string::{ String };
     use sui::{
+        event,
         clock,
         sui::SUI,
         coin::{ Self, Coin },
@@ -67,9 +68,10 @@ module archimeters::bottega {
         add_bottega_to_artlier(artlier, object::uid_to_inner(&bottega.id));
         add_to_pool(artlier, coin::into_balance(fee));
 
+        let bottega_id = object::uid_to_inner(&bottega.id);
         transfer::public_transfer(bottega, sender);
 
-        emit_event(New_bottega { id: object::uid_to_inner(&bottega.id) });
+        event::emit(New_bottega { id: bottega_id });
     }
 
     // public entry fun print_bottega(
