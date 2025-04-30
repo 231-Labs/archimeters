@@ -15,9 +15,6 @@ import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/features/terminal';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
-import GalaxyEffect from '@/components/background_animations/GalaxyEffect';
-import SpaceRoom from '@/components/background_animations/SpaceRoom';
-import Noise from '@/components/background_animations/NoiseEffect';
 import Background from '@/components/background_animations/Background';
 
 interface Props {
@@ -26,7 +23,6 @@ interface Props {
 
 export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
-  {console.log('Wallet status1:', walletStatus)}
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const {
@@ -62,6 +58,13 @@ export default function Home() {
 
     fetchOsId();
   }, [currentAccount, suiClient]);
+
+  // Track wallet status changes in development only
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Wallet status changed:', walletStatus);
+    }
+  }, [walletStatus]);
 
   return (
     <>

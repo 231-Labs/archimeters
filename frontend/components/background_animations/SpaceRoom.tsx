@@ -1,40 +1,57 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, memo } from 'react';
 import "./SpaceRoom.css";
 
-const GalaxyEffect3D = () => {
+const SpaceRoom = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationFrameRef = useRef<number>();
+  const resizeObserverRef = useRef<ResizeObserver>();
+
+  const setupCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Set canvas size
+    const updateCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    updateCanvasSize();
+
+    return { ctx, canvas, updateCanvasSize };
+  }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext('2d')!;
-    const width = canvas.width = window.innerWidth;
-    const height = canvas.height = window.innerHeight;
+    const setup = setupCanvas();
+    if (!setup) return;
+    const { ctx, canvas, updateCanvasSize } = setup;
 
-    const spacing = 40;
+    const width = canvas.width;
+    const height = canvas.height;
 
-    // 左壁
-    const wallFrontBottom = { x: 0, y: height }; //左下
-    const wallFrontTop = { x: 0, y: 20 }; // 左上
-    const wallBackTop = { x: width * 0.15, y: 20 }; // 右上
-    const wallBackBottom = { x: width * 0.4, y: height * 0.85 }; // 右下
+    // Left wall coordinates
+    const wallFrontBottom = { x: 0, y: height }; // Bottom left
+    const wallFrontTop = { x: 0, y: 20 }; // Top left
+    const wallBackTop = { x: width * 0.15, y: 20 }; // Top right
+    const wallBackBottom = { x: width * 0.4, y: height * 0.85 }; // Bottom right
 
-    // 地板
-    const wallFrontBottomB = { x: 0, y: height }; //左下
-    const wallFrontTopB = { x: width * 0.4, y: height * 0.85 }; // 左上
-    const wallBackTopB = { x: width * 1.2, y: height * 0.85 }; // 右上
-    const wallBackBottomB = { x: width, y: height }; // 右下
+    // Floor coordinates
+    const wallFrontBottomB = { x: 0, y: height }; // Bottom left
+    const wallFrontTopB = { x: width * 0.4, y: height * 0.85 }; // Top left
+    const wallBackTopB = { x: width * 1.2, y: height * 0.85 }; // Top right
+    const wallBackBottomB = { x: width, y: height }; // Bottom right
 
-    const drawleft = () => {
+    const drawLeftWall = () => {
       ctx.clearRect(0, 0, width, height);
-      //ctx.fillStyle = '111';
-      ctx.fillRect(0, 0, width, height);
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.6;
 
-      // 畫牆輪廓線
+      // Draw wall outline
       ctx.beginPath();
       ctx.moveTo(wallFrontBottom.x, wallFrontBottom.y);
       ctx.lineTo(wallFrontTop.x, wallFrontTop.y);
@@ -45,32 +62,25 @@ const GalaxyEffect3D = () => {
       const leftGradient = ctx.createLinearGradient(wallBackBottom.x, 0, wallFrontBottom.x, 0);
       leftGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
       leftGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
-      ctx.fillStyle = leftGradient
-      //ctx.fillStyle = 'rgba(113, 113, 123, 0.8)'; // 半透明藍灰色
+      ctx.fillStyle = leftGradient;
       ctx.fill();
       ctx.stroke();
 
-      /// 計算右側邊界線的方程式 (從左上到右下的線段)
-      // 這條線是從 wallBackTop 到 wallBackBottom
+      // Calculate right boundary line equation
       const rightBoundarySlope = (wallBackBottom.y - wallBackTop.y) / (wallBackBottom.x - wallBackTop.x);
       const rightBoundaryIntercept = wallBackTop.y - rightBoundarySlope * wallBackTop.x;
-      
-      // 計算給定 x 座標時，右側邊界的 y 座標
       const getRightBoundaryY = (x: number) => rightBoundarySlope * x + rightBoundaryIntercept;
 
-      // 畫垂直格線（左壁，完全垂直，但限制在輪廓內）
+      // Draw vertical grid lines
       const verticalLines = 20;
       for (let i = 0; i <= verticalLines; i++) {
         const tLinear = i / verticalLines;
-        const t = Math.sqrt(tLinear); // 非線性分布：越後面越密集
+        const t = Math.sqrt(tLinear); // Non-linear distribution: denser at back
 
         const x = wallFrontBottom.x + t * (wallBackBottom.x - wallFrontBottom.x);
         const yBottom = wallFrontBottom.y + t * (wallBackBottom.y - wallFrontBottom.y);
         
-        // 計算垂直線與右側邊界的交點
-        // 如果 x 在右側邊界內，則只需計算邊界上的 y 值
         if (x <= wallBackBottom.x) {
-          // 計算右側邊界線上對應的 y 值
           const rightBoundaryY = getRightBoundaryY(x);
           const yTop = Math.max(wallFrontTop.y, rightBoundaryY);
 
@@ -81,43 +91,33 @@ const GalaxyEffect3D = () => {
         }
       }
 
-
-      // 畫水平格線
+      // Draw horizontal grid lines
       const horizontalLines = 7;
       for (let i = 1; i < horizontalLines; i++) {
         const t = i / horizontalLines;
         const xStart = wallFrontBottom.x + t * (wallFrontTop.x - wallFrontBottom.x);
         const yStart = wallFrontBottom.y + t * (wallFrontTop.y - wallFrontBottom.y);
-        const xEnd = wallBackBottom.x + t * (wallBackTop.x - wallBackBottom.x);
-        const yEnd = wallBackBottom.y + t * (wallBackTop.y - wallBackBottom.y);
         ctx.beginPath();
         ctx.moveTo(xStart, yStart);
         ctx.lineTo(width * 0.4, height * 0.85);
         ctx.stroke();
       }
 
+      // Draw diagonal lines
       ctx.beginPath();
-      ctx.moveTo(width * 0.03, wallFrontTop.y); // 左上
-      ctx.lineTo(wallBackBottom.x, wallBackBottom.y); // 右下
+      ctx.moveTo(width * 0.03, wallFrontTop.y);
+      ctx.lineTo(wallBackBottom.x, wallBackBottom.y);
       ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(width * 0.03, wallFrontTop.y); // 左上
-      ctx.lineTo(wallBackBottom.x, wallBackBottom.y); // 右下
-      ctx.stroke();     
 
       ctx.globalAlpha = 1;
     };
 
-    const drawbottom = () => {
-      // ctx.clearRect(0, 0, width, height);
-      // ctx.fillStyle = '#1alala';
-      // ctx.fillRect(0, 0, width, height);
+    const drawFloor = () => {
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.6;
 
-      // 畫牆輪廓線
+      // Draw floor outline
       ctx.beginPath();
       ctx.moveTo(wallFrontBottomB.x, wallFrontBottomB.y);
       ctx.lineTo(wallFrontTopB.x, wallFrontTopB.y);
@@ -126,14 +126,13 @@ const GalaxyEffect3D = () => {
       ctx.closePath();
 
       const bottomGradient = ctx.createLinearGradient(0, wallFrontTopB.y, 0, wallBackBottomB.y);
-      bottomGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4');
+      bottomGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
       bottomGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
       ctx.fillStyle = bottomGradient;
-      //ctx.fillStyle = 'rgba(113, 113, 123, 0.8)'; // 半透明藍灰色
       ctx.fill();
       ctx.stroke();
 
-      // 畫垂直格線
+      // Draw vertical grid lines
       const verticalLines = 12;
       for (let i = 0; i <= verticalLines; i++) {
         const t = i / verticalLines;
@@ -147,11 +146,11 @@ const GalaxyEffect3D = () => {
         ctx.stroke();
       }
 
-      // 畫水平格線（地板，前面密集）
+      // Draw horizontal grid lines (floor, dense at front)
       const horizontalLines = 20;
       for (let i = 1; i < horizontalLines; i++) {
         const tLinear = i / horizontalLines;
-        const t = Math.sqrt(tLinear); // 非線性：前面密集，後面稀疏
+        const t = Math.sqrt(tLinear); // Non-linear: dense at front, sparse at back
 
         const xStart = wallFrontBottomB.x + t * (wallFrontTopB.x - wallFrontBottomB.x);
         const yStart = wallFrontBottomB.y + t * (wallFrontTopB.y - wallFrontBottomB.y);
@@ -164,13 +163,35 @@ const GalaxyEffect3D = () => {
         ctx.stroke();
       }
 
-
       ctx.globalAlpha = 1;
     };
 
-    drawleft();
-    drawbottom();
-  }, []);
+    const draw = () => {
+      drawLeftWall();
+      drawFloor();
+      animationFrameRef.current = requestAnimationFrame(draw);
+    };
+
+    // Setup resize observer
+    resizeObserverRef.current = new ResizeObserver(() => {
+      updateCanvasSize();
+      draw(); // Redraw when size changes
+    });
+    resizeObserverRef.current.observe(canvas);
+
+    // Start animation
+    draw();
+
+    // Cleanup
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
+  }, [setupCanvas]);
 
   return (
     <canvas
@@ -179,6 +200,8 @@ const GalaxyEffect3D = () => {
       style={{ animationFillMode: 'forwards' }}
     />
   );
-};
+});
 
-export default GalaxyEffect3D;
+SpaceRoom.displayName = 'SpaceRoom';
+
+export default SpaceRoom;
