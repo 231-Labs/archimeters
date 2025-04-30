@@ -1,4 +1,3 @@
-#[allow(unused_field)]
 module archimeters::bottega {
     use std::string::{ String };
     use sui::{
@@ -69,6 +68,8 @@ module archimeters::bottega {
         add_to_pool(artlier, coin::into_balance(fee));
 
         transfer::public_transfer(bottega, sender);
+
+        emit_event(New_bottega { id: object::uid_to_inner(&bottega.id) });
     }
 
     // public entry fun print_bottega(

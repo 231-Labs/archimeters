@@ -1,8 +1,8 @@
 import BaseTemplate from '@/components/templates/BaseTemplate'
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
-import { useState } from 'react';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { ParametricViewer } from './ParametricViewer';
-
+import * as THREE from 'three';
 
 interface PreviewPageProps {
   workName: string;
@@ -40,9 +40,72 @@ export const PreviewPage = ({
   membershipData
 }: PreviewPageProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.Camera | null>(null);
+  const mountedRef = useRef(false);
+
+  // Memoize the viewer props
+  const viewerProps = useMemo(() => {
+    console.log('PreviewPage: Updating viewer props', {
+      hasUserScript: !!userScript,
+      scriptName: userScript?.filename,
+      parameterCount: Object.keys(previewParams).length
+    });
+
+    return {
+      userScript: userScript ? {
+        ...userScript,
+        filename: `preview_${userScript.filename}` // Ensure unique filename
+      } : null,
+      parameters: previewParams,
+      onSceneReady: (scene: THREE.Scene) => {
+        console.log('PreviewPage: Scene ready');
+        sceneRef.current = scene;
+      },
+      onRendererReady: (renderer: THREE.WebGLRenderer) => {
+        console.log('PreviewPage: Renderer ready');
+        rendererRef.current = renderer;
+      },
+      onCameraReady: (camera: THREE.Camera) => {
+        console.log('PreviewPage: Camera ready');
+        cameraRef.current = camera;
+      }
+    };
+  }, [userScript, previewParams]);
+
+  // Monitor component lifecycle and scene state
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    console.log('PreviewPage: Component mounted');
+    
+    return () => {
+      console.log('PreviewPage: Component unmounting');
+      mountedRef.current = false;
+      
+      // Clean up refs
+      sceneRef.current = null;
+      rendererRef.current = null;
+      cameraRef.current = null;
+    };
+  }, []);
+
+  // Monitor scene state changes
+  useEffect(() => {
+    if (mountedRef.current) {
+      console.log('PreviewPage: Scene state updated', {
+        hasScene: !!sceneRef.current,
+        hasRenderer: !!rendererRef.current,
+        hasCamera: !!cameraRef.current,
+        hasUserScript: !!userScript,
+        parameters: previewParams
+      });
+    }
+  }, [userScript, previewParams]);
   
   // 自訂的 mint 處理函數
-  const handleMintClick = (e?: React.MouseEvent) => {
+  const handleMintClick = useCallback(async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -52,10 +115,21 @@ export const PreviewPage = ({
     setShowTooltip(true);
     
     // 3秒後自動隱藏提示
-    setTimeout(() => {
-      setShowTooltip(false);
-    }, 3000);
-  };
+    return new Promise<void>(resolve => {
+      setTimeout(() => {
+        if (mountedRef.current) {
+          setShowTooltip(false);
+        }
+        resolve();
+      }, 3000);
+    });
+  }, []);
+  
+  // Preview mode button state
+  const mintButtonState = useMemo(() => ({
+    disabled: false,
+    tooltip: 'Preview Mode: Click to see how minting works'
+  }), []);
   
   // 懸浮提示
   const TooltipOverlay = () => {
@@ -99,6 +173,7 @@ export const PreviewPage = ({
         previewParams={previewParams}
         onParameterChange={onParameterChange}
         onMint={handleMintClick}
+        mintButtonState={mintButtonState}
       >
         <DefaultTemplate
           workName={workName}
@@ -112,7 +187,15 @@ export const PreviewPage = ({
           previewParams={previewParams}
           onParameterChange={onParameterChange}
           onMint={handleMintClick}
-          preview3D={<ParametricViewer userScript={userScript} parameters={previewParams} />}
+          mintButtonState={mintButtonState}
+          preview3D={
+            <div className="w-full h-full">
+              <ParametricViewer 
+                key={`preview_${userScript?.filename}`} // Force remount when script changes
+                {...viewerProps}
+              />
+            </div>
+          }
         />
       </BaseTemplate>
     </>

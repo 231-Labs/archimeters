@@ -5,20 +5,22 @@ import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
 import { WindowName } from '@/types';
 
 // Wallet connection status types
-type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
+export type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 
 // NFT type constant
 const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 interface EntryWindowProps {
   onDragStart: (e: React.MouseEvent<Element>, name: WindowName) => void;
+  walletStatus: WalletStatus;
+  setWalletStatus: (status: WalletStatus) => void;
 }
 
-export default function EntryWindow({ onDragStart }: EntryWindowProps) {
+export default function EntryWindow({ onDragStart , walletStatus, setWalletStatus}: EntryWindowProps) {
   // Wallet and NFT states
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
+  // const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   // User input states
@@ -155,7 +157,9 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
 
   // Check NFT ownership on account change
   useEffect(() => {
-    checkNFTOwnership();
+    if (currentAccount) {
+      checkNFTOwnership();
+    }
   }, [currentAccount, suiClient]);
 
   // Typewriter effect

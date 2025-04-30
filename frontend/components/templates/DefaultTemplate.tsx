@@ -1,15 +1,38 @@
-import { TemplateProps } from '@/components/templates/BaseTemplate';
+import { ReactNode } from 'react';
+
+export interface TemplateProps {
+  workName: string;
+  description: string;
+  price: string;
+  author: string;
+  social: string;
+  intro: string;
+  imageUrl: string;
+  parameters: Record<string, any>;
+  previewParams: Record<string, any>;
+  onParameterChange: (key: string, value: string | number) => void;
+  onMint: () => Promise<void>;
+  mintButtonState: {
+    disabled: boolean;
+    tooltip: string;
+    tooltipComponent?: ReactNode;
+  };
+  preview3D?: ReactNode;
+}
 
 export default function DefaultTemplate({
   workName,
   description,
   price,
+  author,
+  social,
   intro,
   imageUrl,
   parameters,
   previewParams,
   onParameterChange,
   onMint,
+  mintButtonState,
   preview3D
 }: TemplateProps) {
   return (
@@ -188,13 +211,15 @@ export default function DefaultTemplate({
               <div className="relative group">
                 <button 
                   onClick={onMint}
-                  className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors"
+                  disabled={mintButtonState.disabled}
+                  className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/10"
                 >
                   <div className="flex flex-col items-center">
                     <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
                     <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Initialize Artwork</span>
                   </div>
                 </button>
+                {mintButtonState.tooltipComponent}
               </div>
             </div>
           </div>

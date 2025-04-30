@@ -1,25 +1,12 @@
 import { ReactNode } from 'react';
-
-export interface TemplateProps {
-  workName: string;
-  description: string;
-  price: string;
-  author: string;
-  social: string;
-  intro: string;
-  imageUrl: string;
-  parameters: Record<string, any>;
-  previewParams: Record<string, any>;
-  onParameterChange: (key: string, value: string | number) => void;
-  onMint: () => void;
-  preview3D?: ReactNode;
-}
+import { TemplateProps } from './DefaultTemplate';
 
 export interface BaseTemplateProps extends TemplateProps {
   children?: ReactNode;
 }
 
 export default function BaseTemplate({
+  children,
   workName,
   description,
   price,
@@ -31,7 +18,7 @@ export default function BaseTemplate({
   previewParams,
   onParameterChange,
   onMint,
-  children
+  mintButtonState
 }: BaseTemplateProps) {
   return (
     <div className="h-full bg-black text-white overflow-auto hide-scrollbar">

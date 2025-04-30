@@ -1,54 +1,74 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, memo } from 'react';
 
-const GalaxyEffect3D = () => {
+const GalaxyEffect = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationFrameRef = useRef<number>();
+  const resizeObserverRef = useRef<ResizeObserver>();
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const rotationRef = useRef({ x: 0, y: 0 });
+
+  const setupCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Set canvas size
+    const updateCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    updateCanvasSize();
+
+    return { ctx, canvas, updateCanvasSize };
+  }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext('2d')!;
-    const width = canvas.width = window.innerWidth;
-    const height = canvas.height = window.innerHeight;
+    const setup = setupCanvas();
+    if (!setup) return;
+    const { ctx, canvas, updateCanvasSize } = setup;
+
+    const width = canvas.width;
+    const height = canvas.height;
     const centerX = width / 2;
     const centerY = height / 2;
 
-    const numStars = 5000; // 數量
-    const depth = 1000; // 景深
+    const numStars = 5000;
+    const depth = 1000;
 
-    // 初始化星星位置
-    const stars = Array.from({ length: numStars }, () => ({
+    // Initialize stars
+    let stars = Array.from({ length: numStars }, () => ({
       x: (Math.random() * 2 - 1) * depth,
       y: (Math.random() * 2 - 1) * depth,
       z: Math.random() * depth,
       size: Math.random() * 2 + 1,
     }));
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let rotationX = 0;
-    let rotationY = 0;
-
-    // 監聽滑鼠移動以控制視角旋轉
+    // Mouse movement handler
     const onMouseMove = (e: MouseEvent) => {
       const x = e.clientX - centerX;
       const y = e.clientY - centerY;
-      mouseX = x / width;
-      mouseY = y / height;
+      mouseRef.current = {
+        x: x / width,
+        y: y / height
+      };
     };
-
-    window.addEventListener('mousemove', onMouseMove);
 
     const draw = () => {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, width, height);
 
-      // 平滑控制旋轉角度
-      rotationX += (mouseY * 0.05 - rotationX) * 0.05;
-      rotationY += (mouseX * 0.05 - rotationY) * 0.05;
+      // Smooth rotation control
+      rotationRef.current.x += (mouseRef.current.y * 0.05 - rotationRef.current.x) * 0.05;
+      rotationRef.current.y += (mouseRef.current.x * 0.05 - rotationRef.current.y) * 0.05;
+
+      const { x: rotationX, y: rotationY } = rotationRef.current;
 
       for (let star of stars) {
-        // 緩慢移動星星位置（非由中心飛出）
+        // Slow star movement
         star.z -= 0.5;
         if (star.z <= 1) {
           star.z = depth;
@@ -56,7 +76,7 @@ const GalaxyEffect3D = () => {
           star.y = (Math.random() * 2 - 1) * depth;
         }
 
-        // 套用旋轉變換（模擬 3D）
+        // Apply rotation transform (3D simulation)
         const cosRY = Math.cos(rotationY);
         const sinRY = Math.sin(rotationY);
         const cosRX = Math.cos(rotationX);
@@ -66,48 +86,67 @@ const GalaxyEffect3D = () => {
         let y = star.y;
         let z = star.z;
 
-        // Y 軸旋轉
+        // Y-axis rotation
         let dx = cosRY * x - sinRY * z;
         let dz = sinRY * x + cosRY * z;
         x = dx;
         z = dz;
 
-        // X 軸旋轉
+        // X-axis rotation
         let dy = cosRX * y - sinRX * z;
         dz = sinRX * y + cosRX * z;
         y = dy;
         z = dz;
 
-        // 投影計算
-        const k = 400; // 焦距變大，視角更窄，景更深遠
+        // Projection calculation
+        const k = 400; // Focal length
         const sx = (x / z) * k + centerX;
         const sy = (y / z) * k + centerY;
-        const r = ((1 - z / depth) ** 2) * star.size * 2; // 大小差
+        const r = ((1 - z / depth) ** 2) * star.size * 2;
 
         if (sx >= 0 && sx < width && sy >= 0 && sy < height) {
           ctx.beginPath();
           ctx.globalAlpha = Math.min(1, 1 - z / depth + 0.2);
-          ctx.fillStyle = '#ffffff'; // 顏色
+          ctx.fillStyle = '#ffffff';
           ctx.arc(sx, sy, r, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
       ctx.globalAlpha = 1;
+      animationFrameRef.current = requestAnimationFrame(draw);
     };
 
-    const animate = () => {
-      draw();
-      requestAnimationFrame(animate);
-    };
+    // Setup resize observer
+    resizeObserverRef.current = new ResizeObserver(() => {
+      updateCanvasSize();
+      // Recreate stars with new dimensions
+      stars = Array.from({ length: numStars }, () => ({
+        x: (Math.random() * 2 - 1) * depth,
+        y: (Math.random() * 2 - 1) * depth,
+        z: Math.random() * depth,
+        size: Math.random() * 2 + 1,
+      }));
+    });
+    resizeObserverRef.current.observe(canvas);
 
-    animate();
+    // Add event listeners
+    window.addEventListener('mousemove', onMouseMove);
 
-    // 清理事件監聽
+    // Start animation
+    draw();
+
+    // Cleanup
     return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
       window.removeEventListener('mousemove', onMouseMove);
     };
-  }, []);
+  }, [setupCanvas]);
 
   return (
     <canvas
@@ -115,6 +154,8 @@ const GalaxyEffect3D = () => {
       className="fixed top-0 left-0 w-full h-full z-0 opacity-60 pointer-events-none"
     />
   );
-};
+});
 
-export default GalaxyEffect3D;
+GalaxyEffect.displayName = 'GalaxyEffect';
+
+export default GalaxyEffect;
