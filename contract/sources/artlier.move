@@ -62,7 +62,7 @@ module archimeters::artlier {
 
         display.add(
             b"name".to_string(),
-            b"Artlier".to_string()
+            b"{name}".to_string()
         );
         display.add(
             b"link".to_string(),

@@ -50,7 +50,7 @@ module archimeters::archimeters {
 
         display.add(
             b"name".to_string(),
-            b"Archimeters".to_string()
+            b"{username}".to_string()
         );
         display.add(
             b"link".to_string(),

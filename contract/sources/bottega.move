@@ -3,6 +3,8 @@ module archimeters::bottega {
     use sui::{
         event,
         clock,
+        package,
+        display,
         sui::SUI,
         coin::{ Self, Coin },
     };
@@ -21,9 +23,13 @@ module archimeters::bottega {
     // == Errors ==
     const ENO_CORRECT_FEE: u64 = 0;
 
+    // == One Time Witness ==
+    public struct BOTTEGA has drop {}
+
     // == Structs ==
     public struct Bottega has key, store {
         id: UID,
+        alias: String,
         owner: address,
         creator: address,
         blueprint: String, //blob-id for the image
@@ -37,10 +43,39 @@ module archimeters::bottega {
         id: ID,
     }
 
+    // == Initializer ==
+    fun init(otw: BOTTEGA, ctx: &mut TxContext) {
+        let publisher = package::claim(otw, ctx);
+        let mut display = display::new<Bottega>(&publisher, ctx);
+
+        display.add(
+            b"name".to_string(),
+            b"{alias}".to_string()
+        );
+        display.add(
+            b"link".to_string(),
+            b"https://archimeters.vercel.app/".to_string() 
+        );
+        display.add(
+            b"description".to_string(),
+            b"Bottega Published by Archimeters".to_string()
+        );
+        display.add(
+            b"image_url".to_string(),
+            b"{blueprint}".to_string()
+        );
+
+        display.update_version();
+
+        transfer::public_transfer(publisher, ctx.sender());
+        transfer::public_transfer(display, ctx.sender());
+    }
+
     // == Entry Functions ==
     public entry fun mint_bottega(
         artlier: &mut Artlier,
         membership: &mut MemberShip,
+        alias: String,
         blueprint: String,
         structure: String,
         payment: &mut Coin<SUI>,
@@ -56,6 +91,7 @@ module archimeters::bottega {
 
         let bottega = Bottega {
             id: object::new(ctx),
+            alias,
             owner: sender,
             creator: get_author(artlier),
             blueprint,
