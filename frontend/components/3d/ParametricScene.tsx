@@ -191,6 +191,12 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+        // Position the mesh so it sits on top of the grid
+        if (geometry.boundingBox === null) {
+          geometry.computeBoundingBox();
+        }
+        const height = geometry.boundingBox.max.y - geometry.boundingBox.min.y;
+        mesh.position.y = height / 2;
         sceneRef.current.add(mesh);
         meshRef.current = mesh;
       }
