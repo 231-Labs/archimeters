@@ -5,15 +5,15 @@ import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import * as THREE from 'three';
-import { mintBottega } from '@/utils/transactions';
+import { mintSculpt } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { MEMBERSHIP_TYPE } from '@/utils/transactions';
 
-interface ArtlierViewerWindowProps {
+interface AtelierViewerWindowProps {
   name: WindowName;
 }
 
-interface Artlier {
+interface Atelier {
   id: string;
   photoBlobId: string;
   algorithmBlobId: string;
@@ -37,10 +37,10 @@ interface MintButtonState {
   tooltipComponent?: ReactNode;
 }
 
-export default function ArtlierViewerWindow({
+export default function AtelierViewerWindow({
   name,
-}: ArtlierViewerWindowProps) {
-  const [artlier, setArtlier] = useState<Artlier | null>(null);
+}: AtelierViewerWindowProps) {
+  const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
   const [alias, setAlias] = useState('');
@@ -323,26 +323,26 @@ export default function ArtlierViewerWindow({
   }, []);
 
   useEffect(() => {
-    const fetchArtlierData = async () => {
+    const fetchAtelierData = async () => {
       try {
-        // Read artlier data from sessionStorage
-        const storedArtlier = sessionStorage.getItem('selected-artlier');
-        if (!storedArtlier) {
-          throw new Error('No artlier data found');
+        // Read atelier data from sessionStorage
+        const storedAtelier = sessionStorage.getItem('selected-atelier');
+        if (!storedAtelier) {
+          throw new Error('No atelier data found');
         }
 
-        const parsedArtlier = JSON.parse(storedArtlier);
-        setArtlier(parsedArtlier);
+        const parsedAtelier = JSON.parse(storedAtelier);
+        setAtelier(parsedAtelier);
 
         // Fetch all required data concurrently
         const [imageUrl, algorithmContent, configData] = await Promise.all([
-          fetchImageFromWalrus(parsedArtlier.photoBlobId),
-          fetchAlgorithmFromWalrus(parsedArtlier.algorithmBlobId),
-          fetchConfigDataFromWalrus(parsedArtlier.dataBlobId)
+          fetchImageFromWalrus(parsedAtelier.photoBlobId),
+          fetchAlgorithmFromWalrus(parsedAtelier.algorithmBlobId),
+          fetchConfigDataFromWalrus(parsedAtelier.dataBlobId)
         ]);
 
         // Update state
-        setArtlier(prev => ({
+        setAtelier(prev => ({
           ...prev!,
           url: imageUrl,
           algorithmContent,
@@ -375,18 +375,18 @@ export default function ArtlierViewerWindow({
 
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching Artlier data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch Artlier data');
+        console.error('Error fetching Atelier data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch Atelier data');
         setIsLoading(false);
       }
     };
 
-    fetchArtlierData();
+    fetchAtelierData();
 
     // Cleanup function
     return () => {
-      if (artlier?.url) {
-        URL.revokeObjectURL(artlier.url);
+      if (atelier?.url) {
+        URL.revokeObjectURL(atelier.url);
       }
     };
   }, [processSceneFile]);
@@ -403,41 +403,41 @@ export default function ArtlierViewerWindow({
   // Memoize the ParametricViewer component props
   const viewerProps = useMemo(() => {
     console.log('Updating viewer props:', {
-      hasAlgorithm: !!artlier?.algorithmContent,
+      hasAlgorithm: !!atelier?.algorithmContent,
       parameters: previewParams
     });
 
     return {
-      userScript: artlier?.algorithmContent ? {
-        code: artlier.algorithmContent,
-        filename: `algorithm_${artlier.id}.js` // Use unique filename
+      userScript: atelier?.algorithmContent ? {
+        code: atelier.algorithmContent,
+        filename: `algorithm_${atelier.id}.js` // Use unique filename
       } : null,
       parameters: previewParams,
       onSceneReady: (scene: THREE.Scene) => {
-        console.log('Scene ready in ArtlierViewer');
+        console.log('Scene ready in AtelierViewer');
         sceneRef.current = scene;
       },
       onRendererReady: (renderer: THREE.WebGLRenderer) => {
-        console.log('Renderer ready in ArtlierViewer');
+        console.log('Renderer ready in AtelierViewer');
         rendererRef.current = renderer;
       },
       onCameraReady: (camera: THREE.Camera) => {
-        console.log('Camera ready in ArtlierViewer');
+        console.log('Camera ready in AtelierViewer');
         cameraRef.current = camera;
       }
     };
-  }, [artlier?.algorithmContent, artlier?.id, previewParams]);
+  }, [atelier?.algorithmContent, atelier?.id, previewParams]);
 
   // Monitor scene state
   useEffect(() => {
-    console.log('ArtlierViewer scene state:', {
+    console.log('AtelierViewer scene state:', {
       hasScene: !!sceneRef.current,
       hasRenderer: !!rendererRef.current,
       hasCamera: !!cameraRef.current,
-      hasAlgorithm: !!artlier?.algorithmContent,
+      hasAlgorithm: !!atelier?.algorithmContent,
       parameters: previewParams
     });
-  }, [artlier?.algorithmContent, previewParams]);
+  }, [atelier?.algorithmContent, previewParams]);
 
   // 添加上傳到 Walrus 的通用函數
   const uploadToWalrus = async (file: File, fileType: string): Promise<string> => {
@@ -537,7 +537,7 @@ export default function ArtlierViewerWindow({
   };
 
   const handleMint = useCallback(async () => {
-    if (!artlier) return;
+    if (!atelier) return;
 
     try {
       console.log('開始 Mint 流程');
@@ -563,7 +563,7 @@ export default function ArtlierViewerWindow({
         console.log('生成截圖');
         const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
         const blob = await (await fetch(dataUrl)).blob();
-        const screenshotFile = new File([blob], `${artlier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
+        const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
         console.log('截圖檔案已準備', { fileName: screenshotFile.name, size: screenshotFile.size });
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
@@ -603,7 +603,7 @@ export default function ArtlierViewerWindow({
         console.log('STL 導出完成，大小:', stlString.length);
 
         const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
-        const stlFile = new File([blob2], `${artlier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
+        const stlFile = new File([blob2], `${atelier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
         console.log('STL 檔案已準備', { fileName: stlFile.name, size: stlFile.size });
 
         const stlBlobId = await uploadToWalrus(stlFile, 'STL');
@@ -627,27 +627,27 @@ export default function ArtlierViewerWindow({
           throw new Error('No membership ID found');
         }
 
-        if (!artlier.payment) {
+        if (!atelier.payment) {
           throw new Error('No payment coin selected');
         }
 
         // 4. 執行交易
         console.log('交易參數:', {
-          artlierId: artlier.id,
+          atelierId: atelier.id,
           membershipId,
           alias,
           screenshotBlobId,
           stlBlobId,
-          payment: artlier.payment
+          payment: atelier.payment
         });
 
-        const tx = await mintBottega(
-          artlier.id,
+        const tx = await mintSculpt(
+          atelier.id,
           membershipId,
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
           stlBlobId,
-          artlier.payment,
+          atelier.payment,
         );
 
         signAndExecuteTransaction(
@@ -663,7 +663,7 @@ export default function ArtlierViewerWindow({
             },
             onError: (error) => {
               console.error('Mint 交易失敗:', error);
-              setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+              setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
               setMintStatus('error');
             }
           }
@@ -671,16 +671,16 @@ export default function ArtlierViewerWindow({
 
       } catch (error) {
         console.error('Mint 流程失敗:', error);
-        setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+        setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
         setMintStatus('error');
       }
 
     } catch (error) {
       console.error('Mint 流程失敗:', error);
-      setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
+      setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
       setMintStatus('error');
     }
-  }, [artlier, sceneRef, rendererRef, cameraRef, signAndExecuteTransaction, alias]);
+  }, [atelier, sceneRef, rendererRef, cameraRef, signAndExecuteTransaction, alias]);
 
   // 檢查用戶是否擁有 Membership NFT
   const checkMembershipNFT = useCallback(async () => {
@@ -723,10 +723,10 @@ export default function ArtlierViewerWindow({
 
   // Find suitable coin for payment
   const findSuitableCoin = useCallback(async () => {
-    if (!currentAccount || !artlier) return null;
+    if (!currentAccount || !atelier) return null;
 
     try {
-      const price = BigInt(artlier.price);
+      const price = BigInt(atelier.price);
       const { data: coins } = await suiClient.getCoins({
         owner: currentAccount.address,
         coinType: '0x2::sui::SUI'
@@ -736,8 +736,8 @@ export default function ArtlierViewerWindow({
       const suitableCoin = coins.find(coin => BigInt(coin.balance) >= price);
       
       if (suitableCoin) {
-        // Update artlier with the selected coin ID
-        setArtlier(prev => prev ? {
+        // Update atelier with the selected coin ID
+        setAtelier(prev => prev ? {
           ...prev,
           payment: suitableCoin.coinObjectId
         } : null);
@@ -749,7 +749,7 @@ export default function ArtlierViewerWindow({
       console.error('Error finding suitable coin:', error);
       return null;
     }
-  }, [currentAccount, artlier, suiClient]);
+  }, [currentAccount, atelier, suiClient]);
 
   // Check SUI balance and find suitable coin
   useEffect(() => {
@@ -768,7 +768,7 @@ export default function ArtlierViewerWindow({
         setSuiBalance(BigInt(totalBalance));
 
         // If we have sufficient total balance and no payment coin selected yet, find a suitable coin
-        if (artlier && BigInt(totalBalance) >= BigInt(artlier.price) && !artlier.payment) {
+        if (atelier && BigInt(totalBalance) >= BigInt(atelier.price) && !atelier.payment) {
           await findSuitableCoin();
         }
       } catch (error) {
@@ -778,7 +778,7 @@ export default function ArtlierViewerWindow({
     };
 
     checkBalanceAndCoin();
-  }, [currentAccount, suiClient, artlier?.price]);
+  }, [currentAccount, suiClient, atelier?.price]);
 
   // Update button state
   useEffect(() => {
@@ -798,7 +798,7 @@ export default function ArtlierViewerWindow({
       return;
     }
 
-    if (!artlier) {
+    if (!atelier) {
       setMintButtonState({
         disabled: true,
         tooltip: 'Loading artwork information'
@@ -816,7 +816,7 @@ export default function ArtlierViewerWindow({
     }
 
     try {
-      const price = BigInt(artlier.price);
+      const price = BigInt(atelier.price);
       if (suiBalance < price) {
         const formattedPrice = (Number(price) / 1_000_000_000).toFixed(2);
         setMintButtonState({
@@ -827,7 +827,7 @@ export default function ArtlierViewerWindow({
       }
 
       // If we have sufficient balance but no payment coin selected yet
-      if (!artlier.payment) {
+      if (!atelier.payment) {
         setMintButtonState({
           disabled: true,
           tooltip: 'Selecting payment coin...'
@@ -846,7 +846,7 @@ export default function ArtlierViewerWindow({
         tooltip: 'Error checking price'
       });
     }
-  }, [currentAccount, hasMembership, suiBalance, artlier?.price, artlier?.payment]);
+  }, [currentAccount, hasMembership, suiBalance, atelier?.price, atelier?.payment]);
 
   // 在組件掛載和錢包狀態改變時檢查
   useEffect(() => {
@@ -869,10 +869,10 @@ export default function ArtlierViewerWindow({
     );
   }
 
-  if (!artlier) {
+  if (!atelier) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-white/50">No artlier data found</div>
+        <div className="text-white/50">No atelier data found</div>
       </div>
     );
   }
@@ -896,13 +896,13 @@ export default function ArtlierViewerWindow({
 
   return (
     <BaseTemplate
-      workName={artlier.title}
-      description={artlier.description || ''}
-      price={scaleSuiPrice(artlier.price)}
-      author={artlier.artistName || artlier.author}
-      social={formatAddress(artlier.artistAddress || '')}
-      intro={formatText(artlier.artistStatement || '')}
-      imageUrl={artlier.url || ''}
+      workName={atelier.title}
+      description={atelier.description || ''}
+      price={scaleSuiPrice(atelier.price)}
+      author={atelier.artistName || atelier.author}
+      social={formatAddress(atelier.artistAddress || '')}
+      intro={formatText(atelier.artistStatement || '')}
+      imageUrl={atelier.url || ''}
       parameters={parameters}
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
@@ -922,7 +922,7 @@ export default function ArtlierViewerWindow({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                 </svg>
               )}
-              {currentAccount && hasMembership && suiBalance < BigInt(artlier?.price || 0) && (
+              {currentAccount && hasMembership && suiBalance < BigInt(atelier?.price || 0) && (
                 <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -937,13 +937,13 @@ export default function ArtlierViewerWindow({
       onAliasChange={setAlias}
     >
       <DefaultTemplate
-        workName={artlier.title}
-        description={artlier.description || ''}
-        price={scaleSuiPrice(artlier.price)}
-        author={artlier.artistName || artlier.author}
-        social={formatAddress(artlier.artistAddress || '')}
-        intro={formatText(artlier.artistStatement || '')}
-        imageUrl={artlier.url || ''}
+        workName={atelier.title}
+        description={atelier.description || ''}
+        price={scaleSuiPrice(atelier.price)}
+        author={atelier.artistName || atelier.author}
+        social={formatAddress(atelier.artistAddress || '')}
+        intro={formatText(atelier.artistStatement || '')}
+        imageUrl={atelier.url || ''}
         parameters={parameters}
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
@@ -963,7 +963,7 @@ export default function ArtlierViewerWindow({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
                 )}
-                {currentAccount && hasMembership && suiBalance < BigInt(artlier?.price || 0) && (
+                {currentAccount && hasMembership && suiBalance < BigInt(atelier?.price || 0) && (
                   <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -1031,7 +1031,7 @@ export default function ArtlierViewerWindow({
                   <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
                 </div>
                 <span className="text-white/90 text-sm font-mono tracking-wider">
-                  {mintStatus === 'preparing' ? 'Preparing files...' : 'Minting Bottega...'}
+                  {mintStatus === 'preparing' ? 'Preparing files...' : 'Minting Sculpt...'}
                 </span>
               </div>
             )}
@@ -1046,7 +1046,7 @@ export default function ArtlierViewerWindow({
                   </svg>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-white/90 text-sm font-mono tracking-wider">Bottega minted successfully!</span>
+                  <span className="text-white/90 text-sm font-mono tracking-wider">Sculpt minted successfully!</span>
                   {txDigest && (
                     <a
                       href={`https://suiexplorer.com/txblock/${txDigest}?network=testnet`}

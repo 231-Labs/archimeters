@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x89c638a596a72c9014be58d264e81b346364a012710c8a72b9b894826906681e';
-export const STATE_ID = '0x724d76abe4f059219ca3680ab364488ce58f5dcb92c14e1cd707e6a68b4ede39';
-export const ARTLIER_STATE_ID = '0x443a6d6615bfa9b844b27e1fb4f1991b9cab94fb4851b052cd84a03a2aab9df8';
+export const PACKAGE_ID = '0x3ea35da05e9fd297c9d92039978da467243bdc3713aa1a92d6cb45e72e439c48';
+export const STATE_ID = '0x0f4b582670872010892aa4bfa5546f0663054ef7a39d3bf1c45605708cc03851';
+export const ATELIER_STATE_ID = '0xa26be6e1d68ac761a43dbfb3e638d1ac713432d5fff87ae06b1bb5c8e510070f';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export const mintMembership = async (username: string, description: string) => {
@@ -33,7 +33,7 @@ export const createArtlier = async (
 ) => {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::artlier::mint_artlier`,
+    target: `${PACKAGE_ID}::atelier::mint_atelier`,
     arguments: [
       tx.object(artlierState),
       tx.object(membershipId),
@@ -48,7 +48,7 @@ export const createArtlier = async (
   return tx;
 };
 
-export const mintBottega = async (
+export const mintSculpt = async (
   artlierId: string,
   membershipId: string,
   alias: string,
@@ -59,7 +59,7 @@ export const mintBottega = async (
 ) => {
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::bottega::mint_bottega`,
+    target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
     arguments: [
       tx.object(artlierId),
       tx.object(membershipId),

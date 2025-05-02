@@ -1,4 +1,4 @@
-module archimeters::bottega {
+module archimeters::sculpt {
     use std::string::{ String };
     use sui::{
         event,
@@ -10,24 +10,24 @@ module archimeters::bottega {
     };
     use archimeters::archimeters::{
         MemberShip,
-        add_bottega_to_membership,
+        add_sculpt_to_membership,
     };
-    use archimeters::artlier::{
-        Artlier,
+    use archimeters::atelier::{
+        Atelier,
         get_author,
         get_price,
         add_to_pool,
-        add_bottega_to_artlier,
+        add_sculpt_to_atelier,
     };
 
     // == Errors ==
     const ENO_CORRECT_FEE: u64 = 0;
 
     // == One Time Witness ==
-    public struct BOTTEGA has drop {}
+    public struct SCULPT has drop {}
 
     // == Structs ==
-    public struct Bottega has key, store {
+    public struct Sculpt has key, store {
         id: UID,
         alias: String,
         owner: address,
@@ -39,14 +39,14 @@ module archimeters::bottega {
     }
 
     // == Events ==
-    public struct New_bottega has copy, drop {
+    public struct New_sculpt has copy, drop {
         id: ID,
     }
 
     // == Initializer ==
-    fun init(otw: BOTTEGA, ctx: &mut TxContext) {
+    fun init(otw: SCULPT, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        let mut display = display::new<Bottega>(&publisher, ctx);
+        let mut display = display::new<Sculpt>(&publisher, ctx);
 
         display.add(
             b"name".to_string(),
@@ -58,7 +58,7 @@ module archimeters::bottega {
         );
         display.add(
             b"description".to_string(),
-            b"Bottega Published by Archimeters".to_string()
+            b"Sculpt Published by Archimeters".to_string()
         );
         display.add(
             b"image_url".to_string(),
@@ -72,8 +72,8 @@ module archimeters::bottega {
     }
 
     // == Entry Functions ==
-    public entry fun mint_bottega(
-        artlier: &mut Artlier,
+    public entry fun mint_sculpt(
+        atelier: &mut Atelier,
         membership: &mut MemberShip,
         alias: String,
         blueprint: String,
@@ -82,36 +82,36 @@ module archimeters::bottega {
         clock: &clock::Clock,
         ctx: &mut TxContext
     ) {
-        let price = get_price(artlier);
+        let price = get_price(atelier);
         assert!(coin::value(payment) >= price, ENO_CORRECT_FEE);
         
         let fee = coin::split(payment, price, ctx);
         let sender = tx_context::sender(ctx);
         let now = clock::timestamp_ms(clock);
 
-        let bottega = Bottega {
+        let sculpt = Sculpt {
             id: object::new(ctx),
             alias,
             owner: sender,
-            creator: get_author(artlier),
+            creator: get_author(atelier),
             blueprint,
             structure,
             printed: 0,
             time: now,
         };
 
-        add_bottega_to_membership(membership, object::uid_to_inner(&bottega.id));
-        add_bottega_to_artlier(artlier, object::uid_to_inner(&bottega.id));
-        add_to_pool(artlier, coin::into_balance(fee));
+        add_sculpt_to_membership(membership, object::uid_to_inner(&sculpt.id));
+        add_sculpt_to_atelier(atelier, object::uid_to_inner(&sculpt.id));
+        add_to_pool(atelier, coin::into_balance(fee));
 
-        let bottega_id = object::uid_to_inner(&bottega.id);
-        transfer::public_transfer(bottega, sender);
+        let sculpt_id = object::uid_to_inner(&sculpt.id);
+        transfer::public_transfer(sculpt, sender);
 
-        event::emit(New_bottega { id: bottega_id });
+        event::emit(New_sculpt { id: sculpt_id });
     }
 
-    // public entry fun print_bottega(
-    //     bottega: &mut Bottega,
+    // public entry fun print_sculpt(
+    //     sculpt: &mut Sculpt,
     //     clock: &clock::Clock,
     //     ctx: &mut TxContext
     // ) {

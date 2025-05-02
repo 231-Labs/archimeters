@@ -8,7 +8,6 @@ import EntryWindow from '@/components/windows/EntryWindow';
 import { WalletStatus } from '@/components/windows/EntryWindow';
 import DesignPublisher from '@/components/windows/DesignPublisher';
 import BrowseWindow from '@/components/windows/BrowseWindow';
-import ArtlierViewerWindow from '@/components/windows/ArtlierViewerWindow';
 import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import Dock from '@/components/layout/Dock';
@@ -16,6 +15,7 @@ import { Terminal } from '@/components/features/terminal';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import Background from '@/components/background_animations/Background';
+import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
 
 interface Props {
   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
@@ -158,25 +158,25 @@ export default function Home() {
                       />
                     </Window>
                   );
-                case 'artlier-viewer':
+                case 'atelier-viewer':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title="Artlier Viewer"
-                      position={windowPositions['artlier-viewer']}
-                      size={windowSizes['artlier-viewer']}
-                      isActive={activeWindow === 'artlier-viewer'}
+                      title="Atelier Viewer"
+                      position={windowPositions['atelier-viewer']}
+                      size={windowSizes['atelier-viewer']}
+                      isActive={activeWindow === 'atelier-viewer'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={name === 'artlier-viewer' && openWindows.indexOf('browse') !== -1 
+                      zIndex={name === 'atelier-viewer' && openWindows.indexOf('browse') !== -1 
                         ? Math.max(openWindows.indexOf('browse') + 2, openWindows.indexOf(name) + 1)
                         : openWindows.indexOf(name) + 1}
                     >
-                      <ArtlierViewerWindow name={name} />
+                      <AtelierViewerWindow name={name} />
                     </Window>
                   );
                 default:

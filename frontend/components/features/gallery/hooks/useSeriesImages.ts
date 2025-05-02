@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { ARTLIER_STATE_ID } from '@/utils/transactions';
+import { ATELIER_STATE_ID } from '@/utils/transactions';
 
-interface ArtlierState {
-  all_artliers: string[];
+interface AtelierState {
+  all_ateliers: string[];
 }
 
-interface ArtlierFields {
+interface AtelierFields {
   photo: string;      // 圖片的 blob-id
   name: string;
   author: string;
@@ -18,7 +18,7 @@ interface ArtlierFields {
   id: { id: string };
 }
 
-interface Artlier {
+interface Atelier {
   id: string;
   photoBlobId: string;
   algorithmBlobId: string;
@@ -34,7 +34,7 @@ interface Artlier {
 }
 
 interface UseSeriesImagesReturn {
-  images: Artlier[];
+  images: Atelier[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -43,7 +43,7 @@ interface UseSeriesImagesReturn {
 export function useSeriesImages(): UseSeriesImagesReturn {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const [images, setImages] = useState<Artlier[]>([]);
+  const [images, setImages] = useState<Atelier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -165,7 +165,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
     }
   };
 
-  const fetchArtlierData = async () => {
+  const fetchAtelierData = async () => {
     // if (!currentAccount) {
     //   setError('Wallet not connected');
     //   setIsLoading(false);
@@ -174,38 +174,38 @@ export function useSeriesImages(): UseSeriesImagesReturn {
 
     try {
       setIsLoading(true);
-      const artlierState = await suiClient.getObject({
-        id: ARTLIER_STATE_ID,
+      const atelierState = await suiClient.getObject({
+        id: ATELIER_STATE_ID,
         options: {
           showContent: true,
           showType: true,
         }
       });
 
-      // 從 artlierState 中提取 all_artliers 數組
-      const content = artlierState.data?.content;
+      // 從 atelierState 中提取 all_ateliers 數組
+      const content = atelierState.data?.content;
       if (!content || typeof content !== 'object' || !('fields' in content)) {
-        throw new Error('Invalid artlier state data');
+        throw new Error('Invalid atelier state data');
       }
 
-      const fields = content.fields as unknown as ArtlierState;
-      const allArtliers = fields.all_artliers || [];
+      const fields = content.fields as unknown as AtelierState;
+      const allAteliers = fields.all_ateliers || [];
 
-      if (allArtliers.length === 0) {
+      if (allAteliers.length === 0) {
         setImages([]);
         setIsLoading(false);
         return;
       }
 
-      const allArtliersData = await suiClient.multiGetObjects({
-        ids: allArtliers,
+      const allAteliersData = await suiClient.multiGetObjects({
+        ids: allAteliers,
         options: {
           showContent: true,
           showType: true,
         }
       });
 
-      const artlierImages = allArtliersData.map(obj => {
+      const atelierImages = allAteliersData.map(obj => {
         const content = obj.data?.content;
         if (!content || typeof content !== 'object' || !('fields' in content)) {
           return {
@@ -220,11 +220,11 @@ export function useSeriesImages(): UseSeriesImagesReturn {
             author: '',
             price: '',
             isLoading: false,
-            error: 'Invalid artlier data'
+            error: 'Invalid atelier data'
           };
         }
 
-        const fields = content.fields as unknown as ArtlierFields;
+        const fields = content.fields as unknown as AtelierFields;
         return {
           id: obj.data?.objectId || '',
           photoBlobId: fields.photo || '',
@@ -241,11 +241,11 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         };
       });
 
-      setImages(artlierImages);
+      setImages(atelierImages);
       setIsLoading(false);
 
-      // 開始加載每個 Artlier 的資源
-      artlierImages.forEach(image => {
+      // 開始加載每個 Atelier 的資源
+      atelierImages.forEach(image => {
         // 加載圖片
         if (image.photoBlobId) {
           fetchImageFromWalrus(image.id, image.photoBlobId);
@@ -262,20 +262,20 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         }
       });
     } catch (error) {
-      console.error('Error fetching Artlier data:', error);
-      setError('Failed to fetch Artlier data');
+      console.error('Error fetching Atelier data:', error);
+      setError('Failed to fetch Atelier data');
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchArtlierData();
+    fetchAtelierData();
   }, [currentAccount]);
 
   return {
     images,
     isLoading,
     error,
-    refetch: fetchArtlierData
+    refetch: fetchAtelierData
   };
 }
