@@ -115,6 +115,7 @@ export default function DefaultTemplate({
                   Object.entries(defaultParams).forEach(([key, value]) => {
                     onParameterChange(key, value);
                   });
+                  onAliasChange?.('');
                 }}
                 className="text-sm text-white/50 hover:text-white/70 transition-colors"
               >
@@ -125,14 +126,14 @@ export default function DefaultTemplate({
             {/* Alias Input */}
             <div className="mb-4 bg-white/5 rounded-md p-3">
               <div className="flex justify-between items-center mb-2">
-                <div className="text-white/60 text-sm">Alias</div>
+                <div className="text-white/60 text-sm">Model Alias</div>
                 <div className="text-xs text-white/40">Required</div>
               </div>
               <input
                 type="text"
                 value={alias}
                 onChange={(e) => onAliasChange?.(e.target.value)}
-                placeholder="Enter a name for your Bottega"
+                placeholder="Name Your Model"
                 className="w-full bg-black/30 text-white/90 text-sm p-2 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
               />
             </div>

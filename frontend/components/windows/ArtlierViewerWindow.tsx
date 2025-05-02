@@ -545,7 +545,7 @@ export default function ArtlierViewerWindow({
       setMintError(null);
 
       if (!alias.trim()) {
-        setMintError('Please enter an alias for your Bottega');
+        setMintError('Name Your Model');
         setMintStatus('error');
         return;
       }
