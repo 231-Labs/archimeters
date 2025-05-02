@@ -18,6 +18,8 @@ export interface TemplateProps {
     tooltipComponent?: ReactNode;
   };
   preview3D?: ReactNode;
+  alias?: string;
+  onAliasChange?: (value: string) => void;
 }
 
 export default function DefaultTemplate({
@@ -33,7 +35,9 @@ export default function DefaultTemplate({
   onParameterChange,
   onMint,
   mintButtonState,
-  preview3D
+  preview3D,
+  alias = '',
+  onAliasChange
 }: TemplateProps) {
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6">
@@ -117,6 +121,22 @@ export default function DefaultTemplate({
                 Reset All
               </button>
             </div>
+
+            {/* Alias Input */}
+            <div className="mb-4 bg-white/5 rounded-md p-3">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-white/60 text-sm">Alias</div>
+                <div className="text-xs text-white/40">Required</div>
+              </div>
+              <input
+                type="text"
+                value={alias}
+                onChange={(e) => onAliasChange?.(e.target.value)}
+                placeholder="Enter a name for your Bottega"
+                className="w-full bg-black/30 text-white/90 text-sm p-2 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+              />
+            </div>
+
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(parameters).map(([key, paramDef]) => (
                 <div key={key} className="bg-white/5 rounded-md p-3">

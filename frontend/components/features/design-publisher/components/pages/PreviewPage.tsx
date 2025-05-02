@@ -40,6 +40,7 @@ export const PreviewPage = ({
   membershipData
 }: PreviewPageProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [alias, setAlias] = useState('');
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
@@ -174,6 +175,8 @@ export const PreviewPage = ({
         onParameterChange={onParameterChange}
         onMint={handleMintClick}
         mintButtonState={mintButtonState}
+        alias={alias}
+        onAliasChange={setAlias}
       >
         <DefaultTemplate
           workName={workName}
@@ -188,6 +191,8 @@ export const PreviewPage = ({
           onParameterChange={onParameterChange}
           onMint={handleMintClick}
           mintButtonState={mintButtonState}
+          alias={alias}
+          onAliasChange={setAlias}
           preview3D={
             <div className="w-full h-full">
               <ParametricViewer 

@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xd3406bbf426153af0957227f9ef864883c4c910cb037f7158d224a31759bdc26';
-export const STATE_ID = '0x419332cdd8cfde6126c316d1e6d9f0098978a89474cc38a35fe7ad76837e8579';
-export const ARTLIER_STATE_ID = '0x25b7fc6e1436df7f227e140b28e72eb9682a8841537640c2aa5fa4bfb2c39f96';
+export const PACKAGE_ID = '0x89c638a596a72c9014be58d264e81b346364a012710c8a72b9b894826906681e';
+export const STATE_ID = '0x724d76abe4f059219ca3680ab364488ce58f5dcb92c14e1cd707e6a68b4ede39';
+export const ARTLIER_STATE_ID = '0x443a6d6615bfa9b844b27e1fb4f1991b9cab94fb4851b052cd84a03a2aab9df8';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export const mintMembership = async (username: string, description: string) => {
@@ -51,6 +51,7 @@ export const createArtlier = async (
 export const mintBottega = async (
   artlierId: string,
   membershipId: string,
+  alias: string,
   blueprint: string,
   structure: string,
   payment: string,
@@ -62,6 +63,7 @@ export const mintBottega = async (
     arguments: [
       tx.object(artlierId),
       tx.object(membershipId),
+      tx.pure(bcs.string().serialize(alias).toBytes()),
       tx.pure(bcs.string().serialize(blueprint).toBytes()),
       tx.pure(bcs.string().serialize(structure).toBytes()),
       tx.object(payment),

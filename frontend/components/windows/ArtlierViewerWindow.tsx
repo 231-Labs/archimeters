@@ -43,6 +43,7 @@ export default function ArtlierViewerWindow({
   const [artlier, setArtlier] = useState<Artlier | null>(null);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
+  const [alias, setAlias] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -543,6 +544,12 @@ export default function ArtlierViewerWindow({
       setMintStatus('preparing');
       setMintError(null);
 
+      if (!alias.trim()) {
+        setMintError('Please enter an alias for your Bottega');
+        setMintStatus('error');
+        return;
+      }
+
       // 1. 捕獲截圖並上傳到 Walrus
       try {
         console.log('準備捕獲截圖');
@@ -628,6 +635,7 @@ export default function ArtlierViewerWindow({
         console.log('交易參數:', {
           artlierId: artlier.id,
           membershipId,
+          alias,
           screenshotBlobId,
           stlBlobId,
           payment: artlier.payment
@@ -636,6 +644,7 @@ export default function ArtlierViewerWindow({
         const tx = await mintBottega(
           artlier.id,
           membershipId,
+          alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
           stlBlobId,
           artlier.payment,
@@ -671,7 +680,7 @@ export default function ArtlierViewerWindow({
       setMintError(error instanceof Error ? error.message : 'Failed to mint bottega');
       setMintStatus('error');
     }
-  }, [artlier, sceneRef, rendererRef, cameraRef, signAndExecuteTransaction]);
+  }, [artlier, sceneRef, rendererRef, cameraRef, signAndExecuteTransaction, alias]);
 
   // 檢查用戶是否擁有 Membership NFT
   const checkMembershipNFT = useCallback(async () => {
@@ -924,6 +933,8 @@ export default function ArtlierViewerWindow({
           </div>
         ) : null
       }}
+      alias={alias}
+      onAliasChange={setAlias}
     >
       <DefaultTemplate
         workName={artlier.title}
@@ -963,6 +974,8 @@ export default function ArtlierViewerWindow({
             </div>
           ) : null
         }}
+        alias={alias}
+        onAliasChange={setAlias}
         preview3D={
           <div className="w-full h-full">
             <ParametricViewer {...viewerProps} />
