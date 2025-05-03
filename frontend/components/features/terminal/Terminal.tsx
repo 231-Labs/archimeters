@@ -13,8 +13,9 @@ import '@xterm/xterm/css/xterm.css';
 
 const DOCS = [
   { name: 'readme', title: 'README.md', content: 'This is the project README.\n...\n' },
-  { name: 'guide', title: 'User Guide', content: 'This is the quick start guide.\n...\n' },
-  { name: 'api', title: 'API Reference', content: 'This is the API documentation.\n...\n' },
+  { name: 'guide', title: 'Upload format Guide', content: 'This is the upload format giude guide.\n...\n' },
+  { name: 'credits', title: 'API Reference', content: 'This is the credits documentation.\n...\n' },
+  { name: '231lab', title: 'About 231 Lab', content: 'We are a team of three passionate developers from the 231 Lab at Feng Chia University. \nWith a shared interest in innovation and technology, we joined this hackathon to challenge ourselves and turn creative ideas into real solutions. \nEach member brings unique skills to the table, and together we strive to build impactful projects through collaboration and dedication.\n' },
 ];
 const TEAM = [
   { name: 'Alice', role: 'Product Manager', contact: 'alice@example.com' },
@@ -58,7 +59,7 @@ const ArchimetersTerminal = () => {
       terminal.current = new Terminal({
         fontFamily: 'JetBrains Mono, monospace',
         fontSize: 14,
-        lineHeight: 1.2,
+        lineHeight: 1.5,
         theme: TERMINAL_THEME,
         cursorBlink: true,
         cursorStyle: 'block',
@@ -95,15 +96,15 @@ const ArchimetersTerminal = () => {
 
       // Print TUI style content
       writeLine(terminal.current, '', COLORS.DEFAULT);
-      writeLine(terminal.current, '✨ ARCHIMETERS TERMINAL', COLORS.INFO);
+      writeLine(terminal.current, '✨  ARCHIMETERS TERMINAL', COLORS.INFO);
       writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
-      writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
+      writeLine(terminal.current, `🪐  Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
       writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
-      writeLine(terminal.current, '📖 Available Commands:', COLORS.DEFAULT);
-      writeLine(terminal.current, '  📄 docs         List all documents', COLORS.DEFAULT);
-      writeLine(terminal.current, '  👥 team         Show team members', COLORS.DEFAULT);
-      writeLine(terminal.current, '  📑 read <name>  Read document', COLORS.DEFAULT);
-      writeLine(terminal.current, '  🧹 clear        Clear terminal', COLORS.DEFAULT);
+      writeLine(terminal.current, '📖  Available Commands:', COLORS.DEFAULT);
+      writeLine(terminal.current, '  📄  docs         List all documents', COLORS.DEFAULT);
+      writeLine(terminal.current, '  👥  team         Show team members', COLORS.DEFAULT);
+      writeLine(terminal.current, '  📑  read <name>  Read document', COLORS.DEFAULT);
+      writeLine(terminal.current, '  🧹  clear        Clear terminal', COLORS.DEFAULT);
       writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
       showPrompt();
 
@@ -129,8 +130,11 @@ const ArchimetersTerminal = () => {
             const docName = command.slice(5);
             const doc = DOCS.find(d => d.name === docName);
             if (doc) {
-              setCurrentDoc({ content: doc.content, title: doc.title });
-              setIsViewingDoc(true);
+              // setCurrentDoc({ content: doc.content, title: doc.title });
+              // setIsViewingDoc(true);
+              const lines = doc.content.split('\n');
+              lines.forEach(line => writeLine(terminal.current, line, COLORS.DEFAULT));
+              writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
             } else {
               writeLine(terminal.current, `❌ ERROR: Document not found: ${docName}`, COLORS.ERROR);
               writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
@@ -191,7 +195,9 @@ const ArchimetersTerminal = () => {
     terminal.current.write('\x1B[2K\r');
     terminal.current.write('\x1B[1A');
     terminal.current.write('\x1B[2K\r');
+    writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
     writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
+    writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
     showPrompt();
   }, [currentAccount]);
 
@@ -201,7 +207,7 @@ const ArchimetersTerminal = () => {
 
   if (isViewingDoc && currentDoc) {
     return (
-      <div className="h-full w-full">
+      <div className="h-full w-full overflow-hidden bg-black font-mono" style={{ padding: '1rem' }}>
         <DocumentViewer content={currentDoc.content} title={currentDoc.title} />
       </div>
     );

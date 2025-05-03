@@ -16,7 +16,7 @@ const DocumentViewer = ({ content, title }: DocumentViewerProps) => {
   const terminal = useRef<XTerm | null>(null);
   const fitAddon = useRef<FitAddon | null>(null);
   const initialized = useRef<boolean>(false);
-
+  
   // 捲動到底部
   const scrollToBottom = () => {
     if (terminal.current) {
