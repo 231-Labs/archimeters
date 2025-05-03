@@ -94,6 +94,14 @@ const ArchimetersTerminal = () => {
         }
       }, 0);
 
+      // 捲動到底部
+      const scrollToBottom = () => {
+        if (terminal.current) {
+          // xterm.js 提供 scrollToBottom
+          terminal.current.scrollToBottom();
+        }
+      };
+
       // Print TUI style content
       writeLine(terminal.current, '', COLORS.DEFAULT);
       writeLine(terminal.current, '✨  ARCHIMETERS TERMINAL', COLORS.INFO);
@@ -119,45 +127,58 @@ const ArchimetersTerminal = () => {
           terminal.current?.writeln('');
           const command = inputBuffer.current.trim();
           if (command === 'docs') {
-            writeLine(terminal.current, '📄 DOCUMENTS', COLORS.INFO);
+            writeLine(terminal.current, '📄  DOCUMENTS', COLORS.INFO);
             DOCS.forEach(d => writeLine(terminal.current, `  ${d.name.padEnd(10)} - ${d.title}`, COLORS.INFO));
-            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            writeLine(terminal.current, '', COLORS.DEFAULT);
+            showPrompt();
           } else if (command === 'team') {
-            writeLine(terminal.current, '👥 TEAM', COLORS.INFO);
+            writeLine(terminal.current, '👥  TEAM', COLORS.INFO);
             TEAM.forEach(m => writeLine(terminal.current, `  ${m.name.padEnd(12)} | ${m.role.padEnd(18)} | ${m.contact}`, COLORS.INFO));
-            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            writeLine(terminal.current, '', COLORS.DEFAULT);
+            showPrompt();
           } else if (command.startsWith('read ')) {
             const docName = command.slice(5);
             const doc = DOCS.find(d => d.name === docName);
             if (doc) {
-              // setCurrentDoc({ content: doc.content, title: doc.title });
-              // setIsViewingDoc(true);
               const lines = doc.content.split('\n');
-              lines.forEach(line => writeLine(terminal.current, line, COLORS.DEFAULT));
-              writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+              let idx = 0;
+              const printNext = () => {
+                if (idx < lines.length) {
+                  writeLine(terminal.current, lines[idx], COLORS.DEFAULT); // 不要 prompt
+                  if (terminal.current) terminal.current.scrollToBottom();
+                  idx++;
+                  setTimeout(printNext, 70);
+                } else {
+                  showPrompt();
+                }
+              };
+              printNext();
             } else {
               writeLine(terminal.current, `❌ ERROR: Document not found: ${docName}`, COLORS.ERROR);
-              writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+              writeLine(terminal.current, '', COLORS.DEFAULT);
+              showPrompt();
             }
           } else if (command === 'clear') {
             terminal.current?.clear();
             writeLine(terminal.current, '', COLORS.DEFAULT);
-            writeLine(terminal.current, '✨ ARCHIMETERS TERMINAL', COLORS.INFO);
+            writeLine(terminal.current, '✨  ARCHIMETERS TERMINAL', COLORS.INFO);
             writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
-            writeLine(terminal.current, `🪐 Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
+            writeLine(terminal.current, `🪐  Wallet: ${currentAccount?.address || 'Not Connected'}`, COLORS.ACCENT);
             writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
-            writeLine(terminal.current, '📖 Available Commands:', COLORS.DEFAULT);
-            writeLine(terminal.current, '  📄 docs         List all documents', COLORS.DEFAULT);
-            writeLine(terminal.current, '  👥 team         Show team members', COLORS.DEFAULT);
-            writeLine(terminal.current, '  📑 read <name>  Read document', COLORS.DEFAULT);
-            writeLine(terminal.current, '  🧹 clear        Clear terminal', COLORS.DEFAULT);
+            writeLine(terminal.current, '📖  Available Commands:', COLORS.DEFAULT);
+            writeLine(terminal.current, '  📄  docs         List all documents', COLORS.DEFAULT);
+            writeLine(terminal.current, '  👥  team         Show team members', COLORS.DEFAULT);
+            writeLine(terminal.current, '  📑  read <name>  Read document', COLORS.DEFAULT);
+            writeLine(terminal.current, '  🧹  clear        Clear terminal', COLORS.DEFAULT);
             writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            showPrompt();
           } else if (command) {
             writeLine(terminal.current, `❌ ERROR: Unknown command: ${command}`, COLORS.ERROR);
-            writeLine(terminal.current, BOX_STYLES.separator, COLORS.INFO);
+            writeLine(terminal.current, '', COLORS.DEFAULT);
+            showPrompt();
           }
           inputBuffer.current = '';
-          showPrompt();
+          // showPrompt();
         } else if (data === '\u007f') { // Backspace
           if (inputBuffer.current.length > 0) {
             inputBuffer.current = inputBuffer.current.slice(0, -1);
