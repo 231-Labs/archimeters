@@ -45,9 +45,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (openWindows.includes('artlier-viewer')) {
+    if (openWindows.includes('atelier-viewer')) {
       setZOrder((prev) => {
-        return [...prev.filter(n => n !== 'artlier-viewer'), 'artlier-viewer'];
+        return [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer'];
       });
     }
   }, [openWindows]);
