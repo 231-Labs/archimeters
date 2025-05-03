@@ -25,18 +25,32 @@ export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
+  const [zOrder, setZOrder] = useState<string[]>([]);
+
   const {
     openWindows,
     activeWindow,
     windowPositions,
     windowSizes,
     windowZIndexes,
-    activateWindow,
+    // activateWindow,
     openWindow,
     closeWindow,
     startDragging,
     resizeWindow,
   } = useWindowManager('entry');
+
+  const activateWindow = (name: string) => {
+    setZOrder(prev => [...prev.filter(n => n !== name), name]);
+  };
+
+  useEffect(() => {
+    if (openWindows.includes('artlier-viewer')) {
+      setZOrder((prev) => {
+        return [...prev.filter(n => n !== 'artlier-viewer'), 'artlier-viewer'];
+      });
+    }
+  }, [openWindows]);
 
   useEffect(() => {
     const fetchOsId = async () => {
@@ -88,7 +102,7 @@ export default function Home() {
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
-                      zIndex={openWindows.indexOf(name) + 1}
+                      zIndex={zOrder.indexOf(name) + 1}
                     >
                       <EntryWindow
                         onDragStart={(e, name) => startDragging(e, name)}
@@ -112,7 +126,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={openWindows.indexOf(name) + 1}
+                      zIndex={zOrder.indexOf(name) + 1}
                     >
                       <Terminal />
                     </Window>
@@ -131,7 +145,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={openWindows.indexOf(name) + 1}
+                      zIndex={zOrder.indexOf(name) + 1}
                     >
                       <DesignPublisher />
                     </Window>
@@ -150,7 +164,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={openWindows.indexOf(name) + 1}
+                      zIndex={zOrder.indexOf(name) + 1}
                     >
                       <BrowseWindow
                         name={name}
@@ -172,9 +186,7 @@ export default function Home() {
                       onClick={() => activateWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={name === 'atelier-viewer' && openWindows.indexOf('browse') !== -1 
-                        ? Math.max(openWindows.indexOf('browse') + 2, openWindows.indexOf(name) + 1)
-                        : openWindows.indexOf(name) + 1}
+                      zIndex={zOrder.indexOf(name) + 1}
                     >
                       <AtelierViewerWindow name={name} />
                     </Window>
