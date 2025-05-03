@@ -20,8 +20,8 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 520, height: 660 },
     resizable: true,
   },
-  'artlier-viewer': {
-    title: 'Artlier Viewer',
+  'atelier-viewer': {
+    title: 'Atelier Viewer',
     defaultSize: { width: 800, height: 600 },
     resizable: true,
   },

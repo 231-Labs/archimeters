@@ -8,7 +8,7 @@ import { useUpload } from '@/components/features/design-publisher/hooks/useUploa
 import { createMetadataJson } from '@/components/features/design-publisher/utils/metadata';
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { createArtlier, ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 import { defaultWindowConfigs } from '@/config/windows';
 
 export default function WebsiteUpload() {
@@ -521,7 +521,7 @@ export default function WebsiteUpload() {
 
     console.log('=== Transaction Parameters ===');
     console.log(JSON.stringify({
-      artlierState: ARTLIER_STATE_ID,
+      artlierState: ATELIER_STATE_ID,
       membershipId,
       imageBlobId,
       websiteBlobId: metadataBlobId,  // Use metadata blobId as website blobId
@@ -550,7 +550,7 @@ export default function WebsiteUpload() {
 
     try {
       const tx = await createArtlier(
-        ARTLIER_STATE_ID,
+        ATELIER_STATE_ID,
         membershipId,
         workName,
         imageBlobId,

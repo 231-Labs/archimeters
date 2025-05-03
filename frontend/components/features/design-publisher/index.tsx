@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createArtlier, ARTLIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { createArtlier, ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
 import { createMetadataJson } from './utils/metadata';
 import { useUpload } from './hooks/useUpload';
 import { useFileUpload } from './hooks/useFileUpload';
@@ -159,7 +159,7 @@ export default function WebsiteUpload() {
 
     try {
       const tx = await createArtlier(
-        ARTLIER_STATE_ID,
+        ATELIER_STATE_ID,
         membershipId,
         artworkInfo.workName,
         results.imageBlobId,

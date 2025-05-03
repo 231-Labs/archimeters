@@ -50,7 +50,7 @@ module archimeters::archimeters {
 
         display.add(
             b"name".to_string(),
-            b"Archimeters".to_string()
+            b"{username}".to_string()
         );
         display.add(
             b"link".to_string(),
@@ -119,12 +119,12 @@ module archimeters::archimeters {
         membership.owner
     }
 
-    public fun add_artlier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
+    public fun add_atelier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
         vec_set::insert(&mut membership.artliers, design_series_id);
     }
 
-    public fun add_bottega_to_membership(membership: &mut MemberShip, bottega_id: ID) {
-        vector::push_back(&mut membership.gallery, bottega_id);
+    public fun add_sculpt_to_membership(membership: &mut MemberShip, sculpt_id: ID) {
+        vector::push_back(&mut membership.gallery, sculpt_id);
     }
 }
 

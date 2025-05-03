@@ -38,6 +38,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
   const [showCursor, setShowCursor] = useState(true);
   const [typingComplete, setTypingComplete] = useState(false);
   const [hasPlayedTyping, setHasPlayedTyping] = useState(false);
+  const [shouldInterruptTyping, setShouldInterruptTyping] = useState(false);
 
   // Reset all states to initial values
   const resetAllStates = () => {
@@ -48,6 +49,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
     setInputStage('username');
     setTypingComplete(false);
     setHasPlayedTyping(false);
+    setShouldInterruptTyping(false);
   };
 
   // Reset states when wallet disconnects
@@ -181,6 +183,14 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
     let currentIndex = 0;
     const typingInterval = setInterval(() => {
+      if (shouldInterruptTyping) {
+        setTypingText(welcomeText);
+        setTypingComplete(true);
+        setHasPlayedTyping(true);
+        clearInterval(typingInterval);
+        return;
+      }
+
       if (currentIndex < welcomeText.length) {
         setTypingText(welcomeText.slice(0, currentIndex + 1));
         currentIndex++;
@@ -192,22 +202,32 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
     }, 30);
 
     return () => clearInterval(typingInterval);
-  }, [walletStatus, inputStage, username, description]);
+  }, [walletStatus, inputStage, username, description, shouldInterruptTyping]);
 
   // Handle keyboard input
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (walletStatus !== 'connected-no-nft') return;
       
+      if (!typingComplete) {
+        setShouldInterruptTyping(true);
+        return;
+      }
+      
       if (e.key === 'Enter') {
         if (inputStage === 'username' && username.trim()) {
           setInputStage('description');
           setHasPlayedTyping(false);
+          setShouldInterruptTyping(false);
           return;
         }
         if (inputStage === 'description') {
+          if (!description.trim()) {
+            return;
+          }
           setInputStage('confirm');
           setHasPlayedTyping(false);
+          setShouldInterruptTyping(false);
           return;
         }
         if (inputStage === 'confirm') {
@@ -237,7 +257,14 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [walletStatus, username, description, inputStage]);
+  }, [walletStatus, username, description, inputStage, typingComplete]);
+
+  // Reset states when input stage changes
+  useEffect(() => {
+    setTypingComplete(false);
+    setHasPlayedTyping(false);
+    setShouldInterruptTyping(false);
+  }, [inputStage]);
 
   // Handle ESC key to cancel minting
   useEffect(() => {
@@ -344,6 +371,13 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
                           username.length < 3 ? 'MINIMUM LENGTH NOT MET (3-20 CHARACTERS)' : 
                           username.length > 20 ? 'MAXIMUM LENGTH EXCEEDED (3-20 CHARACTERS)' : 
                           'VALID CODENAME FORMAT'}
+                    </div>
+                  )}
+                  {inputStage === 'description' && (
+                    <div className="mt-2 text-xs text-white/50">
+                      &gt; {description.length === 0 ? 'WAITING FOR INPUT...' : 
+                          description.length > 100 ? 'MAXIMUM LENGTH EXCEEDED (MAX 100 CHARACTERS)' : 
+                          'VALID BIO FORMAT'}
                     </div>
                   )}
                 </>
