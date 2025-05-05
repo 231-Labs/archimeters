@@ -25,4 +25,9 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 800, height: 600 },
     resizable: true,
   },
+  'vault': {
+    title: 'vault',
+    defaultSize: { width: 800, height: 600 },
+    resizable: true,
+  },
 }; 

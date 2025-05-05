@@ -8,7 +8,9 @@ export type WindowName =
   | 'terminal'        // 終端
   | 'website-upload'  // 網站上傳
   | 'browse'          // 圖片瀏覽
-  | 'atelier-viewer'; // 藝術品查看器
+  | 'atelier-viewer'  // 藝術品查看器
+  | 'vault'           // 用戶資產窗口
+  ; 
 
 export interface WindowPosition {
   x: number;

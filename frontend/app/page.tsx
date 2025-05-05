@@ -16,6 +16,7 @@ import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import Background from '@/components/background_animations/Background';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
+import ValueWindow from '@/components/windows/ValueWindow';
 
 interface Props {
   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
@@ -32,7 +33,7 @@ export default function Home() {
     activeWindow,
     windowPositions,
     windowSizes,
-    windowZIndexes,
+    // windowZIndexes,
     // activateWindow,
     openWindow,
     closeWindow,
@@ -189,6 +190,25 @@ export default function Home() {
                       zIndex={zOrder.indexOf(name) + 1}
                     >
                       <AtelierViewerWindow name={name} />
+                    </Window>
+                  );
+                  case 'vault':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="vault"
+                      position={windowPositions['vault']}
+                      size={windowSizes['vault']}
+                      isActive={activeWindow === 'vault'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                      zIndex={zOrder.indexOf(name) + 1}
+                    >
+                      <ValueWindow name={name} />
                     </Window>
                   );
                 default:

@@ -46,6 +46,7 @@ const Window: React.FC<WindowProps> = ({
   };
 
   return (
+    <>
     <div
       className={`absolute flex flex-col window-shadow retro-border bg-[#0a0a0a] ${
         isActive ? 'ring-1 ring-white/20' : ''
@@ -93,6 +94,7 @@ const Window: React.FC<WindowProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };
 
