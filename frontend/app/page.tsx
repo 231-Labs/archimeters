@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
@@ -26,6 +26,7 @@ export default function Home() {
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [zOrder, setZOrder] = useState<string[]>([]);
+  const atelierViewerRaised = useRef(false);
 
   const {
     openWindows,
@@ -45,10 +46,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (openWindows.includes('atelier-viewer')) {
-      setZOrder((prev) => {
-        return [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer'];
-      });
+    const isAtelierViewerOpen = openWindows.includes('atelier-viewer');
+  
+    if (isAtelierViewerOpen && !atelierViewerRaised.current) {
+      setZOrder((prev) => [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer']);
+      atelierViewerRaised.current = true;
+    }
+  
+    if (!isAtelierViewerOpen) {
+      atelierViewerRaised.current = false;
     }
   }, [openWindows]);
 
