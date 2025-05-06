@@ -8,6 +8,8 @@ interface Atelier {
   title: string;
   author: string;
   price: string;
+  pool: string;
+  publish_time: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -20,7 +22,10 @@ export function useUserAteliers() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchMembershipNFT = async () => {
-    if (!currentAccount?.address) return null;
+    if (!currentAccount?.address) {
+      setError('Please connect your wallet to view your Ateliers.');
+      return null;
+    }
 
     try {
       const { data: objects } = await suiClient.getOwnedObjects({
@@ -36,9 +41,10 @@ export function useUserAteliers() {
       if (objects && objects.length > 0) {
         return objects[0];
       }
+      setError('No Membership NFT found. Please mint your Membership first.');
       return null;
     } catch (error) {
-      console.error('Error fetching membership NFT:', error);
+      setError('Error fetching Membership NFT.');
       return null;
     }
   };
@@ -62,6 +68,10 @@ export function useUserAteliers() {
             title: content.fields.name || '',
             author: content.fields.author || '',
             price: content.fields.price || '',
+            pool: content.fields.pool || '',
+            publish_time: content.fields.publish_time
+              ? new Date(Number(content.fields.publish_time)).toLocaleDateString('en-CA')
+              : '',
             isLoading: false,
             error: null
           } as Atelier;
@@ -97,7 +107,7 @@ export function useUserAteliers() {
           setAteliers([]);
         }
       } catch (error) {
-        setError('Failed to load ateliers');
+        setError('Failed to load ateliers.');
       } finally {
         setIsLoading(false);
       }
@@ -105,6 +115,10 @@ export function useUserAteliers() {
 
     if (currentAccount) {
       loadAteliers();
+    } else {
+      setError('Please connect your wallet to view your Ateliers.');
+      setAteliers([]);
+      setIsLoading(false);
     }
   }, [currentAccount, suiClient]);
 

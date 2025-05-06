@@ -18,6 +18,8 @@ interface Atelier {
   title: string;
   author: string;
   price: string;
+  pool: string;
+  publish_time: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -27,7 +29,7 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
   const [loaded, setLoaded] = useState(false);
 
   if (atelier.isLoading) {
-    return <div className="w-full aspect-square bg-neutral-800/50 animate-pulse rounded-sm" />;
+    return <div className="w-full aspect-square bg-neutral-800/50 rounded-sm" />;
   }
 
   if (atelier.error) {
@@ -46,7 +48,7 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
       ref={ref}
     >
       <div className="relative w-full">
-        <div className="absolute inset-0 bg-neutral-800/50 animate-pulse rounded-sm z-0" />
+        <div className="absolute inset-0 bg-neutral-800/50 rounded-sm z-0" />
         {inView && (
           <Image
             src={`/api/image-proxy?blobId=${atelier.photoBlobId}`}
@@ -63,6 +65,20 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
           />
         )}
+        <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button className="bg-black/70 text-white text-sm font-semibold rounded px-5 py-2 shadow-lg backdrop-blur-sm border border-white/10 hover:bg-black/90 focus:outline-none">
+            Collect Fee
+          </button>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end">
+          <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
+            <div className="flex flex-col text-xs text-white/90">
+              <span className="font-semibold">{atelier.title}</span>
+              <span>Pool: {atelier.pool}</span>
+              <span>Published: {atelier.publish_time}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </button>
   );
@@ -80,13 +96,13 @@ export default function VaultWindow({}: VaultWindowProps) {
           value="gallery"
           className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
         >
-          圖片
+          My Ateliers
         </Tabs.Trigger>
         <Tabs.Trigger
           value="second"
           className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
         >
-          列表
+          My Sculpts
         </Tabs.Trigger>
       </Tabs.List>
 
@@ -96,9 +112,9 @@ export default function VaultWindow({}: VaultWindowProps) {
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : error && !ateliers.length ? (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-              <p className="text-red-500">{error}</p>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full text-white/80">
+              <p className="text-lg mb-2">{error}</p>
             </div>
           ) : !ateliers.length ? (
             <div className="flex flex-col items-center justify-center h-full text-white/80">

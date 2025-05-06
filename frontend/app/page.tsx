@@ -18,6 +18,7 @@ import Background from '@/components/background_animations/Background';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
 
+// TEST ONLY
 // interface Props {
 //   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
 // }
