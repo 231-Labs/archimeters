@@ -1,5 +1,5 @@
-#[allow(unused_field)]
 module archimeters::archimeters {
+
     use std::string::{ String };
     use sui::{
         package,
