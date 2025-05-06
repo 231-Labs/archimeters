@@ -5,10 +5,10 @@ import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
 import { useState } from 'react';
-import { useSeriesImages } from '@/components/features/gallery/hooks/useSeriesImages';
+import { useUserAteliers } from '@/components/features/vault/hooks/useUserAteliers';
 import type { WindowName } from '@/types';
 
-interface BrowseWindowProps {
+interface VaultWindowProps {
   name: WindowName;
 }
 
@@ -68,8 +68,8 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
   );
 };
 
-export default function BrowseWindow({}: BrowseWindowProps) {
-  const { images = [], isLoading = false, error = null } = useSeriesImages();
+export default function VaultWindow({}: VaultWindowProps) {
+  const { ateliers, isLoading, error } = useUserAteliers();
 
   const breakpointColumns = { default: 4, 1400: 3, 1100: 2, 700: 1 };
 
@@ -92,18 +92,18 @@ export default function BrowseWindow({}: BrowseWindowProps) {
 
       <Tabs.Content value="gallery" className="flex-1 overflow-y-auto">
         <div className="p-4">
-          {isLoading && !images.length ? (
+          {isLoading && !ateliers.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : error && !images.length ? (
+          ) : error && !ateliers.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <p className="text-red-500">{error}</p>
             </div>
-          ) : !images.length ? (
+          ) : !ateliers.length ? (
             <div className="flex flex-col items-center justify-center h-full text-white/80">
               <p className="text-lg mb-2">No Atelier Found</p>
-              <p className="text-sm">Be the first one to create an Atelier!</p>
+              <p className="text-sm">Create your first Atelier to get started!</p>
             </div>
           ) : (
             <Masonry
@@ -111,7 +111,7 @@ export default function BrowseWindow({}: BrowseWindowProps) {
               className="flex w-auto -ml-3"
               columnClassName="pl-3 bg-clip-padding"
             >
-              {images.map((atelier) => (
+              {ateliers.map((atelier) => (
                 <div key={atelier.id} className="mb-3">
                   <ImageItem atelier={atelier} />
                 </div>
