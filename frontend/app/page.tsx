@@ -16,11 +16,11 @@ import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import Background from '@/components/background_animations/Background';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
-import ValueWindow from '@/components/windows/ValueWindow';
+import VaultWindow from '@/components/windows/VaultWindow';
 
-interface Props {
-  walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
-}
+// interface Props {
+//   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
+// }
 
 export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
@@ -208,7 +208,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={zOrder.indexOf(name) + 1}
                     >
-                      <ValueWindow name={name} />
+                      <VaultWindow name={name} />
                     </Window>
                   );
                 default:

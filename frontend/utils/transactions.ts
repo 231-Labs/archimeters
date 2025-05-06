@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x3ea35da05e9fd297c9d92039978da467243bdc3713aa1a92d6cb45e72e439c48';
-export const STATE_ID = '0x0f4b582670872010892aa4bfa5546f0663054ef7a39d3bf1c45605708cc03851';
-export const ATELIER_STATE_ID = '0xa26be6e1d68ac761a43dbfb3e638d1ac713432d5fff87ae06b1bb5c8e510070f';
+export const PACKAGE_ID = '0xf560b0620dd21ccab475db492d6f40f3def6223bbd000f2dba0a1b6d89b7d36e';
+export const STATE_ID = '0xbedc24db774b6e7867b7707ef44c843342f12cee0a335bb9a33b6abcb3b4d6a9';
+export const ATELIER_STATE_ID = '0xab5c82476fcec49b484cb4b06e16a47b79fb62ac1c56c978c5eca9a496300621';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export const mintMembership = async (username: string, description: string) => {
