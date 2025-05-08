@@ -5,6 +5,7 @@ export const PACKAGE_ID = '0xf560b0620dd21ccab475db492d6f40f3def6223bbd000f2dba0
 export const STATE_ID = '0xbedc24db774b6e7867b7707ef44c843342f12cee0a335bb9a33b6abcb3b4d6a9';
 export const ATELIER_STATE_ID = '0xab5c82476fcec49b484cb4b06e16a47b79fb62ac1c56c978c5eca9a496300621';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
+export const SUI_CLOCK = '0x6';
 
 export const mintMembership = async (username: string, description: string) => {
   
@@ -48,6 +49,7 @@ export const createArtlier = async (
   return tx;
 };
 
+// TODO: Test this
 export const mintSculpt = async (
   artlierId: string,
   membershipId: string,
@@ -72,3 +74,37 @@ export const mintSculpt = async (
   });
   return tx;
 };
+
+// TODO: Test this
+export const printSculpt = async (
+  sculptId: string,
+  clock: string = SUI_CLOCK,
+) => {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::sculpt::print_sculpt`,
+    arguments: [
+      tx.object(sculptId),
+      tx.object(clock),
+    ],
+  });
+  return tx;
+}
+
+// TODO: test this and implement to frontend
+export const withdrawAtelierPool = async (
+  atelierId: string,
+  cap: string,
+  amount: number,
+) => {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::atelier::withdraw_pool`,
+    arguments: [
+      tx.object(atelierId),
+      tx.object(cap),
+      tx.pure(bcs.u64().serialize(amount).toBytes()),
+    ],
+  });
+  return tx;
+}

@@ -110,12 +110,11 @@ module archimeters::sculpt {
         event::emit(New_sculpt { id: sculpt_id });
     }
 
-    // public entry fun print_sculpt(
-    //     sculpt: &mut Sculpt,
-    //     clock: &clock::Clock,
-    //     ctx: &mut TxContext
-    // ) {
-    //     let sender = tx_context::sender(ctx);
-    //     let now = clock::timestamp_ms(clock);
-    // }
+    public fun print_sculpt(
+        sculpt: &mut Sculpt,
+        clock: &clock::Clock,
+    ) {
+        sculpt.printed = sculpt.printed + 1;
+        sculpt.time = clock::timestamp_ms(clock);
+    }
 }
