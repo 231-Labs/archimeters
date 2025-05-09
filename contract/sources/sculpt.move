@@ -117,4 +117,9 @@ module archimeters::sculpt {
         sculpt.printed = sculpt.printed + 1;
         sculpt.time = clock::timestamp_ms(clock);
     }
+
+    // === Getters ===  
+    public fun get_sculpt_info(sculpt: &Sculpt): (ID, String, String) {
+        (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.structure)
+    }
 }
