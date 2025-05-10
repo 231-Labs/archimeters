@@ -7,6 +7,9 @@ import { useInView } from 'react-intersection-observer';
 import { useState } from 'react';
 import { useUserAteliers } from '@/components/features/vault/hooks/useUserAteliers';
 import type { WindowName } from '@/types';
+import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
+
+const SUI_MIST = 1000000000;
 
 interface VaultWindowProps {
   name: WindowName;
@@ -24,7 +27,7 @@ interface Atelier {
   error: string | null;
 }
 
-const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
+const ImageItem: React.FC<{ atelier: Atelier; reload: () => void }> = ({ atelier, reload }) => {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [loaded, setLoaded] = useState(false);
 
@@ -41,11 +44,12 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
   }
 
   return (
-    <button
+    <div
       className="relative group w-full outline-none transition-all"
       onClick={() => console.log('handleImageClick atelier: ', atelier)}
-      disabled={!atelier.photoBlobId}
       ref={ref}
+      tabIndex={0}
+      role="button"
     >
       <div className="relative w-full">
         <div className="absolute inset-0 bg-neutral-800/50 rounded-sm z-0" />
@@ -57,7 +61,7 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
             height={800}
             quality={90}
             placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/2wCEAAEBAQEBAQEBAQEBAQECAgICAgICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAALCAA4ADgBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z"
+            blurDataURL="data:image/jpeg;base64,/9j/2wCEAAEBAQEBAQEBAQEBAQECAgICAgICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAALCAA4ADgBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z"
             onLoad={() => setLoaded(true)}
             className={`w-full h-auto object-cover rounded-sm shadow-md opacity-0 transition-opacity duration-500 group-hover:scale-[1.02] ${
               loaded ? 'opacity-100' : ''
@@ -66,26 +70,36 @@ const ImageItem: React.FC<{ atelier: Atelier }> = ({ atelier }) => {
           />
         )}
         <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button className="bg-black/70 text-white text-sm font-semibold rounded px-5 py-2 shadow-lg backdrop-blur-sm border border-white/10 hover:bg-black/90 focus:outline-none">
-            Collect Fee
-          </button>
+          <AtelierWithdrawButton
+            atelierId={atelier.id}
+            poolAmount={Number(atelier.pool)}
+            onSuccess={() => {
+              console.log('Withdrawal successful');
+              setTimeout(() => {
+                reload();
+              }, 2000);
+            }}
+            onError={(error) => {
+              console.error('Withdrawal failed:', error);
+            }}
+          />
         </div>
         <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end">
           <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
             <div className="flex flex-col text-xs text-white/90">
               <span className="font-semibold">{atelier.title}</span>
-              <span>Pool: {atelier.pool}</span>
+              <span>Fee Pool: {Number(atelier.pool) / SUI_MIST} SUI</span>
               <span>Published: {atelier.publish_time}</span>
             </div>
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 };
 
 export default function VaultWindow({}: VaultWindowProps) {
-  const { ateliers, isLoading, error } = useUserAteliers();
+  const { ateliers, isLoading, error, reload } = useUserAteliers();
 
   const breakpointColumns = { default: 4, 1400: 3, 1100: 2, 700: 1 };
 
@@ -129,7 +143,7 @@ export default function VaultWindow({}: VaultWindowProps) {
             >
               {ateliers.map((atelier) => (
                 <div key={atelier.id} className="mb-3">
-                  <ImageItem atelier={atelier} />
+                  <ImageItem atelier={atelier} reload={reload} />
                 </div>
               ))}
             </Masonry>

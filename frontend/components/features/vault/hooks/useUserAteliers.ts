@@ -20,6 +20,7 @@ export function useUserAteliers() {
   const [ateliers, setAteliers] = useState<Atelier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadFlag, setReloadFlag] = useState(0);
 
   const fetchMembershipNFT = async () => {
     if (!currentAccount?.address) {
@@ -59,7 +60,7 @@ export function useUserAteliers() {
         }
       });
 
-      return objects.map(object => {
+      const ateliers = objects.map(object => {
         if (object.data?.content) {
           const content = object.data.content as any;
           return {
@@ -78,6 +79,9 @@ export function useUserAteliers() {
         }
         return null;
       }).filter((atelier): atelier is Atelier => atelier !== null);
+
+      console.log('[useUserAteliers] fetchAtelierData result:', ateliers);
+      return ateliers;
     } catch (error) {
       console.error('Error fetching atelier data:', error);
       return [];
@@ -102,6 +106,7 @@ export function useUserAteliers() {
 
         if (atelierIds.length > 0) {
           const ateliers = await fetchAtelierData(atelierIds);
+          console.log('[useUserAteliers] setAteliers:', ateliers);
           setAteliers(ateliers);
         } else {
           setAteliers([]);
@@ -120,11 +125,15 @@ export function useUserAteliers() {
       setAteliers([]);
       setIsLoading(false);
     }
-  }, [currentAccount, suiClient]);
+  }, [currentAccount, suiClient, reloadFlag]);
+
+  // 新增 reload 方法
+  const reload = () => setReloadFlag((f) => f + 1);
 
   return {
     ateliers,
     isLoading,
-    error
+    error,
+    reload,
   };
 } 
