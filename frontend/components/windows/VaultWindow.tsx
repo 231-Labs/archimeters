@@ -4,8 +4,8 @@ import * as Tabs from '@radix-ui/react-tabs';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
-import { useState } from 'react';
-import { useUserAteliers } from '@/components/features/vault/hooks/useUserAteliers';
+import { useState, useEffect } from 'react';
+import { useUserItems } from '@/components/features/vault/hooks/useUserItems';
 import type { WindowName } from '@/types';
 import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
 
@@ -99,36 +99,61 @@ const ImageItem: React.FC<{ atelier: Atelier; reload: () => void }> = ({ atelier
 };
 
 export default function VaultWindow({}: VaultWindowProps) {
-  const { ateliers, isLoading, error, reload } = useUserAteliers();
+  const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>('ateliers');
+
+  const {
+    items: ateliers,
+    isLoading: isLoadingAteliers,
+    error: errorAteliers,
+    reload: reloadAteliers,
+  } = useUserItems('ateliers');
+
+  const {
+    items: sculpts,
+    isLoading: isLoadingSculpts,
+    error: errorSculpts,
+    reload: reloadSculpts,
+  } = useUserItems('sculptures');
+
+  useEffect(() => {
+    console.log('🔁 Active tab changed:', activeTab);
+    if (activeTab === 'sculpts') {
+      console.log('🟢 Tab switched to My Sculpts');
+    }
+  }, [activeTab]);
 
   const breakpointColumns = { default: 4, 1400: 3, 1100: 2, 700: 1 };
 
   return (
-    <Tabs.Root defaultValue="gallery" className="flex flex-col h-full">
+    <Tabs.Root
+      value={activeTab}
+      onValueChange={(val) => setActiveTab(val as 'ateliers' | 'sculpts')}
+      className="flex flex-col h-full"
+    >
       <Tabs.List className="flex space-x-4 border-b border-neutral-700 p-2">
         <Tabs.Trigger
-          value="gallery"
+          value="ateliers"
           className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
         >
           My Ateliers
         </Tabs.Trigger>
         <Tabs.Trigger
-          value="second"
+          value="sculpts"
           className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
         >
           My Sculpts
         </Tabs.Trigger>
       </Tabs.List>
 
-      <Tabs.Content value="gallery" className="flex-1 overflow-y-auto">
+      <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto">
         <div className="p-4">
-          {isLoading && !ateliers.length ? (
+          {isLoadingAteliers && !ateliers.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : error ? (
+          ) : errorAteliers ? (
             <div className="flex flex-col items-center justify-center h-full text-white/80">
-              <p className="text-lg mb-2">{error}</p>
+              <p className="text-lg mb-2">{errorAteliers}</p>
             </div>
           ) : !ateliers.length ? (
             <div className="flex flex-col items-center justify-center h-full text-white/80">
@@ -143,7 +168,7 @@ export default function VaultWindow({}: VaultWindowProps) {
             >
               {ateliers.map((atelier) => (
                 <div key={atelier.id} className="mb-3">
-                  <ImageItem atelier={atelier} reload={reload} />
+                  <ImageItem atelier={atelier} reload={reloadAteliers} />
                 </div>
               ))}
             </Masonry>
@@ -151,8 +176,35 @@ export default function VaultWindow({}: VaultWindowProps) {
         </div>
       </Tabs.Content>
 
-      <Tabs.Content value="second" className="p-4 text-white">
-        <p>列表資訊</p>
+      <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          {isLoadingSculpts && !sculpts.length ? (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+              <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : errorSculpts ? (
+            <div className="flex flex-col items-center justify-center h-full text-white/80">
+              <p className="text-lg mb-2">{errorSculpts}</p>
+            </div>
+          ) : !sculpts.length ? (
+            <div className="flex flex-col items-center justify-center h-full text-white/80">
+              <p className="text-lg mb-2">No Sculpts Found</p>
+              <p className="text-sm">Create your first Sculpt to get started!</p>
+            </div>
+          ) : (
+            <Masonry
+              breakpointCols={breakpointColumns}
+              className="flex w-auto -ml-3"
+              columnClassName="pl-3 bg-clip-padding"
+            >
+              {sculpts.map((sculpt) => (
+                <div key={sculpt.id} className="mb-3">
+                  <ImageItem atelier={sculpt} reload={reloadSculpts} />
+                </div>
+              ))}
+            </Masonry>
+          )}
+        </div>
       </Tabs.Content>
     </Tabs.Root>
   );
