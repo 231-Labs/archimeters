@@ -1,9 +1,9 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xf560b0620dd21ccab475db492d6f40f3def6223bbd000f2dba0a1b6d89b7d36e';
-export const STATE_ID = '0xbedc24db774b6e7867b7707ef44c843342f12cee0a335bb9a33b6abcb3b4d6a9';
-export const ATELIER_STATE_ID = '0xab5c82476fcec49b484cb4b06e16a47b79fb62ac1c56c978c5eca9a496300621';
+export const PACKAGE_ID = '0xe7d3ca646b242748e6be8edfe5661ec776360d189c67cb79ea3a0b7457c9fcd4';
+export const STATE_ID = '0xd02c9bbc116c10cbf19939d7a76d4d6a34681c5c3f7a409ba8eac402a8dd51d4';
+export const ATELIER_STATE_ID = '0x8b52f145ca20f677ee6b6c64cd8e70f0f31120800e78b3f86dd5ae6c671bd5d6';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 export const SUI_CLOCK = '0x6';
 
@@ -49,7 +49,7 @@ export const createArtlier = async (
   return tx;
 };
 
-// TODO: Test this
+
 export const mintSculpt = async (
   artlierId: string,
   membershipId: string,

@@ -27,7 +27,7 @@ module archimeters::archimeters {
         username: String,
         description: String,
         ateliers: VecSet<ID>,
-        sculptures: vector<ID>,
+        sculptures: VecSet<ID>,
         registered_time: u64,
     }
 
@@ -95,7 +95,7 @@ module archimeters::archimeters {
             username,
             description,
             ateliers: vec_set::empty(),
-            sculptures: vector::empty(),
+            sculptures: vec_set::empty(),
             registered_time: now,
         };
 
@@ -124,7 +124,7 @@ module archimeters::archimeters {
     }
 
     public fun add_sculpt_to_membership(membership: &mut MemberShip, sculpt_id: ID) {
-        vector::push_back(&mut membership.sculptures, sculpt_id);
+        vec_set::insert(&mut membership.sculptures, sculpt_id);
     }
 }
 

@@ -45,10 +45,10 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
     }
   };
 
-  const handleWithdraw = async (poolAmount: number, onSuccess?: () => void) => {
+  const handleWithdraw = async (poolAmount: number): Promise<boolean> => {
     if (!currentAccount?.address) {
       setError('Please connect your wallet');
-      return;
+      return false;
     }
 
     try {
@@ -57,7 +57,7 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
 
       const cap = await fetchAtelierCap();
       if (!cap) {
-        return;
+        return false;
       }
 
       const tx = await withdrawAtelierPool(
@@ -66,25 +66,27 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
         poolAmount
       );
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            console.log("Transaction successful:", result);
-            onSuccess?.();
-            return true;
+      return new Promise<boolean>((resolve) => {
+        signAndExecuteTransaction(
+          {
+            transaction: tx as any,
+            chain: 'sui:testnet',
           },
-          onError: (error) => {
-            console.error("Transaction failed:", error);
-            setError('Withdrawal failed');
-            return false;
+          {
+            onSuccess: (result) => {
+              console.log("Transaction successful:", result);
+              resolve(true);
+            },
+            onError: (error) => {
+              console.error("Transaction failed:", error);
+              setError('Withdrawal failed');
+              resolve(false);
+            }
           }
-        }
-      );
+        );
+      });
     } catch (error) {
+      console.error("Error in handleWithdraw:", error);
       setError('Withdrawal failed');
       return false;
     } finally {

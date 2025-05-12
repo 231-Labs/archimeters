@@ -5,9 +5,10 @@ import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
 import { useState, useEffect } from 'react';
-import { useUserItems } from '@/components/features/vault/hooks/useUserItems';
+import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
 import type { WindowName } from '@/types';
 import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
+import { SculptPrintButton } from '@/components/features/vault/components/SculptPrintButton';
 
 const SUI_MIST = 1000000000;
 
@@ -15,19 +16,7 @@ interface VaultWindowProps {
   name: WindowName;
 }
 
-interface Atelier {
-  id: string;
-  photoBlobId: string;
-  title: string;
-  author: string;
-  price: string;
-  pool: string;
-  publish_time: string;
-  isLoading: boolean;
-  error: string | null;
-}
-
-const ImageItem: React.FC<{ atelier: Atelier; reload: () => void }> = ({ atelier, reload }) => {
+const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void }> = ({ atelier, reload }) => {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [loaded, setLoaded] = useState(false);
 
@@ -56,7 +45,10 @@ const ImageItem: React.FC<{ atelier: Atelier; reload: () => void }> = ({ atelier
         {inView && (
           <Image
             src={`/api/image-proxy?blobId=${atelier.photoBlobId}`}
-            alt={atelier.title}
+            alt={atelier.type === 'atelier' 
+              ? (atelier as AtelierItem).title || 'Atelier item'
+              : (atelier as SculptItem).alias || 'Sculpt item'
+            }
             width={1200}
             height={800}
             quality={90}
@@ -70,26 +62,55 @@ const ImageItem: React.FC<{ atelier: Atelier; reload: () => void }> = ({ atelier
           />
         )}
         <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <AtelierWithdrawButton
-            atelierId={atelier.id}
-            poolAmount={Number(atelier.pool)}
-            onSuccess={() => {
-              console.log('Withdrawal successful');
-              setTimeout(() => {
-                reload();
-              }, 2000);
-            }}
-            onError={(error) => {
-              console.error('Withdrawal failed:', error);
-            }}
-          />
+          {atelier.type === 'atelier' ? (
+            <AtelierWithdrawButton
+              atelierId={atelier.id}
+              poolAmount={Number((atelier as AtelierItem).pool)}
+              onSuccess={() => {
+                console.log('Withdrawal successful');
+                setTimeout(() => {
+                  reload();
+                }, 2000);
+              }}
+              onError={(error) => {
+                console.error('Withdrawal failed:', error);
+              }}
+            />
+          ) : (
+            <SculptPrintButton
+              sculptId={atelier.id}
+              onSuccess={() => {
+                console.log('Print success');
+                setTimeout(() => {
+                  reload();
+                }, 2000);
+              }}
+              onError={(error) => {
+                console.error('Print failed:', error);
+              }}
+            />
+          )}
         </div>
         <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end">
           <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
             <div className="flex flex-col text-xs text-white/90">
-              <span className="font-semibold">{atelier.title}</span>
-              <span>Fee Pool: {Number(atelier.pool) / SUI_MIST} SUI</span>
-              <span>Published: {atelier.publish_time}</span>
+              {atelier.type === 'atelier' ? (
+                <>
+                  <span className="font-semibold">{(atelier as AtelierItem).title}</span>
+                  <span>Fee Pool: {Number((atelier as AtelierItem).pool) / SUI_MIST} SUI</span>
+                  <span>Published: {(atelier as AtelierItem).publish_time}</span>
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold">{(atelier as SculptItem).alias}</span>
+                  <span>Creator: {
+                    atelier.type === 'sculpt' && (atelier as SculptItem).creator 
+                      ? `${(atelier as SculptItem).creator.substring(0, 4)}...${(atelier as SculptItem).creator.slice(-4)}`
+                      : 'Unknown'
+                  }</span>
+                  <span>Created: {(atelier as SculptItem).time}</span>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -17,12 +17,18 @@ export function AtelierWithdrawButton({
     atelierId
   });
 
-  const handleClick = async () => {
-    const success = await handleWithdraw(poolAmount, onSuccess);
-    if (success) {
-      onSuccess?.();
-    } else if (error) {
-      onError?.(error);
+  const handleClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // 防止事件冒泡
+    try {
+      const success = await handleWithdraw(poolAmount);
+      if (success) {
+        onSuccess?.();
+      } else if (error) {
+        onError?.(error);
+      }
+    } catch (err) {
+      console.error('Error in withdraw button click handler:', err);
+      onError?.('Transaction processing error');
     }
   };
 
