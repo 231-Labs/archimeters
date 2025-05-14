@@ -12,11 +12,41 @@ import { SculptPrintButton } from '@/components/features/vault/components/Sculpt
 
 const SUI_MIST = 1000000000;
 
+// add mock printers
+const MOCK_PRINTERS = [
+  { id: 'printer-1', name: 'Printer 1', status: 'available', location: 'New York Studio' },
+  { id: 'printer-2', name: 'Printer 2', status: 'available', location: 'Tokyo Studio' },
+  { id: 'printer-3', name: 'Printer 3', status: 'busy', location: 'London Studio' },
+  { id: 'printer-4', name: 'Printer 4', status: 'available', location: 'San Francisco Studio' },
+];
+
 interface VaultWindowProps {
   name: WindowName;
 }
 
-const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void }> = ({ atelier, reload }) => {
+// printer component
+const PrinterCard: React.FC<{ printer: typeof MOCK_PRINTERS[0], onSelect: () => void }> = ({ printer, onSelect }) => {
+  return (
+    <div 
+      onClick={printer.status === 'available' ? onSelect : undefined}
+      className={`relative p-2 rounded-md border border-neutral-700 transition-all ${
+        printer.status === 'available' 
+          ? 'bg-neutral-800/50 hover:bg-neutral-700/50 cursor-pointer' 
+          : 'bg-neutral-900/50 opacity-60 cursor-not-allowed'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className={`w-2 h-2 rounded-full ${printer.status === 'available' ? 'bg-green-500' : 'bg-red-500'}`} />
+          <div className="text-sm">{printer.name}</div>
+        </div>
+        <div className="text-xs text-neutral-500">{printer.location}</div>
+      </div>
+    </div>
+  );
+};
+
+const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void; selectedPrinter?: string | null }> = ({ atelier, reload, selectedPrinter }) => {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [loaded, setLoaded] = useState(false);
 
@@ -79,6 +109,7 @@ const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void }> = ({ ateli
           ) : (
             <SculptPrintButton
               sculptId={atelier.id}
+              printerId={selectedPrinter || undefined}
               onSuccess={() => {
                 console.log('Print success');
                 setTimeout(() => {
@@ -103,7 +134,7 @@ const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void }> = ({ ateli
               ) : (
                 <>
                   <span className="font-semibold">{(atelier as SculptItem).alias}</span>
-                  <span>Creator: {
+                  <span>Artist: {
                     atelier.type === 'sculpt' && (atelier as SculptItem).creator 
                       ? `${(atelier as SculptItem).creator.substring(0, 4)}...${(atelier as SculptItem).creator.slice(-4)}`
                       : 'Unknown'
@@ -121,6 +152,8 @@ const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void }> = ({ ateli
 
 export default function VaultWindow({}: VaultWindowProps) {
   const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>('ateliers');
+  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null);
+  const [showPrinters, setShowPrinters] = useState<boolean>(false);
 
   const {
     items: ateliers,
@@ -144,6 +177,10 @@ export default function VaultWindow({}: VaultWindowProps) {
   }, [activeTab]);
 
   const breakpointColumns = { default: 4, 1400: 3, 1100: 2, 700: 1 };
+
+  const handlePrinterSelect = (printerId: string) => {
+    setSelectedPrinter(printerId);
+  };
 
   return (
     <Tabs.Root
@@ -189,7 +226,7 @@ export default function VaultWindow({}: VaultWindowProps) {
             >
               {ateliers.map((atelier) => (
                 <div key={atelier.id} className="mb-3">
-                  <ImageItem atelier={atelier} reload={reloadAteliers} />
+                  <ImageItem atelier={atelier} reload={reloadAteliers} selectedPrinter={selectedPrinter} />
                 </div>
               ))}
             </Masonry>
@@ -199,6 +236,58 @@ export default function VaultWindow({}: VaultWindowProps) {
 
       <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto">
         <div className="p-4">
+          {/* printer selection area */}
+          <div className="mb-4 bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                {selectedPrinter ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-sm font-medium">
+                      Printer: {MOCK_PRINTERS.find(p => p.id === selectedPrinter)?.name} ({MOCK_PRINTERS.find(p => p.id === selectedPrinter)?.location})
+                    </span>
+                    <button
+                      onClick={() => {
+                        setShowPrinters(!showPrinters);
+                        if (!showPrinters) setSelectedPrinter(null);
+                      }}
+                      className="text-xs text-neutral-400 hover:text-white underline"
+                    >
+                      {showPrinters ? "Cancel" : "Change"}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-sm text-neutral-400">Select a printer to print your sculpture</span>
+                )}
+              </div>
+              
+              {!selectedPrinter && (
+                <button
+                  onClick={() => setShowPrinters(!showPrinters)}
+                  className="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-xs rounded border border-neutral-700"
+                >
+                  {showPrinters ? 'Cancel' : 'Select Printer'}
+                </button>
+              )}
+            </div>
+            
+            {showPrinters && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                {MOCK_PRINTERS.map(printer => (
+                  <PrinterCard
+                    key={printer.id}
+                    printer={printer}
+                    onSelect={() => {
+                      handlePrinterSelect(printer.id);
+                      setShowPrinters(false);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* sculpture display area */}
           {isLoadingSculpts && !sculpts.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
@@ -220,10 +309,26 @@ export default function VaultWindow({}: VaultWindowProps) {
             >
               {sculpts.map((sculpt) => (
                 <div key={sculpt.id} className="mb-3">
-                  <ImageItem atelier={sculpt} reload={reloadSculpts} />
+                  <ImageItem atelier={sculpt} reload={reloadSculpts} selectedPrinter={selectedPrinter} />
                 </div>
               ))}
             </Masonry>
+          )}
+          
+          {!selectedPrinter && sculpts.length > 0 && !showPrinters && (
+            <div className="fixed bottom-4 right-4 bg-neutral-900/90 text-white px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm max-w-xs border border-neutral-800">
+              <div className="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <button 
+                  onClick={() => setShowPrinters(true)}
+                  className="text-xs hover:underline"
+                >
+                  Select a printer to print your sculptures
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </Tabs.Content>

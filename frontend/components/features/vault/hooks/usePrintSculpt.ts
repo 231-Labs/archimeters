@@ -5,9 +5,10 @@ import { SUI_CLOCK } from '@/utils/transactions';
 
 interface UsePrintSculptProps {
   sculptId: string;
+  printerId?: string;
 }
 
-export function usePrintSculpt({ sculptId }: UsePrintSculptProps) {
+export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
@@ -19,10 +20,16 @@ export function usePrintSculpt({ sculptId }: UsePrintSculptProps) {
       return false;
     }
 
+    if (!printerId) {
+      setError('請選擇一台打印機');
+      return false;
+    }
+
     try {
       setIsPrinting(true);
       setError(null);
 
+      console.log(`Using printer ID: ${printerId} to print sculpt ID: ${sculptId}`);
       const tx = await printSculpt(sculptId, SUI_CLOCK);
 
       return new Promise<boolean>((resolve) => {

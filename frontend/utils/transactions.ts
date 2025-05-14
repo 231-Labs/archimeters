@@ -1,10 +1,12 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xe7d3ca646b242748e6be8edfe5661ec776360d189c67cb79ea3a0b7457c9fcd4';
-export const STATE_ID = '0xd02c9bbc116c10cbf19939d7a76d4d6a34681c5c3f7a409ba8eac402a8dd51d4';
-export const ATELIER_STATE_ID = '0x8b52f145ca20f677ee6b6c64cd8e70f0f31120800e78b3f86dd5ae6c671bd5d6';
+export const PACKAGE_ID = '0xae1872684ba5684b43b2dd6a379819f943c68e9366c6c2f77faeb54d485ccc18';
+export const EUREKA_PACKAGE_ID = '0xae1872684ba5684b43b2dd6a379819f943c68e9366c6c2f77faeb54d485ccc18'
+export const STATE_ID = '0x6b0321ef3d599ddc288103dbbddd8a43f86975e8bae6dc0ab41571df04333e17';
+export const ATELIER_STATE_ID = '0x129b1cffcfb7ca90835aeafcd073213a35580674c76af194b4797b61ec51dc7e';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
+export const PRINTER_REGISTRY_TYPE = `${EUREKA_PACKAGE_ID}::eureka::PrinterRegistry`;
 export const SUI_CLOCK = '0x6';
 
 export const mintMembership = async (username: string, description: string) => {
@@ -75,23 +77,6 @@ export const mintSculpt = async (
   return tx;
 };
 
-// TODO: Test this
-export const printSculpt = async (
-  sculptId: string,
-  clock: string = SUI_CLOCK,
-) => {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::sculpt::print_sculpt`,
-    arguments: [
-      tx.object(sculptId),
-      tx.object(clock),
-    ],
-  });
-  return tx;
-}
-
-// TODO: test this and implement to frontend
 export const withdrawAtelierPool = async (
   atelierId: string,
   cap: string,
@@ -104,6 +89,22 @@ export const withdrawAtelierPool = async (
       tx.object(atelierId),
       tx.object(cap),
       tx.pure(bcs.u64().serialize(amount).toBytes()),
+    ],
+  });
+  return tx;
+}
+
+// TODO: This is a mock function, need to implement the real function
+export const printSculpt = async (
+  sculptId: string,
+  clock: string = SUI_CLOCK,
+) => {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::sculpt::print_sculpt`,
+    arguments: [
+      tx.object(sculptId),
+      tx.object(clock),
     ],
   });
   return tx;
