@@ -5,9 +5,10 @@ import { PACKAGE_ID } from '@/utils/transactions';
 
 interface UseAtelierWithdrawProps {
   atelierId: string;
+  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => void;
 }
 
-export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
+export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWithdrawProps) {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const suiClient = useSuiClient();
@@ -16,7 +17,9 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
 
   const fetchAtelierCap = async () => {
     if (!currentAccount?.address) {
-      setError('Please connect your wallet');
+      const errorMessage = 'Please connect your wallet';
+      setError(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
     }
 
@@ -28,7 +31,7 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
         },
         options: {
           showContent: true,
-        }
+        },
       });
 
       for (const object of objects) {
@@ -37,34 +40,37 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
           return object.data?.objectId;
         }
       }
-      setError('No corresponding AtelierCap found');
+      const errorMessage = 'No corresponding AtelierCap found';
+      setError(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed${errorMessage}`);
       return null;
     } catch (error) {
-      setError('Error fetching AtelierCap');
+      const errorMessage = 'Error fetching AtelierCap';
+      setError(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
     }
   };
 
   const handleWithdraw = async (poolAmount: number): Promise<boolean> => {
     if (!currentAccount?.address) {
-      setError('Please connect your wallet');
+      const errorMessage = 'Please connect your wallet';
+      setError(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return false;
     }
 
     try {
       setIsWithdrawing(true);
       setError(null);
+      onStatusChange?.('processing', 'Withdrawal processing...');
 
       const cap = await fetchAtelierCap();
       if (!cap) {
         return false;
       }
 
-      const tx = await withdrawAtelierPool(
-        atelierId,
-        cap,
-        poolAmount
-      );
+      const tx = await withdrawAtelierPool(atelierId, cap, poolAmount);
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(
@@ -75,19 +81,31 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
           {
             onSuccess: (result) => {
               console.log("Transaction successful:", result);
+              onStatusChange?.('success', 'Withdrawal successful!');
               resolve(true);
             },
             onError: (error) => {
               console.error("Transaction failed:", error);
-              setError('Withdrawal failed');
+              let errorMessage = 'Withdrawal failed';
+              if (error.message.includes('wallet')) {
+                errorMessage = 'Wallet not connected';
+              } else if (error.message.includes('AtelierCap')) {
+                errorMessage = 'AtelierCap not found';
+              } else if (error.message.includes('balance')) {
+                errorMessage = 'insufficient balance';
+              }
+              setError(errorMessage);
+              onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
               resolve(false);
-            }
+            },
           }
         );
       });
     } catch (error) {
       console.error("Error in handleWithdraw:", error);
-      setError('Withdrawal failed');
+      const errorMessage = 'Withdrawal failed';
+      setError(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed:${errorMessage}`);
       return false;
     } finally {
       setIsWithdrawing(false);
@@ -97,6 +115,6 @@ export function useAtelierWithdraw({ atelierId }: UseAtelierWithdrawProps) {
   return {
     handleWithdraw,
     isWithdrawing,
-    error
+    error,
   };
-} 
+}

@@ -5,30 +5,34 @@ interface AtelierWithdrawButtonProps {
   poolAmount: number;
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => void;
 }
 
 export function AtelierWithdrawButton({
   atelierId,
   poolAmount,
   onSuccess,
-  onError
+  onError,
+  onStatusChange,
 }: AtelierWithdrawButtonProps) {
-  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({
-    atelierId
-  });
+  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ atelierId });
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // 防止事件冒泡
     try {
+      onStatusChange?.('processing', 'Processing withdrawal...');
       const success = await handleWithdraw(poolAmount);
       if (success) {
         onSuccess?.();
       } else if (error) {
         onError?.(error);
+        onStatusChange?.('error', `Withdrawal failed:${error}`);
       }
     } catch (err) {
       console.error('Error in withdraw button click handler:', err);
-      onError?.('Transaction processing error');
+      const errorMessage = 'Transaction processing error';
+      onError?.(errorMessage);
+      onStatusChange?.('error', `Withdrawal failed:${errorMessage}`);
     }
   };
 
@@ -39,6 +43,6 @@ export function AtelierWithdrawButton({
       disabled={isWithdrawing || poolAmount <= 0}
     >
       {isWithdrawing ? 'Processing...' : 'Collect Fee'}
-    </button>
+      </button>
   );
 } 
