@@ -6,42 +6,42 @@ import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
 import { useState, useEffect } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
+import { usePrinters, Printer } from '@/components/features/vault/hooks/usePrinters';
 import type { WindowName } from '@/types';
 import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
 import { SculptPrintButton } from '@/components/features/vault/components/SculptPrintButton';
 
 const SUI_MIST = 1000000000;
 
-// add mock printers
-const MOCK_PRINTERS = [
-  { id: 'printer-1', name: 'Printer 1', status: 'available', location: 'New York Studio' },
-  { id: 'printer-2', name: 'Printer 2', status: 'available', location: 'Tokyo Studio' },
-  { id: 'printer-3', name: 'Printer 3', status: 'busy', location: 'London Studio' },
-  { id: 'printer-4', name: 'Printer 4', status: 'available', location: 'San Francisco Studio' },
-];
-
 interface VaultWindowProps {
   name: WindowName;
 }
 
 // printer component
-const PrinterCard: React.FC<{ printer: typeof MOCK_PRINTERS[0], onSelect: () => void }> = ({ printer, onSelect }) => {
+const PrinterCard: React.FC<{ printer: Printer, onSelect: () => void }> = ({ printer, onSelect }) => {
   return (
     <div 
-      onClick={printer.status === 'available' ? onSelect : undefined}
-      className={`relative p-2 rounded-md border border-neutral-700 transition-all ${
-        printer.status === 'available' 
-          ? 'bg-neutral-800/50 hover:bg-neutral-700/50 cursor-pointer' 
-          : 'bg-neutral-900/50 opacity-60 cursor-not-allowed'
+      onClick={printer.online ? onSelect : undefined}
+      className={`p-3 border border-neutral-700 rounded-md transition-colors flex flex-col w-full h-full shadow-sm ${
+        printer.online 
+          ? 'bg-neutral-800 hover:bg-neutral-700 cursor-pointer' 
+          : 'bg-neutral-900/80 opacity-70 cursor-not-allowed'
       }`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${printer.status === 'available' ? 'bg-green-500' : 'bg-red-500'}`} />
-          <div className="text-sm">{printer.name}</div>
+          <div className={`w-2.5 h-2.5 rounded-full ${printer.online ? 'bg-green-500' : 'bg-neutral-500'}`} />
+          <div className="text-sm font-medium truncate">{printer.alias || 'Unknown Printer'}</div>
         </div>
-        <div className="text-xs text-neutral-500">{printer.location}</div>
+        <div className={`text-xs px-1.5 py-0.5 rounded ${
+          printer.online 
+            ? 'bg-green-900/30 text-green-400' 
+            : 'bg-neutral-800/70 text-neutral-500'
+        }`}>
+          {printer.online ? 'Online' : 'Offline'}
+        </div>
       </div>
+      <div className="text-xs text-neutral-500 truncate mt-1">ID: {printer.id.substring(0, 6)}...{printer.id.slice(-6)}</div>
     </div>
   );
 };
@@ -83,7 +83,7 @@ const ImageItem: React.FC<{ atelier: VaultItem; reload: () => void; selectedPrin
             height={800}
             quality={90}
             placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/2wCEAAEBAQEBAQEBAQEBAQECAgICAgICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAALCAA4ADgBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z"
+            blurDataURL="data:image/jpeg;base64,/9j/2wCEAAEBAQEBAQEBAQEBAQECAgICAgICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAALCAA4ADgBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z"
             onLoad={() => setLoaded(true)}
             className={`w-full h-auto object-cover rounded-sm shadow-md opacity-0 transition-opacity duration-500 group-hover:scale-[1.02] ${
               loaded ? 'opacity-100' : ''
@@ -169,10 +169,28 @@ export default function VaultWindow({}: VaultWindowProps) {
     reload: reloadSculpts,
   } = useUserItems('sculptures');
 
+  const {
+    printers,
+    isLoading: isLoadingPrinters,
+    error: errorPrinters,
+    reload: reloadPrinters,
+  } = usePrinters();
+
+  // 在控制台輸出打印機列表，用於調試
+  useEffect(() => {
+    console.log('Available printers in VaultWindow:', printers);
+  }, [printers]);
+
+  // 選中打印機數據轉化
+  const selectedPrinterData = selectedPrinter 
+    ? printers.find(p => p.id === selectedPrinter) 
+    : null;
+
   useEffect(() => {
     console.log('🔁 Active tab changed:', activeTab);
     if (activeTab === 'sculpts') {
       console.log('🟢 Tab switched to My Sculpts');
+      reloadPrinters();
     }
   }, [activeTab]);
 
@@ -244,7 +262,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                     <span className="text-sm font-medium">
-                      Printer: {MOCK_PRINTERS.find(p => p.id === selectedPrinter)?.name} ({MOCK_PRINTERS.find(p => p.id === selectedPrinter)?.location})
+                      Printer: {selectedPrinterData?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
                     </span>
                     <button
                       onClick={() => {
@@ -272,17 +290,42 @@ export default function VaultWindow({}: VaultWindowProps) {
             </div>
             
             {showPrinters && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                {MOCK_PRINTERS.map(printer => (
-                  <PrinterCard
-                    key={printer.id}
-                    printer={printer}
-                    onSelect={() => {
-                      handlePrinterSelect(printer.id);
-                      setShowPrinters(false);
-                    }}
-                  />
-                ))}
+              <div className="mt-3">
+                {isLoadingPrinters ? (
+                  <div className="p-4 text-center">
+                    <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-neutral-400">Loading printers...</p>
+                  </div>
+                ) : errorPrinters ? (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-red-400">{errorPrinters}</p>
+                    <button 
+                      onClick={reloadPrinters}
+                      className="mt-2 text-xs text-neutral-400 hover:text-white underline"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : printers.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-neutral-400">No printers available</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {printers.map(printer => (
+                      <PrinterCard
+                        key={printer.id}
+                        printer={printer}
+                        onSelect={() => {
+                          if (printer.online) {
+                            handlePrinterSelect(printer.id);
+                            setShowPrinters(false);
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -21,7 +21,7 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
     }
 
     if (!printerId) {
-      setError('請選擇一台打印機');
+      setError('Please select a printer');
       return false;
     }
 
@@ -30,7 +30,7 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
       setError(null);
 
       console.log(`Using printer ID: ${printerId} to print sculpt ID: ${sculptId}`);
-      const tx = await printSculpt(sculptId, SUI_CLOCK);
+      const tx = await printSculpt(sculptId, SUI_CLOCK, printerId);
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(
