@@ -18,21 +18,28 @@ export function AtelierWithdrawButton({
   const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ atelierId });
 
   const handleClick = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // 防止事件冒泡
+    e.stopPropagation(); // Prevent event bubbling
     try {
       onStatusChange?.('processing', 'Processing withdrawal...');
       const success = await handleWithdraw(poolAmount);
       if (success) {
         onSuccess?.();
       } else if (error) {
+        // Check if user cancelled the transaction
+        const errorMsg = error.toLowerCase();
+        if (errorMsg.includes('transaction cancelled') || 
+            errorMsg.includes('user rejected') ||
+            errorMsg.includes('user denied')) {
+          onStatusChange?.('error', 'Transaction cancelled');
+        } else {
+          onStatusChange?.('error', `Withdrawal failed: ${error}`);
+        }
         onError?.(error);
-        onStatusChange?.('error', `Withdrawal failed:${error}`);
       }
     } catch (err) {
-      console.error('Error in withdraw button click handler:', err);
-      const errorMessage = 'Transaction processing error';
+      const errorMessage = err instanceof Error ? err.message : 'Transaction processing error';
       onError?.(errorMessage);
-      onStatusChange?.('error', `Withdrawal failed:${errorMessage}`);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
     }
   };
 

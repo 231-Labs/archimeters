@@ -98,22 +98,9 @@ export const withdrawAtelierPool = async (
 export const printSculpt = async (
   sculptId: string,
   clock: string = SUI_CLOCK,
-  printerId?: string,
+  // printerId?: string,
 ) => {
   const tx = new Transaction();
-  
-  // 如果提供了 printerId，則使用特定的打印機
-  if (printerId) {
-    tx.moveCall({
-      target: `${PACKAGE_ID}::sculpt::print_sculpt_with_printer`,
-      arguments: [
-        tx.object(sculptId),
-        tx.object(printerId),
-        tx.object(clock),
-      ],
-    });
-  } else {
-    // 向後兼容的原始函數，沒有指定打印機
     tx.moveCall({
       target: `${PACKAGE_ID}::sculpt::print_sculpt`,
       arguments: [
@@ -121,7 +108,6 @@ export const printSculpt = async (
         tx.object(clock),
       ],
     });
-  }
   
   return tx;
 }

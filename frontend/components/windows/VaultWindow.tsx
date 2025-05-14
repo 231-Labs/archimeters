@@ -4,7 +4,7 @@ import * as Tabs from '@radix-ui/react-tabs';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
 import { usePrinters, Printer } from '@/components/features/vault/hooks/usePrinters';
 import type { WindowName } from '@/types';
@@ -50,7 +50,7 @@ const ImageItem: React.FC<{
   atelier: VaultItem;
   reload: () => void;
   selectedPrinter?: string | null;
-  onWithdrawStatusChange: (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => void;
+  onWithdrawStatusChange: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }> = ({ atelier, reload, selectedPrinter, onWithdrawStatusChange }) => {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [loaded, setLoaded] = useState(false);
@@ -122,18 +122,18 @@ const ImageItem: React.FC<{
               sculptId={atelier.id}
               printerId={selectedPrinter || undefined}
               onSuccess={() => {
-                onWithdrawStatusChange('success', 'Print success');
                 setTimeout(() => {
                   reload();
                   onWithdrawStatusChange('idle');
-                }, 2000);
+                }, 5000);
               }}
               onError={(error) => {
-                onWithdrawStatusChange('error', `Print failed:${error}`);
+                onWithdrawStatusChange('error', `Print failed: ${error}`);
                 setTimeout(() => {
                   onWithdrawStatusChange('idle');
                 }, 5000);
               }}
+              onStatusChange={(status, message, txDigest) => onWithdrawStatusChange(status, message, txDigest)}
             />
           )}
         </div>
@@ -172,6 +172,10 @@ export default function VaultWindow({}: VaultWindowProps) {
   const [showPrinters, setShowPrinters] = useState<boolean>(false);
   const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [withdrawMessage, setWithdrawMessage] = useState<string>('');
+  const [txDigest, setTxDigest] = useState<string | null>(null);
+  
+  // Adding timeout handler reference
+  const processingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     items: ateliers,
@@ -194,12 +198,7 @@ export default function VaultWindow({}: VaultWindowProps) {
     reload: reloadPrinters,
   } = usePrinters();
 
-  // 在控制台輸出打印機列表，用於調試
-  useEffect(() => {
-    console.log('Available printers in VaultWindow:', printers);
-  }, [printers]);
-
-  // 選中打印機數據轉化
+  // Selected printer data
   const selectedPrinterData = selectedPrinter 
     ? printers.find(p => p.id === selectedPrinter) 
     : null;
@@ -218,10 +217,57 @@ export default function VaultWindow({}: VaultWindowProps) {
     setSelectedPrinter(printerId);
   };
 
-  const handleWithdrawStatusChange = (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => {
-    setWithdrawStatus(status);
-    setWithdrawMessage(message || '');
+  const handleWithdrawStatusChange = (status: 'idle' | 'processing' | 'success' | 'error', message?: string, digest?: string) => {
+    // Clear previous timer (if exists)
+    if (processingTimerRef.current) {
+      clearTimeout(processingTimerRef.current);
+      processingTimerRef.current = null;
+    }
+    
+    // Force UI update by using setTimeout
+    setTimeout(() => {
+      setWithdrawStatus(status);
+      
+      // Ensure we always have a message
+      let displayMessage = message || '';
+      if (!displayMessage) {
+        if (status === 'processing') displayMessage = 'Processing transaction...';
+        else if (status === 'success') displayMessage = 'Transaction successful!';
+        else if (status === 'error') displayMessage = 'Transaction failed';
+      }
+      
+      // Check for rejection messages
+      if (status === 'error' && displayMessage.toLowerCase().includes('cancelled')) {
+        displayMessage = 'Transaction cancelled by user';
+      }
+      
+      setWithdrawMessage(displayMessage);
+      
+      if (digest) {
+        setTxDigest(digest);
+      } else if (status === 'idle') {
+        setTxDigest(null);
+      }
+      
+      // If status is processing, set 30 second timeout
+      if (status === 'processing') {
+        processingTimerRef.current = setTimeout(() => {
+          setWithdrawStatus('error');
+          setWithdrawMessage('Transaction timed out. Please try again later.');
+          processingTimerRef.current = null;
+        }, 30000); // 30 second timeout
+      }
+    }, 0);
   };
+
+  // Clear timer when component unmounts
+  useEffect(() => {
+    return () => {
+      if (processingTimerRef.current) {
+        clearTimeout(processingTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -283,7 +329,7 @@ export default function VaultWindow({}: VaultWindowProps) {
 
       <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto">
         <div className="p-4">
-          {/* printer selection area */}
+          {/* Printer selection area */}
           <div className="mb-4 bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
@@ -359,7 +405,7 @@ export default function VaultWindow({}: VaultWindowProps) {
             )}
           </div>
           
-          {/* sculpture display area */}
+          {/* Sculpture display area */}
           {isLoadingSculpts && !sculpts.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
@@ -422,21 +468,21 @@ export default function VaultWindow({}: VaultWindowProps) {
         </Tabs.Content>
       </Tabs.Root>
 
-      {/* 提現狀態通知 */}
+      {/* Transaction status notification */}
       {withdrawStatus !== 'idle' && (
-        <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg z-50">
           <div className="flex flex-col gap-2">
-            {/* 處理中 */}
+            {/* Processing */}
             {withdrawStatus === 'processing' && (
               <div className="flex items-center gap-3">
                 <div className="relative w-4 h-4">
                   <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
                   <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
                 </div>
-                <span className="text-white/90 text-sm font-mono tracking-wider">processing...</span>
+                <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Processing...'}</span>
               </div>
             )}
-            {/* 成功 */}
+            {/* Success */}
             {withdrawStatus === 'success' && (
               <div className="flex items-center gap-3">
                 <div className="relative w-4 h-4">
@@ -445,10 +491,22 @@ export default function VaultWindow({}: VaultWindowProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage}</span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage}</span>
+                  {txDigest && (
+                    <a
+                      href={`https://suiexplorer.com/txblock/${txDigest}?network=testnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+                    >
+                      View Transaction
+                    </a>
+                  )}
+                </div>
               </div>
             )}
-            {/* 失敗 */}
+            {/* Fail */}
             {withdrawStatus === 'error' && (
               <div className="flex items-center gap-3">
                 <div className="relative w-4 h-4">
@@ -457,7 +515,16 @@ export default function VaultWindow({}: VaultWindowProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage}</span>
+                <div className="flex flex-col">
+                  <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Transaction failed'}</span>
+                  {/* Add close button */}
+                  <button 
+                    onClick={() => handleWithdrawStatusChange('idle')}
+                    className="text-xs text-white/50 hover:text-white/80 transition-colors underline self-start mt-1"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             )}
           </div>

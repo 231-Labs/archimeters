@@ -11,26 +11,32 @@ interface UsePrintSculptProps {
 export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<'idle' | 'preparing' | 'printing' | 'success' | 'error'>('idle');
+  const [txDigest, setTxDigest] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const handlePrint = async (): Promise<boolean> => {
     if (!currentAccount?.address) {
       setError('Please connect your wallet');
+      setStatus('error');
       return false;
     }
 
     if (!printerId) {
       setError('Please select a printer');
+      setStatus('error');
       return false;
     }
 
     try {
       setIsPrinting(true);
       setError(null);
+      setStatus('preparing');
 
-      console.log(`Using printer ID: ${printerId} to print sculpt ID: ${sculptId}`);
-      const tx = await printSculpt(sculptId, SUI_CLOCK, printerId);
+      const tx = await printSculpt(sculptId, SUI_CLOCK);
+      
+      setStatus('printing');
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(
@@ -40,12 +46,24 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
           },
           {
             onSuccess: (result) => {
-              console.log("Print success:", result);
+              setStatus('success');
+              setTxDigest(result.digest);
               resolve(true);
             },
             onError: (error) => {
               console.error("Print failed:", error);
-              setError('Print failed');
+              const errorMsg = error.message || 'Print transaction failed';
+              const isUserRejection = 
+                errorMsg.includes('User rejected') || 
+                errorMsg.includes('User denied') || 
+                errorMsg.includes('cancelled') || 
+                errorMsg.includes('canceled') ||
+                errorMsg.includes('rejected');
+              
+              const finalErrorMsg = isUserRejection ? 'Transaction cancelled by user' : errorMsg;
+              setError(finalErrorMsg);
+              setStatus('error');
+              setIsPrinting(false);
               resolve(false);
             }
           }
@@ -53,7 +71,8 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
       });
     } catch (error) {
       console.error("Print failed:", error);
-      setError('Print failed');
+      setError(error instanceof Error ? error.message : 'Print preparation failed');
+      setStatus('error');
       return false;
     } finally {
       setIsPrinting(false);
@@ -63,6 +82,8 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
   return {
     handlePrint,
     isPrinting,
-    error
+    status,
+    error,
+    txDigest
   };
 } 

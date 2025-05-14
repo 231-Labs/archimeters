@@ -80,7 +80,6 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
           },
           {
             onSuccess: (result) => {
-              console.log("Transaction successful:", result);
               onStatusChange?.('success', 'Withdrawal successful!');
               resolve(true);
             },
@@ -93,9 +92,16 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
                 errorMessage = 'AtelierCap not found';
               } else if (error.message.includes('balance')) {
                 errorMessage = 'insufficient balance';
+              } else if (error.message.includes('User rejected') || 
+                         error.message.includes('User denied') || 
+                         error.message.includes('cancelled') || 
+                         error.message.includes('canceled') ||
+                         error.message.includes('rejected')) {
+                errorMessage = 'Transaction cancelled';
               }
               setError(errorMessage);
               onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
+              setIsWithdrawing(false);
               resolve(false);
             },
           }
