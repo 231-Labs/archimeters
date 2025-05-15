@@ -25,6 +25,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "framer-motion": "^12.4.1",
+    "lodash": "^4.17.21",
     "next": "^14.2.27",
     "react": "^18",
     "react-dom": "^18",
@@ -37,6 +38,7 @@
     "xterm-addon-fit": "^0.8.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.16",
     "@types/node": "^20",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",

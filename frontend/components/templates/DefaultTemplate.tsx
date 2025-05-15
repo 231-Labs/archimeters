@@ -1,3 +1,5 @@
+'use client';
+
 import { ReactNode } from 'react';
 
 export interface TemplateProps {
@@ -8,7 +10,7 @@ export interface TemplateProps {
   social: string;
   intro: string;
   imageUrl: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, { type: string; default: any; label?: string; min?: number; max?: number; step?: number }>;
   previewParams: Record<string, any>;
   onParameterChange: (key: string, value: string | number) => void;
   onMint: () => Promise<void>;
@@ -51,8 +53,14 @@ export default function DefaultTemplate({
             <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
             <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
 
-            <div className="relative h-full bg-black/70 border border-white/10">
-              {preview3D}
+            <div className="relative w-full h-full bg-black/70 border border-white/10" style={{ minHeight: '400px' }}>
+              {preview3D ? (
+                preview3D
+              ) : (
+                <div className="flex h-full items-center justify-center text-white/50">
+                  No 3D preview available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -66,14 +74,18 @@ export default function DefaultTemplate({
                 {/* 主視覺圖 */}
                 <div className="w-1/2">
                   <div className="relative aspect-square bg-black/70 border border-white/10 overflow-hidden">
-                    {imageUrl && (
+                    {imageUrl ? (
                       <div className="relative group h-full">
-                        <img 
-                          src={imageUrl} 
+                        <img
+                          src={imageUrl}
                           alt={workName}
                           className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-white/50">
+                        No image available
                       </div>
                     )}
                   </div>
@@ -82,18 +94,14 @@ export default function DefaultTemplate({
                 {/* 作品描述 */}
                 <div className="w-1/2">
                   <h2 className="text-lg font-semibold mb-2 text-white/90">Artwork Description</h2>
-                  <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
-                    {description}
-                  </p>
+                  <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{description}</p>
                 </div>
               </div>
 
               {/* 藝術家介紹 */}
               <div className="border-t border-white/10 pt-6">
                 <h2 className="text-lg font-semibold mb-2 text-white/90">Artist Statement</h2>
-                <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">
-                  {intro}
-                </p>
+                <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{intro}</p>
               </div>
             </div>
           </div>
@@ -159,14 +167,14 @@ export default function DefaultTemplate({
                           max={paramDef.max || 100}
                           step={paramDef.step || 1}
                           value={previewParams[key] ?? paramDef.default}
-                          onChange={(e) => onParameterChange(key, e.target.value)}
+                          onChange={(e) => onParameterChange(key, Number(e.target.value))}
                           className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:hover:bg-white [&::-webkit-slider-thumb]:transition-colors [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white/80 [&::-moz-range-thumb]:hover:bg-white [&::-moz-range-thumb]:transition-colors [&::-moz-range-thumb]:border-0"
                         />
                         <input
                           type="number"
                           value={previewParams[key] ?? paramDef.default}
                           onChange={(e) => {
-                            const value = e.target.value === '' ? '' : Number(e.target.value);
+                            const value = e.target.value === '' ? paramDef.default : Number(e.target.value);
                             onParameterChange(key, value);
                           }}
                           className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
@@ -186,7 +194,7 @@ export default function DefaultTemplate({
                           input?.click();
                         }}
                       >
-                        <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }}></div>
+                        <div className="absolute inset-0" style={{ backgroundColor: previewParams[key] || paramDef.default }} />
                       </button>
                       <input
                         type="color"
@@ -228,7 +236,6 @@ export default function DefaultTemplate({
                   </span>
                 </div>
               </div>
-              
               <div className="relative group">
                 <button 
                   onClick={onMint}
@@ -236,8 +243,12 @@ export default function DefaultTemplate({
                   className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/10"
                 >
                   <div className="flex flex-col items-center">
-                    <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">Mint NFT</span>
-                    <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">Initialize Artwork</span>
+                    <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">
+                      Mint NFT
+                    </span>
+                    <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">
+                      Initialize Artwork
+                    </span>
                   </div>
                 </button>
                 {mintButtonState.tooltipComponent}
