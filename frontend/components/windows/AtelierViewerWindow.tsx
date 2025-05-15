@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { mintSculpt } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { MEMBERSHIP_TYPE } from '@/utils/transactions';
+import { debounce } from 'lodash';
 
 interface AtelierViewerWindowProps {
   name: WindowName;
@@ -61,32 +62,37 @@ export default function AtelierViewerWindow({
   const [suiBalance, setSuiBalance] = useState<bigint>(BigInt(0));
   const [mintButtonState, setMintButtonState] = useState<MintButtonState>({
     disabled: true,
-    tooltip: 'Please connect your wallet'
+    tooltip: 'Please connect your wallet',
   });
 
+  // 默認占位圖 URL
+  const DEFAULT_IMAGE_URL = '/placeholder-image.png'; // 確保在 public 目錄下有一個占位圖
+
   // Fetch image from Walrus storage
-  const fetchImageFromWalrus = async (blobId: string) => {
+  const fetchImageFromWalrus = async (blobId: string): Promise<string> => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
       if (!response.ok) {
-        throw new Error('Failed to load image');
+        throw new Error(`Failed to load image: ${response.statusText}`);
       }
       const blob = await response.blob();
-      return URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      return url;
     } catch (err) {
       console.error('Error loading image:', err);
-      throw err;
+      return DEFAULT_IMAGE_URL; // 返回占位圖
     }
   };
 
   // Fetch algorithm content from Walrus storage
-  const fetchAlgorithmFromWalrus = async (blobId: string) => {
+  const fetchAlgorithmFromWalrus = async (blobId: string): Promise<string> => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
       if (!response.ok) {
-        throw new Error('Failed to load algorithm');
+        throw new Error(`Failed to load algorithm: ${response.statusText}`);
       }
-      return await response.text();
+      const text = await response.text();
+      return text;
     } catch (err) {
       console.error('Error loading algorithm:', err);
       throw err;
@@ -94,14 +100,15 @@ export default function AtelierViewerWindow({
   };
 
   // Fetch configuration data from Walrus storage
-  const fetchConfigDataFromWalrus = async (blobId: string) => {
+  const fetchConfigDataFromWalrus = async (blobId: string): Promise<any> => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
       if (!response.ok) {
-        throw new Error('Failed to load config data');
+        throw new Error(`Failed to load config data: ${response.statusText}`);
       }
       const configText = await response.text();
-      return JSON.parse(configText);
+      const config = JSON.parse(configText);
+      return config;
     } catch (err) {
       console.error('Error loading config data:', err);
       throw err;
@@ -325,10 +332,12 @@ export default function AtelierViewerWindow({
   useEffect(() => {
     const fetchAtelierData = async () => {
       try {
-        // Read atelier data from sessionStorage
+        setIsLoading(true);
+        setError(null);
+
         const storedAtelier = sessionStorage.getItem('selected-atelier');
         if (!storedAtelier) {
-          throw new Error('No atelier data found');
+          throw new Error('No atelier data found in sessionStorage');
         }
 
         const parsedAtelier = JSON.parse(storedAtelier);
@@ -336,21 +345,27 @@ export default function AtelierViewerWindow({
 
         // Fetch all required data concurrently
         const [imageUrl, algorithmContent, configData] = await Promise.all([
-          fetchImageFromWalrus(parsedAtelier.photoBlobId),
-          fetchAlgorithmFromWalrus(parsedAtelier.algorithmBlobId),
-          fetchConfigDataFromWalrus(parsedAtelier.dataBlobId)
+          fetchImageFromWalrus(parsedAtelier.photoBlobId).catch(() => {
+            return DEFAULT_IMAGE_URL;
+          }),
+          fetchAlgorithmFromWalrus(parsedAtelier.algorithmBlobId).catch((err) => {
+            return null;
+          }),
+          fetchConfigDataFromWalrus(parsedAtelier.dataBlobId).catch((err) => {
+            return null;
+          }),
         ]);
 
         // Update state
-        setAtelier(prev => ({
+        setAtelier((prev) => ({
           ...prev!,
           url: imageUrl,
           algorithmContent,
           configData,
-          description: configData.artwork?.description,
-          artistStatement: configData.artist?.introduction,
-          artistName: configData.artist?.name,
-          artistAddress: configData.artist?.address
+          description: configData?.artwork?.description || '',
+          artistStatement: configData?.artist?.introduction || '',
+          artistName: configData?.artist?.name || prev!.author,
+          artistAddress: configData?.artist?.address || '',
         }));
 
         // If there's configData, set parameters
@@ -385,33 +400,44 @@ export default function AtelierViewerWindow({
 
     // Cleanup function
     return () => {
-      if (atelier?.url) {
-        URL.revokeObjectURL(atelier.url);
+      if (atelier?.url && atelier.url !== DEFAULT_IMAGE_URL) {
+        setTimeout(() => URL.revokeObjectURL(atelier.url!), 1000);
       }
     };
   }, [processSceneFile]);
 
   // Handle parameter changes from UI controls
-  const handleParameterChange = useCallback((key: string, value: string | number) => {
-    console.log('Parameter change:', key, value);
-    setPreviewParams(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  }, []);
+  const handleParameterChange = useCallback(
+    debounce((key: string, value: string | number) => {
+      console.log('Parameter change:', key, value);
+      setPreviewParams((prev) => {
+        if (prev[key] === value) return prev;
+        return { ...prev, [key]: value };
+      });
+    }, 0),
+    []
+  );
+  
+  // Stabilize userScript
+  const userScript = useMemo(() => {
+    if (!atelier?.algorithmContent) {
+      console.warn('No algorithm content available for userScript');
+      return null;
+    }
+    return {
+      code: atelier.algorithmContent,
+      filename: `algorithm_${atelier?.id || 'default'}.js`,
+    };
+  }, [atelier?.algorithmContent, atelier?.id]);
 
-  // Memoize the ParametricViewer component props
   const viewerProps = useMemo(() => {
     console.log('Updating viewer props:', {
-      hasAlgorithm: !!atelier?.algorithmContent,
-      parameters: previewParams
+      hasAlgorithm: !!userScript,
+      parameters: previewParams,
     });
 
     return {
-      userScript: atelier?.algorithmContent ? {
-        code: atelier.algorithmContent,
-        filename: `algorithm_${atelier.id}.js` // Use unique filename
-      } : null,
+      userScript,
       parameters: previewParams,
       onSceneReady: (scene: THREE.Scene) => {
         console.log('Scene ready in AtelierViewer');
@@ -426,7 +452,7 @@ export default function AtelierViewerWindow({
         cameraRef.current = camera;
       }
     };
-  }, [atelier?.algorithmContent, atelier?.id, previewParams]);
+  }, [userScript, previewParams]);
 
   // Monitor scene state
   useEffect(() => {
@@ -435,9 +461,10 @@ export default function AtelierViewerWindow({
       hasRenderer: !!rendererRef.current,
       hasCamera: !!cameraRef.current,
       hasAlgorithm: !!atelier?.algorithmContent,
-      parameters: previewParams
+      parameters: previewParams,
+      imageUrl: atelier?.url,
     });
-  }, [atelier?.algorithmContent, previewParams]);
+  }, [atelier?.algorithmContent, atelier?.url, previewParams]);
 
   // 添加上傳到 Walrus 的通用函數
   const uploadToWalrus = async (file: File, fileType: string): Promise<string> => {
