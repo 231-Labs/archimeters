@@ -17,7 +17,16 @@ export function SculptPrintButton({
 }: SculptPrintButtonProps) {
   const { handlePrint, isPrinting, error, txDigest } = usePrintSculpt({
     sculptId,
-    printerId
+    printerId,
+    onStatusChange: onStatusChange 
+      ? (status, message, txDigest) => {
+          // 將 'preparing' 和 'printing' 映射為 'processing'
+          const mappedStatus = status === 'preparing' || status === 'printing' 
+            ? 'processing' 
+            : status;
+          onStatusChange(mappedStatus, message, txDigest);
+        } 
+      : undefined
   });
 
   const handleClick = async (e: React.MouseEvent) => {
@@ -32,7 +41,9 @@ export function SculptPrintButton({
       
       if (success) {
         if (onStatusChange) {
-          onStatusChange('success', 'Print transaction successful', txDigest || undefined);
+          setTimeout(() => {
+            onStatusChange('success', 'Print transaction successful', txDigest || undefined);
+          }, 100);
         }
         onSuccess?.();
       } else if (error) {

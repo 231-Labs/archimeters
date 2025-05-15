@@ -6,9 +6,10 @@ import { SUI_CLOCK } from '@/utils/transactions';
 interface UsePrintSculptProps {
   sculptId: string;
   printerId?: string;
+  onStatusChange?: (status: 'idle' | 'preparing' | 'printing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }
 
-export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
+export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrintSculptProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'preparing' | 'printing' | 'success' | 'error'>('idle');
@@ -48,21 +49,23 @@ export function usePrintSculpt({ sculptId, printerId }: UsePrintSculptProps) {
             onSuccess: (result) => {
               setStatus('success');
               setTxDigest(result.digest);
+              if (result?.digest) {
+                console.log(`Print successful! (tx: ${result.digest})`);
+                onStatusChange?.('success', `Print successful! (tx: ${result.digest})`, result.digest);
+              } else {
+                onStatusChange?.('success', 'Print successful!');
+              }
               resolve(true);
             },
             onError: (error) => {
-              console.error("Print failed:", error);
-              const errorMsg = error.message || 'Print transaction failed';
-              const isUserRejection = 
-                errorMsg.includes('User rejected') || 
-                errorMsg.includes('User denied') || 
-                errorMsg.includes('cancelled') || 
-                errorMsg.includes('canceled') ||
-                errorMsg.includes('rejected');
+              const finalErrorMsg = (error.message || 'Print transaction failed')
+                .includes('rejected')
+                  ? 'Transaction cancelled by user'
+                  : error.message || 'Print transaction failed';
               
-              const finalErrorMsg = isUserRejection ? 'Transaction cancelled by user' : errorMsg;
               setError(finalErrorMsg);
               setStatus('error');
+              onStatusChange?.('error', finalErrorMsg);
               setIsPrinting(false);
               resolve(false);
             }

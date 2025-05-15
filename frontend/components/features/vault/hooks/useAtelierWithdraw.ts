@@ -5,7 +5,7 @@ import { PACKAGE_ID } from '@/utils/transactions';
 
 interface UseAtelierWithdrawProps {
   atelierId: string;
-  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => void;
+  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }
 
 export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWithdrawProps) {
@@ -80,27 +80,19 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
           },
           {
             onSuccess: (result) => {
-              onStatusChange?.('success', 'Withdrawal successful!');
+              const txHash = result?.digest ? ` (tx: ${result.digest})` : '';
+              onStatusChange?.('success', `Withdrawal successful!${txHash}`, result?.digest);
               resolve(true);
             },
             onError: (error) => {
               console.error("Transaction failed:", error);
-              let errorMessage = 'Withdrawal failed';
-              if (error.message.includes('wallet')) {
-                errorMessage = 'Wallet not connected';
-              } else if (error.message.includes('AtelierCap')) {
-                errorMessage = 'AtelierCap not found';
-              } else if (error.message.includes('balance')) {
-                errorMessage = 'insufficient balance';
-              } else if (error.message.includes('User rejected') || 
-                         error.message.includes('User denied') || 
-                         error.message.includes('cancelled') || 
-                         error.message.includes('canceled') ||
-                         error.message.includes('rejected')) {
-                errorMessage = 'Transaction cancelled';
-              }
-              setError(errorMessage);
-              onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
+              const finalErrorMsg = (error.message || 'Withdrawal failed')
+                .toLowerCase().includes('rejected')
+                  ? 'Transaction cancelled by user'
+                  : error.message || 'Withdrawal failed';
+              
+              setError(finalErrorMsg);
+              onStatusChange?.('error', finalErrorMsg);
               setIsWithdrawing(false);
               resolve(false);
             },
