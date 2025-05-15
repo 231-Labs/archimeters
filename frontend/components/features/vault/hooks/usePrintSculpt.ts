@@ -1,7 +1,7 @@
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
 import { printSculpt } from '@/utils/transactions';
-import { SUI_CLOCK } from '@/utils/transactions';
+// import { SUI_CLOCK } from '@/utils/transactions';
 
 interface UsePrintSculptProps {
   sculptId: string;
@@ -35,7 +35,7 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
       setError(null);
       setStatus('preparing');
 
-      const tx = await printSculpt(sculptId, SUI_CLOCK);
+      const tx = await printSculpt(sculptId, printerId);
       
       setStatus('printing');
 

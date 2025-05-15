@@ -1,12 +1,12 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xae1872684ba5684b43b2dd6a379819f943c68e9366c6c2f77faeb54d485ccc18';
-export const EUREKA_PACKAGE_ID = '0xae1872684ba5684b43b2dd6a379819f943c68e9366c6c2f77faeb54d485ccc18'
-export const STATE_ID = '0x6b0321ef3d599ddc288103dbbddd8a43f86975e8bae6dc0ab41571df04333e17';
-export const ATELIER_STATE_ID = '0x129b1cffcfb7ca90835aeafcd073213a35580674c76af194b4797b61ec51dc7e';
+export const PACKAGE_ID = '0xd4c939244bb540cd7061ced2d6dbf3890671f6c21ff9ac982611bb8b47ec74d0';
+export const EUREKA_PACKAGE_ID = '0xd4c939244bb540cd7061ced2d6dbf3890671f6c21ff9ac982611bb8b47ec74d0'
+export const STATE_ID = '0xd9dbbe4d9bcc6c665a01e89d43b0c3a597694d4bd02ae1a81ef6d5150726a1e9';
+export const ATELIER_STATE_ID = '0x367959f12878b2f433d986f9a12e058895d08d0597c4941a23f8e5717c8c8643';
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
-export const PRINTER_REGISTRY = `0x5403f201d1acf6a6d33ed9f0aa33cfcb1b76258d45d78b30cbe79dd19e61937c`;
+export const PRINTER_REGISTRY = `0xfb3915b441b421b1fbec041514e0b2418c990bef0379afe50cbf59ea23ab638a`;
 export const SUI_CLOCK = '0x6';
 
 export const mintMembership = async (username: string, description: string) => {
@@ -95,19 +95,48 @@ export const withdrawAtelierPool = async (
 }
 
 // Function to print a sculpt with a specific printer
+// export const printSculpt = async (
+//   sculptId: string,
+//   clock: string = SUI_CLOCK,
+//   // printerId?: string,
+// ) => {
+//   const tx = new Transaction();
+//     tx.moveCall({
+//       target: `${PACKAGE_ID}::sculpt::print_sculpt`,
+//       arguments: [
+//         tx.object(sculptId),
+//         tx.object(clock),
+//       ],
+//     });
+  
+//   return tx;
+// }
+
 export const printSculpt = async (
   sculptId: string,
-  clock: string = SUI_CLOCK,
-  // printerId?: string,
+  printerId: string,
+  payment?: string,
 ) => {
   const tx = new Transaction();
+  
+  if (!payment) {
     tx.moveCall({
-      target: `${PACKAGE_ID}::sculpt::print_sculpt`,
+      target: `${EUREKA_PACKAGE_ID}::eureka::create_and_assign_print_job_free`,
       arguments: [
+        tx.object(printerId),
         tx.object(sculptId),
-        tx.object(clock),
       ],
     });
+  } else {
+    tx.moveCall({
+      target: `${EUREKA_PACKAGE_ID}::eureka::create_and_assign_print_job`,
+      arguments: [
+        tx.object(printerId),
+        tx.object(sculptId),
+        tx.object(payment),
+      ],
+    });
+  }
   
   return tx;
 }
