@@ -15,7 +15,7 @@ export function SculptPrintButton({
   onError,
   onStatusChange
 }: SculptPrintButtonProps) {
-  const { handlePrint, isPrinting, status, error, txDigest } = usePrintSculpt({
+  const { handlePrint, isPrinting, error, txDigest } = usePrintSculpt({
     sculptId,
     printerId
   });
