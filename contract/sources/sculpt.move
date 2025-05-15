@@ -118,8 +118,18 @@ module archimeters::sculpt {
         sculpt.time = clock::timestamp_ms(clock);
     }
 
+    // adds a print record to the sculpt
+    public fun add_print_record<T: key + store>(sculpt: &mut Sculpt, record: T) {
+        let key = sculpt.printed;
+        sui::dynamic_object_field::add(&mut sculpt.id, key, record);
+    }
+
     // === Getters ===  
     public fun get_sculpt_info(sculpt: &Sculpt): (ID, String, String) {
         (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.structure)
+    }
+
+    public fun get_sculpt_printed(sculpt: &Sculpt): u64 {
+        sculpt.printed
     }
 }
