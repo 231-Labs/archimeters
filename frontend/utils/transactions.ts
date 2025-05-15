@@ -1,12 +1,12 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xd4c939244bb540cd7061ced2d6dbf3890671f6c21ff9ac982611bb8b47ec74d0';
-export const EUREKA_PACKAGE_ID = '0xd4c939244bb540cd7061ced2d6dbf3890671f6c21ff9ac982611bb8b47ec74d0'
-export const STATE_ID = '0xd9dbbe4d9bcc6c665a01e89d43b0c3a597694d4bd02ae1a81ef6d5150726a1e9';
-export const ATELIER_STATE_ID = '0x367959f12878b2f433d986f9a12e058895d08d0597c4941a23f8e5717c8c8643';
+export const PACKAGE_ID = '0x7b0fc033d2081d746358b47ada123556ff4d9660a0dc73e4cd23e54f6b628c97';
+export const EUREKA_PACKAGE_ID = '0x7b0fc033d2081d746358b47ada123556ff4d9660a0dc73e4cd23e54f6b628c97'
+export const STATE_ID = '0x0ed851c11451de278aeb8b31c253f29f32f361c814f69d631b1d5ca69f11e0b9';
+export const ATELIER_STATE_ID = '0x65d70e23c92f0e0ee2c3c94b88589b4d77836f4626ac3188728394ca98ce3778';
+export const PRINTER_REGISTRY = `0xeb1fb35aacdbce1f9f14e9c991a917a2c532c512ded4bbae7d119f6d3ada1265`;
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
-export const PRINTER_REGISTRY = `0xfb3915b441b421b1fbec041514e0b2418c990bef0379afe50cbf59ea23ab638a`;
 export const SUI_CLOCK = '0x6';
 
 export const mintMembership = async (username: string, description: string) => {
@@ -93,24 +93,6 @@ export const withdrawAtelierPool = async (
   });
   return tx;
 }
-
-// Function to print a sculpt with a specific printer
-// export const printSculpt = async (
-//   sculptId: string,
-//   clock: string = SUI_CLOCK,
-//   // printerId?: string,
-// ) => {
-//   const tx = new Transaction();
-//     tx.moveCall({
-//       target: `${PACKAGE_ID}::sculpt::print_sculpt`,
-//       arguments: [
-//         tx.object(sculptId),
-//         tx.object(clock),
-//       ],
-//     });
-  
-//   return tx;
-// }
 
 export const printSculpt = async (
   sculptId: string,
