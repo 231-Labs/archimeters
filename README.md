@@ -97,8 +97,8 @@ npm run lint
 - **Off-chain Computation**: Advanced 3D modeling capabilities through verifiable computation services
 - **AI Enhancement**: Machine learning algorithms for intelligent parameter optimization
 - **Global Manufacturing**: Integration with production partners worldwide for seamless physical production
-- **DAO Governance**: Community-driven protocol evolution and design standards
 
-## Sui Overflow 2025 Hackathon - Walrus Track 🏆
+
+## Sui Overflow 2025 Hackathon - Programmable Storage Track 🏆
 
 This project is being developed for the Walrus track of the Sui Overflow 2025 Hackathon, showcasing the revolutionary potential of decentralized storage for complex design assets and pioneering new forms of digital ownership with real-world utility.

@@ -98,6 +98,6 @@ npm run lint
 - **全球製造**：與全球生產合作夥伴整合，實現無縫實體生產
 - **DAO 治理**：社群驅動的協議演進和設計標準制定
 
-## Sui Overflow 2025 黑客松 - Walrus 賽道 🏆
+## Sui Overflow 2025 黑客松 - Progrmmable Storage 賽道 🏆
 
 本項目正在參與 Sui Overflow 2025 黑客松的 Walrus 賽道，展示去中心化儲存對複雜設計資產的革命性潛力，並開創具有實際應用價值的數位所有權新形式。 
