@@ -1,5 +1,4 @@
 import { WindowName } from '@/types';
-import DesktopIcon from '../desktop/DesktopIcon';
 
 export interface DockProps {
   onOpenWindow: (name: WindowName) => void;
@@ -29,21 +28,21 @@ export default function Dock({ onOpenWindow, onActivateWindow }: DockProps) {
         </div>
         <div className="group relative transition-transform hover:scale-110 duration-200 px-3 py-2">
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-[rgba(0,0,0,0.8)] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap">
-            <span className="text-white/90 text-xs">Upload</span>
+            <span className="text-white/90 text-xs">Publisher</span>
           </div>
           <img
-            onClick={() => handleIconClick('website-upload')}
+            onClick={() => handleIconClick('publisher')}
             src="/designPublisher.png"
             className="w-14 h-14 flex items-center justify-center transition-all duration-200"
           />
         </div>
         <div className="group relative transition-transform hover:scale-110 duration-200 px-3 py-2">
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-[rgba(0,0,0,0.8)] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap">
-            <span className="text-white/90 text-xs">Browse</span>
+            <span className="text-white/90 text-xs">Gallery</span>
           </div>
           <img
-            onClick={() => handleIconClick('browse')}
-            src="/Gallery.png"
+            onClick={() => handleIconClick('gallery')}
+            src="/gallery.png"
             className="w-11 h-11 flex items-center justify-center transition-all duration-200"
           />
         </div>

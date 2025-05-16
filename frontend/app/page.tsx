@@ -18,11 +18,6 @@ import Background from '@/components/background_animations/Background';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
 
-// TEST ONLY
-// interface Props {
-//   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
-// }
-
 export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const suiClient = useSuiClient();
@@ -121,15 +116,15 @@ export default function Home() {
                     </Window>
                   );
                 
-                case 'website-upload':
+                case 'publisher':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title={defaultWindowConfigs['website-upload'].title}
-                      position={windowPositions['website-upload']}
-                      size={windowSizes['website-upload']}
-                      isActive={activeWindow === 'website-upload'}
+                      title={defaultWindowConfigs['publisher'].title}
+                      position={windowPositions['publisher']}
+                      size={windowSizes['publisher']}
+                      isActive={activeWindow === 'publisher'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
@@ -140,15 +135,15 @@ export default function Home() {
                       <DesignPublisher />
                     </Window>
                   );
-                case 'browse':
+                case 'gallery':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title="Browse Images"
-                      position={windowPositions.browse}
-                      size={windowSizes.browse}
-                      isActive={activeWindow === 'browse'}
+                      title="Gallery"
+                      position={windowPositions.gallery}
+                      size={windowSizes.gallery}
+                      isActive={activeWindow === 'gallery'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
@@ -186,7 +181,7 @@ export default function Home() {
                     <Window
                       key={name}
                       name={name}
-                      title="vault"
+                      title="Vault"
                       position={windowPositions['vault']}
                       size={windowSizes['vault']}
                       isActive={activeWindow === 'vault'}
@@ -205,7 +200,7 @@ export default function Home() {
                       <Window
                         key={name}
                         name={name}
-                        title="Parametric Terminal"
+                        title="Docs Terminal"
                         position={windowPositions.terminal}
                         size={windowSizes.terminal}
                         isActive={activeWindow === 'terminal'}

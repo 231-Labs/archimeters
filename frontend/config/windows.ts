@@ -10,13 +10,13 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 600, height: 600 },
     resizable: true,
   },
-  'website-upload': {
-    title: 'Design Publisher',
+  'publisher': {
+    title: 'Publisher',
     defaultSize: { width: 1140, height: 600 },
     resizable: true,
   },
-  browse: {
-    title: 'Browse Images',
+  'gallery': {
+    title: 'Gallery',
     defaultSize: { width: 520, height: 660 },
     resizable: true,
   },
@@ -26,7 +26,7 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     resizable: true,
   },
   'vault': {
-    title: 'vault',
+    title: 'Vault',
     defaultSize: { width: 800, height: 600 },
     resizable: true,
   },
