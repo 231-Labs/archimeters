@@ -110,12 +110,26 @@ module archimeters::sculpt {
         event::emit(New_sculpt { id: sculpt_id });
     }
 
-    // public entry fun print_sculpt(
-    //     sculpt: &mut Sculpt,
-    //     clock: &clock::Clock,
-    //     ctx: &mut TxContext
-    // ) {
-    //     let sender = tx_context::sender(ctx);
-    //     let now = clock::timestamp_ms(clock);
-    // }
+    public fun print_sculpt(
+        sculpt: &mut Sculpt,
+        clock: &clock::Clock,
+    ) {
+        sculpt.printed = sculpt.printed + 1;
+        sculpt.time = clock::timestamp_ms(clock);
+    }
+
+    // adds a print record to the sculpt
+    public fun add_print_record<T: key + store>(sculpt: &mut Sculpt, record: T) {
+        let key = sculpt.printed;
+        sui::dynamic_object_field::add(&mut sculpt.id, key, record);
+    }
+
+    // === Getters ===  
+    public fun get_sculpt_info(sculpt: &Sculpt): (ID, String, String) {
+        (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.structure)
+    }
+
+    public fun get_sculpt_printed(sculpt: &Sculpt): u64 {
+        sculpt.printed
+    }
 }

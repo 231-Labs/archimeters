@@ -289,7 +289,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-opacity-90 backdrop-blur-sm">
+    <div className="flex flex-col h-full bg-[#1a1a1a] bg-opacity-90 backdrop-blur-sm">
       {/* Background Image */}
       <div className={`absolute inset-0 z-0 ${walletStatus === 'connected-with-nft' ? 'opacity-100' : 'opacity-20'}`}>
         <img

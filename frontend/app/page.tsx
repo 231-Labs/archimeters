@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import Window from '@/components/common/Window';
 import Header from '@/components/layout/Header';
@@ -16,23 +16,26 @@ import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import Background from '@/components/background_animations/Background';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
+import VaultWindow from '@/components/windows/VaultWindow';
 
-interface Props {
-  walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
-}
+// TEST ONLY
+// interface Props {
+//   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft'
+// }
 
 export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [zOrder, setZOrder] = useState<string[]>([]);
+  const atelierViewerRaised = useRef(false);
 
   const {
     openWindows,
     activeWindow,
     windowPositions,
     windowSizes,
-    windowZIndexes,
+    // windowZIndexes,
     // activateWindow,
     openWindow,
     closeWindow,
@@ -45,10 +48,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (openWindows.includes('atelier-viewer')) {
-      setZOrder((prev) => {
-        return [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer'];
-      });
+    const isAtelierViewerOpen = openWindows.includes('atelier-viewer');
+  
+    if (isAtelierViewerOpen && !atelierViewerRaised.current) {
+      setZOrder((prev) => [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer']);
+      atelierViewerRaised.current = true;
+    }
+  
+    if (!isAtelierViewerOpen) {
+      atelierViewerRaised.current = false;
     }
   }, [openWindows]);
 
@@ -112,25 +120,7 @@ export default function Home() {
 
                     </Window>
                   );
-                case 'terminal':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Parametric Terminal"
-                      position={windowPositions.terminal}
-                      size={windowSizes.terminal}
-                      isActive={activeWindow === 'terminal'}
-                      onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      resizable
-                      onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
-                    >
-                      <Terminal />
-                    </Window>
-                  );
+                
                 case 'website-upload':
                   return (
                     <Window
@@ -191,7 +181,45 @@ export default function Home() {
                       <AtelierViewerWindow name={name} />
                     </Window>
                   );
-                default:
+                  case 'vault':
+                  return (
+                    <Window
+                      key={name}
+                      name={name}
+                      title="vault"
+                      position={windowPositions['vault']}
+                      size={windowSizes['vault']}
+                      isActive={activeWindow === 'vault'}
+                      onClose={() => closeWindow(name)}
+                      onDragStart={(e) => startDragging(e, name)}
+                      onClick={() => activateWindow(name)}
+                      resizable
+                      onResize={(e) => resizeWindow(e, name)}
+                      zIndex={zOrder.indexOf(name) + 1}
+                    >
+                      <VaultWindow name={name} />
+                    </Window>
+                  );
+                  case 'terminal':
+                    return (
+                      <Window
+                        key={name}
+                        name={name}
+                        title="Parametric Terminal"
+                        position={windowPositions.terminal}
+                        size={windowSizes.terminal}
+                        isActive={activeWindow === 'terminal'}
+                        onClose={() => closeWindow(name)}
+                        onDragStart={(e) => startDragging(e, name)}
+                        onClick={() => activateWindow(name)}
+                        resizable
+                        onResize={(e) => resizeWindow(e, name)}
+                        zIndex={zOrder.indexOf(name) + 1}
+                      >
+                        <Terminal />
+                      </Window>
+                    );
+                  default:
                   return null;
               }
             })}

@@ -3,7 +3,8 @@ export type WindowName =
   | 'terminal'
   | 'website-upload'
   | 'browse'
-  | 'atelier-viewer';
+  | 'atelier-viewer'
+  | 'vault';
 
 export interface WindowConfig {
   title: string;

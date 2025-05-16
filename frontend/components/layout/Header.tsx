@@ -29,7 +29,7 @@ const Header = () => {
       className="fixed top-0 left-0 right-0 h-6 backdrop-blur-md border-b border-[rgba(255,255,255,0.2)] flex items-center justify-between px-3"
       style={{ 
         zIndex: 1000,
-        backgroundColor: '#0a0a0a'
+        backgroundColor: '#000'
       }}
     >
       <button 

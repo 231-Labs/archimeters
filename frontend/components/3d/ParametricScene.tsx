@@ -258,22 +258,46 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
     // 創建控制器
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+    // controls.enableDamping = true;
+    controls.enableDamping = false; // 禁用阻尼，無需連續更新
     controls.dampingFactor = 0.05;
     controls.rotateSpeed = 0.8;
     controls.target.copy(cameraStateRef.current.target);
     controls.update();
+    controlsRef.current = controls;
 
     // 保存相機狀態並觸發渲染
     controls.addEventListener('change', () => {
-      if (camera) {
-        cameraStateRef.current.position.copy(camera.position);
-        cameraStateRef.current.target.copy(controls.target);
+      if (cameraRef.current && controlsRef.current) {
+        cameraStateRef.current.position.copy(cameraRef.current.position);
+        cameraStateRef.current.target.copy(controlsRef.current.target);
         render();
       }
     });
 
-    controlsRef.current = controls;
+    // 模擬連續渲染（僅在交互期間）
+    let isControlActive = false;
+    let interactionFrameId: number | null = null;
+    controls.addEventListener('start', () => {
+      isControlActive = true;
+      function interactionRender() {
+        if (!isControlActive || !controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+          interactionFrameId = null;
+          return;
+        }
+        controlsRef.current.update();
+        render();
+        interactionFrameId = requestAnimationFrame(interactionRender);
+      }
+      interactionRender();
+    });
+    controls.addEventListener('end', () => {
+      isControlActive = false;
+      if (interactionFrameId) {
+        cancelAnimationFrame(interactionFrameId);
+        interactionFrameId = null;
+      }
+    });
 
     // 添加網格
     const gridHelper = new THREE.GridHelper(10, 10);
@@ -311,22 +335,22 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     hasInitializedRef.current = true;
     console.log('Scene initialization completed');
 
-    let isAnimating = true;
+    // let isAnimating = true;
 
     // 動畫循環
-    function animate() {
-      if (!isAnimating) return;
+    // function animate() {
+    //   if (!isAnimating) return;
 
-      if (!controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
-        console.log('Animation frame skipped: missing required refs');
-        return;
-      }
+    //   if (!controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+    //     console.log('Animation frame skipped: missing required refs');
+    //     return;
+    //   }
       
-      animationFrameIdRef.current = requestAnimationFrame(animate);
-      controlsRef.current.update();
-      render();
-    }
-    animate();
+    //   animationFrameIdRef.current = requestAnimationFrame(animate);
+    //   controlsRef.current.update();
+    //   render();
+    // }
+    // animate();
 
     // 初始渲染
     render();
@@ -334,9 +358,9 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     // 清理函數
     return () => {
       console.log('Cleaning up scene');
-      isAnimating = false;
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
+      if (interactionFrameId) {
+        cancelAnimationFrame(interactionFrameId);
+        interactionFrameId = null;
       }
       // 只有在組件真正卸載時才清理資源
       if (containerRef.current) {

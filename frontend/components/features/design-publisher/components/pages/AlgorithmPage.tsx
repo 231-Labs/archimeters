@@ -294,7 +294,7 @@ export const AlgorithmPage = ({
 
       {/* Right - Parameter Settings */}
       <div className="w-1/3 p-8 flex flex-col relative">
-        <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2">
+        <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2 custom-scrollbar">
           {/* Parameter List */}
           {Object.keys(extractedParameters).length > 0 ? (
             <div className="space-y-4">
@@ -327,9 +327,10 @@ export const AlgorithmPage = ({
             <div>
               <label className="text-white/60 text-sm block mb-2">Page Style</label>
               <select
+                disabled
                 value={style}
                 onChange={(e) => onStyleChange(e.target.value as TemplateSeries)}
-                className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+                className="w-full bg-transparent text-white/30 border-b border-white/10 pb-2 cursor-not-allowed opacity-80"
               >
                 <option value="default">Default</option>
                 <option value="minimal">Minimal</option>
@@ -340,9 +341,10 @@ export const AlgorithmPage = ({
             <div>
               <label className="text-white/60 text-sm block mb-2">Font Style</label>
               <select
+                disabled
                 value={fontStyle}
                 onChange={(e) => onFontStyleChange(e.target.value as FontStyle)}
-                className="w-full bg-transparent text-white border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 transition-colors"
+                className="w-full bg-transparent text-white/30 border-b border-white/10 pb-2 cursor-not-allowed opacity-80"
               >
                 <option value="sans">Sans Serif</option>
                 <option value="serif">Serif</option>

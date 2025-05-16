@@ -1,5 +1,5 @@
-#[allow(unused_field)]
 module archimeters::archimeters {
+
     use std::string::{ String };
     use sui::{
         package,
@@ -26,8 +26,8 @@ module archimeters::archimeters {
         owner: address,
         username: String,
         description: String,
-        artliers: VecSet<ID>,
-        gallery: vector<ID>,
+        ateliers: VecSet<ID>,
+        sculptures: VecSet<ID>,
         registered_time: u64,
     }
 
@@ -94,8 +94,8 @@ module archimeters::archimeters {
             owner: sender,
             username,
             description,
-            artliers: vec_set::empty(),
-            gallery: vector::empty(),
+            ateliers: vec_set::empty(),
+            sculptures: vec_set::empty(),
             registered_time: now,
         };
 
@@ -120,11 +120,11 @@ module archimeters::archimeters {
     }
 
     public fun add_atelier_to_membership(membership: &mut MemberShip, design_series_id: ID) {
-        vec_set::insert(&mut membership.artliers, design_series_id);
+        vec_set::insert(&mut membership.ateliers, design_series_id);
     }
 
     public fun add_sculpt_to_membership(membership: &mut MemberShip, sculpt_id: ID) {
-        vector::push_back(&mut membership.gallery, sculpt_id);
+        vec_set::insert(&mut membership.sculptures, sculpt_id);
     }
 }
 

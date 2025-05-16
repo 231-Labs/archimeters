@@ -10,7 +10,7 @@ export const BOX_STYLES = {
   horizontalDown: '┬',
   horizontalUp: '┴',
   cross: '┼',
-  separator: '────────────────────────────────────────────────────────────────────────────'
+  separator: '───────────────────────────────────────────────────────────────'
 };
 
 export const GEOMETRIC_BORDER = '─'.repeat(80);

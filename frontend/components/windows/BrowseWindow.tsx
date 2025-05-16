@@ -101,7 +101,7 @@ export default function BrowseWindow({
   };
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative bg-[#1a1a1a]">
       {/* Loading overlay */}
       {isLoading && images.length === 0 && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
