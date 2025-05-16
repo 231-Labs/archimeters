@@ -1,8 +1,8 @@
 export type WindowName = 
   | 'entry'
   | 'terminal'
-  | 'website-upload'
-  | 'browse'
+  | 'publisher'
+  | 'gallery'
   | 'atelier-viewer'
   | 'vault';
 

@@ -164,7 +164,7 @@ export const BasicInfoPage = ({
           <div>
             <div className="text-white/50 text-sm mb-2">Artwork Price</div>
             <div className="flex items-center gap-4">
-              <img src="/Sui_Symbol_White.png" alt="Sui Symbol" width={18} height={30} />
+              <img src="/sui_symbol_white.png" alt="Sui Symbol" width={18} height={30} />
               <input
                 type="text"
                 inputMode="numeric"
