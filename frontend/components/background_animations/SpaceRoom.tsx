@@ -196,7 +196,7 @@ const SpaceRoom = memo(() => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full z-0 opacity-90 pointer-events-none animate-[appear_2s_ease-out]"
+      className="fixed top-0 left-0 w-full h-full z-0 opacity-10 pointer-events-none animate-[appear_2s_ease-out]"
       style={{ animationFillMode: 'forwards' }}
     />
   );

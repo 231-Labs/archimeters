@@ -722,7 +722,7 @@ export default function WebsiteUpload() {
       {currentPage > 1 && currentPage < 4 && (
         <button 
           onClick={goToPreviousPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
         >
           <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
           <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
@@ -732,7 +732,7 @@ export default function WebsiteUpload() {
       {currentPage < 3 && (
         <button 
           onClick={goToNextPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
         >
           <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
           <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
@@ -742,7 +742,7 @@ export default function WebsiteUpload() {
       {currentPage === 3 && (
         <button 
           onClick={goToNextPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
         >
           <div className="absolute inset-0 bg-white/5 rounded-sm group-hover:bg-white/10 transition-all duration-300"></div>
           <div className="absolute inset-0 border border-white/20 rotate-45 group-hover:border-white/30 transition-colors"></div>
@@ -799,7 +799,7 @@ export default function WebsiteUpload() {
   ]);
 
   return (
-    <div className="h-full w-full bg-[rgba(10,10,10,0.3)]">
+    <div className="h-full w-full bg-[#1a1a1a]">
       {/* Page content */}
       <div className="h-full relative">
         {currentPage === 1 && (

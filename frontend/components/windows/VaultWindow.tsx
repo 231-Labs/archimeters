@@ -274,9 +274,9 @@ export default function VaultWindow({}: VaultWindowProps) {
       <Tabs.Root
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as 'ateliers' | 'sculpts')}
-        className="flex flex-col h-full"
+        className="flex flex-col h-full bg-[#1a1a1a]"
       >
-        <Tabs.List className="flex space-x-4 border-b border-neutral-700 p-2">
+        <Tabs.List className="flex space-x-4 border-b border-neutral-700 p-2 bg-[#1a1a1a]">
           <Tabs.Trigger
             value="ateliers"
             className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
@@ -291,7 +291,7 @@ export default function VaultWindow({}: VaultWindowProps) {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto">
+        <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
           <div className="p-4">
             {isLoadingAteliers && !ateliers.length ? (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -327,7 +327,7 @@ export default function VaultWindow({}: VaultWindowProps) {
           </div>
         </Tabs.Content>
 
-      <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto">
+      <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
         <div className="p-4">
           {/* Printer selection area */}
           <div className="mb-4 bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">

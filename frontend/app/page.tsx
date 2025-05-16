@@ -120,25 +120,7 @@ export default function Home() {
 
                     </Window>
                   );
-                case 'terminal':
-                  return (
-                    <Window
-                      key={name}
-                      name={name}
-                      title="Parametric Terminal"
-                      position={windowPositions.terminal}
-                      size={windowSizes.terminal}
-                      isActive={activeWindow === 'terminal'}
-                      onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      resizable
-                      onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
-                    >
-                      <Terminal />
-                    </Window>
-                  );
+                
                 case 'website-upload':
                   return (
                     <Window
@@ -218,7 +200,26 @@ export default function Home() {
                       <VaultWindow name={name} />
                     </Window>
                   );
-                default:
+                  case 'terminal':
+                    return (
+                      <Window
+                        key={name}
+                        name={name}
+                        title="Parametric Terminal"
+                        position={windowPositions.terminal}
+                        size={windowSizes.terminal}
+                        isActive={activeWindow === 'terminal'}
+                        onClose={() => closeWindow(name)}
+                        onDragStart={(e) => startDragging(e, name)}
+                        onClick={() => activateWindow(name)}
+                        resizable
+                        onResize={(e) => resizeWindow(e, name)}
+                        zIndex={zOrder.indexOf(name) + 1}
+                      >
+                        <Terminal />
+                      </Window>
+                    );
+                  default:
                   return null;
               }
             })}

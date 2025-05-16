@@ -130,7 +130,7 @@ const NoiseEffect = memo(({ staticStarfieldOnly = false, glitchLinesOnly = false
     resizeObserverRef.current = new ResizeObserver(() => {
       updateCanvasSize();
       // Recreate stars with new dimensions
-      stars = Array.from({ length: 200 }, () => ({
+      stars = Array.from({ length: 225 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         size: Math.random() * 1.5 + 0.5,

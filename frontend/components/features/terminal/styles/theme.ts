@@ -1,9 +1,9 @@
 export const TERMINAL_THEME = {
-  background: '#000000',  // 背景
+  background: '#1a1a1a',  // 背景
   foreground: '#c9d1d9',  // 前景
-  cursor: '#8ab4f8', // 游標
-  cursorAccent: '#181c20',  // 游標選取
-  selection: 'rgba(138, 180, 248, 0.65)', // 選取文字
+  cursor: '#FFC1E0', // 游標
+  cursorAccent: '#FFC1E0',  // 游標選取
+  selection: 'rgba(255, 194, 224, 0.65)', // 選取文字
   black: '#181c20',
   red: '#e06c75',
   green: '#98c379',
@@ -19,15 +19,15 @@ export const terminalStyles = {
     'font-family': 'JetBrains Mono, monospace',
     'font-size': '14px',
     'line-height': '1.2',
-    'padding-right': '20px',
+    'padding-right': '10px',
     'padding-left': '20px',
-    'background-color': '#181c20',
-    'border': '0px solid #181c20',
+    'background-color': '#1a1a1a',
+    'border': '0px solid #1a1a1a',
     'border-radius': '8px',
   },
   '.xterm-viewport': {
     // 'scrollbar-width': 'thin',
-    'scrollbar-color': '#000000 #000000',
+    'scrollbar-color': '#1a1a1a #1a1a1a',
     //'background-color': '#181c20',
   },
   '.xterm-viewport::-webkit-scrollbar': {

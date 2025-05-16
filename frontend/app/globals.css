@@ -69,16 +69,19 @@
 
 /* 主題顏色 */
 :root {
-  --background: #000000;
+  --background: #1A1A1A;
   --foreground: #ffffff;
   --accent: #333333;
-  --border: rgba(255, 255, 255, 0.1);
+  --border-right: rgba(16, 16, 16);
+  --border-bottom: rgba(16, 16, 16);
+  --border-top: rgba(255, 255, 255, 0.3);
+  --border-left: rgb(255, 255, 255, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1A1A1A;
+    --foreground: #ffffff;
   }
 }
 
@@ -95,7 +98,10 @@ body {
 }
 
 .retro-border {
-  border: 1px solid var(--border);
+  border-top: 5px solid var(--border-top);
+  border-left: 5px solid var(--border-left);
+  border-right: 2px solid var(--border-right);
+  border-bottom: 2px solid var(--border-bottom);
   border-radius: 0;
 }
 
@@ -117,9 +123,12 @@ body {
 
 /* DappKit 按鈕樣式 */
 [data-dapp-kit] {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(239, 231, 231, 0.1) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(173, 169, 169, 0.4) !important;
   font-family: monospace !important;
   font-size: 14px !important;
   color: #ffffff !important;
@@ -133,7 +142,7 @@ body {
 
 [data-dapp-kit]:hover {
   background-color: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 /* 按鈕內文字樣式 */

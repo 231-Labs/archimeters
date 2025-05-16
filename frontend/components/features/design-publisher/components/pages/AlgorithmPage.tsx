@@ -294,7 +294,7 @@ export const AlgorithmPage = ({
 
       {/* Right - Parameter Settings */}
       <div className="w-1/3 p-8 flex flex-col relative">
-        <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2">
+        <div className="space-y-8 overflow-auto max-h-[calc(100vh-200px)] pr-2 custom-scrollbar">
           {/* Parameter List */}
           {Object.keys(extractedParameters).length > 0 ? (
             <div className="space-y-4">
