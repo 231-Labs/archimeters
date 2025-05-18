@@ -12,8 +12,6 @@ export interface TemplateProps {
   imageUrl: string;
   parameters: Record<string, { type: string; default: any; label?: string; min?: number; max?: number; step?: number }>;
   previewParams: Record<string, any>;
-  onParameterChange: (key: string, value: string | number) => void;
-  onMint: () => Promise<void>;
   mintButtonState: {
     disabled: boolean;
     tooltip: string;
@@ -22,14 +20,14 @@ export interface TemplateProps {
   preview3D?: ReactNode;
   alias?: string;
   onAliasChange?: (value: string) => void;
+  onParameterChange: (key: string, value: string | number) => void;
+  onMint: () => Promise<void>;
 }
 
 export default function DefaultTemplate({
   workName,
   description,
   price,
-  author,
-  social,
   intro,
   imageUrl,
   parameters,
@@ -43,9 +41,7 @@ export default function DefaultTemplate({
 }: TemplateProps) {
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6">
-      {/* 左側 - 3D展示區 */}
       <div className="lg:w-[55%] flex flex-col gap-4">
-        {/* 3D預覽 */}
         <div className="flex-1 relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 min-h-[500px]">
           <div className="relative bg-black/50 backdrop-blur-sm p-6 h-full">
             <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
@@ -65,13 +61,10 @@ export default function DefaultTemplate({
           </div>
         </div>
 
-        {/* 作品資訊 */}
         <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
           <div className="relative bg-black/50 backdrop-blur-sm p-6">
             <div className="space-y-6">
-              {/* 作品描述和主視覺圖 */}
               <div className="flex gap-6">
-                {/* 主視覺圖 */}
                 <div className="w-1/2">
                   <div className="relative aspect-square bg-black/70 border border-white/10 overflow-hidden">
                     {imageUrl ? (
@@ -91,14 +84,12 @@ export default function DefaultTemplate({
                   </div>
                 </div>
 
-                {/* 作品描述 */}
                 <div className="w-1/2">
                   <h2 className="text-lg font-semibold mb-2 text-white/90">Artwork Description</h2>
                   <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{description}</p>
                 </div>
               </div>
 
-              {/* 藝術家介紹 */}
               <div className="border-t border-white/10 pt-6">
                 <h2 className="text-lg font-semibold mb-2 text-white/90">Artist Statement</h2>
                 <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{intro}</p>
@@ -108,9 +99,7 @@ export default function DefaultTemplate({
         </div>
       </div>
 
-      {/* 右側 - 參數調整和Mint區 */}
       <div className="lg:w-[45%] flex flex-col gap-4">
-        {/* 參數設定 */}
         <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
           <div className="relative bg-black/50 backdrop-blur-sm p-6">
             <div className="flex justify-between items-center mb-4">
@@ -131,7 +120,6 @@ export default function DefaultTemplate({
               </button>
             </div>
 
-            {/* Alias Input */}
             <div className="mb-4 bg-white/5 rounded-md p-3">
               <div className="flex justify-between items-center mb-2">
                 <div className="text-white/60 text-sm">Model Alias</div>
@@ -223,7 +211,6 @@ export default function DefaultTemplate({
           </div>
         </div>
 
-        {/* NFT Minting Area */}
         <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
           <div className="relative bg-black/50 backdrop-blur-sm p-4">
             <div className="flex items-center justify-between">
@@ -244,10 +231,10 @@ export default function DefaultTemplate({
                 >
                   <div className="flex flex-col items-center">
                     <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">
-                      Mint NFT
+                      Mint Sculpt
                     </span>
                     <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">
-                      Initialize Artwork
+                      Initialize Sculpture
                     </span>
                   </div>
                 </button>
