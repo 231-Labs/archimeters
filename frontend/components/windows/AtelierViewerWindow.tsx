@@ -1129,4 +1129,4 @@ export default function AtelierViewerWindow({
       )}
     </BaseTemplate>
   );
-} 
+} // STL導出調整 - 2023-07-20
