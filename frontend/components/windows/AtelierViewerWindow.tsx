@@ -622,8 +622,11 @@ export default function AtelierViewerWindow({
           // 深度克隆原始幾何體
           const clonedGeometry = mesh.geometry.clone();
           
-          // 創建一個旋轉矩陣，使Z軸向上（繞X軸旋轉-90度）
-          const rotationMatrix = new THREE.Matrix4().makeRotationX(-Math.PI / 2);
+          // 創建一個旋轉矩陣，使Z軸向上且解決上下顛倒問題
+          // 先旋轉-90度（使Z軸向上），再旋轉180度（翻轉模型解決上下顛倒）
+          const rotationMatrix = new THREE.Matrix4()
+            .makeRotationX(-Math.PI / 2)     // 先使Z軸向上
+            .multiply(new THREE.Matrix4().makeRotationZ(Math.PI));  // 再繞Z軸旋轉180度
           
           // 將旋轉應用於幾何體（這會直接修改頂點數據）
           clonedGeometry.applyMatrix4(rotationMatrix);
