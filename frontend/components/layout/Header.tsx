@@ -26,10 +26,11 @@ const Header = () => {
 
   return (
     <div 
-      className="fixed top-0 left-0 right-0 h-6 backdrop-blur-md border-b border-[rgba(255,255,255,0.2)] flex items-center justify-between px-3"
+      className="fixed top-0 left-0 right-0 h-7 border-b border-[rgba(255,255,255,0.2)] flex items-center justify-between px-3"
       style={{ 
         zIndex: 1000,
-        backgroundColor: '#000'
+        background: 'linear-gradient(to right, rgba(79, 79, 79, 0.6), rgba(49, 49, 49, 0.6), rgba(19, 19, 19, 0.6), rgba(11, 11, 11, 0.6))',
+        backdropFilter: 'blur(2px)',
       }}
     >
       <button 

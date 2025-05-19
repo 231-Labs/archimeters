@@ -13,7 +13,11 @@ export default function Dock({ onOpenWindow, onActivateWindow }: DockProps) {
 
   return (
     <div 
-      className="fixed left-1/2 -translate-x-1/2 bottom-4 bg-[rgba(10,10,10,0.4)] backdrop-blur-xl border border-white/10 z-50 pointer-events-none gap-12"
+      className="fixed left-1/2 -translate-x-1/2 bottom-4 bg-[rgba(10,10,10,0.4)] backdrop-blur-xl border border-white/10 z-50 pointer-events-none gap-12 shadow-[inset_-2px_-2px_0_#000,inset_2px_2px_0_#555]"
+      style={{ 
+        background: 'linear-gradient(to right, rgba(49, 49, 49, 0.2), rgba(29, 29, 29, 0.2), rgba(19, 19, 19, 0.2), rgba(11, 11, 11, 0.2))',
+        backdropFilter: 'blur(2px)',
+      }}
     >
       <div className="flex items-center pointer-events-auto gap-4">
         <div className="group relative transition-transform hover:scale-110 duration-200 px-3 py-2">

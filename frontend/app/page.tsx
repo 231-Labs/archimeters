@@ -207,7 +207,7 @@ export default function Home() {
                         onClose={() => closeWindow(name)}
                         onDragStart={(e) => startDragging(e, name)}
                         onClick={() => activateWindow(name)}
-                        resizable
+                        // resizable
                         onResize={(e) => resizeWindow(e, name)}
                         zIndex={zOrder.indexOf(name) + 1}
                       >
