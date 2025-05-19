@@ -8,7 +8,7 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   terminal: {
     title: 'Terminal',
     defaultSize: { width: 600, height: 600 },
-    resizable: true,
+    // resizable: false,
   },
   'publisher': {
     title: 'Publisher',
