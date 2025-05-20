@@ -154,7 +154,7 @@ const ArchimetersTerminal = () => {
           }
           inputBuffer.current = '';
           showPrompt();
-        } else if (data === '\u007f') { // Backspace
+        } else if (data === '\u007f') { 
           if (inputBuffer.current.length > 0) {
             inputBuffer.current = inputBuffer.current.slice(0, -1);
             terminal.current?.write('\b \b');
