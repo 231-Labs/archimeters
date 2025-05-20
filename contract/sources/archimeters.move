@@ -127,6 +127,3 @@ module archimeters::archimeters {
         vec_set::insert(&mut membership.sculptures, sculpt_id);
     }
 }
-
-
-
