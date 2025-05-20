@@ -18,30 +18,29 @@ const ThreeScene = ({ dimensions }: ThreeSceneProps) => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 創建場景
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    // 創建相機
+    // create camera
     const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 1000);
     camera.position.set(5, 5, 5);
 
-    // 創建渲染器
+    // create renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     containerRef.current.appendChild(renderer.domElement);
 
-    // 添加軌道控制器
+    // create controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
-    // 創建立方體
+    // create cube
     const geometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.depth);
     const material = new THREE.MeshStandardMaterial({ color: 0xf5f5dc });
     const cube = new THREE.Mesh(geometry, material);
     scene.add(cube);
 
-    // 添加光源
+    // add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
@@ -49,7 +48,7 @@ const ThreeScene = ({ dimensions }: ThreeSceneProps) => {
     pointLight.position.set(10, 10, 10);
     scene.add(pointLight);
 
-    // 動畫循環
+    // animation loop
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
@@ -57,7 +56,7 @@ const ThreeScene = ({ dimensions }: ThreeSceneProps) => {
     }
     animate();
 
-    // 處理視窗大小變化
+    // handle window size changes
     const handleResize = () => {
       if (!containerRef.current) return;
       const width = containerRef.current.clientWidth;
@@ -69,7 +68,7 @@ const ThreeScene = ({ dimensions }: ThreeSceneProps) => {
     };
     window.addEventListener('resize', handleResize);
 
-    // 清理函數
+    // cleanup function
     return () => {
       window.removeEventListener('resize', handleResize);
       containerRef.current?.removeChild(renderer.domElement);

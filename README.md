@@ -57,22 +57,20 @@ npm run dev
 - **Interactive Archive**: Discover team information and project features through an immersive command-line format
 - **Nostalgic UX**: Enjoy the fusion of classic computing interfaces with modern blockchain functionality
 
+## Sui Blockchain Integration 🔄
+
+Archimeters leverages Sui blockchain's unique capabilities:
+- **Walrus Storage**: Secure, decentralized, and persistent storage for design files and parameters
+- **[Building..]Seal Encryption**: Cryptographically protected assets with granular access control
+- **Sui Move Contracts**: Robust ownership verification and automated revenue distribution systems
+
 ## Technical Highlights 🛠️
 
-- **Sui Walrus Integration**: All design algorithm files and user product files are secured on Walrus, ensuring true decentralized ownership and persistence
-- **Seal Encryption**: Printable files are protected by Seal protocol, allowing access only to the owner and authorized accounts
 - **Next.js 14**: Cutting-edge React framework powering the frontend experience
 - **React Three Fiber**: Advanced 3D visualization system for parametric model rendering
 - **xterm.js**: Terminal interface implementation for the retro documentation experience
 - **Tailwind CSS**: Responsive design system for consistent UI across devices
 - **Three.js**: Sophisticated 3D model adjustment and real-time rendering engine
-
-## Sui Blockchain Integration 🔄
-
-Archimeters leverages Sui blockchain's unique capabilities:
-- **Walrus Storage**: Secure, decentralized, and persistent storage for design files and parameters
-- **Seal Encryption**: Cryptographically protected assets with granular access control
-- **Sui Move Contracts**: Robust ownership verification and automated revenue distribution systems
 
 ## Development 👩‍💻
 
