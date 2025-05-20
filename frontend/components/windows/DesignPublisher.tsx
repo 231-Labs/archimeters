@@ -455,20 +455,26 @@ export default function WebsiteUpload() {
   };
 
   // Parameter change handler
-  const handleParameterChange = (key: string, value: string | number) => {
-    const paramDef = extractedParameters[key];
-    if (!paramDef) return;
+  const handleParameterChange = (key: string, value: string | number | Record<string, any>) => {
 
-    let processedValue: any = value;
-    if (paramDef.type === 'number') {
-      processedValue = value === '' ? '' : Number(value);
-      if (typeof processedValue === 'number' && isNaN(processedValue)) return;
-    }
+    // 批量更新
+    setPreviewParams((prev) => {
+      if (key === 'all' && typeof value === 'object') {
+        return { ...value };
+      }
 
-    setPreviewParams(prev => ({
-      ...prev,
-      [key]: processedValue
-    }));
+      const paramDef = extractedParameters[key];
+      if (!paramDef) return;
+
+      let processedValue: any = value;
+      if (paramDef.type === 'number') {
+        processedValue = value === '' ? '' : Number(value);
+        if (typeof processedValue === 'number' && isNaN(processedValue)) return;
+      }
+
+      if (prev[key] === processedValue) return prev;
+      return { ...prev, [key]: processedValue };
+    });
   };
 
   // Price input handler

@@ -14,7 +14,7 @@ interface PreviewPageProps {
   imageUrl: string;
   parameters: Record<string, any>;
   previewParams: Record<string, any>;
-  onParameterChange: (key: string, value: string | number) => void;
+  onParameterChange: (key: string, value: string | number | Record<string, any>) => void;
   onMint: () => void;
   userScript: { code: string; filename: string } | null;
   membershipData: {

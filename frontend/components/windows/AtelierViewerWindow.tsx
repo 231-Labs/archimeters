@@ -408,9 +408,13 @@ export default function AtelierViewerWindow({
 
   // Handle parameter changes from UI controls
   const handleParameterChange = useCallback(
-    debounce((key: string, value: string | number) => {
+    debounce((key: string, value: string | number | Record<string, any>) => {
       console.log('Parameter change:', key, value);
       setPreviewParams((prev) => {
+        if (key === 'all' && typeof value === 'object') {
+          // 批量更新
+          return { ...value };
+        }
         if (prev[key] === value) return prev;
         return { ...prev, [key]: value };
       });

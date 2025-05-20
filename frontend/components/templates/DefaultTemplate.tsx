@@ -12,7 +12,7 @@ export interface TemplateProps {
   imageUrl: string;
   parameters: Record<string, { type: string; default: any; label?: string; min?: number; max?: number; step?: number }>;
   previewParams: Record<string, any>;
-  onParameterChange: (key: string, value: string | number) => void;
+  onParameterChange: (key: string, value: string | number | Record<string, any>) => void;
   onMint: () => Promise<void>;
   mintButtonState: {
     disabled: boolean;
@@ -120,9 +120,7 @@ export default function DefaultTemplate({
                   const defaultParams = Object.fromEntries(
                     Object.entries(parameters).map(([key, value]) => [key, value.default])
                   );
-                  Object.entries(defaultParams).forEach(([key, value]) => {
-                    onParameterChange(key, value);
-                  });
+                  onParameterChange('all', defaultParams); // 單次批量更新
                   onAliasChange?.('');
                 }}
                 className="text-sm text-white/50 hover:text-white/70 transition-colors"
