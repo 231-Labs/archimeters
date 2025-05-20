@@ -30,7 +30,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
   // camera state
   const cameraStateRef = useRef({
-    position: new THREE.Vector3(120, 120, 120),
+    position: new THREE.Vector3(120, 90, 30),
     target: new THREE.Vector3(0, 0, 0)
   });
 
