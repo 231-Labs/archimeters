@@ -108,7 +108,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
     }
   };
 
-  // Initialize OS (mint NFT)
+  // Initialize (mint NFT)
   const handleInitializeOS = async () => {
     if (!currentAccount?.address || !username.trim()) return;
 

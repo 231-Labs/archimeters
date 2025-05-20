@@ -119,9 +119,9 @@ module archimeters::sculpt {
     }
 
     // adds a print record to the sculpt
-    public fun add_print_record<T: key + store>(sculpt: &mut Sculpt, record: T) {
-        let key = sculpt.printed;
-        sui::dynamic_object_field::add(&mut sculpt.id, key, record);
+    public fun add_print_record<T: key + store>(sculpt: &mut Sculpt, record: T, clock: &clock::Clock) {
+        let timestamp = clock::timestamp_ms(clock);
+        sui::dynamic_object_field::add(&mut sculpt.id, timestamp, record);
     }
 
     // === Getters ===  

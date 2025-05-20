@@ -115,7 +115,6 @@ export default function AtelierViewerWindow({
     }
   };
 
-  // Process algorithm file and extract parameters TODO: test logs
   const processSceneFile = useCallback((code: string) => {
     if (!code || typeof code !== 'string') {
       console.error('Invalid code input:', { code });
@@ -123,10 +122,10 @@ export default function AtelierViewerWindow({
     }
 
     try {
-      console.log('====== Processing scene file ======');
-      console.log('Code length:', code.length);
-      console.log('First 100 chars:', code.substring(0, 100));
-      console.log('File format detection...');
+        // console.log('====== Processing scene file ======');
+        // console.log('Code length:', code.length);
+        // console.log('First 100 chars:', code.substring(0, 100));
+        // console.log('File format detection...');
       
       // Simple file format detection
       if (code.includes('createGeometry')) {
@@ -602,31 +601,58 @@ export default function AtelierViewerWindow({
           throw new Error('3D scene not ready for STL export');
         }
 
-        const meshes: THREE.Mesh[] = [];
+        // 檢查場景中的網格
+        const originalMeshes: THREE.Mesh[] = [];
         sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) meshes.push(object);
+          if (object instanceof THREE.Mesh) originalMeshes.push(object);
         });
-        console.log('找到網格數量:', meshes.length);
+        console.log('找到網格數量:', originalMeshes.length);
 
-        if (meshes.length === 0) {
+        if (originalMeshes.length === 0) {
           throw new Error('No mesh found in scene');
         }
 
+        console.log('開始導出 STL');
+        
+        // 創建用於導出的新場景
         const exportScene = new THREE.Scene();
-        meshes.forEach(mesh => {
-          const clonedMesh = mesh.clone();
-          if (clonedMesh.geometry instanceof THREE.BufferGeometry) {
-            clonedMesh.geometry.computeVertexNormals();
-            if (clonedMesh.material instanceof THREE.Material) {
-              clonedMesh.material.side = THREE.DoubleSide;
+        
+        // 為每個網格創建正確旋轉的幾何體
+        originalMeshes.forEach(mesh => {
+          // 深度克隆原始幾何體
+          const clonedGeometry = mesh.geometry.clone();
+          
+          // 創建一個旋轉矩陣，使Z軸向上且解決上下顛倒問題
+          // 先旋轉90度（使Z軸向上），再旋轉180度（翻轉模型解決上下顛倒）
+          const rotationMatrix = new THREE.Matrix4()
+            .makeRotationX(Math.PI / 2)     // 先使Z軸向上
+          
+          // 將旋轉應用於幾何體（這會直接修改頂點數據）
+          clonedGeometry.applyMatrix4(rotationMatrix);
+          
+          // 確保法線也被正確更新
+          clonedGeometry.computeVertexNormals();
+          
+          // 克隆材質
+          let clonedMaterial;
+          if (Array.isArray(mesh.material)) {
+            clonedMaterial = mesh.material.map(mat => mat.clone());
+          } else {
+            clonedMaterial = mesh.material.clone();
+            if (clonedMaterial instanceof THREE.Material) {
+              clonedMaterial.side = THREE.DoubleSide; // 確保雙面可見
             }
           }
+          
+          // 創建新的網格並添加到導出場景
+          const clonedMesh = new THREE.Mesh(clonedGeometry, clonedMaterial);
           exportScene.add(clonedMesh);
         });
-
-        console.log('開始導出 STL');
+        
+        // 導出STL
         const exporter = new STLExporter();
         const stlString = exporter.parse(exportScene, { binary: false });
+        
         console.log('STL 導出完成，大小:', stlString.length);
 
         const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
@@ -864,7 +890,7 @@ export default function AtelierViewerWindow({
 
       setMintButtonState({
         disabled: false,
-        tooltip: 'Click to mint NFT'
+        tooltip: 'Click to mint'
       });
     } catch (error) {
       console.error('Error checking balance:', error);
@@ -1105,4 +1131,4 @@ export default function AtelierViewerWindow({
       )}
     </BaseTemplate>
   );
-} 
+} // STL導出調整 - 2023-07-20

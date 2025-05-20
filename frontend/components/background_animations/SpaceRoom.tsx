@@ -35,8 +35,8 @@ const SpaceRoom = memo(() => {
 
     // Left wall coordinates
     const wallFrontBottom = { x: 0, y: height }; // Bottom left
-    const wallFrontTop = { x: 0, y: 20 }; // Top left
-    const wallBackTop = { x: width * 0.15, y: 20 }; // Top right
+    const wallFrontTop = { x: 0, y: 26 }; // Top left
+    const wallBackTop = { x: width * 0.15, y: 26 }; // Top right
     const wallBackBottom = { x: width * 0.4, y: height * 0.85 }; // Bottom right
 
     // Floor coordinates

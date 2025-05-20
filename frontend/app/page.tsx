@@ -89,7 +89,7 @@ export default function Home() {
         <Background walletStatus={walletStatus} />
         <Header />
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
-        <div className="relative h-[calc(100vh-48px)]">
+        <div className="fixed top-[27px]">
           <div className="h-full relative">
             {openWindows.map(name => {
               switch(name) {
@@ -207,7 +207,7 @@ export default function Home() {
                         onClose={() => closeWindow(name)}
                         onDragStart={(e) => startDragging(e, name)}
                         onClick={() => activateWindow(name)}
-                        resizable
+                        // resizable
                         onResize={(e) => resizeWindow(e, name)}
                         zIndex={zOrder.indexOf(name) + 1}
                       >
