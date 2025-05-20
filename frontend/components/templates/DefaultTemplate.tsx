@@ -42,14 +42,14 @@ export default function DefaultTemplate({
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6">
       <div className="lg:w-[55%] flex flex-col gap-4">
-        <div className="flex-1 relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 min-h-[500px]">
-          <div className="relative bg-black/50 backdrop-blur-sm p-6 h-full">
+        <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
+          <div className="relative bg-black/50 backdrop-blur-sm p-6">
             <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
             <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
             <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
             <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
 
-            <div className="relative w-full h-full bg-black/70 border border-white/10" style={{ minHeight: '400px' }}>
+            <div className="relative w-full bg-black/70 border border-white/10" style={{ height: '500px' }}>
               {preview3D ? (
                 preview3D
               ) : (
