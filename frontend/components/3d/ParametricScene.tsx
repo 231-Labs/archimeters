@@ -28,34 +28,34 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
   const hasInitializedRef = useRef(false);
   const animationFrameIdRef = useRef<number>();
 
-  // 相機位置持久化
+  // camera state
   const cameraStateRef = useRef({
-    position: new THREE.Vector3(8, 8, 8),
+    position: new THREE.Vector3(120, 120, 120),
     target: new THREE.Vector3(0, 0, 0)
   });
 
-  // 渲染函數
+  // render function
   const render = useCallback(() => {
     if (rendererRef.current && sceneRef.current && cameraRef.current) {
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     }
   }, []);
 
-  // 清理所有 Three.js 資源
+  // cleanup all three.js resources
   const cleanupResources = useCallback(() => {
-    // 取消動畫幀
+    // cancel animation frame
     if (animationFrameIdRef.current) {
       cancelAnimationFrame(animationFrameIdRef.current);
       animationFrameIdRef.current = undefined;
     }
 
-    // 清理控制器
+    // cleanup controls
     if (controlsRef.current) {
       controlsRef.current.dispose();
       controlsRef.current = null;
     }
 
-    // 清理網格和材質
+    // cleanup mesh and material
     if (meshRef.current) {
       if (meshRef.current.geometry) {
         meshRef.current.geometry.dispose();
@@ -73,13 +73,13 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       meshRef.current = null;
     }
 
-    // 清理幾何體
+    // cleanup geometry
     if (geometryRef.current) {
       geometryRef.current.dispose();
       geometryRef.current = null;
     }
 
-    // 清理場景中的所有物體
+    // cleanup all objects in the scene
     if (sceneRef.current) {
       while(sceneRef.current.children.length > 0) {
         const object = sceneRef.current.children[0];
@@ -97,7 +97,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       }
     }
 
-    // 清理渲染器
+    // cleanup renderer
     if (rendererRef.current) {
       rendererRef.current.dispose();
       rendererRef.current.forceContextLoss();
@@ -105,22 +105,22 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       rendererRef.current = null;
     }
 
-    // 清理場景和相機
+    // cleanup scene and camera
     sceneRef.current = null;
     cameraRef.current = null;
 
-    // 重置初始化標誌
+    // reset initialization flag
     hasInitializedRef.current = false;
   }, []);
 
-  // 組件卸載時清理
+  // cleanup when component unmounts
   useEffect(() => {
     return () => {
       cleanupResources();
     };
   }, [cleanupResources]);
 
-  // 更新幾何體而不重新創建整個場景
+  // update geometry without recreating the entire scene
   const updateGeometry = useCallback(() => {
     if (!userScript || !sceneRef.current) {
       console.log('Cannot update geometry: missing userScript or scene');
@@ -130,24 +130,24 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     try {
       console.log('Updating geometry with parameters:', parameters);
       
-      // 評估用戶代碼
+      // evaluate user code
       const createGeometry = new Function('THREE', 'params', `
         ${userScript.code}
         return createGeometry(THREE, params);
       `);
 
-      // 創建新的幾何體
+      // create new geometry
       const geometry = createGeometry(THREE, parameters);
       console.log('Geometry created successfully');
 
-      // 如果已有網格，更新其幾何體和材質
+      // if there is an existing mesh, update its geometry and material
       if (meshRef.current) {
         console.log('Updating existing mesh');
-        // 保存舊的材質和幾何體
+        // save old material and geometry
         const oldMaterial = meshRef.current.material;
         const oldGeometry = meshRef.current.geometry;
         
-        // 創建新的材質
+        // create new material
         const material = new THREE.MeshPhongMaterial({
           color: parameters.color || 0xff3366,
           emissive: parameters.emissive || 0x000000,
@@ -159,11 +159,11 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
           side: THREE.DoubleSide,
         });
 
-        // 更新網格
+        // update mesh
         meshRef.current.geometry = geometry;
         meshRef.current.material = material;
 
-        // 清理舊的資源
+        // cleanup old resources
         if (oldGeometry) {
           oldGeometry.dispose();
         }
@@ -176,7 +176,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
         }
       } else {
         console.log('Creating new mesh');
-        // 如果沒有網格，創建新的
+        // if there is no mesh, create a new one
         const material = new THREE.MeshPhongMaterial({
           color: parameters.color || 0xff3366,
           emissive: parameters.emissive || 0x000000,
@@ -201,12 +201,12 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
         meshRef.current = mesh;
       }
 
-      // 計算法線以確保正確的光照
+      // compute normals to ensure correct lighting
       if (geometry instanceof THREE.BufferGeometry) {
         geometry.computeVertexNormals();
       }
 
-      // 確保渲染器更新
+      // ensure renderer updates
       render();
 
       console.log('Geometry update completed successfully');
@@ -216,7 +216,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     }
   }, [userScript, parameters, render]);
 
-  // 初始化場景
+  // initialize scene
   useEffect(() => {
     if (!containerRef.current || hasInitializedRef.current) {
       console.log('Scene initialization skipped:', {
@@ -228,11 +228,11 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
     console.log('Initializing scene');
 
-    // 創建場景
+    // create scene
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 創建相機
+    // create camera
     const camera = new THREE.PerspectiveCamera(
       50,
       containerRef.current.clientWidth / containerRef.current.clientHeight,
@@ -243,7 +243,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     camera.lookAt(cameraStateRef.current.target);
     cameraRef.current = camera;
 
-    // 創建渲染器
+    // create renderer
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
       preserveDrawingBuffer: true,
@@ -256,17 +256,17 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 創建控制器
+    // create controls
     const controls = new OrbitControls(camera, renderer.domElement);
     // controls.enableDamping = true;
-    controls.enableDamping = false; // 禁用阻尼，無需連續更新
+    controls.enableDamping = false; // disable damping, no continuous updates
     controls.dampingFactor = 0.05;
     controls.rotateSpeed = 0.8;
     controls.target.copy(cameraStateRef.current.target);
     controls.update();
     controlsRef.current = controls;
 
-    // 保存相機狀態並觸發渲染
+    // save camera state and trigger render
     controls.addEventListener('change', () => {
       if (cameraRef.current && controlsRef.current) {
         cameraStateRef.current.position.copy(cameraRef.current.position);
@@ -275,7 +275,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       }
     });
 
-    // 模擬連續渲染（僅在交互期間）
+    // simulate continuous rendering (only during interaction)
     let isControlActive = false;
     let interactionFrameId: number | null = null;
     controls.addEventListener('start', () => {
@@ -299,35 +299,35 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       }
     });
 
-    // 添加網格
+    // add grid
     const gridHelper = new THREE.GridHelper(10, 10);
     scene.add(gridHelper);
 
-    // 添加座標軸
+    // add axes
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
 
-    // 添加環境光
+    // add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
-    // 添加主要方向光（右上方）
+    // add main light (top right)
     const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
     mainLight.position.set(5, 8, 5);
     mainLight.castShadow = true;
     scene.add(mainLight);
 
-    // 添加填充光（側面）
+    // add fill light (side)
     const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
     fillLight.position.set(-8, 0, 0);
     scene.add(fillLight);
 
-    // 添加背光
+    // add back light
     const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
     backLight.position.set(0, 2, -10);
     scene.add(backLight);
 
-    // 通知組件準備就緒
+    // notify component ready
     if (onCameraReady) onCameraReady(camera);
     if (onRendererReady) onRendererReady(renderer);
     if (onSceneReady) onSceneReady(scene);
@@ -337,7 +337,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
 
     // let isAnimating = true;
 
-    // 動畫循環
+    // animation loop
     // function animate() {
     //   if (!isAnimating) return;
 
@@ -352,24 +352,24 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
     // }
     // animate();
 
-    // 初始渲染
+    // initial render
     render();
 
-    // 清理函數
+    // cleanup function
     return () => {
       console.log('Cleaning up scene');
       if (interactionFrameId) {
         cancelAnimationFrame(interactionFrameId);
         interactionFrameId = null;
       }
-      // 只有在組件真正卸載時才清理資源
+      // only cleanup resources when the component is actually unmounted
       if (containerRef.current) {
         cleanupResources();
       }
     };
   }, [onSceneReady, onRendererReady, onCameraReady, cleanupResources, render]);
 
-  // 更新幾何體
+  // update geometry
   useEffect(() => {
     console.log('Geometry update effect triggered', {
       hasInitialized: hasInitializedRef.current,
