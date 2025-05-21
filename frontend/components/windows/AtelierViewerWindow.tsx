@@ -32,7 +32,11 @@ interface MintButtonState {
   tooltipComponent?: ReactNode;
 }
 
-export default function AtelierViewerWindow() {
+interface AtelierViewerProps {
+  name: WindowName;
+}
+
+export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
   const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
