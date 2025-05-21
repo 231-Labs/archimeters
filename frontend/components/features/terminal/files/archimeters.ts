@@ -21,4 +21,9 @@ export const archimeters = [
     'digital design and making things will feel as easy and fun as',
     'playing a game. This small experiment is just our first step.',
     '',
+    'As for the name \x1b[38;2;128;255;255m"Archimeters"\x1b[38;2;255;255;255m, it comes from combining', 
+    '\x1b[38;2;255;199;143m"Architecture" \x1b[38;2;255;255;255mand \x1b[38;2;255;199;143m"Parameters"\x1b[38;2;255;255;255m. Fun fact: it also sounds a',
+    'bit like "Archimedes," which is why our local project is called',
+    '\x1b[38;2;128;255;255m"Eureka" \x1b[38;2;255;255;255m—a little tribute to the classics.',
+    '',
 ]

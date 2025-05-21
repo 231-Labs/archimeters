@@ -23,9 +23,4 @@ export const intoduction = [
     '\x1b[38;2;255;199;143m• \x1b[38;2;255;255;255mDistributed 3D Printing Manufacturing\x1b[0m',
     '\x1b[38;2;255;199;143m• \x1b[38;2;255;255;255mDigital Twin and IoT Integration\x1b[0m',
     '',
-    'As for the name "Archimeters," it comes from combining', 
-    '"Architecture" and "Parameters." Fun fact: it also sounds a',
-    'bit like "Archimedes," which is why our local project is called',
-    '"Eureka" —a little tribute to the classics.',
-    '',
 ]
