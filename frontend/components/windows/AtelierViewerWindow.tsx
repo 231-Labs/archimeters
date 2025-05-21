@@ -114,11 +114,6 @@ export default function AtelierViewerWindow() {
     }
 
     try {
-        // console.log('====== Processing scene file ======');
-        // console.log('Code length:', code.length);
-        // console.log('First 100 chars:', code.substring(0, 100));
-        // console.log('File format detection...');
-      
       // Simple file format detection
       if (code.includes('createGeometry')) {
         console.log('✓ Found createGeometry function');
@@ -467,15 +462,11 @@ export default function AtelierViewerWindow() {
     let retryCount = 0;
     let lastError: Error | null = null;
 
-    console.log(`[${fileType}] 開始上傳流程`, {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
+    console.log(`📤 [${fileType}] Starting upload`);
 
     while (retryCount < maxRetries) {
       try {
-        console.log(`[${fileType}] 嘗試上傳 (${retryCount + 1}/${maxRetries})`);
+        console.log(`🟡 [${fileType}] Upload attempt (${retryCount + 1}/${maxRetries})`);
         setUploadStatus('uploading');
         setUploadProgress(`Uploading ${fileType}...`);
 
@@ -483,20 +474,14 @@ export default function AtelierViewerWindow() {
         formData.append('data', file);
         formData.append('epochs', '5');
 
-        console.log(`[${fileType}] 發送請求到 Walrus API`);
         const response = await fetch('/api/walrus', {
           method: 'PUT',
           body: formData,
         });
 
-        console.log(`[${fileType}] 收到回應:`, {
-          status: response.status,
-          statusText: response.statusText
-        });
-
         if (!response.ok) {
           if (response.status === 500) {
-            console.log(`[${fileType}] 收到 500 錯誤，準備重試`);
+            console.log(`🟠 [${fileType}] Server error, preparing to retry`);
             lastError = new Error(`HTTP error: ${response.status}`);
             retryCount++;
             await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -506,44 +491,36 @@ export default function AtelierViewerWindow() {
         }
 
         const responseText = await response.text();
-        console.log(`[${fileType}] 回應內容:`, responseText.substring(0, 200));
-
         let result;
+        
         try {
           result = JSON.parse(responseText);
-          console.log(`[${fileType}] 解析 JSON 成功:`, result);
         } catch (err) {
-          console.error(`[${fileType}] JSON 解析失敗:`, err);
-          throw new Error('Failed to parse response JSON');
+          console.error(`🔴 [${fileType}] JSON parsing failed`);
+          throw new Error('Failed to parse response');
         }
 
         let blobId = result?.alreadyCertified?.blobId || result?.newlyCreated?.blobObject?.blobId;
-        console.log(`[${fileType}] 獲取到 blobId:`, blobId);
-
+        
         if (!blobId || typeof blobId !== 'string' || blobId.trim() === '') {
-          console.error(`[${fileType}] 無效的 blobId`);
-          throw new Error('No valid blobId returned');
+          console.error(`🔴 [${fileType}] Invalid blob ID`);
+          throw new Error('No valid blob ID returned');
         }
 
-        console.log(`[${fileType}] 等待確認 blob 可用性`);
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        console.log(`[${fileType}] 上傳成功完成！blobId:`, blobId);
+        console.log(`🟢 [${fileType}] Upload successful! ID: ${blobId.substring(0, 10)}...`);
         setUploadStatus('success');
         setUploadProgress(`${fileType} uploaded successfully!`);
         return blobId;
 
       } catch (error: any) {
-        console.error(`[${fileType}] 錯誤:`, {
-          message: error.message,
-          stack: error.stack,
-          attempt: retryCount + 1
-        });
+        console.error(`🔴 [${fileType}] Error: ${error.message}`);
         
         if ((error.message.includes('Failed to fetch') || error.message.includes('HTTP error: 500')) && retryCount < maxRetries - 1) {
           lastError = error;
           retryCount++;
-          console.log(`[${fileType}] 準備重試 (${retryCount}/${maxRetries})`);
+          console.log(`🟠 [${fileType}] Preparing to retry (${retryCount}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
           continue;
         }
@@ -554,7 +531,7 @@ export default function AtelierViewerWindow() {
       }
     }
 
-    console.error(`[${fileType}] 達到最大重試次數，上傳失敗`);
+    console.error(`🔴 [${fileType}] Maximum retries reached, upload failed`);
     throw lastError || new Error('Upload failed after maximum retries');
   };
 
@@ -562,19 +539,19 @@ export default function AtelierViewerWindow() {
     if (!atelier) return;
 
     try {
-      console.log('Starting Mint process');
+      console.log('🔵 Starting mint process');
       setMintStatus('preparing');
       setMintError(null);
 
       if (!alias.trim()) {
-        setMintError('Name Your Model');
+        setMintError('Name your model');
         setMintStatus('error');
         return;
       }
 
       // 1. Capture screenshot and upload to Walrus
       try {
-        console.log('Preparing to capture screenshot');
+        console.log('🔵 Preparing to capture screenshot');
         if (!sceneRef.current || !rendererRef.current || !cameraRef.current) {
           throw new Error('3D scene not ready');
         }
@@ -582,17 +559,15 @@ export default function AtelierViewerWindow() {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
         await new Promise(requestAnimationFrame);
         
-        console.log('Generating screenshot');
+        console.log('🔵 Generating screenshot');
         const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
         const blob = await (await fetch(dataUrl)).blob();
         const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
-        console.log('Screenshot file prepared', { fileName: screenshotFile.name, size: screenshotFile.size });
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
-        console.log('Screenshot upload successful, blobId:', screenshotBlobId);
 
         // 2. Export STL and upload to Walrus
-        console.log('Preparing to export STL');
+        console.log('🔵 Preparing to export STL');
         if (!sceneRef.current) {
           throw new Error('3D scene not ready for STL export');
         }
@@ -602,13 +577,12 @@ export default function AtelierViewerWindow() {
         sceneRef.current.traverse((object) => {
           if (object instanceof THREE.Mesh) originalMeshes.push(object);
         });
-        console.log('Found mesh count:', originalMeshes.length);
-
+        
         if (originalMeshes.length === 0) {
           throw new Error('No mesh found in scene');
         }
 
-        console.log('Starting STL export');
+        console.log('🔵 Starting STL export');
         
         // Create new scene for export
         const exportScene = new THREE.Scene();
@@ -648,24 +622,19 @@ export default function AtelierViewerWindow() {
         const exporter = new STLExporter();
         const stlString = exporter.parse(exportScene, { binary: false });
         
-        console.log('STL export complete, size:', stlString.length);
+        console.log('🟢 STL export complete');
 
         const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
         const stlFile = new File([blob2], `${atelier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
-        console.log('STL file prepared', { fileName: stlFile.name, size: stlFile.size });
 
         const stlBlobId = await uploadToWalrus(stlFile, 'STL');
-        console.log('STL upload successful, blobId:', stlBlobId);
 
         // Ensure both blob IDs are obtained
         if (!screenshotBlobId || !stlBlobId) {
           throw new Error('Failed to get blob IDs');
         }
 
-        console.log('All files uploaded successfully, preparing transaction', {
-          screenshotBlobId,
-          stlBlobId
-        });
+        console.log('🟢 All files uploaded successfully, preparing transaction');
 
         setMintStatus('minting');
 
@@ -676,14 +645,7 @@ export default function AtelierViewerWindow() {
         }
 
         // 4. Execute transaction with price
-        console.log('Transaction parameters:', {
-          atelierId: atelier.id,
-          membershipId,
-          alias,
-          screenshotBlobId,
-          stlBlobId,
-          price: atelier.price
-        });
+        console.log('🟡 Transaction parameters ready');
 
         const tx = await mintSculpt(
           atelier.id,
@@ -701,12 +663,12 @@ export default function AtelierViewerWindow() {
           },
           {
             onSuccess: (result) => {
-              console.log('Mint transaction successful:', result);
+              console.log('🟢 Mint transaction successful');
               setTxDigest(result.digest);
               setMintStatus('success');
             },
             onError: (error) => {
-              console.error('Mint transaction failed:', error);
+              console.error('🔴 Mint transaction failed');
               setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
               setMintStatus('error');
             }
@@ -714,13 +676,13 @@ export default function AtelierViewerWindow() {
         );
 
       } catch (error) {
-        console.error('Mint process failed:', error);
+        console.error('🔴 Mint process failed');
         setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
         setMintStatus('error');
       }
 
     } catch (error) {
-      console.error('Mint process failed:', error);
+      console.error('🔴 Mint process failed');
       setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
       setMintStatus('error');
     }
