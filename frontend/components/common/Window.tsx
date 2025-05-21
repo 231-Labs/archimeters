@@ -105,7 +105,7 @@ const Window: React.FC<WindowProps> = ({
       </div>
       {/* 內容區 */}
       <div
-          className="flex-1 overflow-hidden bg-[#FFF]"
+          className="flex-1 overflow-hidden bg-[#1a1a1a]"
           style={{
             borderTop: '4px solid #000',
             borderLeft: '4px solid #000',
