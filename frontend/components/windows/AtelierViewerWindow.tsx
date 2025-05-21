@@ -5,7 +5,7 @@ import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import * as THREE from 'three';
-import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK } from '@/utils/transactions';
+import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK, MIST_PER_SUI } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { debounce } from 'lodash';
 
@@ -821,9 +821,11 @@ export default function AtelierViewerWindow() {
       const totalNeeded = price + gasEstimate;
       
       if (suiBalance < totalNeeded) {
+        // Convert from MIST to SUI for display
+        const totalNeededSui = Number(totalNeeded) / MIST_PER_SUI;
         setMintButtonState({
           disabled: true,
-          tooltip: `Insufficient balance, need ${totalNeeded.toString()} MIST`
+          tooltip: `Insufficient balance, need ${totalNeededSui.toFixed(2)} SUI`
         });
         return;
       }
@@ -903,7 +905,7 @@ export default function AtelierViewerWindow() {
       mintButtonState={{
         ...mintButtonState,
         tooltipComponent: mintButtonState.disabled ? (
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div className="absolute bottom-full left-1/3 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             <div className="flex items-center gap-2">
               {!currentAccount && (
                 <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -944,7 +946,7 @@ export default function AtelierViewerWindow() {
         mintButtonState={{
           ...mintButtonState,
           tooltipComponent: mintButtonState.disabled ? (
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <div className="absolute bottom-full left-1/3 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               <div className="flex items-center gap-2">
                 {!currentAccount && (
                   <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">

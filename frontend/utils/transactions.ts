@@ -8,6 +8,7 @@ export const ATELIER_STATE_ID = '0xcb52d65a3d600ea300bc4824444fdda7ab82ff3595195
 export const PRINTER_REGISTRY = `0xe2a996f1ea846d58304d2e7f3e17c2c744db7482fbcb7635be202a20c916f36c`;
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 export const SUI_CLOCK = '0x6';
+export const MIST_PER_SUI = 1_000_000_00;
 
 export const mintMembership = async (username: string, description: string) => {
   

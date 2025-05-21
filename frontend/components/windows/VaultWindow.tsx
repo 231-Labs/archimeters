@@ -10,8 +10,7 @@ import { usePrinters, Printer } from '@/components/features/vault/hooks/usePrint
 import type { WindowName } from '@/types';
 import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
 import { SculptPrintButton } from '@/components/features/vault/components/SculptPrintButton';
-
-const SUI_MIST = 1000000000;
+import { MIST_PER_SUI } from '@/utils/transactions';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -143,7 +142,7 @@ const ImageItem: React.FC<{
               {atelier.type === 'atelier' ? (
                 <>
                   <span className="font-semibold">{(atelier as AtelierItem).title}</span>
-                  <span>Fee Pool: {Number((atelier as AtelierItem).pool) / SUI_MIST} SUI</span>
+                  <span>Fee Pool: {Number((atelier as AtelierItem).pool) / MIST_PER_SUI} SUI</span>
                   <span>Published: {(atelier as AtelierItem).publish_time}</span>
                 </>
               ) : (
