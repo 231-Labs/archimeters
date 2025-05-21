@@ -10,10 +10,6 @@ import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@
 import { MEMBERSHIP_TYPE } from '@/utils/transactions';
 import { debounce } from 'lodash';
 
-interface AtelierViewerWindowProps {
-  name: WindowName;
-}
-
 interface Atelier {
   id: string;
   photoBlobId: string;
@@ -25,7 +21,6 @@ interface Atelier {
   title: string;
   author: string;
   price: string;
-  payment?: string;
   description?: string;
   artistStatement?: string;
   artistName?: string;
@@ -38,9 +33,7 @@ interface MintButtonState {
   tooltipComponent?: ReactNode;
 }
 
-export default function AtelierViewerWindow({
-  name,
-}: AtelierViewerWindowProps) {
+export default function AtelierViewerWindow() {
   const [atelier, setAtelier] = useState<Atelier | null>(null);
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
@@ -65,10 +58,10 @@ export default function AtelierViewerWindow({
     tooltip: 'Please connect your wallet',
   });
 
-  // 默認占位圖 URL
-  const DEFAULT_IMAGE_URL = '/placeholder-image.png'; // 確保在 public 目錄下有一個占位圖
+  // default image url
+  const DEFAULT_IMAGE_URL = '/placeholder-image.png'; // ensure there is a placeholder image in the public directory
 
-  // Fetch image from Walrus storage
+  // fetch image from walrus storage
   const fetchImageFromWalrus = async (blobId: string): Promise<string> => {
     try {
       const response = await fetch(`/api/walrus/blob/${blobId}`);
@@ -80,7 +73,7 @@ export default function AtelierViewerWindow({
       return url;
     } catch (err) {
       console.error('Error loading image:', err);
-      return DEFAULT_IMAGE_URL; // 返回占位圖
+      return DEFAULT_IMAGE_URL; // return placeholder image
     }
   };
 
@@ -570,7 +563,7 @@ export default function AtelierViewerWindow({
     if (!atelier) return;
 
     try {
-      console.log('開始 Mint 流程');
+      console.log('Starting Mint process');
       setMintStatus('preparing');
       setMintError(null);
 
@@ -580,9 +573,9 @@ export default function AtelierViewerWindow({
         return;
       }
 
-      // 1. 捕獲截圖並上傳到 Walrus
+      // 1. Capture screenshot and upload to Walrus
       try {
-        console.log('準備捕獲截圖');
+        console.log('Preparing to capture screenshot');
         if (!sceneRef.current || !rendererRef.current || !cameraRef.current) {
           throw new Error('3D scene not ready');
         }
@@ -590,112 +583,107 @@ export default function AtelierViewerWindow({
         rendererRef.current.render(sceneRef.current, cameraRef.current);
         await new Promise(requestAnimationFrame);
         
-        console.log('生成截圖');
+        console.log('Generating screenshot');
         const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
         const blob = await (await fetch(dataUrl)).blob();
         const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
-        console.log('截圖檔案已準備', { fileName: screenshotFile.name, size: screenshotFile.size });
+        console.log('Screenshot file prepared', { fileName: screenshotFile.name, size: screenshotFile.size });
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
-        console.log('截圖上傳成功，blobId:', screenshotBlobId);
+        console.log('Screenshot upload successful, blobId:', screenshotBlobId);
 
-        // 2. 導出 STL 並上傳到 Walrus
-        console.log('準備導出 STL');
+        // 2. Export STL and upload to Walrus
+        console.log('Preparing to export STL');
         if (!sceneRef.current) {
           throw new Error('3D scene not ready for STL export');
         }
 
-        // 檢查場景中的網格
+        // Check meshes in the scene
         const originalMeshes: THREE.Mesh[] = [];
         sceneRef.current.traverse((object) => {
           if (object instanceof THREE.Mesh) originalMeshes.push(object);
         });
-        console.log('找到網格數量:', originalMeshes.length);
+        console.log('Found mesh count:', originalMeshes.length);
 
         if (originalMeshes.length === 0) {
           throw new Error('No mesh found in scene');
         }
 
-        console.log('開始導出 STL');
+        console.log('Starting STL export');
         
-        // 創建用於導出的新場景
+        // Create new scene for export
         const exportScene = new THREE.Scene();
         
-        // 為每個網格創建正確旋轉的幾何體
+        // Create properly rotated geometry for each mesh
         originalMeshes.forEach(mesh => {
-          // 深度克隆原始幾何體
+          // Deep clone original geometry
           const clonedGeometry = mesh.geometry.clone();
           
-          // 創建一個旋轉矩陣，使Z軸向上且解決上下顛倒問題
-          // 先旋轉90度（使Z軸向上），再旋轉180度（翻轉模型解決上下顛倒）
+          // Create rotation matrix to make Z-axis up and fix upside-down issue
           const rotationMatrix = new THREE.Matrix4()
-            .makeRotationX(Math.PI / 2)     // 先使Z軸向上
+            .makeRotationX(Math.PI / 2)     // First make Z-axis up
           
-          // 將旋轉應用於幾何體（這會直接修改頂點數據）
+          // Apply rotation to geometry (this will modify vertex data directly)
           clonedGeometry.applyMatrix4(rotationMatrix);
           
-          // 確保法線也被正確更新
+          // Ensure normals are correctly updated
           clonedGeometry.computeVertexNormals();
           
-          // 克隆材質
+          // Clone material
           let clonedMaterial;
           if (Array.isArray(mesh.material)) {
             clonedMaterial = mesh.material.map(mat => mat.clone());
           } else {
             clonedMaterial = mesh.material.clone();
             if (clonedMaterial instanceof THREE.Material) {
-              clonedMaterial.side = THREE.DoubleSide; // 確保雙面可見
+              clonedMaterial.side = THREE.DoubleSide; // Ensure both sides are visible
             }
           }
           
-          // 創建新的網格並添加到導出場景
+          // Create new mesh and add to export scene
           const clonedMesh = new THREE.Mesh(clonedGeometry, clonedMaterial);
           exportScene.add(clonedMesh);
         });
         
-        // 導出STL
+        // Export STL
         const exporter = new STLExporter();
         const stlString = exporter.parse(exportScene, { binary: false });
         
-        console.log('STL 導出完成，大小:', stlString.length);
+        console.log('STL export complete, size:', stlString.length);
 
         const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
         const stlFile = new File([blob2], `${atelier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
-        console.log('STL 檔案已準備', { fileName: stlFile.name, size: stlFile.size });
+        console.log('STL file prepared', { fileName: stlFile.name, size: stlFile.size });
 
         const stlBlobId = await uploadToWalrus(stlFile, 'STL');
-        console.log('STL 上傳成功，blobId:', stlBlobId);
+        console.log('STL upload successful, blobId:', stlBlobId);
 
-        // 確保兩個 blob ID 都已獲取
+        // Ensure both blob IDs are obtained
         if (!screenshotBlobId || !stlBlobId) {
           throw new Error('Failed to get blob IDs');
         }
 
-        console.log('所有檔案上傳成功，準備執行交易', {
+        console.log('All files uploaded successfully, preparing transaction', {
           screenshotBlobId,
           stlBlobId
         });
 
         setMintStatus('minting');
 
-        // 3. 準備交易
+        // 3. Prepare transaction
         const membershipId = sessionStorage.getItem('membership-id');
         if (!membershipId) {
           throw new Error('No membership ID found');
         }
 
-        if (!atelier.payment) {
-          throw new Error('No payment coin selected');
-        }
-
-        // 4. 執行交易
-        console.log('交易參數:', {
+        // 4. Execute transaction with price directly - will use splitCoin in the transaction
+        console.log('Transaction parameters:', {
           atelierId: atelier.id,
           membershipId,
           alias,
           screenshotBlobId,
           stlBlobId,
-          payment: atelier.payment
+          price: atelier.price
         });
 
         const tx = await mintSculpt(
@@ -704,7 +692,7 @@ export default function AtelierViewerWindow({
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
           stlBlobId,
-          atelier.payment,
+          atelier.price, // Pass price directly instead of payment coinId
         );
 
         signAndExecuteTransaction(
@@ -714,12 +702,12 @@ export default function AtelierViewerWindow({
           },
           {
             onSuccess: (result) => {
-              console.log('Mint 交易成功:', result);
+              console.log('Mint transaction successful:', result);
               setTxDigest(result.digest);
               setMintStatus('success');
             },
             onError: (error) => {
-              console.error('Mint 交易失敗:', error);
+              console.error('Mint transaction failed:', error);
               setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
               setMintStatus('error');
             }
@@ -727,13 +715,13 @@ export default function AtelierViewerWindow({
         );
 
       } catch (error) {
-        console.error('Mint 流程失敗:', error);
+        console.error('Mint process failed:', error);
         setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
         setMintStatus('error');
       }
 
     } catch (error) {
-      console.error('Mint 流程失敗:', error);
+      console.error('Mint process failed:', error);
       setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
       setMintStatus('error');
     }
@@ -778,39 +766,9 @@ export default function AtelierViewerWindow({
     }
   }, [currentAccount, suiClient]);
 
-  // Find suitable coin for payment
-  const findSuitableCoin = useCallback(async () => {
-    if (!currentAccount || !atelier) return null;
-
-    try {
-      const price = BigInt(atelier.price);
-      const { data: coins } = await suiClient.getCoins({
-        owner: currentAccount.address,
-        coinType: '0x2::sui::SUI'
-      });
-
-      // Find a coin with sufficient balance
-      const suitableCoin = coins.find(coin => BigInt(coin.balance) >= price);
-      
-      if (suitableCoin) {
-        // Update atelier with the selected coin ID
-        setAtelier(prev => prev ? {
-          ...prev,
-          payment: suitableCoin.coinObjectId
-        } : null);
-        return suitableCoin.coinObjectId;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error finding suitable coin:', error);
-      return null;
-    }
-  }, [currentAccount, atelier, suiClient]);
-
-  // Check SUI balance and find suitable coin
+  // Check SUI balance and determine if user can mint
   useEffect(() => {
-    const checkBalanceAndCoin = async () => {
+    const checkBalance = async () => {
       if (!currentAccount) {
         setSuiBalance(BigInt(0));
         return;
@@ -823,21 +781,16 @@ export default function AtelierViewerWindow({
         });
 
         setSuiBalance(BigInt(totalBalance));
-
-        // If we have sufficient total balance and no payment coin selected yet, find a suitable coin
-        if (atelier && BigInt(totalBalance) >= BigInt(atelier.price) && !atelier.payment) {
-          await findSuitableCoin();
-        }
       } catch (error) {
         console.error('Error checking SUI balance:', error);
         setSuiBalance(BigInt(0));
       }
     };
 
-    checkBalanceAndCoin();
-  }, [currentAccount, suiClient, atelier?.price]);
+    checkBalance();
+  }, [currentAccount, suiClient]);
 
-  // Update button state
+  // Update button state logic
   useEffect(() => {
     if (!currentAccount) {
       setMintButtonState({
@@ -863,31 +816,15 @@ export default function AtelierViewerWindow({
       return;
     }
 
-    // Check if we have the balance information
-    if (suiBalance === BigInt(0)) {
-      setMintButtonState({
-        disabled: true,
-        tooltip: 'Loading balance information...'
-      });
-      return;
-    }
-
     try {
       const price = BigInt(atelier.price);
-      if (suiBalance < price) {
-        const formattedPrice = (Number(price) / 1_000_000_000).toFixed(2);
+      const gasEstimate = BigInt(10000000); // Set a reasonable gas budget in MIST
+      const totalNeeded = price + gasEstimate;
+      
+      if (suiBalance < totalNeeded) {
         setMintButtonState({
           disabled: true,
-          tooltip: `Insufficient balance`
-        });
-        return;
-      }
-
-      // If we have sufficient balance but no payment coin selected yet
-      if (!atelier.payment) {
-        setMintButtonState({
-          disabled: true,
-          tooltip: 'Selecting payment coin...'
+          tooltip: `Insufficient balance, need ${totalNeeded.toString()} MIST`
         });
         return;
       }
@@ -903,9 +840,9 @@ export default function AtelierViewerWindow({
         tooltip: 'Error checking price'
       });
     }
-  }, [currentAccount, hasMembership, suiBalance, atelier?.price, atelier?.payment]);
+  }, [currentAccount, hasMembership, suiBalance, atelier?.price]);
 
-  // 在組件掛載和錢包狀態改變時檢查
+  // check membership NFT
   useEffect(() => {
     checkMembershipNFT();
   }, [currentAccount, checkMembershipNFT]);
@@ -1135,4 +1072,4 @@ export default function AtelierViewerWindow({
       )}
     </BaseTemplate>
   );
-} // STL導出調整 - 2023-07-20
+}

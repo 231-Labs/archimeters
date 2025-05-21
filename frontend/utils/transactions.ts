@@ -58,10 +58,15 @@ export const mintSculpt = async (
   alias: string,
   blueprint: string,
   structure: string,
-  payment: string,
+  price: string,
   clock: string = '0x6',
 ) => {
   const tx = new Transaction();
+  
+  // 從用戶錢包中找到一個 coin 並直接傳遞
+  // 這樣合約可以將費用從這個 coin 中提取並將剩餘部分返回
+  const coinToUse = tx.gas; // 使用 gas coin 作為支付來源
+  
   tx.moveCall({
     target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
     arguments: [
@@ -70,7 +75,7 @@ export const mintSculpt = async (
       tx.pure(bcs.string().serialize(alias).toBytes()),
       tx.pure(bcs.string().serialize(blueprint).toBytes()),
       tx.pure(bcs.string().serialize(structure).toBytes()),
-      tx.object(payment),
+      coinToUse, // 直接傳遞 gas coin 的引用
       tx.object(clock),
     ],
   });
