@@ -8,6 +8,7 @@ export const ATELIER_STATE_ID = '0xcb52d65a3d600ea300bc4824444fdda7ab82ff3595195
 export const PRINTER_REGISTRY = `0xe2a996f1ea846d58304d2e7f3e17c2c744db7482fbcb7635be202a20c916f36c`;
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 export const SUI_CLOCK = '0x6';
+export const MIST_PER_SUI = 1_000_000_000;
 
 export const mintMembership = async (username: string, description: string) => {
   
@@ -58,10 +59,12 @@ export const mintSculpt = async (
   alias: string,
   blueprint: string,
   structure: string,
-  payment: string,
   clock: string = '0x6',
 ) => {
   const tx = new Transaction();
+  
+  // Instead of creating a separate coin and having ownership issues,
+  // use tx.gas directly and let the contract handle the splitting
   tx.moveCall({
     target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
     arguments: [
@@ -70,7 +73,7 @@ export const mintSculpt = async (
       tx.pure(bcs.string().serialize(alias).toBytes()),
       tx.pure(bcs.string().serialize(blueprint).toBytes()),
       tx.pure(bcs.string().serialize(structure).toBytes()),
-      tx.object(payment),
+      tx.gas, // Use gas coin directly
       tx.object(clock),
     ],
   });
