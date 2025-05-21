@@ -17,12 +17,12 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'gallery': {
     title: 'Gallery',
-    defaultSize: { width: 520, height: 660 },
+    defaultSize: { width: 700, height: 650 },
     resizable: true,
   },
   'atelier-viewer': {
     title: 'Atelier Viewer',
-    defaultSize: { width: 800, height: 600 },
+    defaultSize: { width: 900, height: 650 },
     resizable: true,
   },
   'vault': {
