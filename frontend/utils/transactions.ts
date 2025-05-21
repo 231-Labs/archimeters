@@ -61,8 +61,9 @@ export const mintSculpt = async (
   clock: string = '0x6',
 ) => {
   const tx = new Transaction();
-  const coinToUse = tx.gas;
   
+  // Instead of creating a separate coin and having ownership issues,
+  // use tx.gas directly and let the contract handle the splitting
   tx.moveCall({
     target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
     arguments: [
@@ -71,7 +72,7 @@ export const mintSculpt = async (
       tx.pure(bcs.string().serialize(alias).toBytes()),
       tx.pure(bcs.string().serialize(blueprint).toBytes()),
       tx.pure(bcs.string().serialize(structure).toBytes()),
-      coinToUse,
+      tx.gas, // Use gas coin directly
       tx.object(clock),
     ],
   });

@@ -5,9 +5,8 @@ import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import * as THREE from 'three';
-import { mintSculpt } from '@/utils/transactions';
+import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { MEMBERSHIP_TYPE } from '@/utils/transactions';
 import { debounce } from 'lodash';
 
 interface Atelier {
@@ -676,7 +675,7 @@ export default function AtelierViewerWindow() {
           throw new Error('No membership ID found');
         }
 
-        // 4. Execute transaction with price directly - will use splitCoin in the transaction
+        // 4. Execute transaction with price
         console.log('Transaction parameters:', {
           atelierId: atelier.id,
           membershipId,
@@ -692,7 +691,7 @@ export default function AtelierViewerWindow() {
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
           stlBlobId,
-          atelier.price, // Pass price directly instead of payment coinId
+          SUI_CLOCK,
         );
 
         signAndExecuteTransaction(
