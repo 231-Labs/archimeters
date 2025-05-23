@@ -1,4 +1,5 @@
 # Archimeters 🏛️
+![archimeters_main_vision](https://github.com/user-attachments/assets/5aade832-2568-46e2-9600-336a13353681)
 
 A revolutionary parametric design platform on the Sui blockchain that transforms NFTs through functional 3D designs. Archimeters bridges digital creation with physical manufacturing, providing unique model configuration, real-time previewing, and secure asset generation via Sui's Walrus decentralized storage.
 
@@ -95,8 +96,3 @@ npm run lint
 - **Off-chain Computation**: Advanced 3D modeling capabilities through verifiable computation services
 - **AI Enhancement**: Machine learning algorithms for intelligent parameter optimization
 - **Global Manufacturing**: Integration with production partners worldwide for seamless physical production
-
-
-## Sui Overflow 2025 Hackathon - Programmable Storage Track 🏆
-
-This project is being developed for the Walrus track of the Sui Overflow 2025 Hackathon, showcasing the revolutionary potential of decentralized storage for complex design assets and pioneering new forms of digital ownership with real-world utility.
