@@ -9,7 +9,7 @@ import { createMetadataJson } from '@/components/features/design-publisher/utils
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { createArtlier, ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
-import { defaultWindowConfigs } from '@/config/windows';
+// import { defaultWindowConfigs } from '@/config/windows';
 
 export default function WebsiteUpload() {
   const router = useRouter();
@@ -33,14 +33,14 @@ export default function WebsiteUpload() {
   const [showPreview, setShowPreview] = useState(false);
 
   // Artwork information
-  const [workName, setWorkName] = useState('Parametric Constellation #42');
-  const [description, setDescription] = useState('A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.');
-  const [price, setPrice] = useState('1024');
+  const [workName, setWorkName] = useState('Morphic Vessel X-1');
+  const [description, setDescription] = useState('A shape-shifting cup with interactive elements that transforms to optimize your drinking experience. Designed for the modern beverage enthusiast.');
+  const [price, setPrice] = useState('1');
 
   // Artist information
-  const [name, setName] = useState('CryptoArtist#0042');
+  const [name, setName] = useState('FluidDesigner#0088');
   const [social, setSocial] = useState('archimeters.lens');
-  const [intro, setIntro] = useState('Digital artist exploring the intersection of mathematics and visual aesthetics through parametric art.');
+  const [intro, setIntro] = useState('Product designer pushing boundaries between functional objects and digital innovation through adaptive, fluid-inspired creations.');
 
   // Design settings
   const [style, setStyle] = useState<TemplateSeries>('default');

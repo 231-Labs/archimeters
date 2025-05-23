@@ -3,15 +3,15 @@ import type { ArtworkInfo, ArtistInfo, DesignSettings } from '../types';
 
 // TODO: empty default values
 const defaultArtworkInfo: ArtworkInfo = {
-  workName: 'Parametric Constellation #42',
-  description: 'A generative artwork exploring celestial patterns through mathematical algorithms. Parameters can be adjusted to create unique constellations.',
-  price: '1024',
+  workName: 'Morphic Vessel X-1',
+  description: 'A revolutionary shape-shifting cup that adapts to your beverage experience. Interactive elements allow users to transform its form for optimal enjoyment of any drink.',
+  price: '1',
 };
 
 const defaultArtistInfo: ArtistInfo = {
-  name: 'CryptoArtist#0042',
+  name: 'FluidDesigner#0088',
   social: 'archimeters.lens',
-  intro: 'Digital artist exploring the intersection of mathematics and visual aesthetics through parametric art.',
+  intro: 'Product designer pushing boundaries between functional objects and digital innovation through adaptive, fluid-inspired creations.',
 };
 
 const defaultDesignSettings: DesignSettings = {
