@@ -1,18 +1,17 @@
 # Archimeters 🏛️
 ![archimeters_main_vision](https://github.com/user-attachments/assets/5aade832-2568-46e2-9600-336a13353681)
 
-A revolutionary parametric design platform on the Sui blockchain that transforms NFTs through functional 3D designs. Archimeters bridges digital creation with physical manufacturing, providing unique model configuration, real-time previewing, and secure asset generation via Sui's Walrus decentralized storage.
-
+A parametric design platform on the Sui blockchain that connects NFTs with functional 3D designs. Archimeters links digital creation to physical manufacturing, offering model configuration, design previewing, and asset storage through Sui's Walrus decentralized storage.
 [繁體中文版](README.zh-TW.md) 🌏
 
-## Vision 🔮
+## About 🔮
 
-Archimeters reimagines NFTs by connecting digital designs with real-world utility. While traditional NFTs often rely on community sentiment or roadmaps for value proposition, we focus on intrinsic functionality:
+Archimeters connects digital designs with practical applications. Unlike traditional NFTs that often focus on community value, we emphasize functional utility:
 
-- **Parametric Design Monetization**: Enabling designers to create algorithmic designs with perpetual revenue streams
-- **Meaningful User Participation**: Users become co-creators by adjusting parameters to produce personalized designs
-- **Real Asset Generation**: Digital designs transform into physical products through our companion project Eureka
-- **True Decentralized Ownership**: Leveraging Sui Walrus for secure, censorship-resistant decentralized storage
+- **Parametric Design Tools**: Helping designers create algorithmic designs with ongoing revenue opportunities
+- **User Customization**: Users can adjust parameters to create personalized designs
+- **Physical Production**: Digital designs can be manufactured into physical products through the Eureka project
+- **Decentralized Storage**: Using Sui Walrus for design storage
 
 ## Quick Start 🚀
 
@@ -35,43 +34,43 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser 🌐
 
-## Key Features ✨
+## Main Components ✨
 
 ### 🎨 For Designers — Atelier (Design Studio)
-- **Parametric Design Creation**: Build algorithmic designs with powerful adjustable parameters
-- **Real-time Visual Feedback**: Preview 3D models instantly as you refine your parameters
-- **Blockchain Publishing**: Securely publish and protect your creations on the Sui blockchain
-- **Design Monetization**: Earn ongoing royalties through innovative on-chain fee distribution pools
+- **Parametric Design Creation**: Create designs with adjustable parameters
+- **Visual Preview**: See 3D models as you modify parameters
+- **Blockchain Publishing**: Publish your designs on the Sui blockchain
+- **Royalty System**: Receive fees when others use your designs
 
 ### 💎 For Collectors — Gallery (Showcase Platform)
-- **Explore & Collect**: Discover and acquire parametric designs from leading creators
-- **Personalization**: Adjust parameters in real-time to create unique variants that match your aesthetic
-- **On-chain Ownership**: Store your parametric designs securely as NFTs with verifiable provenance
+- **Browse Designs**: Find and purchase parametric designs
+- **Customize**: Adjust parameters to create variants of purchased designs
+- **Digital Ownership**: Store your designs as NFTs on the blockchain
 
 ### 🔐 Asset Management — Vault
-- **Unified Dashboard**: Manage all your owned designs and generated sculptures in one place
-- **Revenue Tracking**: Monitor and withdraw design royalties from your published ateliers
-- **Physical Transformation**: Connect to the Eureka manufacturing network to transform digital sculptures into physical artifacts
+- **Design Dashboard**: View and manage your designs in one interface
+- **Revenue Tracking**: Track earnings from your published designs
+- **Manufacturing Options**: Connect to Eureka to produce physical versions
 
-### 💻 Retro Terminal — Documentation Interface
-- **Post-apocalyptic Tech Aesthetic**: Experience project documentation with a wasteland tech visual style
-- **Interactive Archive**: Discover team information and project features through an immersive command-line format
-- **Nostalgic UX**: Enjoy the fusion of classic computing interfaces with modern blockchain functionality
+### 💻 Documentation Interface — Terminal
+- **Technical Interface**: Access documentation through a terminal-style UI
+- **Project Information**: View team and feature information in an interactive format
+- **Command-line Experience**: Navigate project details using text commands
 
 ## Sui Blockchain Integration 🔄
 
-Archimeters leverages Sui blockchain's unique capabilities:
-- **Walrus Storage**: Secure, decentralized, and persistent storage for design files and parameters
-- **[Building..]Seal Encryption**: Cryptographically protected assets with granular access control
-- **Sui Move Contracts**: Robust ownership verification and automated revenue distribution systems
+Archimeters uses Sui blockchain for:
+- **Walrus Storage**: Storing design files and parameters
+- **[In Development] Seal Encryption**: Encrypted asset protection
+- **Sui Move Contracts**: Ownership verification and fee distribution
 
-## Technical Highlights 🛠️
+## Technology Stack 🛠️
 
-- **Next.js 14**: Cutting-edge React framework powering the frontend experience
-- **React Three Fiber**: Advanced 3D visualization system for parametric model rendering
-- **xterm.js**: Terminal interface implementation for the retro documentation experience
-- **Tailwind CSS**: Responsive design system for consistent UI across devices
-- **Three.js**: Sophisticated 3D model adjustment and real-time rendering engine
+- **Next.js 14**: React framework for the frontend
+- **React Three Fiber**: 3D visualization for parametric models
+- **xterm.js**: Terminal interface functionality
+- **Tailwind CSS**: UI styling system
+- **Three.js**: 3D model rendering engine
 
 ## Development 👩‍💻
 
@@ -91,8 +90,8 @@ npm run start
 npm run lint
 ```
 
-## Future Roadmap 🚀
+## Future Plans 🚀
 
-- **Off-chain Computation**: Advanced 3D modeling capabilities through verifiable computation services
-- **AI Enhancement**: Machine learning algorithms for intelligent parameter optimization
-- **Global Manufacturing**: Integration with production partners worldwide for seamless physical production
+- **Off-chain Computation**: Additional 3D modeling capabilities
+- **AI Integration**: Parameter optimization tools
+- **Manufacturing Network**: Production partnerships for physical items
