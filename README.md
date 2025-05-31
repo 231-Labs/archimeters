@@ -2,6 +2,8 @@
 ![archimeters_main_vision](https://github.com/user-attachments/assets/5aade832-2568-46e2-9600-336a13353681)
 
 A parametric design platform on the Sui blockchain that connects NFTs with functional 3D designs. Archimeters links digital creation to physical manufacturing, offering model configuration, design previewing, and asset storage through Sui's Walrus decentralized storage.  
+
+[Live Demo](https://archimeters-do0x0obs-projects.vercel.app/) 👩🏻‍💻
   
 [繁體中文版](README.zh-TW.md) 🌏
 
