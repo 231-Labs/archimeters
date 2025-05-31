@@ -1,11 +1,11 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0x81eac9c2b1857eb78af2453a46ea405ab3596a8101f1980bfa9b7600e576d801';
-export const EUREKA_PACKAGE_ID = '0x81eac9c2b1857eb78af2453a46ea405ab3596a8101f1980bfa9b7600e576d801'
-export const STATE_ID = '0x2eaabd6dc4823c0b25814900f80b6fa7316121b61388f4612b19693e6e57dc04';
-export const ATELIER_STATE_ID = '0x1ceea8b915572a3047ae7734304ddc5beba0d2bfed06ad69e19bf9aa9e802b2e';
-export const PRINTER_REGISTRY = `0x5b4c3ead9cc63796f0933cec5f222c4c6d8450b3190f1ba29fa8f0b1c3d1a693`;
+export const PACKAGE_ID = '0xfbc407f866074ade2fa71e31c8be3d05cbf096a49ced7e07dc5e22d0400275bc';
+export const EUREKA_PACKAGE_ID = '0xfbc407f866074ade2fa71e31c8be3d05cbf096a49ced7e07dc5e22d0400275bc'
+export const STATE_ID = '0xedcd7ed43d4aabdb0f2eb146aa30e3e6928f4f515d2c75bddc0cb94e8a516d55';
+export const ATELIER_STATE_ID = '0xe796845645e5437ffad4e7ce89598059532b41b568f52f00a8086e7069dc09c1';
+export const PRINTER_REGISTRY = `0xe2029e7661361e19e158a6916a1fb8e30d5a919cfff9b1f5688c38511236c464`;
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 export const SUI_CLOCK = '0x6';
 export const MIST_PER_SUI = 1_000_000_000;
