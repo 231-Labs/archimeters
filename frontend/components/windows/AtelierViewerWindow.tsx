@@ -476,7 +476,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
 
         const formData = new FormData();
         formData.append('data', file);
-        formData.append('epochs', '5');
+        formData.append('epochs', '50');
 
         const response = await fetch('/api/walrus', {
           method: 'PUT',

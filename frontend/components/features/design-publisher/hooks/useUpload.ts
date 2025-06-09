@@ -311,7 +311,7 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
         
         const formData = new FormData();
         formData.append('data', file);
-        formData.append('epochs', '5');
+        formData.append('epochs', '50');
 
         console.log(`[${fileType}] 開始發送請求...`);
         
