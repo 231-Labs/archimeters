@@ -1,10 +1,10 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-export const PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
+export const PACKAGE_ID = '0x64ec0abe4f0c79ab509fe2eb61c37e584ed1681d274926216bfe5113a07f5d33';
 export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a'
-export const STATE_ID = '0xfb658631c7df6a1fca3b7ee4486682e3883dae0911583170f675a7b6a0b3b9fd';
-export const ATELIER_STATE_ID = '0x6bf30b1d9481819936b1787ac13671b94fac60d84aa7d7735d33f51c1bee4052';
+export const STATE_ID = '0x5bca31807dd1c1916127f89fb875cf3cc13ed923c391ef945b9a5e75708abecf';
+export const ATELIER_STATE_ID = '0x8ffae89c8b903adf879a6b0a00c7454f68774a0110017240a1a15284e151d5d9';
 export const PRINTER_REGISTRY = `0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c`;
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 export const SUI_CLOCK = '0x6';
