@@ -9,14 +9,14 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Missing blobId', { status: 400 });
   }
 
-  const blobUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+  const blobUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
 
   try {
     const response = await fetch(blobUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
-        'Referer': 'https://agg.test.walrus.eosusa.io/',
-        'Origin': 'https://agg.test.walrus.eosusa.io/',
+        'Referer': 'https://aggregator.testnet.walrus.atalma.io/',
+        'Origin': 'https://aggregator.testnet.walrus.atalma.io/',
       },
     });
 

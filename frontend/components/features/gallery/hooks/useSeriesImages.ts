@@ -58,7 +58,9 @@ export function useSeriesImages(): UseSeriesImagesReturn {
       ));
 
       // 直接使用 Walrus 的 URL 作為圖片源
-      const imageUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+      // const imageUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+      const imageUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
+
       
       // 測試 URL 是否可訪問
       const response = await fetch(imageUrl);
@@ -91,8 +93,8 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   const fetchAlgorithmFromWalrus = async (id: string, blobId: string) => {
     try {
       // 直接使用 Walrus 的 URL 獲取演算法內容
-      const algorithmUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
-      
+      //const algorithmUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+      const algorithmUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
       const response = await fetch(algorithmUrl);
       
       if (!response.ok) {
@@ -126,7 +128,8 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   const fetchConfigDataFromWalrus = async (id: string, blobId: string) => {
     try {
       // 直接使用 Walrus 的 URL 獲取配置文件
-      const configUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+      // const configUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
+      const configUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
       
       const response = await fetch(configUrl);
       
