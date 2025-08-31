@@ -68,7 +68,7 @@ export class WalrusApiService {
           'Cache-Control': 'no-transform',
           'X-Content-Type-Options': 'nosniff'
         },
-        body: fileBuffer,
+        body: new Uint8Array(fileBuffer),
       });
 
       const responseText = await response.text();
