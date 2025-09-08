@@ -3,7 +3,7 @@ import type { WindowName } from '@/types';
 import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
-import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import * as THREE from 'three';
 import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK, MIST_PER_SUI } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
@@ -539,6 +539,29 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
     throw lastError || new Error('Upload failed after maximum retries');
   };
 
+  // 放在檔案中（如 handleMint 上方）：
+  const exportSceneToGLB = (scene: THREE.Scene, fileName: string) => {
+    return new Promise<File>((resolve, reject) => {
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        scene,
+        (result) => {
+          // binary:true 時 result 是 ArrayBuffer
+          const blob = new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' });
+          const file = new File([blob], `${fileName}.glb`, { type: 'model/gltf-binary' });
+          resolve(file);
+        },
+        (error) => reject(error),
+        {
+          binary: true,                // 產出 .glb
+          onlyVisible: true,           // 只輸出可見物件
+          truncateDrawRange: true,     // 精簡資料
+          // 其他選項可按需加：animations, embedImages 等
+        }
+      );
+    });
+  };
+
   const handleMint = useCallback(async () => {
     if (!atelier) return;
 
@@ -570,71 +593,24 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
 
-        // 2. Export STL and upload to Walrus
-        console.log('🔵 Preparing to export STL');
+        // 2. Export GLB and upload to Walrus
+        console.log('🔵 Preparing to export GLB');
         if (!sceneRef.current) {
-          throw new Error('3D scene not ready for STL export');
+          throw new Error('3D scene not ready for GLB export');
         }
 
-        // Check meshes in the scene
-        const originalMeshes: THREE.Mesh[] = [];
-        sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) originalMeshes.push(object);
-        });
-        
-        if (originalMeshes.length === 0) {
-          throw new Error('No mesh found in scene');
-        }
+        // 直接用目前的場景輸出
+        const exportScene = sceneRef.current;
+        const baseName = `${atelier.title}_${Date.now()}`;
+        console.log('🔵 Starting GLB export');
 
-        console.log('🔵 Starting STL export');
-        
-        // Create new scene for export
-        const exportScene = new THREE.Scene();
-        
-        // Create properly rotated geometry for each mesh
-        originalMeshes.forEach(mesh => {
-          // Deep clone original geometry
-          const clonedGeometry = mesh.geometry.clone();
-          
-          // Create rotation matrix to make Z-axis up and fix upside-down issue
-          const rotationMatrix = new THREE.Matrix4()
-            .makeRotationX(Math.PI / 2)     // First make Z-axis up
-          
-          // Apply rotation to geometry (this will modify vertex data directly)
-          clonedGeometry.applyMatrix4(rotationMatrix);
-          
-          // Ensure normals are correctly updated
-          clonedGeometry.computeVertexNormals();
-          
-          // Clone material
-          let clonedMaterial;
-          if (Array.isArray(mesh.material)) {
-            clonedMaterial = mesh.material.map(mat => mat.clone());
-          } else {
-            clonedMaterial = mesh.material.clone();
-            if (clonedMaterial instanceof THREE.Material) {
-              clonedMaterial.side = THREE.DoubleSide; // Ensure both sides are visible
-            }
-          }
-          
-          // Create new mesh and add to export scene
-          const clonedMesh = new THREE.Mesh(clonedGeometry, clonedMaterial);
-          exportScene.add(clonedMesh);
-        });
-        
-        // Export STL
-        const exporter = new STLExporter();
-        const stlString = exporter.parse(exportScene, { binary: false });
-        
-        console.log('🟢 STL export complete');
+        const glbFile = await exportSceneToGLB(exportScene, baseName);
+        console.log('🟢 GLB export complete');
 
-        const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
-        const stlFile = new File([blob2], `${atelier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
-
-        const stlBlobId = await uploadToWalrus(stlFile, 'STL');
+        const glbBlobId = await uploadToWalrus(glbFile, 'GLB');
 
         // Ensure both blob IDs are obtained
-        if (!screenshotBlobId || !stlBlobId) {
+        if (!screenshotBlobId || !glbBlobId) {
           throw new Error('Failed to get blob IDs');
         }
 
@@ -656,7 +632,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
           membershipId,
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
-          stlBlobId,
+          glbBlobId,             // ← 用 GLB 的 blobId
           SUI_CLOCK,
         );
 
