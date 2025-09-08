@@ -7,6 +7,7 @@ import GalaxyEffect from '../background_animations/GalaxyEffect';
 
 interface BackgroundProps {
   walletStatus: 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
+  paused: boolean;
 }
 
 /**
@@ -15,7 +16,7 @@ interface BackgroundProps {
  * - Connected without NFT: Shows space room with static starfield
  * - Connected with NFT: Shows space room + galaxy effect
  */
-const Background = memo(({ walletStatus }: BackgroundProps) => {
+const Background = memo(({ walletStatus, paused }: BackgroundProps) => {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none bg-[#1a1a1a]">
       {/* Full noise effect when disconnected */}
@@ -39,7 +40,7 @@ const Background = memo(({ walletStatus }: BackgroundProps) => {
 
       {/* Galaxy effect with fade transition */}
       <div className={`transition-opacity duration-1000 ${walletStatus === 'connected-with-nft' ? 'opacity-100' : 'opacity-0'}`}>
-        {walletStatus === 'connected-with-nft' && <GalaxyEffect />}
+        {walletStatus === 'connected-with-nft' && <GalaxyEffect paused={paused} baseSpeed={0.5}/>}
       </div>
     </div>
   );

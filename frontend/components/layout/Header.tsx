@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
-const Header = () => {
+type HeaderProps = {
+  paused: boolean;
+  onToggle: () => void;
+};
+
+const Header = ({ paused, onToggle }: HeaderProps) => {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
 
@@ -41,6 +46,9 @@ const Header = () => {
       </button>
 
       <div className="flex items-center gap-2 text-white">
+        <button onClick={onToggle}>
+          Background {paused ? 'Resume' : 'Pause'}
+        </button>
         <span className="text-xs font-mono font-bold">{currentDate}</span>
         <div className="h-3 border-l border-[rgba(255,255,255,0.2)]"></div>
         <span className="text-xs font-mono font-bold">{currentTime}</span>

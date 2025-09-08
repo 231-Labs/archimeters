@@ -24,6 +24,7 @@ export default function Home() {
   const currentAccount = useCurrentAccount();
   const [zOrder, setZOrder] = useState<string[]>([]);
   const atelierViewerRaised = useRef(false);
+  const [paused, setPaused] = useState(false);
 
   const {
     openWindows,
@@ -86,8 +87,8 @@ export default function Home() {
   return (
     <>
       <div className="min-h-screen bg-black overflow-hidden relative">
-        <Background walletStatus={walletStatus} />
-        <Header />
+        <Header paused={paused} onToggle={() => setPaused(p => !p)}/>
+        <Background walletStatus={walletStatus} paused={paused}/>
         <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
         <div className="fixed top-[27px]">
           <div className="h-full relative">
