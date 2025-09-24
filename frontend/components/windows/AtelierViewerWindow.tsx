@@ -4,6 +4,7 @@ import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import * as THREE from 'three';
 import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK, MIST_PER_SUI } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
@@ -540,6 +541,24 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
   };
 
   // 放在檔案中（如 handleMint 上方）：
+  const exportSceneToSTL = (scene: THREE.Scene, fileName: string) => {
+    const exporter = new STLExporter();
+    const result = exporter.parse(scene, { binary: true }) as unknown;
+    let blob: Blob;
+    if (result instanceof ArrayBuffer) {
+      blob = new Blob([result], { type: 'model/stl' });
+    } else if (typeof result === 'string') {
+      blob = new Blob([result], { type: 'model/stl' });
+    } else {
+      const dataView = result as DataView;
+      const cloned = new ArrayBuffer(dataView.byteLength);
+      new Uint8Array(cloned).set(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength));
+      blob = new Blob([cloned], { type: 'model/stl' });
+    }
+    const file = new File([blob], `${fileName}.stl`, { type: 'model/stl' });
+    return file;
+  };
+
   const exportSceneToGLB = (scene: THREE.Scene, fileName: string) => {
     return new Promise<File>((resolve, reject) => {
       const exporter = new GLTFExporter();
@@ -602,6 +621,19 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
         // 直接用目前的場景輸出
         const exportScene = sceneRef.current;
         const baseName = `${atelier.title}_${Date.now()}`;
+
+        // 先導出 STL 並觸發下載，接著再進行 GLB 匯出與上傳
+        console.log('🔵 Exporting STL and triggering download');
+        const stlFile = exportSceneToSTL(exportScene, baseName);
+        const stlUrl = URL.createObjectURL(stlFile);
+        const link = document.createElement('a');
+        link.href = stlUrl;
+        link.download = stlFile.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(stlUrl), 1000);
+
         console.log('🔵 Starting GLB export');
 
         const glbFile = await exportSceneToGLB(exportScene, baseName);
