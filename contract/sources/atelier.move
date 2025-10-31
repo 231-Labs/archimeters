@@ -9,15 +9,19 @@ module archimeters::atelier {
         coin::{ Self },
         balance::{ Self, Balance },
         sui::SUI,
+        vec_map::{ Self, VecMap },
     };
 
     // == Constants ==
     const ONE_SUI: u64 = 1_000_000_000;
+    const BASIS_POINTS: u64 = 100;
 
     // == Errors ==
     const ENO_MEMBERSHIP: u64 = 0;
     const ENO_PERMISSION: u64 = 1;
     const ENO_AMOUNT: u64 = 2;
+    const ENO_INVALID_PARAMETER: u64 = 3;
+    const ENO_PARAMETER_NOT_FOUND: u64 = 4;
 
     // == One Time Witness ==
     public struct ATELIER has drop {}
@@ -26,6 +30,20 @@ module archimeters::atelier {
     public struct AtelierState has key {
         id: UID,
         all_ateliers: vector<ID>,
+    }
+    
+    /// Parameter rule for validation (values in basis points, e.g., 5.25 = 525)
+    public struct ParameterRule has store, copy, drop {
+        param_type: String,
+        label: String,
+        min_value: u64,
+        max_value: u64,
+        default_value: u64,
+    }
+    
+    /// Container for all parameter rules
+    public struct ParameterRules has store {
+        rules: VecMap<String, ParameterRule>,
     }
 
     public struct Atelier has key, store {
@@ -39,6 +57,7 @@ module archimeters::atelier {
         price: u64,
         pool: Balance<SUI>,
         publish_time: u64,
+        parameter_rules: ParameterRules,
     }
 
     public struct AtelierCap has key, store {
@@ -98,6 +117,12 @@ module archimeters::atelier {
         algorithm: String,
         clock: &clock::Clock,
         price: u64,
+        param_keys: vector<String>,
+        param_types: vector<String>,
+        param_labels: vector<String>,
+        param_min_values: vector<u64>,
+        param_max_values: vector<u64>,
+        param_default_values: vector<u64>,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
@@ -108,6 +133,22 @@ module archimeters::atelier {
         let id = object::new(ctx);
         let id_inner = object::uid_to_inner(&id);
         let now = clock::timestamp_ms(clock);
+        
+        // Build parameter rules
+        let mut rules_map = vec_map::empty<String, ParameterRule>();
+        let len = vector::length(&param_keys);
+        let mut i = 0;
+        while (i < len) {
+            let rule = ParameterRule {
+                param_type: *vector::borrow(&param_types, i),
+                label: *vector::borrow(&param_labels, i),
+                min_value: *vector::borrow(&param_min_values, i),
+                max_value: *vector::borrow(&param_max_values, i),
+                default_value: *vector::borrow(&param_default_values, i),
+            };
+            vec_map::insert(&mut rules_map, *vector::borrow(&param_keys, i), rule);
+            i = i + 1;
+        };
         
         let atelier = Atelier {
             id,
@@ -120,6 +161,7 @@ module archimeters::atelier {
             price: price * ONE_SUI,
             pool: balance::zero<SUI>(),
             publish_time: now,
+            parameter_rules: ParameterRules { rules: rules_map },
         };
 
         // Create AtelierCap
@@ -186,5 +228,35 @@ module archimeters::atelier {
 
     fun add_atelier_to_state(atelier_state: &mut AtelierState, atelier_id: ID) {
         atelier_state.all_ateliers.push_back(atelier_id);
+    }
+    
+    // == Parameter Validation Functions ==
+    
+    /// Validate if a parameter value is within the rule's constraints
+    public(package) fun validate_parameter(
+        rules: &ParameterRules, 
+        key: String, 
+        value: u64
+    ): bool {
+        if (!vec_map::contains(&rules.rules, &key)) {
+            return false
+        };
+        
+        let rule = vec_map::get(&rules.rules, &key);
+        value >= rule.min_value && value <= rule.max_value
+    }
+    
+    /// Get a specific parameter rule
+    public(package) fun get_parameter_rule(
+        rules: &ParameterRules, 
+        key: &String
+    ): &ParameterRule {
+        assert!(vec_map::contains(&rules.rules, key), ENO_PARAMETER_NOT_FOUND);
+        vec_map::get(&rules.rules, key)
+    }
+    
+    /// Get all parameter rules from an atelier
+    public fun get_parameter_rules(atelier: &Atelier): &ParameterRules {
+        &atelier.parameter_rules
     }
 }

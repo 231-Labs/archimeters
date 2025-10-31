@@ -7,6 +7,13 @@ module archimeters::sculpt {
         display,
         sui::SUI,
         coin::{ Self, Coin },
+        kiosk::{ Self, Kiosk, KioskOwnerCap },
+        transfer_policy::{ 
+            Self, 
+            TransferPolicy, 
+            TransferPolicyCap,
+            TransferRequest
+        },
     };
     use archimeters::archimeters::{
         MemberShip,
@@ -22,6 +29,10 @@ module archimeters::sculpt {
 
     // == Errors ==
     const ENO_CORRECT_FEE: u64 = 0;
+    const ENO_PERMISSION: u64 = 1;
+    
+    // == Constants ==
+    const BASIS_POINTS: u64 = 10000;
 
     // == One Time Witness ==
     public struct SCULPT has drop {}
@@ -41,6 +52,10 @@ module archimeters::sculpt {
     // == Events ==
     public struct New_sculpt has copy, drop {
         id: ID,
+    }
+    
+    public struct RoyaltyUpdated has copy, drop {
+        new_rate_bp: u64,
     }
 
     // == Initializer ==
@@ -67,6 +82,18 @@ module archimeters::sculpt {
 
         display.update_version();
 
+        // Initialize TransferPolicy with 0% royalty (0 basis points)
+        let (mut policy, policy_cap) = transfer_policy::new<Sculpt>(&publisher, ctx);
+        transfer_policy::add_rule(
+            transfer_policy::royalty_rule::Rule {},
+            &mut policy,
+            &policy_cap,
+            0,
+            0
+        );
+
+        transfer::public_share_object(policy);
+        transfer::public_transfer(policy_cap, ctx.sender());
         transfer::public_transfer(publisher, ctx.sender());
         transfer::public_transfer(display, ctx.sender());
     }
@@ -75,6 +102,8 @@ module archimeters::sculpt {
     entry fun mint_sculpt(
         atelier: &mut Atelier,
         membership: &mut MemberShip,
+        kiosk: &mut Kiosk,
+        kiosk_cap: &KioskOwnerCap,
         alias: String,
         blueprint: String,
         structure: String,
@@ -100,14 +129,36 @@ module archimeters::sculpt {
             time: now,
         };
 
-        add_sculpt_to_membership(membership, object::uid_to_inner(&sculpt.id));
-        add_sculpt_to_atelier(atelier, object::uid_to_inner(&sculpt.id));
+        let sculpt_id = object::uid_to_inner(&sculpt.id);
+        add_sculpt_to_membership(membership, sculpt_id);
+        add_sculpt_to_atelier(atelier, sculpt_id);
         add_to_pool(atelier, coin::into_balance(fee));
 
-        let sculpt_id = object::uid_to_inner(&sculpt.id);
-        transfer::public_transfer(sculpt, sender);
+        // Place sculpt in kiosk instead of direct transfer
+        kiosk::place(kiosk, kiosk_cap, sculpt);
 
         event::emit(New_sculpt { id: sculpt_id });
+    }
+    
+    /// Set royalty rate for Sculpt transfers (in basis points, e.g., 500 = 5%)
+    /// Only the TransferPolicyCap owner can call this
+    public entry fun set_royalty_rate(
+        policy: &mut TransferPolicy<Sculpt>,
+        policy_cap: &TransferPolicyCap<Sculpt>,
+        rate_bp: u64,
+        ctx: &mut TxContext
+    ) {
+        assert!(rate_bp <= BASIS_POINTS, ENO_PERMISSION);
+        
+        transfer_policy::add_rule(
+            transfer_policy::royalty_rule::Rule {},
+            policy,
+            policy_cap,
+            rate_bp,
+            0
+        );
+        
+        event::emit(RoyaltyUpdated { new_rate_bp: rate_bp });
     }
 
     public fun print_sculpt(

@@ -72,7 +72,6 @@ export default function WebsiteUpload() {
     resetUpload
   } = useUpload({
     onSuccess: (results) => {
-      console.log('Upload completed with results:', results);
       if (results.success) {
         handleMint(results);
       }
@@ -97,7 +96,6 @@ export default function WebsiteUpload() {
   useEffect(() => {
     const fetchMembership = async () => {
       if (!currentAccount?.address) {
-        console.error('No wallet connected');
         return;
       }
 
@@ -115,16 +113,11 @@ export default function WebsiteUpload() {
         if (objects && objects.length > 0) {
           const id = objects[0].data?.objectId;
           if (id) {
-            console.log('Found membership ID:', id);
             setMembershipId(id);
-          } else {
-            console.error('Membership object found but no ID');
           }
-        } else {
-          console.error('No membership found for address:', currentAccount.address);
         }
       } catch (error) {
-        console.error('Error fetching membership:', error);
+        setError('Error fetching membership');
       }
     };
 
@@ -144,16 +137,12 @@ export default function WebsiteUpload() {
 
   const handleMint = async (results?: UploadResults) => {
     if (!membershipId) {
-      const error = 'No membership ID found. Please make sure you have a valid membership.';
-      console.error(error);
-      setTransactionError(error);
+      setTransactionError('No membership ID found. Please make sure you have a valid membership.');
       return;
     }
 
     if (!results?.imageBlobId || !results?.algoBlobId || !results?.metadataBlobId) {
-      const error = 'Missing required upload results';
-      console.error(error);
-      setTransactionError(error);
+      setTransactionError('Missing required upload results');
       return;
     }
 
@@ -176,17 +165,14 @@ export default function WebsiteUpload() {
         },
         {
           onSuccess: (result) => {
-            console.log("Transaction successful:", result);
             setTransactionDigest(result.digest);
           },
           onError: (error) => {
-            console.error("Transaction failed:", error);
             setTransactionError(error.message);
           }
         }
       );
     } catch (error) {
-      console.error('Error in handleMint:', error);
       setTransactionError('Failed to create transaction');
     }
   };
@@ -230,7 +216,7 @@ export default function WebsiteUpload() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl text-white">參數化模型上傳</h1>
+        <h1 className="text-2xl text-white">Design Publisher</h1>
       </div>
       <div className="h-full flex flex-col">
         {currentPage === 1 && (
@@ -270,29 +256,8 @@ export default function WebsiteUpload() {
             style={designSettings.style}
             fontStyle={designSettings.fontStyle}
             onFileChange={handleAlgoFileChange}
-            onExtractParameters={(params) => {
-              try {
-                const extracted = processSceneFile(algoResponse);
-                if (extracted && typeof extracted === 'object') {
-                  Object.entries(extracted).forEach(([key, value]) => {
-                    updateParameter(key, value);
-                  });
-                }
-              } catch (error) {
-                console.error('Failed to extract parameters:', error);
-              }
-            }}
-            onUpdatePreviewParams={(params) => {
-              Object.entries(params).forEach(([key, value]) => {
-                updateParameter(key, value);
-              });
-            }}
-            onTogglePreview={togglePreview}
             onStyleChange={(style) => updateDesignSettings('style', style)}
             onFontStyleChange={(font) => updateDesignSettings('fontStyle', font)}
-            onNext={goToNextPage}
-            onPrevious={goToPreviousPage}
-            userScript={userScript}
             onUserScriptChange={setUserScript}
           />
         )}
