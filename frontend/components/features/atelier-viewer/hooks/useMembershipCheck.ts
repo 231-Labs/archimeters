@@ -36,7 +36,7 @@ export const useMembershipCheck = () => {
       
       return hasNFT;
     } catch (error) {
-      console.error('Error checking NFT ownership:', error);
+      console.error('Error checking membershipNFT ownership:', error);
       setHasMembership(false);
       sessionStorage.removeItem('membership-id');
       return false;
