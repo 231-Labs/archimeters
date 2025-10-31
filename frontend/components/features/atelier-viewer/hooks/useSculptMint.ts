@@ -47,7 +47,7 @@ export const useSculptMint = ({
         throw new Error('3D scene not ready');
       }
 
-      // Step 1: Capture screenshot (not encrypted)
+      // Step 1: Capture screenshot
       renderer.render(scene, camera);
       await new Promise(requestAnimationFrame);
       
@@ -69,6 +69,7 @@ export const useSculptMint = ({
       //       atelierId: atelier.id 
       //     })
       //   : modelFile;
+      
       const fileToUpload = options.encryptModel 
         ? (await options.encryptModel(modelFile, { 
             sculptId: `sculpt_${Date.now()}`, 
