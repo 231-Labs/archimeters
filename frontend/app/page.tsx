@@ -1,22 +1,21 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import Background from '@/components/background_animations/Background';
 import Window from '@/components/common/Window';
-import Header from '@/components/layout/Header';
-import EntryWindow from '@/components/windows/EntryWindow';
-import { WalletStatus } from '@/components/windows/EntryWindow';
-import DesignPublisher from '@/components/windows/DesignPublisher';
-import BrowseWindow from '@/components/windows/BrowseWindow';
-import { useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
-import { PACKAGE_ID } from '@/utils/transactions';
-import Dock from '@/components/layout/Dock';
 import { Terminal } from '@/components/features/terminal';
+import Dock from '@/components/layout/Dock';
+import Header from '@/components/layout/Header';
+import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
+import BrowseWindow from '@/components/windows/BrowseWindow';
+import DesignPublisher from '@/components/windows/DesignPublisher';
+import EntryWindow, { WalletStatus } from '@/components/windows/EntryWindow';
+import VaultWindow from '@/components/windows/VaultWindow';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
-import Background from '@/components/background_animations/Background';
-import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
-import VaultWindow from '@/components/windows/VaultWindow';
+import { PACKAGE_ID } from '@/utils/transactions';
 
 export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');

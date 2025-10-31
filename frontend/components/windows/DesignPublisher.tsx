@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { BasicInfoPage } from '@/components/features/design-publisher/components/pages/BasicInfoPage';
 import { AlgorithmPage } from '@/components/features/design-publisher/components/pages/AlgorithmPage';
 import { PreviewPage } from '@/components/features/design-publisher/components/pages/PreviewPage';
@@ -9,11 +8,8 @@ import { createMetadataJson } from '@/components/features/design-publisher/utils
 import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { createArtlier, ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
-// import { defaultWindowConfigs } from '@/config/windows';
 
-export default function WebsiteUpload() {
-  const router = useRouter();
-
+export default function DesignPublisher() {
   // State Management Section
   // Image states
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -33,14 +29,14 @@ export default function WebsiteUpload() {
   const [showPreview, setShowPreview] = useState(false);
 
   // Artwork information
-  const [workName, setWorkName] = useState('Morphic Vessel X-1');
-  const [description, setDescription] = useState('A shape-shifting cup with interactive elements that transforms to optimize your drinking experience. Designed for the modern beverage enthusiast.');
-  const [price, setPrice] = useState('1');
+  const [workName, setWorkName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
 
   // Artist information
-  const [name, setName] = useState('FluidDesigner#0088');
-  const [social, setSocial] = useState('archimeters.lens');
-  const [intro, setIntro] = useState('Product designer pushing boundaries between functional objects and digital innovation through adaptive, fluid-inspired creations.');
+  const [name, setName] = useState('');
+  const [social, setSocial] = useState('');
+  const [intro, setIntro] = useState('');
 
   // Design settings
   const [style, setStyle] = useState<TemplateSeries>('default');
@@ -161,6 +157,21 @@ export default function WebsiteUpload() {
       setPriceError('');
     };
   }, []);
+
+  // Sync membershipData to form fields
+  useEffect(() => {
+    if (membershipData) {
+      if (membershipData.username && !name) {
+        setName(membershipData.username);
+      }
+      if (membershipData.description && !intro) {
+        setIntro(membershipData.description);
+      }
+      if (membershipData.address && !social) {
+        setSocial(membershipData.address);
+      }
+    }
+  }, [membershipData]);
 
   // Fetch membership ID only
   useEffect(() => {

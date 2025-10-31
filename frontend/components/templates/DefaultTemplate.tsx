@@ -20,6 +20,7 @@ export interface TemplateProps {
   preview3D?: ReactNode;
   alias?: string;
   onAliasChange?: (value: string) => void;
+  exportFormatToggle?: ReactNode;
   onParameterChange: (key: string, value: string | number | Record<string, any>) => void;
   onMint: () => Promise<void>;
 }
@@ -37,7 +38,8 @@ export default function DefaultTemplate({
   mintButtonState,
   preview3D,
   alias = '',
-  onAliasChange
+  onAliasChange,
+  exportFormatToggle
 }: TemplateProps) {
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6">
@@ -221,22 +223,25 @@ export default function DefaultTemplate({
                   </span>
                 </div>
               </div>
-              <div className="relative group">
-                <button 
-                  onClick={onMint}
-                  disabled={mintButtonState.disabled}
-                  className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/10"
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">
-                      Mint Sculpt
-                    </span>
-                    <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">
-                      Initialize Sculpture
-                    </span>
-                  </div>
-                </button>
-                {mintButtonState.tooltipComponent}
+              <div className="flex flex-col gap-2 items-end">
+                {exportFormatToggle}
+                <div className="relative group">
+                  <button 
+                    onClick={onMint}
+                    disabled={mintButtonState.disabled}
+                    className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/10"
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">
+                        Mint Sculpt
+                      </span>
+                      <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">
+                        Initialize Sculpture
+                      </span>
+                    </div>
+                  </button>
+                  {mintButtonState.tooltipComponent}
+                </div>
               </div>
             </div>
           </div>

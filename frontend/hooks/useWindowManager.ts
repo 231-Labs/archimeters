@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { WindowName, WindowPosition, WindowSize, WindowManagerState } from '@/types/window';
 import { defaultWindowConfigs } from '@/config/windows';
 
-const BASE_Z_INDEX = 100;  // 基礎 z-index 值
+const BASE_Z_INDEX = 100;  // Base z-index value
 
 export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
   const [state, setState] = useState<WindowManagerState>({
@@ -24,7 +24,7 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     maxZIndex: BASE_Z_INDEX,
   });
 
-  // 計算視窗中心位置的函數
+  // Calculate window center position function
   const getCenterPosition = useCallback((width: number, height: number): WindowPosition => {
     if (typeof window === 'undefined') {
       return { x: 0, y: 0 };
@@ -36,7 +36,7 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     return { x, y };
   }, []);
 
-  // 初始化窗口位置
+  // Initialize window positions
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -55,14 +55,14 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     });
   }, [getCenterPosition]);
 
-  // 激活窗口
+  // Activate window
   const activateWindow = useCallback((name: WindowName) => {
     setState(prev => {
       const newMaxZIndex = prev.maxZIndex + 1;
       return {
         ...prev,
         activeWindow: name,
-        // 將激活的窗口移到數組末尾
+        // Move activated window to the end of the array
         openWindows: [...prev.openWindows.filter(w => w !== name), name],
         maxZIndex: newMaxZIndex,
         windowZIndexes: {
@@ -73,23 +73,23 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     });
   }, []);
 
-  // 打開窗口
+  // Open window
   const openWindow = useCallback((name: WindowName) => {
     setState(prev => {
       const config = defaultWindowConfigs[name];
       const basePosition = getCenterPosition(config.defaultSize.width, config.defaultSize.height);
       
-      // 為新窗口添加一個小的偏移，避免完全重疊
+      // Add a small offset to the new window to avoid complete overlap
       const offset = prev.openWindows.length * 20;
       const centerPosition = {
         x: Math.min(basePosition.x + offset, window.innerWidth - config.defaultSize.width - 20),
         y: Math.min(basePosition.y + offset, window.innerHeight - config.defaultSize.height - 68),
       };
 
-      // 設置新的 z-index
+      // Set new z-index
       const newMaxZIndex = prev.maxZIndex + 1;
 
-      // 如果窗口已經打開，保留在列表中的位置，只更新 z-index
+      // If window is already open, keep its position in the list, only update z-index
       const newOpenWindows = prev.openWindows.includes(name)
         ? prev.openWindows
         : [...prev.openWindows, name];
@@ -111,7 +111,7 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     });
   }, [getCenterPosition]);
 
-  // 關閉窗口
+  // Close window
   const closeWindow = useCallback((name: WindowName) => {
     setState(prev => ({
       ...prev,
@@ -161,7 +161,7 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     document.addEventListener('mouseup', handleMouseUp);
   }, [activateWindow]);
 
-  // 調整窗口大小
+  // Resize window
   const resizeWindow = useCallback((e: React.MouseEvent, name: WindowName) => {
     e.preventDefault();
     const startX = e.clientX;

@@ -7,14 +7,14 @@ interface AtelierState {
 }
 
 interface AtelierFields {
-  photo: string;      // 圖片的 blob-id
+  photo: string;      // Image blob-id
   name: string;
   author: string;
   price: string;
   publish_time: string;
-  algorithm: string;  // 演算法檔案的 blob-id
+  algorithm: string;  // Algorithm file blob-id
   artificials: string[];
-  data: string;      // JSON 配置檔的 blob-id
+  data: string;      // JSON config file blob-id
   id: { id: string };
 }
 
@@ -47,29 +47,25 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 從 Walrus 獲取圖片
+  // Fetch image from Walrus
   const fetchImageFromWalrus = async (id: string, blobId: string) => {
     try {
-      // 在開始加載時設置狀態
+      // Set status when starting to load
       setImages(prev => prev.map(img => 
         img.id === id 
           ? { ...img, isLoading: true, error: null }
           : img
       ));
 
-      // 直接使用 Walrus 的 URL 作為圖片源
-      // const imageUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
       const imageUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
-
-      
-      // 測試 URL 是否可訪問
+      // Test if URL is accessible
       const response = await fetch(imageUrl);
       
       if (!response.ok) {
         throw new Error('Failed to load image');
       }
 
-      // 更新圖片 URL
+      // Update image URL
       setImages(prev => {
         const newImages = prev.map(img => 
           img.id === id 
@@ -89,11 +85,9 @@ export function useSeriesImages(): UseSeriesImagesReturn {
     }
   };
 
-  // 從 Walrus 獲取演算法內容
+  // Fetch algorithm content from Walrus
   const fetchAlgorithmFromWalrus = async (id: string, blobId: string) => {
     try {
-      // 直接使用 Walrus 的 URL 獲取演算法內容
-      //const algorithmUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
       const algorithmUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
       const response = await fetch(algorithmUrl);
       
@@ -101,10 +95,10 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         throw new Error('Failed to load algorithm');
       }
 
-      // 獲取演算法文本內容
+      // Fetch algorithm text content
       const algorithmContent = await response.text();
 
-      // 更新演算法內容
+      // Update algorithm content
       setImages(prev => {
         const newImages = prev.map(img => 
           img.id === id 
@@ -124,11 +118,9 @@ export function useSeriesImages(): UseSeriesImagesReturn {
     }
   };
 
-  // 從 Walrus 獲取配置文件
+  // Fetch config file from Walrus
   const fetchConfigDataFromWalrus = async (id: string, blobId: string) => {
     try {
-      // 直接使用 Walrus 的 URL 獲取配置文件
-      // const configUrl = `https://agg.test.walrus.eosusa.io/v1/blobs/${blobId}`;
       const configUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
       
       const response = await fetch(configUrl);
@@ -137,7 +129,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         throw new Error('Failed to load config data');
       }
 
-      // 獲取配置文件內容並解析為 JSON
+      // Fetch config file content and parse as JSON
       const configText = await response.text();
       let configData;
       
@@ -145,10 +137,10 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         configData = JSON.parse(configText);
       } catch (parseErr) {
         console.error('Failed to parse config data as JSON:', parseErr);
-        configData = { rawText: configText }; // 如果解析失敗，保存原始文本
+        configData = { rawText: configText }; // If parsing fails, save original text
       }
 
-      // 更新配置數據
+      // Update config data
       setImages(prev => {
         const newImages = prev.map(img => 
           img.id === id 
@@ -185,7 +177,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
         }
       });
 
-      // 從 atelierState 中提取 all_ateliers 數組
+      // Extract all_ateliers array from atelierState
       const content = atelierState.data?.content;
       if (!content || typeof content !== 'object' || !('fields' in content)) {
         throw new Error('Invalid atelier state data');
@@ -247,9 +239,9 @@ export function useSeriesImages(): UseSeriesImagesReturn {
       setImages(atelierImages);
       setIsLoading(false);
 
-      // 開始加載每個 Atelier 的資源
+      // Start loading resources for each Atelier
       atelierImages.forEach(image => {
-        // 加載圖片
+        // Load image
         if (image.photoBlobId) {
           fetchImageFromWalrus(image.id, image.photoBlobId);
         }

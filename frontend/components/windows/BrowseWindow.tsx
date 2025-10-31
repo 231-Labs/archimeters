@@ -11,7 +11,7 @@ interface BrowseWindowProps {
   onOpenWindow: (name: WindowName) => void;
 }
 
-// 從 useSeriesImages 介面獲取 Atelier 類型
+// Atelier type
 interface Atelier {
   id: string;
   photoBlobId: string;
@@ -27,7 +27,7 @@ interface Atelier {
   error: string | null;
 }
 
-// 緩存圖片的 Map
+// Image cache Map
 const imageCache = new Map<string, string>();
 
 export default function BrowseWindow({
@@ -39,7 +39,7 @@ export default function BrowseWindow({
   const error = result?.error || null;
   const [loadedImageIds, setLoadedImageIds] = useState<string[]>([]);
   
-  // 預加載並緩存圖片
+  // Preload and cache images
   const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
     if (!url || imageCache.has(url)) {
       return;
@@ -60,7 +60,7 @@ export default function BrowseWindow({
     }
   }, []);
 
-  // 當圖片數據變化時預加載
+  // When image data changes, preload images
   useEffect(() => {
     images.forEach(image => {
       if (image.url) {
@@ -75,9 +75,7 @@ export default function BrowseWindow({
 
   const handleImageClick = (atelier: Atelier) => {
     console.log('Image clicked:', atelier);
-    // 將圖片數據保存到 sessionStorage 中
     sessionStorage.setItem('selected-atelier', JSON.stringify(atelier));
-    // 使用 props 傳入的 onOpenWindow
     onOpenWindow('atelier-viewer');
   };
 
@@ -88,12 +86,12 @@ export default function BrowseWindow({
     700: 1
   };
 
-  // 檢查 Atelier 是否已完全加載
+  // Check if Atelier is fully loaded
   const isAtelierLoaded = (atelier: Atelier) => {
     return !atelier.isLoading && !atelier.error && atelier.url !== null;
   };
 
-  // 縮放 Sui Price
+  // Scale Sui Price
   const scaleSuiPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseInt(price) : price;
     const scaled = Math.floor(numPrice / 1_000_000_000).toString();
@@ -147,7 +145,7 @@ export default function BrowseWindow({
                       {atelier.url ? (
                         <div className="relative w-full">
                           <div className="relative w-full">
-                            {/* 低質量預覽圖 */}
+                            {/* Low quality preview image */}
                             <Image
                               src={getImageUrl(atelier.url)}
                               alt={atelier.title}
@@ -161,7 +159,7 @@ export default function BrowseWindow({
                               priority={!loadedImageIds.includes(atelier.id)}
                               style={{ height: 'auto' }}
                             />
-                            {/* 高質量圖片 */}
+                            {/* High quality image */}
                             <Image
                               src={getImageUrl(atelier.url)}
                               alt={atelier.title}

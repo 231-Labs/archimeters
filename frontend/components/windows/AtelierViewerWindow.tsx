@@ -4,6 +4,7 @@ import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import * as THREE from 'three';
 import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK, MIST_PER_SUI } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
@@ -60,6 +61,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
     disabled: true,
     tooltip: 'Please connect your wallet',
   });
+  const [exportFormat, setExportFormat] = useState<'glb' | 'stl'>('glb');
 
   // default image url
   const DEFAULT_IMAGE_URL = '/placeholder-image.png'; // ensure there is a placeholder image in the public directory
@@ -539,7 +541,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
     throw lastError || new Error('Upload failed after maximum retries');
   };
 
-  // 放在檔案中（如 handleMint 上方）：
+  // 導出場景為 GLB
   const exportSceneToGLB = (scene: THREE.Scene, fileName: string) => {
     return new Promise<File>((resolve, reject) => {
       const exporter = new GLTFExporter();
@@ -556,9 +558,30 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
           binary: true,                // 產出 .glb
           onlyVisible: true,           // 只輸出可見物件
           truncateDrawRange: true,     // 精簡資料
-          // 其他選項可按需加：animations, embedImages 等
         }
       );
+    });
+  };
+
+  // 導出場景為 STL
+  const exportSceneToSTL = (scene: THREE.Scene, fileName: string) => {
+    return new Promise<File>((resolve, reject) => {
+      try {
+        const exporter = new STLExporter();
+        const result = exporter.parse(scene, { binary: true });
+        // Extract buffer and create a new ArrayBuffer to ensure compatibility
+        const sourceBuffer = result instanceof DataView ? result.buffer : result;
+        const sourceArray = new Uint8Array(sourceBuffer as ArrayBuffer);
+        // Create a new ArrayBuffer and copy data
+        const buffer = new ArrayBuffer(sourceArray.byteLength);
+        const targetArray = new Uint8Array(buffer);
+        targetArray.set(sourceArray);
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const file = new File([blob], `${fileName}.stl`, { type: 'application/octet-stream' });
+        resolve(file);
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 
@@ -593,24 +616,26 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
 
-        // 2. Export GLB and upload to Walrus
-        console.log('🔵 Preparing to export GLB');
+        // 2. Export 3D model and upload to Walrus
+        console.log(`🔵 Preparing to export ${exportFormat.toUpperCase()}`);
         if (!sceneRef.current) {
-          throw new Error('3D scene not ready for GLB export');
+          throw new Error('3D scene not ready for export');
         }
 
         // 直接用目前的場景輸出
         const exportScene = sceneRef.current;
         const baseName = `${atelier.title}_${Date.now()}`;
-        console.log('🔵 Starting GLB export');
+        console.log(`🔵 Starting ${exportFormat.toUpperCase()} export`);
 
-        const glbFile = await exportSceneToGLB(exportScene, baseName);
-        console.log('🟢 GLB export complete');
+        const modelFile = exportFormat === 'glb' 
+          ? await exportSceneToGLB(exportScene, baseName)
+          : await exportSceneToSTL(exportScene, baseName);
+        console.log(`🟢 ${exportFormat.toUpperCase()} export complete`);
 
-        const glbBlobId = await uploadToWalrus(glbFile, 'GLB');
+        const modelBlobId = await uploadToWalrus(modelFile, exportFormat.toUpperCase());
 
         // Ensure both blob IDs are obtained
-        if (!screenshotBlobId || !glbBlobId) {
+        if (!screenshotBlobId || !modelBlobId) {
           throw new Error('Failed to get blob IDs');
         }
 
@@ -632,7 +657,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
           membershipId,
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
-          glbBlobId,             // ← 用 GLB 的 blobId
+          modelBlobId,
           SUI_CLOCK,
         );
 
@@ -844,6 +869,29 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
       onMint={handleMint}
+      exportFormatToggle={
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-light text-white/60 tracking-wide">
+            Export Format
+          </span>
+          <button
+            onClick={() => setExportFormat(prev => prev === 'glb' ? 'stl' : 'glb')}
+            className="flex items-center gap-2"
+            title={`Switch to ${exportFormat === 'glb' ? 'STL' : 'GLB'}`}
+          >
+            <div className={`w-8 h-3 rounded-sm transition-all ${
+              exportFormat === 'glb' ? 'bg-white/30' : 'bg-white/20'
+            }`}>
+              <div className={`w-3 h-2.5 rounded-[1px] bg-white transition-all ${
+                exportFormat === 'glb' ? 'translate-x-0.5' : 'translate-x-4'
+              }`} />
+            </div>
+            <span className="text-[10px] font-mono text-white/90 font-bold min-w-[24px] tracking-wider">
+              {exportFormat.toUpperCase()}
+            </span>
+          </button>
+        </div>
+      }
       mintButtonState={{
         ...mintButtonState,
         tooltipComponent: mintButtonState.disabled ? (
@@ -885,6 +933,29 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
         onMint={handleMint}
+        exportFormatToggle={
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-light text-white/60 tracking-wide">
+              Export Format
+            </span>
+            <button
+              onClick={() => setExportFormat(prev => prev === 'glb' ? 'stl' : 'glb')}
+              className="flex items-center gap-2"
+              title={`Switch to ${exportFormat === 'glb' ? 'STL' : 'GLB'}`}
+            >
+              <div className={`w-8 h-3 rounded-sm transition-all ${
+                exportFormat === 'glb' ? 'bg-white/30' : 'bg-white/20'
+              }`}>
+                <div className={`w-3 h-2.5 rounded-[1px] bg-white transition-all ${
+                  exportFormat === 'glb' ? 'translate-x-0.5' : 'translate-x-4'
+                }`} />
+              </div>
+              <span className="text-[10px] font-mono text-white/90 font-bold min-w-[24px] tracking-wider">
+                {exportFormat.toUpperCase()}
+              </span>
+            </button>
+          </div>
+        }
         mintButtonState={{
           ...mintButtonState,
           tooltipComponent: mintButtonState.disabled ? (

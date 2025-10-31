@@ -1,4 +1,3 @@
-// 復古風格的按鈕樣式
 export const retroButtonStyles = {
   button: {
     backgroundColor: '#000',
@@ -15,7 +14,6 @@ export const retroButtonStyles = {
     color: '#000',
     border: '2px solid #000',
   },
-  // 連接後的樣式
   connectedButton: {
     display: 'flex',
     alignItems: 'center',
@@ -30,7 +28,6 @@ export const retroButtonStyles = {
     borderRadius: '0',
     cursor: 'pointer',
   },
-  // 下拉菜單樣式
   menu: {
     backgroundColor: 'rgba(255, 252, 250, 0.95)',
     border: '1px solid rgba(0, 0, 0, 0.8)',

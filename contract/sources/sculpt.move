@@ -72,7 +72,7 @@ module archimeters::sculpt {
     }
 
     // == Entry Functions ==
-    public entry fun mint_sculpt(
+    entry fun mint_sculpt(
         atelier: &mut Atelier,
         membership: &mut MemberShip,
         alias: String,
