@@ -63,8 +63,8 @@ export default function AtelierViewer({ name }: AtelierViewerProps) {
     }
   }), [userScript, previewParams]);
 
-  const onMint = () => {
-    handleMint(alias);
+  const onMint = async () => {
+    await handleMint(alias);
   };
 
   const exportFormatToggle = (
