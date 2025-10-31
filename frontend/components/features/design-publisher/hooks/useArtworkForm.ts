@@ -1,17 +1,17 @@
 import { useState, useCallback } from 'react';
 import type { ArtworkInfo, ArtistInfo, DesignSettings } from '../types';
 
-// TODO: empty default values
+// Empty default values - placeholders are shown in the UI components
 const defaultArtworkInfo: ArtworkInfo = {
-  workName: 'Morphic Vessel X-1',
-  description: 'A revolutionary shape-shifting cup that adapts to your beverage experience. Interactive elements allow users to transform its form for optimal enjoyment of any drink.',
-  price: '1',
+  workName: '',
+  description: '',
+  price: '',
 };
 
 const defaultArtistInfo: ArtistInfo = {
-  name: 'FluidDesigner#0088',
-  social: 'archimeters.lens',
-  intro: 'Product designer pushing boundaries between functional objects and digital innovation through adaptive, fluid-inspired creations.',
+  name: '',
+  social: '',
+  intro: '',
 };
 
 const defaultDesignSettings: DesignSettings = {

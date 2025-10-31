@@ -124,18 +124,25 @@ export class WalrusApiService {
       const file = formData.get('data') || formData.get('file');
       const epochs = formData.get('epochs')?.toString() || '1';
       
-      if (!file || !(file instanceof File)) {
+
+      if (!file || typeof file === 'string') {
         throw new Error('Invalid file');
       }
 
+      if (typeof (file as any).arrayBuffer !== 'function') {
+        throw new Error('File does not support arrayBuffer()');
+      }
+
+      const fileBlob = file as Blob;
+      
       console.log('Processing file upload:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
+        fileName: (file as any).name || 'unknown',
+        fileSize: fileBlob.size,
+        fileType: fileBlob.type,
         epochs
       });
 
-      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const fileBuffer = Buffer.from(await fileBlob.arrayBuffer());
       return this.uploadBlob(fileBuffer, epochs);
     } catch (error) {
       console.error('File upload error:', error);

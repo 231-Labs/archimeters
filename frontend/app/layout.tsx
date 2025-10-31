@@ -19,8 +19,6 @@ const spaceMono = Space_Mono({
   variable: '--font-space-mono',
 });
 
-const client = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' });
-
 const networks = {
   testnet: {
     url: getFullnodeUrl('testnet'),

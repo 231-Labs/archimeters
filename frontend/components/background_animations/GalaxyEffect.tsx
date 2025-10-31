@@ -2,12 +2,24 @@
 
 import { useRef, useEffect, useCallback, memo } from 'react';
 
-const GalaxyEffect = memo(() => {
+type GalaxyProps = {
+  paused: boolean;
+  baseSpeed: number;
+};
+
+const GalaxyEffect = memo(({ paused, baseSpeed }: GalaxyProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
   const resizeObserverRef = useRef<ResizeObserver>();
   const mouseRef = useRef({ x: 0, y: 0 });
   const rotationRef = useRef({ x: 0, y: 0 });
+    const speedRef = useRef(baseSpeed);
+
+
+   // ⭐ 每當 paused 改變，就同步到 speedRef
+  useEffect(() => {
+    speedRef.current = paused ? 0 : baseSpeed;
+  }, [paused, baseSpeed]);
 
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -69,7 +81,7 @@ const GalaxyEffect = memo(() => {
 
       for (let star of stars) {
         // Slow star movement
-        star.z -= 0.5;
+        star.z -= speedRef.current;
         if (star.z <= 1) {
           star.z = depth;
           star.x = (Math.random() * 2 - 1) * depth;

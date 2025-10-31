@@ -6,12 +6,19 @@ const nextConfig = {
     unoptimized: true,
   },
   transpilePackages: ['xterm', 'xterm-addon-fit'],
-  webpack: (config) => {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
+  },
+  webpack: (config, { dev, isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       'xterm': 'xterm/lib/xterm.js',
     };
-    config.devtool = 'source-map';
+    if (!dev && isServer) {
+      config.devtool = 'source-map';
+    }
     return config;
   },
 }

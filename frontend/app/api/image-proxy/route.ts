@@ -9,14 +9,15 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Missing blobId', { status: 400 });
   }
 
-  const blobUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
+  const aggregatorUrl = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR || 'https://aggregator.walrus-testnet.walrus.space';
+  const blobUrl = `${aggregatorUrl}/v1/blobs/${blobId}`;
 
   try {
     const response = await fetch(blobUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
-        'Referer': 'https://aggregator.testnet.walrus.atalma.io/',
-        'Origin': 'https://aggregator.testnet.walrus.atalma.io/',
+        'Referer': aggregatorUrl,
+        'Origin': aggregatorUrl,
       },
     });
 

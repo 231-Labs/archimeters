@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
-const Header = () => {
+type HeaderProps = {
+  paused: boolean;
+  onToggle: () => void;
+};
+
+const Header = ({ paused, onToggle }: HeaderProps) => {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
 
@@ -40,7 +45,29 @@ const Header = () => {
         Archimeters OS
       </button>
 
-      <div className="flex items-center gap-2 text-white">
+      <div className="flex items-center gap-3 text-white">
+        <button 
+          onClick={onToggle}
+          className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-[rgba(255,255,255,0.2)] hover:border-[rgba(255,255,255,0.4)] transition-all group"
+          title={paused ? "Resume background animation" : "Pause background animation"}
+        >
+          <span className="text-[10px] font-mono text-white/60 group-hover:text-white/80 transition-colors">
+            BG
+          </span>
+          <div className="flex items-center gap-0.5">
+            <div className={`w-5 h-2.5 rounded-sm transition-all ${
+              paused ? 'bg-white/20' : 'bg-emerald-500/40'
+            }`}>
+              <div className={`w-2 h-2 rounded-[1px] bg-white transition-all ${
+                paused ? 'translate-x-0.5' : 'translate-x-2.5'
+              }`} />
+            </div>
+          </div>
+          <span className="text-[9px] font-mono text-white/40">
+            {paused ? '⏸' : '▶'}
+          </span>
+        </button>
+        <div className="h-3 border-l border-[rgba(255,255,255,0.2)]"></div>
         <span className="text-xs font-mono font-bold">{currentDate}</span>
         <div className="h-3 border-l border-[rgba(255,255,255,0.2)]"></div>
         <span className="text-xs font-mono font-bold">{currentTime}</span>

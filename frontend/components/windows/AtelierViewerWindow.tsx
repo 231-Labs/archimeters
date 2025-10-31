@@ -3,7 +3,8 @@ import type { WindowName } from '@/types';
 import BaseTemplate from '@/components/templates/BaseTemplate';
 import DefaultTemplate from '@/components/templates/DefaultTemplate';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
-import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import * as THREE from 'three';
 import { mintSculpt, MEMBERSHIP_TYPE, SUI_CLOCK, MIST_PER_SUI } from '@/utils/transactions';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
@@ -60,6 +61,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
     disabled: true,
     tooltip: 'Please connect your wallet',
   });
+  const [exportFormat, setExportFormat] = useState<'glb' | 'stl'>('glb');
 
   // default image url
   const DEFAULT_IMAGE_URL = '/placeholder-image.png'; // ensure there is a placeholder image in the public directory
@@ -539,6 +541,50 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
     throw lastError || new Error('Upload failed after maximum retries');
   };
 
+  // 導出場景為 GLB
+  const exportSceneToGLB = (scene: THREE.Scene, fileName: string) => {
+    return new Promise<File>((resolve, reject) => {
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        scene,
+        (result) => {
+          // binary:true 時 result 是 ArrayBuffer
+          const blob = new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' });
+          const file = new File([blob], `${fileName}.glb`, { type: 'model/gltf-binary' });
+          resolve(file);
+        },
+        (error) => reject(error),
+        {
+          binary: true,                // 產出 .glb
+          onlyVisible: true,           // 只輸出可見物件
+          truncateDrawRange: true,     // 精簡資料
+        }
+      );
+    });
+  };
+
+  // 導出場景為 STL
+  const exportSceneToSTL = (scene: THREE.Scene, fileName: string) => {
+    return new Promise<File>((resolve, reject) => {
+      try {
+        const exporter = new STLExporter();
+        const result = exporter.parse(scene, { binary: true });
+        // Extract buffer and create a new ArrayBuffer to ensure compatibility
+        const sourceBuffer = result instanceof DataView ? result.buffer : result;
+        const sourceArray = new Uint8Array(sourceBuffer as ArrayBuffer);
+        // Create a new ArrayBuffer and copy data
+        const buffer = new ArrayBuffer(sourceArray.byteLength);
+        const targetArray = new Uint8Array(buffer);
+        targetArray.set(sourceArray);
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const file = new File([blob], `${fileName}.stl`, { type: 'application/octet-stream' });
+        resolve(file);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   const handleMint = useCallback(async () => {
     if (!atelier) return;
 
@@ -570,71 +616,26 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
 
         const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
 
-        // 2. Export STL and upload to Walrus
-        console.log('🔵 Preparing to export STL');
+        // 2. Export 3D model and upload to Walrus
+        console.log(`🔵 Preparing to export ${exportFormat.toUpperCase()}`);
         if (!sceneRef.current) {
-          throw new Error('3D scene not ready for STL export');
+          throw new Error('3D scene not ready for export');
         }
 
-        // Check meshes in the scene
-        const originalMeshes: THREE.Mesh[] = [];
-        sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh) originalMeshes.push(object);
-        });
-        
-        if (originalMeshes.length === 0) {
-          throw new Error('No mesh found in scene');
-        }
+        // 直接用目前的場景輸出
+        const exportScene = sceneRef.current;
+        const baseName = `${atelier.title}_${Date.now()}`;
+        console.log(`🔵 Starting ${exportFormat.toUpperCase()} export`);
 
-        console.log('🔵 Starting STL export');
-        
-        // Create new scene for export
-        const exportScene = new THREE.Scene();
-        
-        // Create properly rotated geometry for each mesh
-        originalMeshes.forEach(mesh => {
-          // Deep clone original geometry
-          const clonedGeometry = mesh.geometry.clone();
-          
-          // Create rotation matrix to make Z-axis up and fix upside-down issue
-          const rotationMatrix = new THREE.Matrix4()
-            .makeRotationX(Math.PI / 2)     // First make Z-axis up
-          
-          // Apply rotation to geometry (this will modify vertex data directly)
-          clonedGeometry.applyMatrix4(rotationMatrix);
-          
-          // Ensure normals are correctly updated
-          clonedGeometry.computeVertexNormals();
-          
-          // Clone material
-          let clonedMaterial;
-          if (Array.isArray(mesh.material)) {
-            clonedMaterial = mesh.material.map(mat => mat.clone());
-          } else {
-            clonedMaterial = mesh.material.clone();
-            if (clonedMaterial instanceof THREE.Material) {
-              clonedMaterial.side = THREE.DoubleSide; // Ensure both sides are visible
-            }
-          }
-          
-          // Create new mesh and add to export scene
-          const clonedMesh = new THREE.Mesh(clonedGeometry, clonedMaterial);
-          exportScene.add(clonedMesh);
-        });
-        
-        // Export STL
-        const exporter = new STLExporter();
-        const stlString = exporter.parse(exportScene, { binary: false });
-        
-        console.log('🟢 STL export complete');
+        const modelFile = exportFormat === 'glb' 
+          ? await exportSceneToGLB(exportScene, baseName)
+          : await exportSceneToSTL(exportScene, baseName);
+        console.log(`🟢 ${exportFormat.toUpperCase()} export complete`);
 
-        const blob2 = new Blob([stlString], { type: 'application/octet-stream' });
-        const stlFile = new File([blob2], `${atelier.title}_${Date.now()}.stl`, { type: 'application/octet-stream' });
-
-        const stlBlobId = await uploadToWalrus(stlFile, 'STL');
+        const modelBlobId = await uploadToWalrus(modelFile, exportFormat.toUpperCase());
 
         // Ensure both blob IDs are obtained
-        if (!screenshotBlobId || !stlBlobId) {
+        if (!screenshotBlobId || !modelBlobId) {
           throw new Error('Failed to get blob IDs');
         }
 
@@ -656,7 +657,7 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
           membershipId,
           alias,
           `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
-          stlBlobId,
+          modelBlobId,
           SUI_CLOCK,
         );
 
@@ -868,6 +869,29 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
       previewParams={previewParams}
       onParameterChange={handleParameterChange}
       onMint={handleMint}
+      exportFormatToggle={
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-light text-white/60 tracking-wide">
+            Export Format
+          </span>
+          <button
+            onClick={() => setExportFormat(prev => prev === 'glb' ? 'stl' : 'glb')}
+            className="flex items-center gap-2"
+            title={`Switch to ${exportFormat === 'glb' ? 'STL' : 'GLB'}`}
+          >
+            <div className={`w-8 h-3 rounded-sm transition-all ${
+              exportFormat === 'glb' ? 'bg-white/30' : 'bg-white/20'
+            }`}>
+              <div className={`w-3 h-2.5 rounded-[1px] bg-white transition-all ${
+                exportFormat === 'glb' ? 'translate-x-0.5' : 'translate-x-4'
+              }`} />
+            </div>
+            <span className="text-[10px] font-mono text-white/90 font-bold min-w-[24px] tracking-wider">
+              {exportFormat.toUpperCase()}
+            </span>
+          </button>
+        </div>
+      }
       mintButtonState={{
         ...mintButtonState,
         tooltipComponent: mintButtonState.disabled ? (
@@ -909,6 +933,29 @@ export default function AtelierViewerWindow({ name }: AtelierViewerProps) {
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
         onMint={handleMint}
+        exportFormatToggle={
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-light text-white/60 tracking-wide">
+              Export Format
+            </span>
+            <button
+              onClick={() => setExportFormat(prev => prev === 'glb' ? 'stl' : 'glb')}
+              className="flex items-center gap-2"
+              title={`Switch to ${exportFormat === 'glb' ? 'STL' : 'GLB'}`}
+            >
+              <div className={`w-8 h-3 rounded-sm transition-all ${
+                exportFormat === 'glb' ? 'bg-white/30' : 'bg-white/20'
+              }`}>
+                <div className={`w-3 h-2.5 rounded-[1px] bg-white transition-all ${
+                  exportFormat === 'glb' ? 'translate-x-0.5' : 'translate-x-4'
+                }`} />
+              </div>
+              <span className="text-[10px] font-mono text-white/90 font-bold min-w-[24px] tracking-wider">
+                {exportFormat.toUpperCase()}
+              </span>
+            </button>
+          </div>
+        }
         mintButtonState={{
           ...mintButtonState,
           tooltipComponent: mintButtonState.disabled ? (
