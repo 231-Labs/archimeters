@@ -95,7 +95,6 @@ export const useUpload = ({ onSuccess, onError }: UseUploadProps = {}) => {
       const subStepId = `upload-${fileType}`;
       const subStep = uploadStep.subSteps.find(subStep => subStep.id === subStepId);
       if (subStep && subStep.status === status) {
-        // 已經是目標狀態，不需重複更新
         return;
       }
     }

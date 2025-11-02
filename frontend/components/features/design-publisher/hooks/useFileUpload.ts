@@ -29,6 +29,13 @@ export function useFileUpload() {
 
   const handleAlgoFileChange = useCallback((file: File) => {
     try {
+      // Set the file first
+      setState(prev => ({
+        ...prev,
+        algoFile: file,
+        algoError: '',
+      }));
+
       const reader = new FileReader();
       reader.onload = (event) => {
         try {

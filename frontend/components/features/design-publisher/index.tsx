@@ -59,7 +59,8 @@ export default function WebsiteUpload() {
     processSceneFile,
     updateParameter,
     togglePreview,
-    resetParameters
+    resetParameters,
+    exportParameterRules
   } = useParameters();
 
   const { 
@@ -78,6 +79,17 @@ export default function WebsiteUpload() {
     },
     onError: (error) => setError(error)
   });
+
+  // Extract parameters when algorithm file is uploaded
+  useEffect(() => {
+    if (algoResponse) {
+      try {
+        processSceneFile(algoResponse);
+      } catch (error) {
+        console.error('Error extracting parameters:', error);
+      }
+    }
+  }, [algoResponse, processSceneFile]);
 
   // Blockchain related
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
@@ -147,6 +159,21 @@ export default function WebsiteUpload() {
     }
 
     try {
+      // Convert ParameterRules to ParameterInput[]
+      const parameterRules = exportParameterRules();
+      // Note: Parameters are already offset to handle negative values
+      const parameters = Object.entries(parameterRules).map(([key, rule]) => ({
+        key,
+        param_type: rule.type,
+        label: rule.label,
+        min_value: rule.minValue,
+        max_value: rule.maxValue,
+        default_value: rule.defaultValue,
+      }));
+
+      // Convert price from SUI to MIST
+      const priceInMist = Math.floor(Math.max(0, parseFloat(artworkInfo.price) || 0) * 1_000_000_000);
+
       const tx = await createArtlier(
         ATELIER_STATE_ID,
         membershipId,
@@ -155,7 +182,8 @@ export default function WebsiteUpload() {
         results.metadataBlobId,
         results.algoBlobId,
         '0x6',
-        Number(artworkInfo.price)
+        priceInMist,
+        parameters
       );
 
       signAndExecuteTransaction(
@@ -187,7 +215,9 @@ export default function WebsiteUpload() {
       fontStyle: designSettings.fontStyle,
       name: artistInfo.name,
       address: currentAccount?.address || '',
-      intro: artistInfo.intro
+      intro: artistInfo.intro,
+      membershipData,
+      extractedParameters
     });
 
     const metadataBlob = new Blob([JSON.stringify(metadataJson, null, 2)], {

@@ -162,17 +162,26 @@ export const BasicInfoPage = ({
 
           {/* Artwork Price */}
           <div>
-            <div className="text-white/50 text-sm mb-2">Artwork Price</div>
+            <div className="text-white/50 text-sm mb-2">Artwork Price (SUI)</div>
             <div className="flex items-center gap-4">
               <img src="/sui_symbol_white.png" alt="Sui Symbol" width={18} height={30} />
               <input
                 type="text"
-                inputMode="numeric"
-                pattern="\d*"
+                inputMode="decimal"
                 value={price}
-                onChange={(e) => onPriceChange(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty string
+                  if (value === '') {
+                    onPriceChange(value);
+                    return;
+                  }
+                  if (/^\d*\.?\d*$/.test(value)) {
+                    onPriceChange(value);
+                  }
+                }}
                 className={`flex-1 bg-transparent text-white text-xl border-b ${priceRequired ? 'border-red-400' : 'border-white/20'} pb-1.5 focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/20`}
-                placeholder="Set artwork price..."
+                placeholder="0 or any amount..."
               />
             </div>
             {priceError && (
@@ -180,6 +189,9 @@ export const BasicInfoPage = ({
                 {priceError}
               </div>
             )}
+            <div className="mt-1.5 text-white/40 text-xs">
+              Accepts 0 and decimal values (e.g., 0, 1.5, 10.99)
+            </div>
           </div>
         </div>
       </div>

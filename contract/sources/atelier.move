@@ -12,16 +12,10 @@ module archimeters::atelier {
         vec_map::{ Self, VecMap },
     };
 
-    // == Constants ==
-    const ONE_SUI: u64 = 1_000_000_000;
-    const BASIS_POINTS: u64 = 100;
-
     // == Errors ==
     const ENO_MEMBERSHIP: u64 = 0;
     const ENO_PERMISSION: u64 = 1;
     const ENO_AMOUNT: u64 = 2;
-    const ENO_INVALID_PARAMETER: u64 = 3;
-    const ENO_PARAMETER_NOT_FOUND: u64 = 4;
 
     // == One Time Witness ==
     public struct ATELIER has drop {}
@@ -30,6 +24,16 @@ module archimeters::atelier {
     public struct AtelierState has key {
         id: UID,
         all_ateliers: vector<ID>,
+    }
+    
+    /// Input structure for defining a parameter (used when minting atelier)
+    public struct ParameterInput has copy, drop {
+        key: String,
+        param_type: String,
+        label: String,
+        min_value: u64,
+        max_value: u64,
+        default_value: u64,
     }
     
     /// Parameter rule for validation (values in basis points, e.g., 5.25 = 525)
@@ -108,7 +112,10 @@ module archimeters::atelier {
     }
 
     // == Entry Functions ==
-    public entry fun mint_atelier(
+    
+    /// Main function to mint a new atelier
+    /// Instead of vector<ParameterInput>, we use separate vectors for each field
+    public fun mint_atelier(
         atelier_state: &mut AtelierState,
         membership: &mut MemberShip,
         name: String,
@@ -127,81 +134,180 @@ module archimeters::atelier {
     ) {
         let sender = tx_context::sender(ctx);
         
-        // Verify membership ownership
-        assert!(archimeters::owner(membership) == sender, ENO_MEMBERSHIP);
+        // Step 1: Verify membership ownership
+        verify_membership_ownership(membership, sender);
         
+        // Step 2: Build parameter rules from separate vectors
+        let param_rules = build_parameter_rules_from_vectors(
+            param_keys,
+            param_types,
+            param_labels,
+            param_min_values,
+            param_max_values,
+            param_default_values
+        );
+        
+        // Step 3: Create the atelier object
+        let (atelier, atelier_id) = create_atelier_object(
+            name,
+            photo,
+            data,
+            algorithm,
+            sender,
+            price,
+            param_rules,
+            clock,
+            ctx
+        );
+        
+        // Step 4: Create the atelier capability
+        let cap = create_atelier_cap(atelier_id, ctx);
+        
+        // Step 5: Register atelier to membership and global state
+        register_atelier(atelier_state, membership, atelier_id);
+        
+        // Step 6: Transfer objects and emit event
+        finalize_atelier_mint(atelier, cap, atelier_id, sender);
+    }
+    
+    // == Internal Helper Functions ==
+    
+    /// Verify that the sender owns the membership
+    fun verify_membership_ownership(membership: &MemberShip, sender: address) {
+        assert!(archimeters::owner(membership) == sender, ENO_MEMBERSHIP);
+    }
+    
+    /// Build ParameterRules from separate vectors (new approach)
+    fun build_parameter_rules_from_vectors(
+        keys: vector<String>,
+        types: vector<String>,
+        labels: vector<String>,
+        min_values: vector<u64>,
+        max_values: vector<u64>,
+        default_values: vector<u64>
+    ): ParameterRules {
+        let mut rules_map = vec_map::empty<String, ParameterRule>();
+        let len = vector::length(&keys);
+        
+        // Validate all vectors have the same length
+        assert!(vector::length(&types) == len, 0);
+        assert!(vector::length(&labels) == len, 0);
+        assert!(vector::length(&min_values) == len, 0);
+        assert!(vector::length(&max_values) == len, 0);
+        assert!(vector::length(&default_values) == len, 0);
+        
+        let mut i = 0;
+        while (i < len) {
+            let key = *vector::borrow(&keys, i);
+            let rule = ParameterRule {
+                param_type: *vector::borrow(&types, i),
+                label: *vector::borrow(&labels, i),
+                min_value: *vector::borrow(&min_values, i),
+                max_value: *vector::borrow(&max_values, i),
+                default_value: *vector::borrow(&default_values, i),
+            };
+            vec_map::insert(&mut rules_map, key, rule);
+            i = i + 1;
+        };
+        
+        ParameterRules { rules: rules_map }
+    }
+    
+    /// Create the Atelier object with all its properties
+    fun create_atelier_object(
+        name: String,
+        photo: String,
+        data: String,
+        algorithm: String,
+        author: address,
+        price: u64,
+        parameter_rules: ParameterRules,
+        clock: &clock::Clock,
+        ctx: &mut TxContext
+    ): (Atelier, ID) {
         let id = object::new(ctx);
         let id_inner = object::uid_to_inner(&id);
         let now = clock::timestamp_ms(clock);
         
-        // Build parameter rules
-        let mut rules_map = vec_map::empty<String, ParameterRule>();
-        let len = vector::length(&param_keys);
-        let mut i = 0;
-        while (i < len) {
-            let rule = ParameterRule {
-                param_type: *vector::borrow(&param_types, i),
-                label: *vector::borrow(&param_labels, i),
-                min_value: *vector::borrow(&param_min_values, i),
-                max_value: *vector::borrow(&param_max_values, i),
-                default_value: *vector::borrow(&param_default_values, i),
-            };
-            vec_map::insert(&mut rules_map, *vector::borrow(&param_keys, i), rule);
-            i = i + 1;
-        };
-        
         let atelier = Atelier {
             id,
             name,
-            author: sender,
+            author,
             photo,
             data,
             algorithm,
             artificials: vector[],
-            price: price * ONE_SUI,
+            price, // Price is already in MIST from frontend
             pool: balance::zero<SUI>(),
             publish_time: now,
-            parameter_rules: ParameterRules { rules: rules_map },
+            parameter_rules,
         };
-
-        // Create AtelierCap
-        let cap = AtelierCap {
+        
+        (atelier, id_inner)
+    }
+    
+    /// Create an AtelierCap for the given atelier ID
+    fun create_atelier_cap(atelier_id: ID, ctx: &mut TxContext): AtelierCap {
+        AtelierCap {
             id: object::new(ctx),
-            atelier_id: id_inner,
-        };
-
-        // Add Atelier ID to MemberShip and State
-        archimeters::add_atelier_to_membership(membership, id_inner);
-        add_atelier_to_state(atelier_state, id_inner);
-
+            atelier_id,
+        }
+    }
+    
+    /// Register the atelier to membership and global state
+    fun register_atelier(
+        atelier_state: &mut AtelierState,
+        membership: &mut MemberShip,
+        atelier_id: ID
+    ) {
+        archimeters::add_atelier_to_membership(membership, atelier_id);
+        add_atelier_to_state(atelier_state, atelier_id);
+    }
+    
+    /// Finalize the minting process by transferring objects and emitting events
+    #[allow(lint(share_owned, custom_state_change))]
+    fun finalize_atelier_mint(
+        atelier: Atelier,
+        cap: AtelierCap,
+        atelier_id: ID,
+        recipient: address
+    ) {
         transfer::share_object(atelier);
-        transfer::transfer(cap, sender);
-
-        // Emit the event at the end
+        transfer::transfer(cap, recipient);
+        
         event::emit(New_atelier {
-            id: id_inner,
+            id: atelier_id,
         });
     }
 
-    public entry fun withdraw_pool(
+    /// Withdraw funds from the pool to a specified recipient
+    public fun withdraw_pool(
         atelier: &mut Atelier,
         cap: &AtelierCap,
         amount: u64,
+        recipient: address,
         ctx: &mut TxContext
     ) {
-        let sender = tx_context::sender(ctx);
-        let atelier_id = object::uid_to_inner(&atelier.id);
-        
-        // Verify atelier_id match and amount
-        assert!(cap.atelier_id == atelier_id, ENO_PERMISSION);
+        // Verify capability and amount
+        verify_atelier_cap(atelier, cap);
         assert!(amount > 0, ENO_AMOUNT);
         
-        let coin = coin::from_balance(balance::split(&mut atelier.pool, amount), ctx);
-        transfer::public_transfer(coin, sender);
+        // Perform withdrawal
+        let coin = extract_from_pool(atelier, amount, ctx);
+        transfer::public_transfer(coin, recipient);
         
-        event::emit(WithdrawPool {
-            amount,
-        });
+        event::emit(WithdrawPool { amount });
+    }
+    
+    /// Verify that the capability matches the atelier
+    fun verify_atelier_cap(atelier: &Atelier, cap: &AtelierCap) {
+        let atelier_id = object::uid_to_inner(&atelier.id);
+        assert!(cap.atelier_id == atelier_id, ENO_PERMISSION);
+    }
+    
+    /// Extract coin from the atelier pool
+    fun extract_from_pool(atelier: &mut Atelier, amount: u64, ctx: &mut TxContext): coin::Coin<SUI> {
+        coin::from_balance(balance::split(&mut atelier.pool, amount), ctx)
     }
 
     // == Getter Functions ==
@@ -246,17 +352,42 @@ module archimeters::atelier {
         value >= rule.min_value && value <= rule.max_value
     }
     
-    /// Get a specific parameter rule
-    public(package) fun get_parameter_rule(
-        rules: &ParameterRules, 
-        key: &String
-    ): &ParameterRule {
-        assert!(vec_map::contains(&rules.rules, key), ENO_PARAMETER_NOT_FOUND);
-        vec_map::get(&rules.rules, key)
+    /// Get all parameter rules from an atelier
+    public(package) fun get_parameter_rules(atelier: &Atelier): &ParameterRules {
+        &atelier.parameter_rules
     }
     
-    /// Get all parameter rules from an atelier
-    public fun get_parameter_rules(atelier: &Atelier): &ParameterRules {
-        &atelier.parameter_rules
+    // == Test Functions ==
+    #[test_only]
+    public fun test_init(otw: ATELIER, ctx: &mut TxContext) {
+        init(otw, ctx);
+    }
+    
+    #[test_only]
+    public fun new_atelier_state_for_testing(ctx: &mut TxContext) {
+        let atelier_state = AtelierState {
+            id: object::new(ctx),
+            all_ateliers: vector[],
+        };
+        transfer::share_object(atelier_state);
+    }
+    
+    #[test_only]
+    public fun new_parameter_input(
+        key: String,
+        param_type: String,
+        label: String,
+        min_value: u64,
+        max_value: u64,
+        default_value: u64
+    ): ParameterInput {
+        ParameterInput {
+            key,
+            param_type,
+            label,
+            min_value,
+            max_value,
+            default_value,
+        }
     }
 }

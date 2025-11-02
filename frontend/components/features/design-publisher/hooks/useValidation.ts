@@ -25,10 +25,11 @@ export function useValidation() {
     }
 
     const numericPrice = Number(price);
-    if (isNaN(numericPrice) || numericPrice <= 0) {
+    // Allow 0 and positive numbers including decimals
+    if (isNaN(numericPrice) || numericPrice < 0) {
       setValidationState(prev => ({
         ...prev,
-        priceError: 'Please enter a valid price',
+        priceError: 'Please enter a valid price (0 or positive number)',
       }));
       return false;
     }
@@ -51,19 +52,32 @@ export function useValidation() {
       algoFile,
     } = formData;
 
+    // Check if price is valid (allow 0, but not empty string)
+    const isPriceValid = price !== '' && price !== null && price !== undefined;
+    const numericPrice = Number(price);
+    const hasPriceError = !isPriceValid || isNaN(numericPrice) || numericPrice < 0;
+
     const newValidationState = {
       workNameRequired: !workName,
       descriptionRequired: !description,
-      priceRequired: !price,
+      priceRequired: !isPriceValid,
       introRequired: !intro,
-      priceError: '',
+      priceError: hasPriceError ? 'Please enter a valid price (0 or positive number)' : '',
       imageRequired: !imageFile,
-      algoRequired: !algoFile,
+      algoRequired: algoFile !== null ? !algoFile : false, // Only check if algoFile is expected
     };
 
     setValidationState(newValidationState);
 
-    return !Object.values(newValidationState).some(Boolean);
+    // Filter out falsy values and empty strings for validation check
+    const validationErrors = Object.entries(newValidationState).filter(([key, value]) => {
+      if (typeof value === 'string') {
+        return value !== ''; // String errors count if non-empty
+      }
+      return value === true; // Boolean errors count if true
+    });
+
+    return validationErrors.length === 0;
   }, []);
 
   const resetValidation = useCallback(() => {

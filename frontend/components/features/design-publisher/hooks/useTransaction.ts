@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { createArtlier, ATELIER_STATE_ID } from '@/utils/transactions';
-import type { UploadResults } from '../types';
+import { createArtlier, ATELIER_STATE_ID, ParameterInput } from '@/utils/transactions';
+import type { UploadResults, ParameterRules } from '../types';
 
 interface TransactionState {
   transactionDigest: string;
@@ -13,6 +13,7 @@ interface UseTransactionOptions {
   membershipId: string;
   workName: string;
   price: string;
+  parameterRules: ParameterRules;
   onSuccess?: (digest: string) => void;
   onError?: (error: string) => void;
 }
@@ -21,6 +22,7 @@ export function useTransaction({
   membershipId,
   workName,
   price,
+  parameterRules,
   onSuccess,
   onError,
 }: UseTransactionOptions) {
@@ -72,6 +74,29 @@ export function useTransaction({
     setState(prev => ({ ...prev, isProcessing: true, transactionError: '' }));
 
     try {
+      // Convert ParameterRules to ParameterInput[]
+      // Note: Parameters are already offset to handle negative values in exportParameterRules
+      const parameters: ParameterInput[] = Object.entries(parameterRules).map(([key, rule]) => {
+        console.log(`Parameter ${key}:`, { 
+          minValue: rule.minValue, 
+          maxValue: rule.maxValue, 
+          defaultValue: rule.defaultValue 
+        });
+        
+        return {
+          key,
+          param_type: rule.type,
+          label: rule.label,
+          min_value: rule.minValue,
+          max_value: rule.maxValue,
+          default_value: rule.defaultValue,
+        };
+      });
+
+      // Convert price from SUI to MIST and ensure it's a valid integer
+      const priceInMist = Math.floor(Math.max(0, parseFloat(price) || 0) * 1_000_000_000);
+      console.log(`Price: ${price} SUI = ${priceInMist} MIST`);
+
       const tx = await createArtlier(
         ATELIER_STATE_ID,
         membershipId,
@@ -80,7 +105,8 @@ export function useTransaction({
         metadataBlobId,
         algoBlobId,
         '0x6',
-        parseInt(price)
+        priceInMist,
+        parameters
       );
 
       console.log('=== Transaction Object ===');
@@ -126,7 +152,7 @@ export function useTransaction({
       }));
       onError?.(errorMsg);
     }
-  }, [membershipId, workName, price, signAndExecuteTransaction, onSuccess, onError]);
+  }, [membershipId, workName, price, parameterRules, signAndExecuteTransaction, onSuccess, onError]);
 
   const resetTransaction = useCallback(() => {
     setState({

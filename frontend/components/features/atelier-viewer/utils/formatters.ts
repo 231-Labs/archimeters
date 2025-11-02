@@ -1,7 +1,8 @@
 export const scaleSuiPrice = (price: string | number): string => {
   const numPrice = typeof price === 'string' ? parseInt(price) : price;
-  const scaled = Math.floor(numPrice / 1_000_000_000).toString();
-  return scaled;
+  const scaled = numPrice / 1_000_000_000;
+  // Format to remove trailing zeros, keep reasonable precision
+  return scaled.toFixed(9).replace(/\.?0+$/, '');
 };
 
 export const formatAddress = (address: string): string => {

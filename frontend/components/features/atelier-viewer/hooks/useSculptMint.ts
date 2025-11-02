@@ -2,7 +2,9 @@ import { useState, useCallback } from 'react';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import * as THREE from 'three';
 import { mintSculpt, SUI_CLOCK } from '@/utils/transactions';
+import { convertParamsToChain } from '@/utils/parameterOffset';
 import { MintStatus, Atelier, UseSculptMintOptions, SceneRefs, ExportFormat } from '../types';
+import { useKiosk } from '@/components/features/entry/hooks';
 
 interface UseSculptMintProps {
   atelier: Atelier | null;
@@ -25,6 +27,7 @@ export const useSculptMint = ({
   const [mintError, setMintError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const { selectedKiosk, kiosks } = useKiosk();
 
   const handleMint = useCallback(async (alias: string) => {
     if (!atelier) {
@@ -86,7 +89,52 @@ export const useSculptMint = ({
 
       setMintStatus('minting');
 
-      // Step 4: Execute on-chain transaction
+      // Step 4: Verify kiosk selection
+      if (!selectedKiosk) {
+        const errorMsg = kiosks.length === 0 
+          ? 'No kiosk found, create at Entry Window.'
+          : 'Select a kiosk at Entry Window';
+        throw new Error(errorMsg);
+      }
+
+      const kioskId = selectedKiosk.kioskId;
+      const kioskCapId = selectedKiosk.kioskCapId;
+      
+      console.log('Using Kiosk:', {
+        id: kioskId,
+        capId: kioskCapId,
+        itemCount: selectedKiosk.itemCount,
+      });
+      
+      // Step 5: Get parameter values from atelier and convert to on-chain format
+      // Get user's current parameter values (from preview or use defaults)
+      const userParams: Record<string, number> = {};
+      
+      // For now, use default values from metadata
+      // TODO: In the future, allow users to customize parameters before minting
+      if (atelier.metadata?.parameters) {
+        Object.entries(atelier.metadata.parameters).forEach(([key, paramMeta]: [string, any]) => {
+          if (paramMeta.type === 'number') {
+            // Use the original default value (can be negative)
+            userParams[key] = paramMeta.originalDefault ?? 0;
+          }
+        });
+      }
+      
+      // Convert parameters to on-chain values (with offset)
+      // This handles negative values by converting them to non-negative u64
+      const { keys: paramKeys, values: paramValues } = convertParamsToChain(
+        userParams,
+        atelier.metadata?.parameters || {}
+      );
+      
+      console.log('Parameter conversion:', {
+        userParams,
+        chainKeys: paramKeys,
+        chainValues: paramValues
+      });
+      
+      // Step 6: Execute on-chain transaction
       const membershipId = sessionStorage.getItem('membership-id');
       if (!membershipId) {
         throw new Error('No membership ID found');
@@ -95,9 +143,13 @@ export const useSculptMint = ({
       const tx = await mintSculpt(
         atelier.id,
         membershipId,
+        kioskId,
+        kioskCapId,
         alias,
         `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
         modelBlobId,
+        paramKeys,
+        paramValues,
         SUI_CLOCK,
       );
 

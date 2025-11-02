@@ -208,6 +208,7 @@ export function useParameters() {
         previewParams: Object.fromEntries(
           Object.entries(extractedParams).map(([key, value]) => [key, value.default])
         ),
+        showPreview: true, // Auto-enable preview when parameters are extracted
       }));
 
       return extractedParams;
@@ -252,12 +253,20 @@ export function useParameters() {
         const minValue = param.min !== undefined ? param.min : 0;
         const maxValue = param.max !== undefined ? param.max : 100;
         
+        // Apply offset to handle negative values
+        // Store as: value_on_chain = value - minValue
+        // This converts [-30, 30] to [0, 60], for example
+        const offset = minValue;
+        const minValueOnChain = 0; // Always starts at 0 after offset
+        const maxValueOnChain = maxValue - offset;
+        const defaultValueOnChain = defaultValue - offset;
+        
         rules[key] = {
           type: 'number',
           label: param.label || key,
-          minValue: toBasisPoints(minValue),
-          maxValue: toBasisPoints(maxValue),
-          defaultValue: toBasisPoints(defaultValue),
+          minValue: toBasisPoints(minValueOnChain),
+          maxValue: toBasisPoints(maxValueOnChain),
+          defaultValue: toBasisPoints(defaultValueOnChain),
         };
       } else {
         rules[key] = {

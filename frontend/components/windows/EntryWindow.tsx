@@ -3,6 +3,7 @@ import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
 import { WindowName } from '@/types';
+import KioskSelector from '@/components/features/entry/components/KioskSelector';
 
 // Wallet connection status types
 export type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
@@ -407,8 +408,14 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
         {/* NFT Verified Status */}
         {walletStatus === 'connected-with-nft' && (
-          <div className="flex flex-col items-center">
-            <div className="text-green-400 text-base mt-12 bg-black px-4 py-2 flex items-center">
+          <div className="flex flex-col items-center justify-between h-full">
+            {/* Kiosk Selector - Top */}
+            <div className="w-full max-w-md px-4 mt-8">
+              <KioskSelector />
+            </div>
+            
+            {/* Welcome Message - Bottom */}
+            <div className="text-green-400 text-base mb-8 bg-black px-4 py-2 flex items-center">
               &gt; IDENTITY VERIFIED - WELCOME BACK
               <span className={`inline-block w-2 h-5 bg-green-400 ml-2 ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
             </div>

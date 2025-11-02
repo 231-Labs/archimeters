@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import type { EntryWindowProps } from './types';
 import { useWalletStatus } from './hooks/useWalletStatus';
 import { useMembership } from './hooks/useMembership';
+import KioskSelector from './components/KioskSelector';
 
 export default function EntryWindow({ onDragStart }: EntryWindowProps) {
   const [username, setUsername] = useState('');
@@ -147,12 +148,17 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
         )}
 
         {walletStatus === 'connected-with-nft' && !isGifLoading && !gifError && welcomeGifUrl && (
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <img 
               src={welcomeGifUrl} 
               alt="Welcome Animation" 
               className="max-w-full h-auto"
             />
+            
+            {/* Kiosk Selector */}
+            <div className="mt-4 px-4">
+              <KioskSelector />
+            </div>
           </div>
         )}
       </div>

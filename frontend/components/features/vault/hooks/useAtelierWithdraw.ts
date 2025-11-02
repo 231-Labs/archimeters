@@ -70,7 +70,7 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
         return false;
       }
 
-      const tx = await withdrawAtelierPool(atelierId, cap, poolAmount);
+      const tx = await withdrawAtelierPool(atelierId, cap, poolAmount, currentAccount.address);
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(

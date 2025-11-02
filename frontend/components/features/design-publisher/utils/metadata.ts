@@ -1,4 +1,4 @@
-import { TemplateSeries, FontStyle } from '../types';
+import { TemplateSeries, FontStyle, GeometryParameter } from '../types';
 import { templateSeries } from './templateConfig';
 
 interface MetadataParams {
@@ -14,6 +14,7 @@ interface MetadataParams {
     description: string;
     address: string;
   } | null;
+  extractedParameters?: Record<string, GeometryParameter>;
 }
 
 export const createMetadataJson = ({
@@ -24,8 +25,30 @@ export const createMetadataJson = ({
   name,
   address,
   intro,
-  membershipData
+  membershipData,
+  extractedParameters = {}
 }: MetadataParams): File => {
+  // Build parameter metadata with original ranges (for offset calculation)
+  const parametersMetadata: Record<string, any> = {};
+  Object.entries(extractedParameters).forEach(([key, param]) => {
+    if (param.type === 'number') {
+      parametersMetadata[key] = {
+        type: param.type,
+        label: param.label || key,
+        originalMin: param.min ?? 0,      // Original min (can be negative)
+        originalMax: param.max ?? 100,    // Original max
+        originalDefault: param.default ?? 0,
+        step: (param as any).step,
+      };
+    } else {
+      parametersMetadata[key] = {
+        type: param.type,
+        label: param.label || key,
+        default: param.default,
+      };
+    }
+  });
+
   const metadata = {
     artwork: {
       title: workName,
@@ -45,7 +68,9 @@ export const createMetadataJson = ({
       name: membershipData?.username || name,
       address: membershipData?.address || address,
       introduction: membershipData?.description || intro
-    }
+    },
+    // Store original parameter ranges for offset calculation
+    parameters: parametersMetadata
   };
 
   // TODO: Test Only

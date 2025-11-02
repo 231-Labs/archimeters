@@ -77,7 +77,8 @@ module archimeters::archimeters {
     }
 
     // == Entry Functions ==
-    public entry fun mint_membership(
+    #[allow(lint(self_transfer))]
+    public fun mint_membership(
         state: &mut State,
         username: String,
         description: String,
@@ -125,5 +126,20 @@ module archimeters::archimeters {
 
     public fun add_sculpt_to_membership(membership: &mut MemberShip, sculpt_id: ID) {
         vec_set::insert(&mut membership.sculptures, sculpt_id);
+    }
+    
+    // == Test Functions ==
+    #[test_only]
+    public fun test_init(otw: ARCHIMETERS, ctx: &mut TxContext) {
+        init(otw, ctx);
+    }
+    
+    #[test_only]
+    public fun new_state_for_testing(ctx: &mut TxContext) {
+        let state = State {
+            id: object::new(ctx),
+            registered_users: table::new(ctx),
+        };
+        transfer::share_object(state);
     }
 }

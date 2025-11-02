@@ -135,6 +135,7 @@ export function useDesignPublisherForm() {
     membershipId,
     workName: artworkInfo.workName,
     price: artworkInfo.price,
+    parameterRules: exportParameterRules(),
     onSuccess: handleTransactionSuccess,
     onError: handleTransactionError,
   });
@@ -251,9 +252,10 @@ export function useDesignPublisherForm() {
     }
   }, [baseHandleAlgoFileChange, processSceneFile]);
 
-  // Price handler with validation
+  // Price handler with validation - supports decimals and zero
   const handlePriceChange = useCallback((value: string) => {
-    if (value === '' || /^\d+$/.test(value)) {
+    // Allow empty, numbers, and decimal point (e.g., "0", "1.5", ".5", "10.99")
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
       updateArtworkInfo('price', value);
       validatePrice(value);
     }
@@ -303,7 +305,8 @@ export function useDesignPublisherForm() {
         name: artistInfo.name,
         address: currentAccount?.address || '',
         intro: artistInfo.intro,
-        membershipData: membershipData
+        membershipData: membershipData,
+        extractedParameters: extractedParameters
       });
       
       if (imageFile && algoFile) {

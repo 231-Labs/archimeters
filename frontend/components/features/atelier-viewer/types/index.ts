@@ -1,5 +1,29 @@
 import * as THREE from 'three';
 
+export interface ParameterMetadata {
+  type: 'number' | 'color';
+  label: string;
+  originalMin?: number;      // Original min value (can be negative)
+  originalMax?: number;      // Original max value
+  originalDefault?: number;  // Original default value
+  step?: number;
+  default?: any;
+}
+
+export interface AtelierMetadata {
+  artwork?: {
+    title: string;
+    description: string;
+    template?: any;
+  };
+  artist?: {
+    name: string;
+    address: string;
+    introduction: string;
+  };
+  parameters?: Record<string, ParameterMetadata>;
+}
+
 export interface Atelier {
   id: string;
   photoBlobId: string;
@@ -8,6 +32,7 @@ export interface Atelier {
   url: string | null;
   algorithmContent: string | null;
   configData: any | null;
+  metadata?: AtelierMetadata;
   title: string;
   author: string;
   price: string;
