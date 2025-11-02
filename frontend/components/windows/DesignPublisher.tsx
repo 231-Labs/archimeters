@@ -855,14 +855,8 @@ export default function DesignPublisher() {
             style={style}
             fontStyle={fontStyle}
             onFileChange={handleAlgoFileChange}
-            onUpdatePreviewParams={(params) => setPreviewParams(params)}
             onStyleChange={setStyle}
             onFontStyleChange={setFontStyle}
-            onExtractParameters={setExtractedParameters}
-            onTogglePreview={() => setShowPreview(!showPreview)}
-            onNext={goToNextPage}
-            onPrevious={goToPreviousPage}
-            userScript={userScript}
             onUserScriptChange={setUserScript}
           />
         )}
