@@ -24,6 +24,13 @@ export interface AtelierMetadata {
   parameters?: Record<string, ParameterMetadata>;
 }
 
+/**
+ * Atelier (Design Template) data structure
+ * 
+ * Note: On-chain, Atelier is now a generic type: Atelier<ATELIER>
+ * This ensures type safety between Atelier and Sculpt.
+ * However, in the frontend, we use this plain interface for data representation.
+ */
 export interface Atelier {
   id: string;
   photoBlobId: string;

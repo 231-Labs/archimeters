@@ -54,9 +54,9 @@ frontend/next-env.d.ts
 package-lock.json
 yarn.lock
 
-# Doc
-docs
-feature-guide.md
+# Documentation - Internal development docs
+docs/
+*.md.backup
 
 # Contract
 contract/build/

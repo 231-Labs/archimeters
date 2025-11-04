@@ -2,45 +2,50 @@ import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
 // ============================================================================
-// PREVIOUS VERSION (Backup for rollback if needed)
+// PREVIOUS VERSION - Deployment: FE8qibrcLuq4zUc7hstrHNF3JV8a4WWHW8AX3zcvqbC9
+// Deployed: 2025-11-02, Epoch: 906 (Backup for rollback if needed)
 // ============================================================================
-// export const PACKAGE_ID = '0x64ec0abe4f0c79ab509fe2eb61c37e584ed1681d274926216bfe5113a07f5d33';
-// export const STATE_ID = '0x5bca31807dd1c1916127f89fb875cf3cc13ed923c391ef945b9a5e75708abecf';
-// export const ATELIER_STATE_ID = '0x8ffae89c8b903adf879a6b0a00c7454f68774a0110017240a1a15284e151d5d9';
+// export const PACKAGE_ID = '0x5712bc99406bf71c386f4641f7fc31e67de74b12a4fceb569325bf29e09c614c';
+// export const STATE_ID = '0x0cec121bf193a38e360bcd19c604e2a6ad503f82c977b580ad228d5ef844e95d';
+// export const ATELIER_STATE_ID = '0x9a221a3eaa36c8b54c7edfa950040358d154c2352c6da3d4c7a3c52edfc55970';
+// export const SCULPT_TRANSFER_POLICY = '0xca68f6e68fa75acdf68149119127c67dbce195f4cca996775d07526331aeb213';
 
 // ============================================================================
-// CURRENT VERSION - Deployment: FE8qibrcLuq4zUc7hstrHNF3JV8a4WWHW8AX3zcvqbC9
-// Deployed: 2025-11-02, Epoch: 906
-// Fixed: Removed duplicate price conversion (price * ONE_SUI)
+// CURRENT VERSION - Deployment: DaXkXPwpUqsCk7ybSRn9hx4JMUFgCrKTakFMoPthfQLG
+// Deployed: 2025-11-04, Epoch: 908
+// Changes: Phase 1.5 - Atelier & Sculpt Generics
+//   - Atelier<phantom T> and Sculpt<phantom T>
+//   - Type-safe relationship enforcement
+//   - Added typeArguments to all contract calls
 // ============================================================================
 
-export const PACKAGE_ID = '0x5712bc99406bf71c386f4641f7fc31e67de74b12a4fceb569325bf29e09c614c';
-export const STATE_ID = '0x0cec121bf193a38e360bcd19c604e2a6ad503f82c977b580ad228d5ef844e95d';
-export const ATELIER_STATE_ID = '0x9a221a3eaa36c8b54c7edfa950040358d154c2352c6da3d4c7a3c52edfc55970';
-export const SCULPT_TRANSFER_POLICY = '0xca68f6e68fa75acdf68149119127c67dbce195f4cca996775d07526331aeb213';
-export const UPGRADE_CAP = '0xa7fa8c9bf2dbcba817fd61ed10e0963735749a59e0a7a1cb9edc2d8a6c090e27';
+export const PACKAGE_ID = '0x80e08281d763b4f020c106e1a6a10108058bef89c3054cb85fa894a3bc4c3f09';
+export const STATE_ID = '0x192bd3eb1fc09c0e9815bf39549807c00456fdd018e5765c7c5904db78f7e2e4';
+export const ATELIER_STATE_ID = '0xce5b9be03c5bfe7b5f5625575826ecef4a3f166fdb87370e8f453e7a146f5b88';
+export const SCULPT_TRANSFER_POLICY = '0x7142c6057e2c765ef16d37dd6e0f41be8000d2f558ee5d8109dd080a71c65ca5';
+export const UPGRADE_CAP = '0x834963d39f4006761ee4e50d3f610af7f17159e8ac2ac5c808994f3fc9056e98';
 
 // Display objects
-export const MEMBERSHIP_DISPLAY = '0xf9a238152941c98c44bdeaaaf387f3ca87f4c7c36eb15b3f6285ae97fb684362';
-export const ATELIER_DISPLAY = '0xaab0dd12dbada85c3c1ea2f3b1ff974aff4af82cc644ff85733213ff4477f88f';
-export const SCULPT_DISPLAY = '0xfade6150c449da399f24dec2f8055dd6eee935014b756f99559cf7a3004027ee';
+export const MEMBERSHIP_DISPLAY = '0xae9617ae3ab3b00164b9b384b3640ed310dbd1afdcbdbf99fa2c612b6de8d8c1';
+export const ATELIER_DISPLAY = '0x005b63266359c357bd504fc56627b666c1fb204cd6e9ba4ddc24b068b898a5ea';
+export const SCULPT_DISPLAY = '0x0016bc6fae9142ec9ad4fca65308cc0c49dfc3a65c4e4244e231b382ee517e9d';
 
 // Publisher objects
-export const PUBLISHER_ARCHIMETERS = '0x2d5c8cde03f10b2f5a16cda6cef976156e06607bd45fe7cd4267bcc5de5941c3';
-export const PUBLISHER_ATELIER = '0x0b9ca142c15c2205ab9c564d386aabb96af60477df4e04e62db32ae2ab73caa4';
-export const PUBLISHER_SCULPT = '0x77d8509b0caf644df69632e057fedab9f0b301a397dd3e66fc1282c577b53ad5';
+export const PUBLISHER_ARCHIMETERS = '0xd2f7de8e7de73295893a72910deaa628b877a3071ef9c9c2a40cca013b3ee85e';
+export const PUBLISHER_ATELIER = '0xa13518f50b1bed6cd7352f4bacfdbca83f4fd0bd74d094ec4b202b4a8c15a782';
+export const PUBLISHER_SCULPT = '0x5e1b4ecc5a504d033d3599afeb4b00cd292df8ff51a6a729b8f8315423bf8c14';
 
 // Transfer Policy Cap
-export const SCULPT_TRANSFER_POLICY_CAP = '0xd0086918373f4ac082db9df9089203d3b2ffcacbd7afa322844204fef771eeb4';
+export const SCULPT_TRANSFER_POLICY_CAP = '0x3080943a4fac94da1cf90c7d9853b23abe48372357ea4fc9d3d8af4cb2c11546';
 
 // External dependencies
 export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
 export const PRINTER_REGISTRY = '0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c';
 
-// Type definitions
+// Type definitions (with generics)
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
-export const ATELIER_TYPE = `${PACKAGE_ID}::atelier::Atelier`;
-export const SCULPT_TYPE = `${PACKAGE_ID}::sculpt::Sculpt`;
+export const ATELIER_TYPE = `${PACKAGE_ID}::atelier::Atelier<${PACKAGE_ID}::atelier::ATELIER>`;
+export const SCULPT_TYPE = `${PACKAGE_ID}::sculpt::Sculpt<${PACKAGE_ID}::atelier::ATELIER>`;
 
 // Constants
 export const SUI_CLOCK = '0x6';
@@ -104,6 +109,8 @@ export const createArtlier = async (
   
   tx.moveCall({
     target: `${PACKAGE_ID}::atelier::mint_atelier`,
+    // Add type argument for generic Atelier<ATELIER>
+    typeArguments: [`${PACKAGE_ID}::atelier::ATELIER`],
     arguments: [
       tx.object(artlierState),
       tx.object(membershipId),
@@ -142,6 +149,8 @@ export const mintSculpt = async (
   
   tx.moveCall({
     target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
+    // Add type argument for the generic Sculpt<ATELIER>
+    typeArguments: [`${PACKAGE_ID}::atelier::ATELIER`],
     arguments: [
       tx.object(artlierId),
       tx.object(membershipId),
@@ -168,6 +177,8 @@ export const withdrawAtelierPool = async (
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::atelier::withdraw_pool`,
+    // Add type argument for generic Atelier<ATELIER>
+    typeArguments: [`${PACKAGE_ID}::atelier::ATELIER`],
     arguments: [
       tx.object(atelierId),
       tx.object(cap),

@@ -50,7 +50,7 @@ module archimeters::atelier {
         rules: VecMap<String, ParameterRule>,
     }
 
-    public struct Atelier has key, store {
+    public struct Atelier<phantom T> has key, store {
         id: UID,
         name: String,
         author: address,
@@ -81,7 +81,7 @@ module archimeters::atelier {
     // == Initializer ==
     fun init(otw: ATELIER, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        let mut display = display::new<Atelier>(&publisher, ctx);
+        let mut display = display::new<Atelier<ATELIER>>(&publisher, ctx);
 
         display.add(
             b"name".to_string(),
@@ -115,7 +115,8 @@ module archimeters::atelier {
     
     /// Main function to mint a new atelier
     /// Instead of vector<ParameterInput>, we use separate vectors for each field
-    public fun mint_atelier(
+    /// Generic parameter T represents the phantom type for this Atelier (typically ATELIER)
+    public fun mint_atelier<T>(
         atelier_state: &mut AtelierState,
         membership: &mut MemberShip,
         name: String,
@@ -148,7 +149,7 @@ module archimeters::atelier {
         );
         
         // Step 3: Create the atelier object
-        let (atelier, atelier_id) = create_atelier_object(
+        let (atelier, atelier_id) = create_atelier_object<T>(
             name,
             photo,
             data,
@@ -167,7 +168,7 @@ module archimeters::atelier {
         register_atelier(atelier_state, membership, atelier_id);
         
         // Step 6: Transfer objects and emit event
-        finalize_atelier_mint(atelier, cap, atelier_id, sender);
+        finalize_atelier_mint<T>(atelier, cap, atelier_id, sender);
     }
     
     // == Internal Helper Functions ==
@@ -214,7 +215,7 @@ module archimeters::atelier {
     }
     
     /// Create the Atelier object with all its properties
-    fun create_atelier_object(
+    fun create_atelier_object<T>(
         name: String,
         photo: String,
         data: String,
@@ -224,12 +225,12 @@ module archimeters::atelier {
         parameter_rules: ParameterRules,
         clock: &clock::Clock,
         ctx: &mut TxContext
-    ): (Atelier, ID) {
+    ): (Atelier<T>, ID) {
         let id = object::new(ctx);
         let id_inner = object::uid_to_inner(&id);
         let now = clock::timestamp_ms(clock);
         
-        let atelier = Atelier {
+        let atelier = Atelier<T> {
             id,
             name,
             author,
@@ -266,8 +267,8 @@ module archimeters::atelier {
     
     /// Finalize the minting process by transferring objects and emitting events
     #[allow(lint(share_owned, custom_state_change))]
-    fun finalize_atelier_mint(
-        atelier: Atelier,
+    fun finalize_atelier_mint<T>(
+        atelier: Atelier<T>,
         cap: AtelierCap,
         atelier_id: ID,
         recipient: address
@@ -281,8 +282,8 @@ module archimeters::atelier {
     }
 
     /// Withdraw funds from the pool to a specified recipient
-    public fun withdraw_pool(
-        atelier: &mut Atelier,
+    public fun withdraw_pool<T>(
+        atelier: &mut Atelier<T>,
         cap: &AtelierCap,
         amount: u64,
         recipient: address,
@@ -300,35 +301,39 @@ module archimeters::atelier {
     }
     
     /// Verify that the capability matches the atelier
-    fun verify_atelier_cap(atelier: &Atelier, cap: &AtelierCap) {
+    fun verify_atelier_cap<T>(atelier: &Atelier<T>, cap: &AtelierCap) {
         let atelier_id = object::uid_to_inner(&atelier.id);
         assert!(cap.atelier_id == atelier_id, ENO_PERMISSION);
     }
     
     /// Extract coin from the atelier pool
-    fun extract_from_pool(atelier: &mut Atelier, amount: u64, ctx: &mut TxContext): coin::Coin<SUI> {
+    fun extract_from_pool<T>(atelier: &mut Atelier<T>, amount: u64, ctx: &mut TxContext): coin::Coin<SUI> {
         coin::from_balance(balance::split(&mut atelier.pool, amount), ctx)
     }
 
     // == Getter Functions ==
 
-    public fun get_author(atelier: &Atelier): address {
+    public fun get_author<T>(atelier: &Atelier<T>): address {
         atelier.author
     }
 
-    public fun get_price(atelier: &Atelier): u64 {
+    public fun get_price<T>(atelier: &Atelier<T>): u64 {
         atelier.price
     }
 
-    public fun get_pool(atelier: &Atelier): &Balance<SUI> {
+    public fun get_pool<T>(atelier: &Atelier<T>): &Balance<SUI> {
         &atelier.pool
     }
+    
+    public fun get_atelier_id<T>(atelier: &Atelier<T>): ID {
+        object::uid_to_inner(&atelier.id)
+    }
 
-    public fun add_to_pool(atelier: &mut Atelier, fee: Balance<SUI>) {
+    public fun add_to_pool<T>(atelier: &mut Atelier<T>, fee: Balance<SUI>) {
         balance::join(&mut atelier.pool, fee);
     }
 
-    public fun add_sculpt_to_atelier(atelier: &mut Atelier, sculpt_id: ID) {
+    public fun add_sculpt_to_atelier<T>(atelier: &mut Atelier<T>, sculpt_id: ID) {
         vector::push_back(&mut atelier.artificials, sculpt_id);
     }
 
@@ -353,7 +358,7 @@ module archimeters::atelier {
     }
     
     /// Get all parameter rules from an atelier
-    public(package) fun get_parameter_rules(atelier: &Atelier): &ParameterRules {
+    public(package) fun get_parameter_rules<T>(atelier: &Atelier<T>): &ParameterRules {
         &atelier.parameter_rules
     }
     

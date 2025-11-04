@@ -18,8 +18,10 @@ module archimeters::sculpt {
     use archimeters::atelier::{
         Self as atelier_module,
         Atelier,
+        ATELIER,
         get_author,
         get_price,
+        get_atelier_id,
         add_to_pool,
         add_sculpt_to_atelier,
     };
@@ -33,8 +35,9 @@ module archimeters::sculpt {
     public struct SCULPT has drop {}
 
     // == Structs ==
-    public struct Sculpt has key, store {
+    public struct Sculpt<phantom ATELIER> has key, store {
         id: UID,
+        atelier_id: ID, // Links to the specific Atelier this Sculpt was minted from
         alias: String,
         owner: address,
         creator: address,
@@ -54,7 +57,10 @@ module archimeters::sculpt {
     #[allow(lint(share_owned))]
     fun init(otw: SCULPT, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        let mut display = display::new<Sculpt>(&publisher, ctx);
+        
+        // Create Display for Sculpt<ATELIER>
+        // Note: Using ATELIER as the phantom type parameter
+        let mut display = display::new<Sculpt<ATELIER>>(&publisher, ctx);
 
         display.add(
             b"name".to_string(),
@@ -75,8 +81,9 @@ module archimeters::sculpt {
 
         display.update_version();
 
-        // Initialize TransferPolicy
-        let (policy, policy_cap) = transfer_policy::new<Sculpt>(&publisher, ctx);
+        // Initialize TransferPolicy for Sculpt<ATELIER>
+        // This policy applies to all Sculpts minted from any Atelier
+        let (policy, policy_cap) = transfer_policy::new<Sculpt<ATELIER>>(&publisher, ctx);
 
         transfer::public_share_object(policy);
         transfer::public_transfer(policy_cap, ctx.sender());
@@ -87,8 +94,10 @@ module archimeters::sculpt {
     // == Entry Functions ==
     
     /// Main function to mint a new sculpt
-    entry fun mint_sculpt(
-        atelier: &mut Atelier,
+    /// Generic parameter T should be archimeters::atelier::ATELIER
+    /// This ensures type safety: only Atelier<T> can mint Sculpt<T>
+    entry fun mint_sculpt<T>(
+        atelier: &mut Atelier<T>,
         membership: &mut MemberShip,
         kiosk: &mut Kiosk,
         kiosk_cap: &KioskOwnerCap,
@@ -102,6 +111,7 @@ module archimeters::sculpt {
         ctx: &mut TxContext
     ) {
         let sender = ctx.sender();
+        let atelier_id = get_atelier_id(atelier);
         
         // Step 1: Validate payment
         validate_payment(atelier, payment);
@@ -112,8 +122,9 @@ module archimeters::sculpt {
         // Step 3: Process payment
         let fee = extract_payment(atelier, payment, ctx);
         
-        // Step 4: Create sculpt
-        let (sculpt, sculpt_id) = create_sculpt(
+        // Step 4: Create sculpt with generic type parameter
+        let (sculpt, sculpt_id) = create_sculpt<T>(
+            atelier_id,
             alias,
             sender,
             get_author(atelier),
@@ -128,20 +139,20 @@ module archimeters::sculpt {
         register_sculpt(membership, atelier, sculpt_id, fee);
         
         // Step 6: Place in kiosk and emit event
-        finalize_sculpt_mint(kiosk, kiosk_cap, sculpt, sculpt_id);
+        finalize_sculpt_mint<T>(kiosk, kiosk_cap, sculpt, sculpt_id);
     }
     
     // == Internal Helper Functions ==
     
     /// Validate that payment is sufficient
-    fun validate_payment(atelier: &Atelier, payment: &Coin<SUI>) {
+    fun validate_payment<T>(atelier: &Atelier<T>, payment: &Coin<SUI>) {
         let price = get_price(atelier);
         assert!(coin::value(payment) >= price, ENO_CORRECT_FEE);
     }
     
     /// Validate parameters and build parameter map
-    fun validate_and_build_parameters(
-        atelier: &Atelier,
+    fun validate_and_build_parameters<T>(
+        atelier: &Atelier<T>,
         param_keys: vector<String>,
         param_values: vector<u64>
     ): VecMap<String, u64> {
@@ -176,13 +187,14 @@ module archimeters::sculpt {
     }
     
     /// Extract payment fee from coin
-    fun extract_payment(atelier: &Atelier, payment: &mut Coin<SUI>, ctx: &mut TxContext): Coin<SUI> {
+    fun extract_payment<T>(atelier: &Atelier<T>, payment: &mut Coin<SUI>, ctx: &mut TxContext): Coin<SUI> {
         let price = get_price(atelier);
         coin::split(payment, price, ctx)
     }
     
-    /// Create sculpt object
-    fun create_sculpt(
+    /// Create sculpt object with generic type parameter
+    fun create_sculpt<T>(
+        atelier_id: ID,
         alias: String,
         owner: address,
         creator: address,
@@ -191,13 +203,14 @@ module archimeters::sculpt {
         parameters: VecMap<String, u64>,
         clock: &clock::Clock,
         ctx: &mut TxContext
-    ): (Sculpt, ID) {
+    ): (Sculpt<T>, ID) {
         let id = object::new(ctx);
         let id_inner = object::uid_to_inner(&id);
         let now = clock::timestamp_ms(clock);
         
-        let sculpt = Sculpt {
+        let sculpt = Sculpt<T> {
             id,
+            atelier_id,
             alias,
             owner,
             creator,
@@ -212,9 +225,9 @@ module archimeters::sculpt {
     }
     
     /// Register sculpt to membership and atelier
-    fun register_sculpt(
+    fun register_sculpt<T>(
         membership: &mut MemberShip,
-        atelier: &mut Atelier,
+        atelier: &mut Atelier<T>,
         sculpt_id: ID,
         fee: Coin<SUI>
     ) {
@@ -224,18 +237,18 @@ module archimeters::sculpt {
     }
     
     /// Finalize minting by placing in kiosk and emitting event
-    fun finalize_sculpt_mint(
+    fun finalize_sculpt_mint<T>(
         kiosk: &mut Kiosk,
         kiosk_cap: &KioskOwnerCap,
-        sculpt: Sculpt,
+        sculpt: Sculpt<T>,
         sculpt_id: ID
     ) {
         kiosk::place(kiosk, kiosk_cap, sculpt);
         event::emit(New_sculpt { id: sculpt_id });
     }
 
-    public fun print_sculpt(
-        sculpt: &mut Sculpt,
+    public fun print_sculpt<T>(
+        sculpt: &mut Sculpt<T>,
         clock: &clock::Clock,
     ) {
         sculpt.printed = sculpt.printed + 1;
@@ -243,18 +256,22 @@ module archimeters::sculpt {
     }
 
     // adds a print record to the sculpt
-    public fun add_print_record<T: key + store>(sculpt: &mut Sculpt, record: T, clock: &clock::Clock) {
+    public fun add_print_record<T, R: key + store>(sculpt: &mut Sculpt<T>, record: R, clock: &clock::Clock) {
         let timestamp = clock::timestamp_ms(clock);
         sui::dynamic_object_field::add(&mut sculpt.id, timestamp, record);
     }
 
     // === Getters ===  
-    public fun get_sculpt_info(sculpt: &Sculpt): (ID, String, String) {
+    public fun get_sculpt_info<T>(sculpt: &Sculpt<T>): (ID, String, String) {
         (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.structure)
     }
 
-    public fun get_sculpt_printed(sculpt: &Sculpt): u64 {
+    public fun get_sculpt_printed<T>(sculpt: &Sculpt<T>): u64 {
         sculpt.printed
+    }
+    
+    public fun get_sculpt_atelier_id<T>(sculpt: &Sculpt<T>): ID {
+        sculpt.atelier_id
     }
     
     // == Test Functions ==

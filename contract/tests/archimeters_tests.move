@@ -8,7 +8,7 @@ module archimeters::archimeters_tests {
     use sui::kiosk::{Self, Kiosk, KioskOwnerCap};
     
     use archimeters::archimeters::{Self, State, MemberShip};
-    use archimeters::atelier::{Self, Atelier, AtelierState, AtelierCap, ParameterInput};
+    use archimeters::atelier::{Self, Atelier, AtelierState, AtelierCap, ATELIER};
     use archimeters::sculpt::{Self};
 
     // Test addresses
@@ -72,31 +72,32 @@ module archimeters::archimeters_tests {
         ts::return_shared(state);
     }
 
-    /// Create test parameter inputs
-    fun create_test_parameters(): vector<ParameterInput> {
-        let mut params = vector::empty<ParameterInput>();
-        
-        // Parameter 1: width (100-1000, default 500)
-        vector::push_back(&mut params, atelier::new_parameter_input(
+    /// Create test parameter vectors (keys, types, labels, min, max, default)
+    fun create_test_parameter_vectors(): (
+        vector<string::String>,
+        vector<string::String>,
+        vector<string::String>,
+        vector<u64>,
+        vector<u64>,
+        vector<u64>
+    ) {
+        let keys = vector[
             string::utf8(b"width"),
+            string::utf8(b"height")
+        ];
+        let types = vector[
             string::utf8(b"number"),
+            string::utf8(b"number")
+        ];
+        let labels = vector[
             string::utf8(b"Width"),
-            100,
-            1000,
-            500
-        ));
+            string::utf8(b"Height")
+        ];
+        let min_values = vector[100, 100];
+        let max_values = vector[1000, 1000];
+        let default_values = vector[500, 500];
         
-        // Parameter 2: height (100-1000, default 500)
-        vector::push_back(&mut params, atelier::new_parameter_input(
-            string::utf8(b"height"),
-            string::utf8(b"number"),
-            string::utf8(b"Height"),
-            100,
-            1000,
-            500
-        ));
-        
-        params
+        (keys, types, labels, min_values, max_values, default_values)
     }
 
     // == Integration Tests ==
@@ -114,9 +115,9 @@ module archimeters::archimeters_tests {
         {
             let mut atelier_state = ts::take_shared<AtelierState>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
-            let params = create_test_parameters();
+            let (keys, types, labels, min_values, max_values, default_values) = create_test_parameter_vectors();
             
-            atelier::mint_atelier(
+            atelier::mint_atelier<ATELIER>(
                 &mut atelier_state,
                 &mut membership,
                 string::utf8(b"Test Atelier"),
@@ -124,8 +125,13 @@ module archimeters::archimeters_tests {
                 string::utf8(b"data_blob_id"),
                 string::utf8(b"algorithm_blob_id"),
                 &clock,
-                5, // 5 SUI price
-                params,
+                5 * ONE_SUI, // 5 SUI price in MIST
+                keys,
+                types,
+                labels,
+                min_values,
+                max_values,
+                default_values,
                 ts::ctx(&mut scenario)
             );
             
@@ -145,7 +151,7 @@ module archimeters::archimeters_tests {
         // Step 5: Collector mints a sculpt with valid parameters
         ts::next_tx(&mut scenario, COLLECTOR);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
             let mut kiosk = ts::take_shared<Kiosk>(&scenario);
             let kiosk_cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
@@ -158,7 +164,7 @@ module archimeters::archimeters_tests {
             ];
             let param_values = vector[500, 750]; // Both within 100-1000 range
             
-            sculpt::mint_sculpt(
+            sculpt::mint_sculpt<ATELIER>(
                 &mut atelier,
                 &mut membership,
                 &mut kiosk,
@@ -183,7 +189,7 @@ module archimeters::archimeters_tests {
         // Step 6: Designer withdraws funds from atelier
         ts::next_tx(&mut scenario, DESIGNER);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let atelier_cap = ts::take_from_sender<AtelierCap>(&scenario);
             
             // Check pool balance
@@ -191,7 +197,7 @@ module archimeters::archimeters_tests {
             assert!(sui::balance::value(pool) == 5 * ONE_SUI, 0);
             
             // Withdraw to designer
-            atelier::withdraw_pool(
+            atelier::withdraw_pool<ATELIER>(
                 &mut atelier,
                 &atelier_cap,
                 5 * ONE_SUI,
@@ -228,9 +234,9 @@ module archimeters::archimeters_tests {
         {
             let mut atelier_state = ts::take_shared<AtelierState>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
-            let params = create_test_parameters();
+            let (keys, types, labels, min_values, max_values, default_values) = create_test_parameter_vectors();
             
-            atelier::mint_atelier(
+            atelier::mint_atelier<ATELIER>(
                 &mut atelier_state,
                 &mut membership,
                 string::utf8(b"Test Atelier"),
@@ -238,8 +244,13 @@ module archimeters::archimeters_tests {
                 string::utf8(b"data_blob_id"),
                 string::utf8(b"algorithm_blob_id"),
                 &clock,
-                5,
-                params,
+                5 * ONE_SUI,
+                keys,
+                types,
+                labels,
+                min_values,
+                max_values,
+                default_values,
                 ts::ctx(&mut scenario)
             );
             
@@ -257,7 +268,7 @@ module archimeters::archimeters_tests {
         // Try to mint with invalid parameter (too high)
         ts::next_tx(&mut scenario, COLLECTOR);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
             let mut kiosk = ts::take_shared<Kiosk>(&scenario);
             let kiosk_cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
@@ -270,7 +281,7 @@ module archimeters::archimeters_tests {
             ];
             let param_values = vector[1500, 500]; // width exceeds max!
             
-            sculpt::mint_sculpt(
+            sculpt::mint_sculpt<ATELIER>(
                 &mut atelier,
                 &mut membership,
                 &mut kiosk,
@@ -309,9 +320,9 @@ module archimeters::archimeters_tests {
         {
             let mut atelier_state = ts::take_shared<AtelierState>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
-            let params = create_test_parameters();
+            let (keys, types, labels, min_values, max_values, default_values) = create_test_parameter_vectors();
             
-            atelier::mint_atelier(
+            atelier::mint_atelier<ATELIER>(
                 &mut atelier_state,
                 &mut membership,
                 string::utf8(b"Test Atelier"),
@@ -319,8 +330,13 @@ module archimeters::archimeters_tests {
                 string::utf8(b"data_blob_id"),
                 string::utf8(b"algorithm_blob_id"),
                 &clock,
-                5,
-                params,
+                5 * ONE_SUI,
+                keys,
+                types,
+                labels,
+                min_values,
+                max_values,
+                default_values,
                 ts::ctx(&mut scenario)
             );
             
@@ -338,7 +354,7 @@ module archimeters::archimeters_tests {
         // Try to mint with invalid parameter (too low)
         ts::next_tx(&mut scenario, COLLECTOR);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
             let mut kiosk = ts::take_shared<Kiosk>(&scenario);
             let kiosk_cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
@@ -351,7 +367,7 @@ module archimeters::archimeters_tests {
             ];
             let param_values = vector[500, 50]; // height below min!
             
-            sculpt::mint_sculpt(
+            sculpt::mint_sculpt<ATELIER>(
                 &mut atelier,
                 &mut membership,
                 &mut kiosk,
@@ -390,9 +406,9 @@ module archimeters::archimeters_tests {
         {
             let mut atelier_state = ts::take_shared<AtelierState>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
-            let params = create_test_parameters();
+            let (keys, types, labels, min_values, max_values, default_values) = create_test_parameter_vectors();
             
-            atelier::mint_atelier(
+            atelier::mint_atelier<ATELIER>(
                 &mut atelier_state,
                 &mut membership,
                 string::utf8(b"Test Atelier"),
@@ -400,8 +416,13 @@ module archimeters::archimeters_tests {
                 string::utf8(b"data_blob_id"),
                 string::utf8(b"algorithm_blob_id"),
                 &clock,
-                5,
-                params,
+                5 * ONE_SUI,
+                keys,
+                types,
+                labels,
+                min_values,
+                max_values,
+                default_values,
                 ts::ctx(&mut scenario)
             );
             
@@ -419,7 +440,7 @@ module archimeters::archimeters_tests {
         // Try to mint with mismatched key/value count
         ts::next_tx(&mut scenario, COLLECTOR);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
             let mut kiosk = ts::take_shared<Kiosk>(&scenario);
             let kiosk_cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
@@ -432,7 +453,7 @@ module archimeters::archimeters_tests {
             ];
             let param_values = vector[500, 750, 600]; // Extra value!
             
-            sculpt::mint_sculpt(
+            sculpt::mint_sculpt<ATELIER>(
                 &mut atelier,
                 &mut membership,
                 &mut kiosk,
@@ -471,9 +492,9 @@ module archimeters::archimeters_tests {
         {
             let mut atelier_state = ts::take_shared<AtelierState>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
-            let params = create_test_parameters();
+            let (keys, types, labels, min_values, max_values, default_values) = create_test_parameter_vectors();
             
-            atelier::mint_atelier(
+            atelier::mint_atelier<ATELIER>(
                 &mut atelier_state,
                 &mut membership,
                 string::utf8(b"Test Atelier"),
@@ -481,8 +502,13 @@ module archimeters::archimeters_tests {
                 string::utf8(b"data_blob_id"),
                 string::utf8(b"algorithm_blob_id"),
                 &clock,
-                5,
-                params,
+                5 * ONE_SUI,
+                keys,
+                types,
+                labels,
+                min_values,
+                max_values,
+                default_values,
                 ts::ctx(&mut scenario)
             );
             
@@ -500,7 +526,7 @@ module archimeters::archimeters_tests {
         // Try to mint with insufficient payment
         ts::next_tx(&mut scenario, COLLECTOR);
         {
-            let mut atelier = ts::take_shared<Atelier>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut membership = ts::take_from_sender<MemberShip>(&scenario);
             let mut kiosk = ts::take_shared<Kiosk>(&scenario);
             let kiosk_cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
@@ -512,7 +538,7 @@ module archimeters::archimeters_tests {
             ];
             let param_values = vector[500, 750];
             
-            sculpt::mint_sculpt(
+            sculpt::mint_sculpt<ATELIER>(
                 &mut atelier,
                 &mut membership,
                 &mut kiosk,
