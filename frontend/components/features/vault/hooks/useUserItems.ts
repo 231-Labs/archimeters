@@ -15,6 +15,7 @@ export interface AtelierItem extends BaseVaultItem {
   author: string;
   price: string;
   pool: string;
+  poolId: string;
   publish_time: string;
 }
 
@@ -111,45 +112,66 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
           },
         });
 
-        const parsedItems = results
-          .map((object) => {
-            if (!object.data?.content) return null;
-            const content = object.data.content as any;
+        const parsedItems: VaultItem[] = [];
+
+        for (const object of results) {
+          if (!object.data?.content) continue;
+          const content = object.data.content as any;
+          
+          if (fieldKey === 'ateliers') {
+            const poolId = content.fields.pool_id || '';
+            let poolBalance = '0';
             
-            if (fieldKey === 'ateliers') {
-              return {
-                id: object.data.objectId,
-                type: 'atelier',
-                photoBlobId: content.fields.photo || '',
-                title: content.fields.name || '',
-                author: content.fields.author || '',
-                price: content.fields.price || '',
-                pool: content.fields.pool || '',
-                publish_time: content.fields.publish_time
-                  ? new Date(Number(content.fields.publish_time)).toLocaleDateString('en-CA')
-                  : '',
-                isLoading: false,
-                error: null,
-              } as AtelierItem;
-            } else {
-              return {
-                id: object.data.objectId,
-                type: 'sculpt',
-                blueprint: content.fields.blueprint || '',
-                photoBlobId: extractBlobId(content.fields.blueprint) || '',
-                alias: content.fields.alias || '',
-                creator: content.fields.creator || '',
-                printed: content.fields.printed || '0',
-                structure: content.fields.structure || '',
-                time: content.fields.time
-                  ? new Date(Number(content.fields.time)).toLocaleDateString('en-CA')
-                  : '',
-                isLoading: false,
-                error: null,
-              } as SculptItem;
+            // Fetch pool balance from AtelierPool object
+            if (poolId) {
+              try {
+                const poolObject = await suiClient.getObject({
+                  id: poolId,
+                  options: { showContent: true },
+                });
+                
+                if (poolObject.data?.content) {
+                  const poolContent = poolObject.data.content as any;
+                  poolBalance = poolContent.fields?.balance || '0';
+                }
+              } catch (err) {
+                console.error('Error fetching pool balance:', err);
+              }
             }
-          })
-          .filter((item): item is VaultItem => item !== null);
+            
+            parsedItems.push({
+              id: object.data.objectId,
+              type: 'atelier',
+              photoBlobId: content.fields.photo || '',
+              title: content.fields.name || '',
+              author: content.fields.current_owner || content.fields.original_creator || '',
+              price: content.fields.price || '',
+              pool: poolBalance,
+              poolId: poolId,
+              publish_time: content.fields.publish_time
+                ? new Date(Number(content.fields.publish_time)).toLocaleDateString('en-CA')
+                : '',
+              isLoading: false,
+              error: null,
+            } as AtelierItem);
+          } else {
+            parsedItems.push({
+              id: object.data.objectId,
+              type: 'sculpt',
+              blueprint: content.fields.blueprint || '',
+              photoBlobId: extractBlobId(content.fields.blueprint) || '',
+              alias: content.fields.alias || '',
+              creator: content.fields.creator || '',
+              printed: content.fields.printed || '0',
+              structure: content.fields.structure || '',
+              time: content.fields.time
+                ? new Date(Number(content.fields.time)).toLocaleDateString('en-CA')
+                : '',
+              isLoading: false,
+              error: null,
+            } as SculptItem);
+          }
+        }
 
         setItems(parsedItems);
       } catch (err) {

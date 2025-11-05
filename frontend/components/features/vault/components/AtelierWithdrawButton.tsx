@@ -2,6 +2,7 @@ import { useAtelierWithdraw } from '../hooks/useAtelierWithdraw';
 
 interface AtelierWithdrawButtonProps {
   atelierId: string;
+  poolId: string;
   poolAmount: number;
   onSuccess?: () => void;
   onError?: (error: string) => void;
@@ -10,12 +11,13 @@ interface AtelierWithdrawButtonProps {
 
 export function AtelierWithdrawButton({
   atelierId,
+  poolId,
   poolAmount,
   onSuccess,
   onError,
   onStatusChange,
 }: AtelierWithdrawButtonProps) {
-  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ atelierId });
+  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ atelierId, poolId });
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling

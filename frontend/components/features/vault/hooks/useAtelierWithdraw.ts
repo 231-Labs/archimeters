@@ -1,21 +1,21 @@
 import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
-import { withdrawAtelierPool } from '@/utils/transactions';
-import { PACKAGE_ID } from '@/utils/transactions';
+import { withdrawAtelierPool, ATELIER_TYPE } from '@/utils/transactions';
 
 interface UseAtelierWithdrawProps {
   atelierId: string;
+  poolId: string;
   onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }
 
-export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWithdrawProps) {
+export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAtelierWithdrawProps) {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
-  const fetchAtelierCap = async () => {
+  const fetchAtelierObject = async () => {
     if (!currentAccount?.address) {
       const errorMessage = 'Please connect your wallet';
       setError(errorMessage);
@@ -27,7 +27,7 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
       const { data: objects } = await suiClient.getOwnedObjects({
         owner: currentAccount.address,
         filter: {
-          StructType: `${PACKAGE_ID}::atelier::AtelierCap`
+          StructType: ATELIER_TYPE
         },
         options: {
           showContent: true,
@@ -35,17 +35,16 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
       });
 
       for (const object of objects) {
-        const content = object.data?.content as any;
-        if (content?.fields?.atelier_id === atelierId) {
+        if (object.data?.objectId === atelierId) {
           return object.data?.objectId;
         }
       }
-      const errorMessage = 'No corresponding AtelierCap found';
+      const errorMessage = 'No corresponding Atelier found in your wallet';
       setError(errorMessage);
-      onStatusChange?.('error', `Withdrawal failed${errorMessage}`);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
     } catch (error) {
-      const errorMessage = 'Error fetching AtelierCap';
+      const errorMessage = 'Error fetching Atelier object';
       setError(errorMessage);
       onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
@@ -65,12 +64,12 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
       setError(null);
       onStatusChange?.('processing', 'Withdrawal processing...');
 
-      const cap = await fetchAtelierCap();
-      if (!cap) {
+      const atelierObjectId = await fetchAtelierObject();
+      if (!atelierObjectId) {
         return false;
       }
 
-      const tx = await withdrawAtelierPool(atelierId, cap, poolAmount, currentAccount.address);
+      const tx = withdrawAtelierPool(atelierObjectId, poolId, poolAmount, currentAccount.address);
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(
@@ -103,7 +102,7 @@ export function useAtelierWithdraw({ atelierId, onStatusChange }: UseAtelierWith
       console.error("Error in handleWithdraw:", error);
       const errorMessage = 'Withdrawal failed';
       setError(errorMessage);
-      onStatusChange?.('error', `Withdrawal failed:${errorMessage}`);
+      onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return false;
     } finally {
       setIsWithdrawing(false);

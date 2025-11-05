@@ -100,6 +100,7 @@ const ImageItem: React.FC<{
           {atelier.type === 'atelier' ? (
             <AtelierWithdrawButton
               atelierId={atelier.id}
+              poolId={(atelier as AtelierItem).poolId}
               poolAmount={Number((atelier as AtelierItem).pool)}
               onSuccess={() => {
                 onWithdrawStatusChange('success', 'Withdrawal successful');
