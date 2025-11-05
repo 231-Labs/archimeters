@@ -17,6 +17,7 @@ interface Atelier {
   photoBlobId: string;
   algorithmBlobId: string;
   dataBlobId: string;
+  poolId: string;     // Pool ID for payment
   url: string | null;
   algorithmContent: string | null;
   configData: any | null;

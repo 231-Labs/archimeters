@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import * as THREE from 'three';
-import { mintSculpt, SUI_CLOCK } from '@/utils/transactions';
+import { mintSculpt } from '@/utils/transactions';
 import { convertParamsToChain } from '@/utils/parameterOffset';
 import { MintStatus, Atelier, UseSculptMintOptions, SceneRefs, ExportFormat } from '../types';
 import { useKiosk } from '@/components/features/entry/hooks';
@@ -100,12 +100,6 @@ export const useSculptMint = ({
       const kioskId = selectedKiosk.kioskId;
       const kioskCapId = selectedKiosk.kioskCapId;
       
-      console.log('Using Kiosk:', {
-        id: kioskId,
-        capId: kioskCapId,
-        itemCount: selectedKiosk.itemCount,
-      });
-      
       // Step 5: Get parameter values from atelier and convert to on-chain format
       // Get user's current parameter values (from preview or use defaults)
       const userParams: Record<string, number> = {};
@@ -122,17 +116,10 @@ export const useSculptMint = ({
       }
       
       // Convert parameters to on-chain values (with offset)
-      // This handles negative values by converting them to non-negative u64
       const { keys: paramKeys, values: paramValues } = convertParamsToChain(
         userParams,
         atelier.metadata?.parameters || {}
       );
-      
-      console.log('Parameter conversion:', {
-        userParams,
-        chainKeys: paramKeys,
-        chainValues: paramValues
-      });
       
       // Step 6: Execute on-chain transaction
       const membershipId = sessionStorage.getItem('membership-id');
@@ -140,8 +127,9 @@ export const useSculptMint = ({
         throw new Error('No membership ID found');
       }
 
-      const tx = await mintSculpt(
+      const tx = mintSculpt(
         atelier.id,
+        atelier.poolId,
         membershipId,
         kioskId,
         kioskCapId,
@@ -150,7 +138,7 @@ export const useSculptMint = ({
         modelBlobId,
         paramKeys,
         paramValues,
-        SUI_CLOCK,
+        Number(atelier.price),
       );
 
       signAndExecuteTransaction(

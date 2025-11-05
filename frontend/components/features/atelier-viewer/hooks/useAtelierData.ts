@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Atelier } from '../types';
+import { getWalrusBlobUrl } from '@/config/walrus';
 
 const DEFAULT_IMAGE_URL = '/placeholder-image.png';
 
 const fetchImageFromWalrus = async (blobId: string): Promise<string> => {
   try {
-    const response = await fetch(`/api/walrus/blob/${blobId}`);
+    const imageUrl = getWalrusBlobUrl(blobId);
+    const response = await fetch(imageUrl);
     if (!response.ok) {
       throw new Error(`Failed to load image: ${response.statusText}`);
     }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    return url;
+    return imageUrl;
   } catch (err) {
     console.error('Error loading image:', err);
     return DEFAULT_IMAGE_URL;
@@ -20,7 +20,8 @@ const fetchImageFromWalrus = async (blobId: string): Promise<string> => {
 
 const fetchAlgorithmFromWalrus = async (blobId: string): Promise<string> => {
   try {
-    const response = await fetch(`/api/walrus/blob/${blobId}`);
+    const algorithmUrl = getWalrusBlobUrl(blobId);
+    const response = await fetch(algorithmUrl);
     if (!response.ok) {
       throw new Error(`Failed to load algorithm: ${response.statusText}`);
     }
@@ -34,7 +35,8 @@ const fetchAlgorithmFromWalrus = async (blobId: string): Promise<string> => {
 
 const fetchConfigDataFromWalrus = async (blobId: string): Promise<any> => {
   try {
-    const response = await fetch(`/api/walrus/blob/${blobId}`);
+    const configUrl = getWalrusBlobUrl(blobId);
+    const response = await fetch(configUrl);
     if (!response.ok) {
       throw new Error(`Failed to load config data: ${response.statusText}`);
     }
@@ -93,11 +95,6 @@ export const useAtelierData = () => {
 
     fetchAtelierData();
 
-    return () => {
-      if (atelier?.url && atelier.url !== DEFAULT_IMAGE_URL) {
-        setTimeout(() => URL.revokeObjectURL(atelier.url!), 1000);
-      }
-    };
   }, []);
 
   return { atelier, isLoading, error };

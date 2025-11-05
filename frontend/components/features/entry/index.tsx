@@ -1,27 +1,24 @@
-// EntryWindow component - Initial window for user entry
 import { ConnectButton } from '@mysten/dapp-kit';
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
 import type { EntryWindowProps } from './types';
 import { useWalletStatus } from './hooks/useWalletStatus';
 import { useMembership } from './hooks/useMembership';
+import { getWalrusBlobUrl } from '@/config/walrus';
 import KioskSelector from './components/KioskSelector';
 
 export default function EntryWindow({ onDragStart }: EntryWindowProps) {
   const [username, setUsername] = useState('');
-  const [description, setDescription] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [welcomeGifUrl, setWelcomeGifUrl] = useState<string>('');
   const [isGifLoading, setIsGifLoading] = useState(false);
   const [gifError, setGifError] = useState<string>('');
 
   const { walletStatus, isMinting, setIsMinting, checkNFTOwnership } = useWalletStatus();
   const { handleInitializeOS } = useMembership(async () => {
-    // 交易成功後等待 2 秒再檢查一次
+    // Wait and retry checking for NFT ownership after transaction
     setTimeout(async () => {
       const hasNFT = await checkNFTOwnership();
       
-      // 如果第一次檢查沒找到 NFT，最多再重試 3 次
       if (!hasNFT) {
         let attempts = 0;
         const maxAttempts = 3;
@@ -37,56 +34,44 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     }, 2000);
   });
 
-  // 添加鍵盤事件監聽
+  // Handle keyboard input for username
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (walletStatus !== 'connected-no-nft') return;
       
       if (e.key === 'Enter') {
-        handleInitializeOS(username, description);
+        handleInitializeOS(username, '');
         return;
       }
       
       if (e.key === 'Backspace') {
-        if (description) {
-          setDescription(prev => prev.slice(0, -1));
-        } else {
-          setUsername(prev => prev.slice(0, -1));
-        }
+        setUsername(prev => prev.slice(0, -1));
         return;
       }
       
       if (e.key.length === 1) {
-        if (description) {
-          setDescription(prev => prev + e.key);
-        } else {
-          setUsername(prev => prev + e.key);
-        }
+        setUsername(prev => prev + e.key);
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [walletStatus, username, description]);
+  }, [walletStatus, username, handleInitializeOS]);
 
+  // Handle ESC key to cancel minting
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isMinting) {
-        handleCancelMint();
+        setIsMinting(false);
+        setUsername('');
       }
     };
 
     window.addEventListener('keydown', handleEscKey);
     return () => window.removeEventListener('keydown', handleEscKey);
-  }, [isMinting]);
+  }, [isMinting, setIsMinting]);
 
-  // 添加取消 mint 的功能
-  const handleCancelMint = () => {
-    setIsMinting(false);
-    setUsername('');
-  };
-
-  // 添加獲取 GIF 的 useEffect
+  // Fetch welcome GIF from Walrus
   useEffect(() => {
     const fetchWelcomeGif = async () => {
       setIsGifLoading(true);
@@ -94,15 +79,15 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
       
       try {
         const blobId = 'yy3Ngjkh5O1Vg7GWp9R96pGsJ8fzNbvnopia9dc9uMw';
-        const response = await fetch(`/api/walrus/blob/${blobId}`);
+        const walrusUrl = getWalrusBlobUrl(blobId);
+        
+        const response = await fetch(walrusUrl, { method: 'HEAD' });
         
         if (!response.ok) {
           throw new Error('Failed to load animation');
         }
         
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setWelcomeGifUrl(url);
+        setWelcomeGifUrl(walrusUrl);
       } catch (err) {
         console.error('Error loading welcome animation:', err);
         setGifError('Failed to load welcome animation');
@@ -112,18 +97,10 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
     };
 
     fetchWelcomeGif();
-
-    // 清理函數
-    return () => {
-      if (welcomeGifUrl) {
-        URL.revokeObjectURL(welcomeGifUrl);
-      }
-    };
   }, []);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Connect Button 區域 */}
       <div className="pt-6 px-4 flex justify-center">
         <ConnectButton 
           style={retroButtonStyles.button} 
@@ -132,17 +109,13 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
         />
       </div>
 
-      {/* 主要內容區域 */}
       <div className="flex-1 flex items-center justify-center p-4">
         {walletStatus === 'connected-no-nft' && (
           <div className="text-center">
             <h2 className="text-xl font-bold mb-4">Welcome to Archimeters</h2>
             <p className="mb-4">Please enter your username to continue:</p>
             <div className="relative inline-block">
-              <span className="text-lg font-mono">
-                {username}
-                {isTyping && <span className="animate-blink">|</span>}
-              </span>
+              <span className="text-lg font-mono">{username}</span>
             </div>
           </div>
         )}
@@ -154,8 +127,6 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
               alt="Welcome Animation" 
               className="max-w-full h-auto"
             />
-            
-            {/* Kiosk Selector */}
             <div className="mt-4 px-4">
               <KioskSelector />
             </div>

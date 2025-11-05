@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { ATELIER_STATE_ID } from '@/utils/transactions';
+import { ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { getWalrusBlobUrl } from '@/config/walrus';
 
 interface AtelierState {
   all_ateliers: string[];
@@ -11,6 +12,7 @@ interface AtelierFields {
   name: string;
   author: string;
   price: string;
+  pool_id: string;    // Associated pool ID
   publish_time: string;
   algorithm: string;  // Algorithm file blob-id
   artificials: string[];
@@ -23,6 +25,7 @@ interface Atelier {
   photoBlobId: string;
   algorithmBlobId: string;
   dataBlobId: string;
+  poolId: string;     // Pool ID for payment
   url: string | null;
   algorithmContent: string | null;
   configData: any | null;
@@ -57,7 +60,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
           : img
       ));
 
-      const imageUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
+      const imageUrl = getWalrusBlobUrl(blobId);
       // Test if URL is accessible
       const response = await fetch(imageUrl);
       
@@ -88,7 +91,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   // Fetch algorithm content from Walrus
   const fetchAlgorithmFromWalrus = async (id: string, blobId: string) => {
     try {
-      const algorithmUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
+      const algorithmUrl = getWalrusBlobUrl(blobId);
       const response = await fetch(algorithmUrl);
       
       if (!response.ok) {
@@ -121,7 +124,7 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   // Fetch config file from Walrus
   const fetchConfigDataFromWalrus = async (id: string, blobId: string) => {
     try {
-      const configUrl = `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`;
+      const configUrl = getWalrusBlobUrl(blobId);
       
       const response = await fetch(configUrl);
       
@@ -161,53 +164,36 @@ export function useSeriesImages(): UseSeriesImagesReturn {
   };
 
   const fetchAtelierData = async () => {
-    // if (!currentAccount) {
-    //   setError('Wallet not connected');
-    //   setIsLoading(false);
-    //   return;
-    // }
-
     try {
       setIsLoading(true);
-      const atelierState = await suiClient.getObject({
-        id: ATELIER_STATE_ID,
-        options: {
-          showContent: true,
-          showType: true,
-        }
+    
+      const events = await suiClient.queryEvents({
+        query: {
+          MoveEventType: `${PACKAGE_ID}::atelier::New_atelier`
+        },
+        limit: 50,
+        order: 'descending'
       });
 
-      // Extract all_ateliers array from atelierState
-      const content = atelierState.data?.content;
-      if (!content || typeof content !== 'object' || !('fields' in content)) {
-        throw new Error('Invalid atelier state data');
-      }
+      console.log('Found events:', events.data.length);
 
-      const fields = content.fields as unknown as AtelierState;
-      const allAteliers = fields.all_ateliers || [];
-
-      if (allAteliers.length === 0) {
+      if (events.data.length === 0) {
         setImages([]);
         setIsLoading(false);
         return;
       }
 
-      const allAteliersData = await suiClient.multiGetObjects({
-        ids: allAteliers,
-        options: {
-          showContent: true,
-          showType: true,
-        }
-      });
-
-      const atelierImages = allAteliersData.map(obj => {
-        const content = obj.data?.content;
-        if (!content || typeof content !== 'object' || !('fields' in content)) {
+      // 直接從事件中構建 Atelier 數據（因為 Atelier 在 Kiosk 中無法直接查詢）
+      const atelierImages = events.data.map((eventData: any) => {
+        const event = eventData.parsedJson;
+        
+        if (!event || !event.id) {
           return {
-            id: obj.data?.objectId || '',
+            id: '',
             photoBlobId: '',
             algorithmBlobId: '',
             dataBlobId: '',
+            poolId: '',
             url: null,
             algorithmContent: null,
             configData: null,
@@ -215,22 +201,22 @@ export function useSeriesImages(): UseSeriesImagesReturn {
             author: '',
             price: '',
             isLoading: false,
-            error: 'Invalid atelier data'
+            error: 'Invalid event data'
           };
         }
 
-        const fields = content.fields as unknown as AtelierFields;
         return {
-          id: obj.data?.objectId || '',
-          photoBlobId: fields.photo || '',
-          algorithmBlobId: fields.algorithm || '',
-          dataBlobId: fields.data || '',
+          id: event.id,
+          photoBlobId: event.photo || '',
+          algorithmBlobId: event.algorithm || '',
+          dataBlobId: event.data || '',
+          poolId: event.pool_id || '',
           url: null,
           algorithmContent: null,
           configData: null,
-          title: fields.name || '',
-          author: fields.author || '',
-          price: fields.price || '',
+          title: event.name || '',
+          author: event.original_creator || '',
+          price: event.price?.toString() || '',
           isLoading: true,
           error: null
         };

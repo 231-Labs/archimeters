@@ -7,6 +7,7 @@ import { useMembership } from './useMembership';
 import { useTransaction } from './useTransaction';
 import { usePageNavigation } from './usePageNavigation';
 import { useUpload } from './useUpload';
+import { useKiosk } from '../../entry/hooks';
 import { createMetadataJson } from '../utils/metadata';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import type { UploadResults } from '../types';
@@ -50,6 +51,9 @@ export function useDesignPublisherForm() {
   
   // Membership
   const { membershipId, membershipData, setMembershipData } = useMembership();
+  
+  // Kiosk management
+  const { selectedKiosk, kiosks } = useKiosk();
   
   // Page navigation
   const { currentPage, goToNextPage: baseGoToNextPage, goToPreviousPage, goToPage } = usePageNavigation({
@@ -133,6 +137,8 @@ export function useDesignPublisherForm() {
     resetTransaction,
   } = useTransaction({
     membershipId,
+    kioskId: selectedKiosk?.kioskId || '',
+    kioskCapId: selectedKiosk?.kioskCapId || '',
     workName: artworkInfo.workName,
     price: artworkInfo.price,
     parameterRules: exportParameterRules(),

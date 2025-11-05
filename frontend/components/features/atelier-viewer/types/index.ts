@@ -36,6 +36,7 @@ export interface Atelier {
   photoBlobId: string;
   algorithmBlobId: string;
   dataBlobId: string;
+  poolId: string;     // Pool ID for payment when minting sculpts
   url: string | null;
   algorithmContent: string | null;
   configData: any | null;
