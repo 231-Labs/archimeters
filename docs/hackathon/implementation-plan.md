@@ -611,7 +611,7 @@ export default function PavilionWindow() {
           </div>
           <div className="flex-1 bg-neutral-800 rounded px-3 py-1 text-xs text-neutral-400 font-mono">
             {selectedKiosk 
-              ? `pavilion.wal.app/pavilion/visit?kioskId=${selectedKiosk}`
+              ? `pavilion-231.vercel.app/pavilion/visit?kioskId=${selectedKiosk}`
               : 'Select a pavilion to visit'
             }
           </div>
@@ -621,7 +621,7 @@ export default function PavilionWindow() {
         <div className="flex-1 bg-white">
           {selectedKiosk ? (
             <iframe
-              src={`https://pavilion.wal.app/pavilion/visit?kioskId=${selectedKiosk}`}
+              src={`https://pavilion-231.vercel.app/pavilion/visit?kioskId=${selectedKiosk}`}
               className="w-full h-full border-0"
               title="Pavilion Viewer"
             />

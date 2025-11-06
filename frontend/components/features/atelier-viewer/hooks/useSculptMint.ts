@@ -3,6 +3,7 @@ import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import * as THREE from 'three';
 import { mintSculpt } from '@/utils/transactions';
 import { convertParamsToChain } from '@/utils/parameterOffset';
+import { encryptModelFile, SEAL_CONFIG } from '@/utils/seal';
 import { MintStatus, Atelier, UseSculptMintOptions, SceneRefs, ExportFormat } from '../types';
 import { useKiosk } from '@/components/features/entry/hooks';
 
@@ -63,25 +64,39 @@ export const useSculptMint = ({
       const baseName = `${atelier.title}_${Date.now()}`;
       const modelFile = await exportScene(scene, baseName, exportFormat);
 
-      // 🔑 SEAL ENCRYPTION EXTENSION POINT
-      // Future: Encrypt the model file before uploading
-      // Example usage when Seal is implemented:
-      // const fileToUpload = options.encryptModel 
-      //   ? await options.encryptModel(modelFile, { 
-      //       sculptId: `sculpt_${Date.now()}`, 
-      //       atelierId: atelier.id 
-      //     })
-      //   : modelFile;
+      // 🔑 SEAL ENCRYPTION
+      // Encrypt the model file before uploading to Walrus
+      let fileToUpload: File | Blob = modelFile;
+      let sealMetadata: any = null;
       
-      const fileToUpload = options.encryptModel 
-        ? (await options.encryptModel(modelFile, { 
-            sculptId: `sculpt_${Date.now()}`, 
-            atelierId: atelier.id 
-          })).encryptedBlob as File
-        : modelFile;
+      if (SEAL_CONFIG.enabled && SEAL_CONFIG.supportedTypes.includes(exportFormat.toLowerCase())) {
+        setMintStatus('preparing'); // Update status for encryption
+        console.log('🔐 Encrypting model file with Seal...');
+        
+        try {
+          const encryptionResult = await encryptModelFile(modelFile, {
+            sculptId: `sculpt_${Date.now()}`,
+            atelierId: atelier.id,
+          });
+          
+          fileToUpload = encryptionResult.encryptedBlob;
+          sealMetadata = {
+            resourceId: encryptionResult.resourceId,
+            ...encryptionResult.metadata,
+          };
+          
+          console.log('✅ Seal encryption completed:', sealMetadata);
+        } catch (error) {
+          console.error('⚠️ Seal encryption failed, uploading unencrypted:', error);
+          // Fall back to unencrypted upload
+        }
+      }
 
       // Step 3: Upload model to Walrus
-      const modelBlobId = await uploadToWalrus(fileToUpload, exportFormat.toUpperCase());
+      const modelBlobId = await uploadToWalrus(
+        fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], modelFile.name),
+        exportFormat.toUpperCase()
+      );
 
       if (!screenshotBlobId || !modelBlobId) {
         throw new Error('Failed to get blob IDs');

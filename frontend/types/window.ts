@@ -10,6 +10,7 @@ export type WindowName =
   | 'gallery'         // 圖片瀏覽
   | 'atelier-viewer'  // 藝術品查看器
   | 'vault'           // 用戶資產窗口
+  | 'pavilion'        // Pavilion 瀏覽器
   ; 
 
 export interface WindowPosition {

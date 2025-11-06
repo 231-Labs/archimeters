@@ -365,6 +365,23 @@ module archimeters::atelier {
         atelier.current_owner = new_owner;
     }
     
+    /// Withdraw all pool balance before marketplace sale (package-only access)
+    /// This ensures the original owner receives all accumulated fees before selling
+    public(package) fun withdraw_pool_on_sale<T>(
+        pool: &mut AtelierPool<T>,
+        atelier_id: ID,
+        original_owner: address,
+        ctx: &mut TxContext
+    ) {
+        assert!(pool.atelier_id == atelier_id, ENO_POOL_MISMATCH);
+        let balance_amount = balance::value(&pool.balance);
+        
+        if (balance_amount > 0) {
+            let withdrawn = coin::take(&mut pool.balance, balance_amount, ctx);
+            transfer::public_transfer(withdrawn, original_owner);
+        };
+    }
+    
     public fun update_creator_royalty<T>(
         atelier: &mut Atelier<T>,
         new_royalty_bps: u64,

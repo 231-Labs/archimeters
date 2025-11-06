@@ -13,6 +13,7 @@ import BrowseWindow from '@/components/windows/BrowseWindow';
 import DesignPublisher from '@/components/windows/DesignPublisher';
 import EntryWindow, { WalletStatus } from '@/components/windows/EntryWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
+import PavilionWindow from '@/components/windows/PavilionWindow';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import { PACKAGE_ID } from '@/utils/transactions';
@@ -212,6 +213,25 @@ export default function Home() {
                         zIndex={zOrder.indexOf(name) + 1}
                       >
                         <Terminal />
+                      </Window>
+                    );
+                  case 'pavilion':
+                    return (
+                      <Window
+                        key={name}
+                        name={name}
+                        title={defaultWindowConfigs['pavilion'].title}
+                        position={windowPositions['pavilion']}
+                        size={windowSizes['pavilion']}
+                        isActive={activeWindow === 'pavilion'}
+                        onClose={() => closeWindow(name)}
+                        onDragStart={(e) => startDragging(e, name)}
+                        onClick={() => activateWindow(name)}
+                        resizable
+                        onResize={(e) => resizeWindow(e, name)}
+                        zIndex={zOrder.indexOf(name) + 1}
+                      >
+                        <PavilionWindow name={name} />
                       </Window>
                     );
                   default:

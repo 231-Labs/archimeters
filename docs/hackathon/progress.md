@@ -9,14 +9,14 @@
 
 | 優先級 | 模組 | 狀態 | 完成度 |
 |--------|------|------|--------|
-| P0 | Seal SDK 整合 | ⏳ 未開始 | 0% |
-| P0 | Sculpt 二級市場 | ⏳ 未開始 | 0% |
-| P0 | Atelier 二級市場 | ⏳ 未開始 | 0% |
-| P1 | Vault - Atelier 詳情頁 | ⏳ 未開始 | 0% |
-| P1 | Vault - Sculpt 詳情頁 | ⏳ 未開始 | 0% |
+| P0 | Seal SDK 整合 | ✅ 已完成 | 100% |
+| P0 | Sculpt 二級市場 | ✅ 已完成 | 100% |
+| P0 | Atelier 二級市場 | ✅ 已完成 | 100% |
+| P1 | Vault - Atelier 詳情頁 | ✅ 已完成 | 100% |
+| P1 | Vault - Sculpt 詳情頁 | ✅ 已完成 | 100% |
 | P1 | Gallery 優化 | ⏳ 未開始 | 0% |
-| P1 | Pavilion 接入 | ⏳ 未開始 | 0% |
-| P2 | 其他優化 | ⏳ 未開始 | 0% |
+| P1 | Pavilion 接入 | ✅ 已完成 | 100% |
+| P2 | 其他優化 | ✅ 已完成 | 100% |
 
 **圖例**: ✅ 已完成 | 🚧 進行中 | ⏳ 未開始 | ⚠️ 遇到問題 | 🔄 需要返工
 
@@ -29,18 +29,44 @@
 #### 完成事項
 - [x] 建立專案文檔結構
 - [x] 完成實施計劃文檔
-- [ ] 
+- [x] **合約開發**
+  - [x] Seal 授權機制（sculpt.move）- printer_whitelist, add_printer_to_whitelist
+  - [x] Atelier 池子轉移（atelier.move）- withdraw_pool_on_sale
+  - [x] Atelier Marketplace 增強（atelier_marketplace.move）- purchase_atelier_with_pool
+- [x] **前端核心功能**
+  - [x] Seal SDK 整合架構（utils/seal.ts）- 加密檔案上傳
+  - [x] 格式化工具（utils/formatters.ts）- SUI 金額、地址格式化
+  - [x] Sculpt 二級市場 Hook（useSculptMarketplace.ts）
+  - [x] Atelier 二級市場 Hook（useAtelierMarketplace.ts）
+  - [x] Withdraw All 功能（useWithdrawAll.ts）- PTB 批量提取
+- [x] **Vault 詳情頁面**
+  - [x] Atelier 詳情 Modal - 顯示統計、Withdraw、List 功能
+  - [x] Sculpt 詳情 Modal - 3D 預覽準備、Print、List 功能
+  - [x] 移除 hover 交互，改為點擊打開詳情
+- [x] **Pavilion 整合**
+  - [x] Pavilion 窗口組件（PavilionWindow.tsx）
+  - [x] Pavilion 配置（pavilion.ts）
+  - [x] Dock Icon 和路由整合
+  - [x] 更新域名為 pavilion-231.vercel.app
+- [x] **UI/UX 優化**
+  - [x] 簡化 Entry 註冊流程提示語
+  - [x] 修復 Vault 餘額 < 1 SUI 顯示問題
+  - [x] 代碼清理 - 移除未使用的導入和 props
 
 #### 進行中
-- [ ] 
+- 無
 
 #### 遇到的問題
-- 
+- TypeScript 類型衝突：`@mysten/sui` 和 `@mysten/dapp-kit` 的 Transaction 類型不匹配
+  - **解決方案**: 使用 `as any` 類型斷言暫時繞過
+- npm 安裝權限問題
+  - **解決方案**: 使用 `--legacy-peer-deps` 標誌
 
 #### 明日計劃
-- [ ] Seal 授權函數開發（sculpt.move）
-- [ ] Atelier marketplace 合約補充
-- [ ] 
+- [ ] Gallery List/Gallery 模式切換
+- [ ] Gallery Trending 排序功能
+- [ ] 新的 Mint 頁面樣式設計（極簡、淺色模式）
+- [ ] 合約測試與部署到 testnet 
 
 ---
 

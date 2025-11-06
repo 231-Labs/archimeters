@@ -7,10 +7,11 @@ import { useInView } from 'react-intersection-observer';
 import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
 import { usePrinters, Printer } from '@/components/features/vault/hooks/usePrinters';
+import { useWithdrawAll } from '@/components/features/vault/hooks/useWithdrawAll';
 import type { WindowName } from '@/types';
-import { AtelierWithdrawButton } from '@/components/features/vault/components/AtelierWithdrawButton';
-import { SculptPrintButton } from '@/components/features/vault/components/SculptPrintButton';
-import { MIST_PER_SUI } from '@/utils/transactions';
+import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
+import { SculptDetailModal } from '@/components/features/vault/components/SculptDetailModal';
+import { formatSuiAmount } from '@/utils/formatters';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -47,10 +48,8 @@ const PrinterCard: React.FC<{ printer: Printer, onSelect: () => void }> = ({ pri
 
 const ImageItem: React.FC<{
   atelier: VaultItem;
-  reload: () => void;
-  selectedPrinter?: string | null;
-  onWithdrawStatusChange: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
-}> = ({ atelier, reload, selectedPrinter, onWithdrawStatusChange }) => {
+  onClick: () => void;
+}> = ({ atelier, onClick }) => {
   const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [loaded, setLoaded] = useState(false);
 
@@ -68,8 +67,8 @@ const ImageItem: React.FC<{
 
   return (
     <div
-      className="relative group w-full outline-none transition-all"
-      onClick={() => console.log('handleImageClick atelier: ', atelier)}
+      className="relative group w-full outline-none transition-all cursor-pointer"
+      onClick={onClick}
       ref={ref}
       tabIndex={0}
       role="button"
@@ -96,54 +95,13 @@ const ImageItem: React.FC<{
             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
           />
         )}
-        <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          {atelier.type === 'atelier' ? (
-            <AtelierWithdrawButton
-              atelierId={atelier.id}
-              poolId={(atelier as AtelierItem).poolId}
-              poolAmount={Number((atelier as AtelierItem).pool)}
-              onSuccess={() => {
-                onWithdrawStatusChange('success', 'Withdrawal successful');
-                setTimeout(() => {
-                  reload();
-                  onWithdrawStatusChange('idle');
-                }, 2000);
-              }}
-              onError={(error) => {
-                onWithdrawStatusChange('error', `Withdrawal failed: ${error}`);
-                setTimeout(() => {
-                  onWithdrawStatusChange('idle');
-                }, 5000);
-              }}
-              onStatusChange={(status, message) => onWithdrawStatusChange(status, message)}
-            />
-          ) : (
-            <SculptPrintButton
-              sculptId={atelier.id}
-              printerId={selectedPrinter || undefined}
-              onSuccess={() => {
-                setTimeout(() => {
-                  reload();
-                  onWithdrawStatusChange('idle');
-                }, 5000);
-              }}
-              onError={(error) => {
-                onWithdrawStatusChange('error', `Print failed: ${error}`);
-                setTimeout(() => {
-                  onWithdrawStatusChange('idle');
-                }, 5000);
-              }}
-              onStatusChange={(status, message, txDigest) => onWithdrawStatusChange(status, message, txDigest)}
-            />
-          )}
-        </div>
         <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end">
           <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
             <div className="flex flex-col text-xs text-white/90">
               {atelier.type === 'atelier' ? (
                 <>
                   <span className="font-semibold">{(atelier as AtelierItem).title}</span>
-                  <span>Fee Pool: {Number((atelier as AtelierItem).pool) / MIST_PER_SUI} SUI</span>
+                  <span>Fee Pool: {formatSuiAmount((atelier as AtelierItem).pool)}</span>
                   <span>Published: {(atelier as AtelierItem).publish_time}</span>
                 </>
               ) : (
@@ -173,6 +131,8 @@ export default function VaultWindow({}: VaultWindowProps) {
   const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [withdrawMessage, setWithdrawMessage] = useState<string>('');
   const [txDigest, setTxDigest] = useState<string | null>(null);
+  const [selectedAtelier, setSelectedAtelier] = useState<AtelierItem | null>(null);
+  const [selectedSculpt, setSelectedSculpt] = useState<SculptItem | null>(null);
   
   // Adding timeout handler reference
   const processingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -197,6 +157,15 @@ export default function VaultWindow({}: VaultWindowProps) {
     error: errorPrinters,
     reload: reloadPrinters,
   } = usePrinters();
+
+  const {
+    withdrawAll,
+    status: withdrawAllStatus,
+    error: withdrawAllError,
+    txDigest: withdrawAllTxDigest,
+    totalWithdrawn,
+    resetStatus: resetWithdrawAll,
+  } = useWithdrawAll();
 
   // Selected printer data
   const selectedPrinterData = selectedPrinter 
@@ -293,6 +262,25 @@ export default function VaultWindow({}: VaultWindowProps) {
 
         <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
           <div className="p-4">
+            {/* Withdraw All Button */}
+            {ateliers.length > 0 && ateliers.some(a => Number((a as AtelierItem).pool) > 0) && (
+              <div className="mb-4 flex items-center justify-between bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">
+                <div>
+                  <p className="text-white text-sm font-medium">Withdraw All Earnings</p>
+                  <p className="text-neutral-400 text-xs mt-1">
+                    Batch withdraw from all ateliers with balance
+                  </p>
+                </div>
+                <button
+                  onClick={() => withdrawAll(ateliers as AtelierItem[])}
+                  disabled={withdrawAllStatus === 'processing'}
+                  className="px-4 py-2 bg-white text-black rounded hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  {withdrawAllStatus === 'processing' ? 'Processing...' : 'Withdraw All'}
+                </button>
+              </div>
+            )}
+
             {isLoadingAteliers && !ateliers.length ? (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                 <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
@@ -316,9 +304,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                   <div key={atelier.id} className="mb-3">
                     <ImageItem
                       atelier={atelier}
-                      reload={reloadAteliers}
-                      selectedPrinter={selectedPrinter}
-                      onWithdrawStatusChange={handleWithdrawStatusChange}
+                      onClick={() => setSelectedAtelier(atelier as AtelierItem)}
                     />
                   </div>
                 ))}
@@ -429,9 +415,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                   <div key={sculpt.id} className="mb-3">
                     <ImageItem
                       atelier={sculpt}
-                      reload={reloadSculpts}
-                      selectedPrinter={selectedPrinter}
-                      onWithdrawStatusChange={handleWithdrawStatusChange}
+                      onClick={() => setSelectedSculpt(sculpt as SculptItem)}
                     />
                   </div>
                 ))}
@@ -529,6 +513,30 @@ export default function VaultWindow({}: VaultWindowProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modals */}
+      {selectedAtelier && (
+        <AtelierDetailModal
+          atelier={selectedAtelier}
+          isOpen={true}
+          onClose={() => setSelectedAtelier(null)}
+          onUpdate={() => {
+            reloadAteliers();
+          }}
+        />
+      )}
+
+      {selectedSculpt && (
+        <SculptDetailModal
+          sculpt={selectedSculpt}
+          isOpen={true}
+          onClose={() => setSelectedSculpt(null)}
+          onUpdate={() => {
+            reloadSculpts();
+          }}
+          selectedPrinter={selectedPrinter || undefined}
+        />
       )}
     </>
   );

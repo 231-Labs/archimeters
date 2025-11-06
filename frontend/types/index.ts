@@ -4,7 +4,8 @@ export type WindowName =
   | 'publisher'
   | 'gallery'
   | 'atelier-viewer'
-  | 'vault';
+  | 'vault'
+  | 'pavilion';
 
 export interface WindowConfig {
   title: string;

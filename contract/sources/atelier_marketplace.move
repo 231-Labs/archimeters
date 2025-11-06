@@ -1,5 +1,5 @@
 module archimeters::atelier_marketplace {
-    use archimeters::atelier::{ Self, Atelier };
+    use archimeters::atelier::{ Self, Atelier, AtelierPool };
     use archimeters::royalty_rule;
     use sui::{
         event,
@@ -27,6 +27,7 @@ module archimeters::atelier_marketplace {
         buyer: address,
         price: u64,
         royalty_paid: u64,
+        pool_transferred: u64,
     }
 
     // == Marketplace Functions ==
@@ -69,7 +70,7 @@ module archimeters::atelier_marketplace {
         });
     }
     
-    /// Purchase an Atelier from a Kiosk
+    /// Purchase an Atelier from a Kiosk (without pool transfer)
     #[allow(lint(self_transfer))]
     public fun purchase_atelier<T>(
         kiosk: &mut Kiosk,
@@ -104,6 +105,55 @@ module archimeters::atelier_marketplace {
             buyer,
             price: paid_amount,
             royalty_paid: royalty_amount,
+            pool_transferred: 0,
+        });
+    }
+    
+    /// Purchase an Atelier from a Kiosk with pool transfer
+    /// This function first transfers all accumulated fees in the pool to the original owner,
+    /// then proceeds with the purchase
+    #[allow(lint(self_transfer))]
+    public fun purchase_atelier_with_pool<T>(
+        kiosk: &mut Kiosk,
+        pool: &mut AtelierPool<T>,
+        atelier_id: ID,
+        original_owner: address,
+        payment: Coin<SUI>,
+        royalty_payment: Coin<SUI>,
+        policy: &TransferPolicy<Atelier<T>>,
+        ctx: &mut TxContext
+    ) {
+        let buyer = ctx.sender();
+        let paid_amount = coin::value(&payment);
+        let royalty_amount = coin::value(&royalty_payment);
+        
+        // First, transfer pool balance to original owner
+        let pool_balance = atelier::get_pool_balance(pool);
+        atelier::withdraw_pool_on_sale(pool, atelier_id, original_owner, ctx);
+        
+        // Then purchase the atelier
+        let (mut atelier, mut transfer_request) = kiosk::purchase<Atelier<T>>(
+            kiosk,
+            atelier_id,
+            payment
+        );
+        
+        if (royalty_amount > 0) {
+            royalty_rule::pay(policy, &mut transfer_request, royalty_payment);
+        } else {
+            coin::destroy_zero(royalty_payment);
+        };
+        
+        atelier::update_owner_on_purchase(&mut atelier, buyer);
+        transfer_policy::confirm_request(policy, transfer_request);
+        transfer::public_transfer(atelier, buyer);
+        
+        event::emit(AtelierPurchased {
+            atelier_id,
+            buyer,
+            price: paid_amount,
+            royalty_paid: royalty_amount,
+            pool_transferred: pool_balance,
         });
     }
     

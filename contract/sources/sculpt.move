@@ -10,6 +10,7 @@ module archimeters::sculpt {
         kiosk::{ Self, Kiosk, KioskOwnerCap },
         transfer_policy,
         vec_map::{ Self, VecMap },
+        vec_set::{ Self, VecSet },
     };
     use archimeters::archimeters::{
         Self as archimeters_module,
@@ -35,6 +36,7 @@ module archimeters::sculpt {
     const ENO_POOL_MISMATCH: u64 = 3;
     const ENO_MEMBERSHIP: u64 = 4;
     const ENO_EMPTY_STRING: u64 = 5;
+    const ENO_PERMISSION: u64 = 6;
 
     // == One Time Witness ==
     public struct SCULPT has drop {}
@@ -49,12 +51,24 @@ module archimeters::sculpt {
         structure: String,
         parameters: VecMap<String, u64>,
         printed: u64,
-        time: u64
+        time: u64,
+        printer_whitelist: VecSet<ID>,
+        encrypted: bool,
     }
 
     // == Events ==
     public struct New_sculpt has copy, drop {
         id: ID,
+    }
+    
+    public struct PrinterAdded has copy, drop {
+        sculpt_id: ID,
+        printer_id: ID,
+    }
+    
+    public struct PrinterRemoved has copy, drop {
+        sculpt_id: ID,
+        printer_id: ID,
     }
 
     #[allow(lint(share_owned))]
@@ -154,7 +168,9 @@ module archimeters::sculpt {
         
         (Sculpt<T> {
             id, atelier_id, alias, owner, creator, blueprint, structure,
-            parameters, printed: 0, time: clock::timestamp_ms(clock)
+            parameters, printed: 0, time: clock::timestamp_ms(clock),
+            printer_whitelist: vec_set::empty(),
+            encrypted: false,
         }, id_inner)
     }
     
@@ -184,4 +200,60 @@ module archimeters::sculpt {
     public fun get_sculpt_printed<T>(sculpt: &Sculpt<T>): u64 { sculpt.printed }
     
     public fun get_sculpt_atelier_id<T>(sculpt: &Sculpt<T>): ID { sculpt.atelier_id }
+    
+    // == Seal Authorization Functions ==
+    
+    /// Add a printer to the whitelist for this sculpt (owner only)
+    public fun add_printer_to_whitelist<T>(
+        sculpt: &mut Sculpt<T>,
+        printer_id: ID,
+        ctx: &TxContext
+    ) {
+        assert!(sculpt.owner == ctx.sender(), ENO_PERMISSION);
+        vec_set::insert(&mut sculpt.printer_whitelist, printer_id);
+        
+        event::emit(PrinterAdded {
+            sculpt_id: object::uid_to_inner(&sculpt.id),
+            printer_id,
+        });
+    }
+    
+    /// Remove a printer from the whitelist (owner only)
+    public fun remove_printer_from_whitelist<T>(
+        sculpt: &mut Sculpt<T>,
+        printer_id: ID,
+        ctx: &TxContext
+    ) {
+        assert!(sculpt.owner == ctx.sender(), ENO_PERMISSION);
+        vec_set::remove(&mut sculpt.printer_whitelist, &printer_id);
+        
+        event::emit(PrinterRemoved {
+            sculpt_id: object::uid_to_inner(&sculpt.id),
+            printer_id,
+        });
+    }
+    
+    /// Check if a printer is authorized to print this sculpt
+    public fun is_printer_authorized<T>(sculpt: &Sculpt<T>, printer_id: ID): bool {
+        vec_set::contains(&sculpt.printer_whitelist, &printer_id)
+    }
+    
+    /// Set the encryption status for this sculpt (owner only, can only be set once)
+    public fun set_encrypted<T>(
+        sculpt: &mut Sculpt<T>,
+        ctx: &TxContext
+    ) {
+        assert!(sculpt.owner == ctx.sender(), ENO_PERMISSION);
+        sculpt.encrypted = true;
+    }
+    
+    /// Check if the sculpt is encrypted
+    public fun is_encrypted<T>(sculpt: &Sculpt<T>): bool {
+        sculpt.encrypted
+    }
+    
+    /// Get the printer whitelist
+    public fun get_printer_whitelist<T>(sculpt: &Sculpt<T>): &VecSet<ID> {
+        &sculpt.printer_whitelist
+    }
 }

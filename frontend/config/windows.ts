@@ -30,4 +30,9 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
     defaultSize: { width: 800, height: 600 },
     resizable: true,
   },
+  'pavilion': {
+    title: 'Pavilion',
+    defaultSize: { width: 1000, height: 700 },
+    resizable: true,
+  },
 }; 
