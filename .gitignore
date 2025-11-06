@@ -55,7 +55,8 @@ package-lock.json
 yarn.lock
 
 # Documentation - Internal development docs
-docs/
+# docs/ (commented out to allow docs/hackathon/)
+!docs/hackathon/
 *.md.backup
 
 # Contract
