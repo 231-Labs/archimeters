@@ -160,10 +160,41 @@ export default function DefaultTemplate({
                         />
                         <input
                           type="number"
+                          min={paramDef.min || 0}
+                          max={paramDef.max || 100}
+                          step={paramDef.step || 1}
                           value={previewParams[key] ?? paramDef.default}
                           onChange={(e) => {
-                            const value = e.target.value === '' ? paramDef.default : Number(e.target.value);
-                            onParameterChange(key, value);
+                            const inputValue = e.target.value;
+                            
+                            // Allow empty value or intermediate decimal input (e.g., "0.", "0.5", "-")
+                            // This enables editing decimal numbers between 0 and 1
+                            if (inputValue === '' || inputValue === '-' || inputValue.endsWith('.')) {
+                              onParameterChange(key, inputValue);
+                              return;
+                            }
+                            
+                            // Parse as number
+                            const numValue = Number(inputValue);
+                            
+                            // If it's a valid number, allow it (will be clamped on blur)
+                            if (!isNaN(numValue)) {
+                              onParameterChange(key, numValue);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // When focus is lost, ensure value is within range or set to default
+                            const inputValue = e.target.value;
+                            
+                            if (inputValue === '' || inputValue === '-' || inputValue === '.' || isNaN(Number(inputValue))) {
+                              onParameterChange(key, paramDef.default);
+                            } else {
+                              const numValue = Number(inputValue);
+                              const minValue = paramDef.min || 0;
+                              const maxValue = paramDef.max || 100;
+                              const clampedValue = Math.max(minValue, Math.min(maxValue, numValue));
+                              onParameterChange(key, clampedValue);
+                            }
                           }}
                           className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
                         />

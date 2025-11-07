@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AtelierItem } from '../hooks/useUserItems';
 import { formatSuiAmount } from '@/utils/formatters';
 import { AtelierWithdrawButton } from './AtelierWithdrawButton';
-import { useAtelierMarketplace } from '@/components/features/marketplace/hooks/useAtelierMarketplace';
+import { useAtelierMarketplace } from '../hooks/useAtelierMarketplace';
 
 interface AtelierDetailModalProps {
   atelier: AtelierItem;

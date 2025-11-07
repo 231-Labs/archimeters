@@ -37,6 +37,7 @@ module archimeters::sculpt {
     const ENO_MEMBERSHIP: u64 = 4;
     const ENO_EMPTY_STRING: u64 = 5;
     const ENO_PERMISSION: u64 = 6;
+    const ENO_EMPTY_PARAMETERS: u64 = 7;
 
     // == One Time Witness ==
     public struct SCULPT has drop {}
@@ -116,6 +117,10 @@ module archimeters::sculpt {
         assert!(!string::is_empty(&structure), ENO_EMPTY_STRING);
         assert!(get_pool_id(atelier) == object::id(pool), ENO_POOL_MISMATCH);
         assert!(coin::value(&payment) == get_price(atelier), ENO_CORRECT_FEE);
+        
+        // Ensure parameters are provided (cannot be empty)
+        assert!(vector::length(&param_keys) > 0, ENO_EMPTY_PARAMETERS);
+        assert!(vector::length(&param_values) > 0, ENO_EMPTY_PARAMETERS);
         
         let params = validate_and_build_parameters(atelier, param_keys, param_values);
         let creator = get_original_creator(atelier);

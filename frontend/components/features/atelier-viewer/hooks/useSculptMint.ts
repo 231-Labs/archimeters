@@ -119,22 +119,36 @@ export const useSculptMint = ({
       // Get user's current parameter values (from preview or use defaults)
       const userParams: Record<string, number> = {};
       
-      // For now, use default values from metadata
+      // Read parameters from configData (which contains metadata from Walrus)
+      const parameters = atelier.configData?.parameters || atelier.metadata?.parameters || {};
+      
+      // For now, use default values from parameters
       // TODO: In the future, allow users to customize parameters before minting
-      if (atelier.metadata?.parameters) {
-        Object.entries(atelier.metadata.parameters).forEach(([key, paramMeta]: [string, any]) => {
+      if (Object.keys(parameters).length > 0) {
+        Object.entries(parameters).forEach(([key, paramMeta]: [string, any]) => {
           if (paramMeta.type === 'number') {
             // Use the original default value (can be negative)
-            userParams[key] = paramMeta.originalDefault ?? 0;
+            userParams[key] = paramMeta.originalDefault ?? paramMeta.default ?? 0;
           }
         });
+      } else {
+        console.warn('⚠️ No parameters found in atelier data. Empty parameters will be sent to contract.');
       }
       
       // Convert parameters to on-chain values (with offset)
       const { keys: paramKeys, values: paramValues } = convertParamsToChain(
         userParams,
-        atelier.metadata?.parameters || {}
+        parameters
       );
+      
+      // Debug logging
+      console.log('🔍 Mint Debug Info:', {
+        hasParameters: Object.keys(parameters).length > 0,
+        userParams,
+        paramKeys,
+        paramValues,
+        parameters: Object.keys(parameters),
+      });
       
       // Step 6: Execute on-chain transaction
       const membershipId = sessionStorage.getItem('membership-id');

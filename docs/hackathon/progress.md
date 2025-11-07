@@ -73,16 +73,53 @@
 ### Day 2 - 2025-11-07 (Thu)
 
 #### 完成事項
-- [ ] 
+- [x] **文件夾重構**
+  - [x] 移動 marketplace/hooks/useAtelierMarketplace.ts 到 vault/hooks/
+  - [x] 刪除 features/marketplace/ 文件夾
+  - [x] 更新 import 路徑
+- [x] **合約測試**
+  - [x] 運行所有 21 個測試 - 全部通過 ✅
+  - [x] 測試 Seal 授權功能 (printer_whitelist)
+  - [x] 測試 Pool 轉移功能 (withdraw_pool_on_sale)
+  - [x] 測試 Marketplace 購買功能 (purchase_atelier_with_pool)
+- [x] **合約部署 (Phase 2.5)**
+  - [x] 首次部署: 0x8b6bd5537cf68ba37e05cadeef6dbd9ef7939c0747f03f8ed4e402263dec8d94
+  - [x] 修復後重新部署: 0xb1c35c962187b1b2eebe934b69300fba986efb187297b2abfaff7f1711275dd3
+  - [x] 更新 frontend/utils/transactions.ts 中所有合約地址
+  - [x] Gas 消耗: 150.42 SUI + 151.17 SUI = 301.59 SUI (兩次部署)
+- [x] **Bug 修復：參數驗證**
+  - [x] 新增合約錯誤碼：ENO_EMPTY_PARAMETERS
+  - [x] 新增合約檢查：不允許空參數數組
+  - [x] 修正前端：從 configData.parameters 讀取參數
+  - [x] 新增 4 個參數驗證測試 - 全部通過 ✅
+  - [x] 修復參數輸入框 bug：
+    - [x] 添加 min/max 屬性限制輸入範圍
+    - [x] 添加自動 clamp 邏輯防止超出範圍
+    - [x] 修復第一位數無法刪除的問題
+    - [x] 修復小數點輸入問題（允許輸入 0.、0.5 等中間狀態）
 
 #### 進行中
-- [ ] 
+- [ ] E2E 測試準備中
 
 #### 遇到的問題
-- 
+- ✅ **已解決**: 傳送超出範圍的參數仍可成功 mint
+  - **根本原因**: 前端沒有讀取參數！空數組導致合約無參數驗證
+  - **調查過程**: 
+    - 合約測試確認驗證邏輯正確 ✅
+    - 檢查 transaction 參數發現 `param_keys=[]`, `param_values=[]`
+    - 發現 `useSculptMint` 讀取錯誤字段：`metadata` 而非 `configData`
+  - **修復方案**: 
+    - 修改讀取順序：`configData.parameters` → `metadata.parameters`
+    - 添加警告日誌提示參數為空
+    - 添加調試日誌輸出參數信息
+  - **測試建議**: 重新測試 mint 功能，檢查 console 確認參數正確傳遞
 
 #### 明日計劃
-- [ ] 
+- [ ] E2E 功能測試（優先測試參數驗證）✨ **重點測試項目**
+- [ ] 檢查前端參數範圍顯示邏輯
+- [ ] Gallery List/Gallery 模式切換
+- [ ] Gallery Trending 排序功能
+- [ ] 新的 Mint 頁面樣式設計 
 
 ---
 
