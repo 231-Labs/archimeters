@@ -12,6 +12,9 @@ import type { WindowName } from '@/types';
 import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
 import { SculptDetailModal } from '@/components/features/vault/components/SculptDetailModal';
 import { formatSuiAmount } from '@/utils/formatters';
+import { RetroButton } from '@/components/common/RetroButton';
+import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
+import { RetroPanel } from '@/components/common/RetroPanel';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -126,6 +129,7 @@ const ImageItem: React.FC<{
 
 export default function VaultWindow({}: VaultWindowProps) {
   const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>('ateliers');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null);
   const [showPrinters, setShowPrinters] = useState<boolean>(false);
   const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -239,49 +243,85 @@ export default function VaultWindow({}: VaultWindowProps) {
   }, []);
 
   return (
-    <>
+    <div className="relative h-full overflow-hidden">
       <Tabs.Root
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as 'ateliers' | 'sculpts')}
         className="flex flex-col h-full bg-[#1a1a1a]"
       >
-        <Tabs.List className="flex space-x-4 border-b border-neutral-700 p-2 bg-[#1a1a1a]">
-          <Tabs.Trigger
-            value="ateliers"
-            className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
-          >
-          My Ateliers
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="sculpts"
-            className="text-white px-4 py-2 rounded hover:bg-neutral-800 data-[state=active]:bg-neutral-700"
-          >
-          My Sculpts
-          </Tabs.Trigger>
-        </Tabs.List>
+        {/* Header with Tabs and View Mode Toggle */}
+        <div 
+          className="flex items-center justify-between bg-[#0f0f0f] px-2"
+          style={{
+            borderBottom: '2px solid #0a0a0a',
+            boxShadow: 'inset 0 -1px 2px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <RetroTabsList className="flex-1">
+            <RetroTabsTrigger value="ateliers">
+              Ateliers
+            </RetroTabsTrigger>
+            <RetroTabsTrigger value="sculpts">
+              Sculpts
+            </RetroTabsTrigger>
+          </RetroTabsList>
+
+          {/* View Mode Toggle */}
+          <div className="flex gap-1 p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-white/10 text-white/90'
+                  : 'text-white/40 hover:text-white/70'
+              }`}
+              title="Grid View"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white/10 text-white/90'
+                  : 'text-white/40 hover:text-white/70'
+              }`}
+              title="List View"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
-          <div className="p-4">
+          <div className="p-4 space-y-4">
             {/* Withdraw All Button */}
             {ateliers.length > 0 && ateliers.some(a => Number((a as AtelierItem).pool) > 0) && (
-              <div className="mb-4 flex items-center justify-between bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">
+              <RetroPanel className="flex items-center justify-between p-3">
                 <div>
-                  <p className="text-white text-sm font-medium">Withdraw All Earnings</p>
-                  <p className="text-neutral-400 text-xs mt-1">
+                  <p className="text-white/90 text-xs font-medium tracking-wide">WITHDRAW ALL EARNINGS</p>
+                  <p className="text-white/40 text-[10px] mt-1 font-mono">
                     Batch withdraw from all ateliers with balance
                   </p>
                 </div>
-                <button
+                <RetroButton
+                  variant="primary"
+                  size="md"
                   onClick={() => withdrawAll(ateliers as AtelierItem[])}
-                  disabled={withdrawAllStatus === 'processing'}
-                  className="px-4 py-2 bg-white text-black rounded hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                  isLoading={withdrawAllStatus === 'processing'}
                 >
                   {withdrawAllStatus === 'processing' ? 'Processing...' : 'Withdraw All'}
-                </button>
-              </div>
+                </RetroButton>
+              </RetroPanel>
             )}
 
-            {isLoadingAteliers && !ateliers.length ? (
+            {/* Items Container */}
+            <div className="relative">
+              {isLoadingAteliers && !ateliers.length ? (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                 <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
               </div>
@@ -294,7 +334,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                 <p className="text-lg mb-2">No Atelier Found</p>
                 <p className="text-sm">Create your first Atelier to get started!</p>
               </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
               <Masonry
                 breakpointCols={breakpointColumns}
                 className="flex w-auto -ml-3"
@@ -309,45 +349,85 @@ export default function VaultWindow({}: VaultWindowProps) {
                   </div>
                 ))}
               </Masonry>
+            ) : (
+              /* List View */
+              <div className="space-y-2">
+                {ateliers.map((atelier) => {
+                  const item = atelier as AtelierItem;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedAtelier(item)}
+                      className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
+                        <img
+                          src={`/api/image-proxy?blobId=${item.photoBlobId}`}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white/90 text-sm font-medium font-mono truncate">{item.title}</h3>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
+                          <span>POOL: {formatSuiAmount(item.pool)}</span>
+                          <span>PRICE: {formatSuiAmount(item.price)}</span>
+                          <span>{item.publish_time}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Icon */}
+                      <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  );
+                })}
+              </div>
             )}
+            </div>
           </div>
         </Tabs.Content>
 
       <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
-        <div className="p-4">
+        <div className="p-4 space-y-4">
           {/* Printer selection area */}
-          <div className="mb-4 bg-neutral-900/80 rounded-lg p-3 border border-neutral-800">
+          <RetroPanel className="p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 {selectedPrinter ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-sm font-medium">
-                      Printer: {selectedPrinterData?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
+                    <span className="text-xs font-medium text-white/90">
+                      PRINTER: {selectedPrinterData?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
                     </span>
                     <button
                       onClick={() => {
                         setShowPrinters(!showPrinters);
                         if (!showPrinters) setSelectedPrinter(null);
                       }}
-                      className="text-xs text-neutral-400 hover:text-white underline"
+                      className="text-[10px] text-white/40 hover:text-white/80 underline font-mono"
                     >
-                      {showPrinters ? "Cancel" : "Change"}
+                      {showPrinters ? "CANCEL" : "CHANGE"}
                       </button>
                     </div>
                   ) : (
-                    <span className="text-sm text-neutral-400">Select a printer to print your sculpture</span>
+                    <span className="text-xs text-white/40 font-mono">Select a printer to print your sculpture</span>
                   )}
                 </div>
 
                 {!selectedPrinter && (
-                  <button
+                  <RetroButton
+                    variant="primary"
+                    size="sm"
                     onClick={() => setShowPrinters(!showPrinters)}
-                    className="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-xs rounded border border-neutral-700"
                   >
-                  {showPrinters ? 'Cancel' : 'Select Printer'}
-                </button>
-              )}
+                    {showPrinters ? 'Cancel' : 'Select Printer'}
+                  </RetroButton>
+                )}
             </div>
             
             {showPrinters && (
@@ -389,10 +469,11 @@ export default function VaultWindow({}: VaultWindowProps) {
                 )}
               </div>
             )}
-          </div>
+          </RetroPanel>
           
           {/* Sculpture display area */}
-          {isLoadingSculpts && !sculpts.length ? (
+          <div className="relative">
+            {isLoadingSculpts && !sculpts.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
@@ -405,7 +486,7 @@ export default function VaultWindow({}: VaultWindowProps) {
               <p className="text-lg mb-2">No Sculpts Found</p>
               <p className="text-sm">Create your first Sculpt to get started!</p>
               </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
               <Masonry
                 breakpointCols={breakpointColumns}
                 className="flex w-auto -ml-3"
@@ -420,6 +501,43 @@ export default function VaultWindow({}: VaultWindowProps) {
                   </div>
                 ))}
               </Masonry>
+            ) : (
+              /* List View */
+              <div className="space-y-2">
+                {sculpts.map((sculpt) => {
+                  const item = sculpt as SculptItem;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedSculpt(item)}
+                      className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
+                        <img
+                          src={`/api/image-proxy?blobId=${item.photoBlobId}`}
+                          alt={item.alias}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white/90 text-sm font-medium font-mono truncate">{item.alias}</h3>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
+                          <span>CREATOR: {item.creator.substring(0, 6)}...{item.creator.slice(-4)}</span>
+                          <span>{item.time}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Icon */}
+                      <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  );
+                })}
+              </div>
             )}
 
             {!selectedPrinter && sculpts.length > 0 && !showPrinters && (
@@ -448,6 +566,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </Tabs.Content>
       </Tabs.Root>
@@ -538,6 +657,6 @@ export default function VaultWindow({}: VaultWindowProps) {
           selectedPrinter={selectedPrinter || undefined}
         />
       )}
-    </>
+    </div>
   );
 }

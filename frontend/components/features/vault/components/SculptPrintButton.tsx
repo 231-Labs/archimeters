@@ -1,4 +1,5 @@
 import { usePrintSculpt } from '../hooks/usePrintSculpt';
+import { RetroButton } from '@/components/common/RetroButton';
 
 interface SculptPrintButtonProps {
   sculptId: string;
@@ -85,13 +86,15 @@ export function SculptPrintButton({
   };
 
   return (
-    <button
-      className="bg-black/70 text-white text-sm font-semibold rounded px-5 py-2 shadow-lg backdrop-blur-sm border border-white/10 hover:bg-black/90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+    <RetroButton
+      variant="primary"
+      size="md"
       onClick={handleClick}
-      disabled={isPrinting || !printerId}
+      disabled={!printerId}
+      isLoading={isPrinting}
       title={!printerId ? 'Please select a printer' : undefined}
     >
-      {isPrinting ? 'Printing...' : 'Print Sculpt'}
-    </button>
+      {isPrinting ? 'Printing...' : 'Select Printer'}
+    </RetroButton>
   );
 } 

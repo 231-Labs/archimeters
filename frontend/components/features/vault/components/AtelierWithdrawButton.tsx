@@ -1,4 +1,5 @@
 import { useAtelierWithdraw } from '../hooks/useAtelierWithdraw';
+import { RetroButton } from '@/components/common/RetroButton';
 
 interface AtelierWithdrawButtonProps {
   atelierId: string;
@@ -46,12 +47,14 @@ export function AtelierWithdrawButton({
   };
 
   return (
-    <button
-      className="bg-black/70 text-white text-sm font-semibold rounded px-5 py-2 shadow-lg backdrop-blur-sm border border-white/10 hover:bg-black/90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+    <RetroButton
+      variant="primary"
+      size="md"
       onClick={handleClick}
-      disabled={isWithdrawing || poolAmount <= 0}
+      disabled={poolAmount <= 0}
+      isLoading={isWithdrawing}
     >
-      {isWithdrawing ? 'Processing...' : 'Collect Fee'}
-      </button>
+      {isWithdrawing ? 'Processing...' : 'Withdraw All'}
+    </RetroButton>
   );
 } 

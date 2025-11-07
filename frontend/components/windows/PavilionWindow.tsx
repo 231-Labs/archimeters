@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PAVILION_KIOSKS, getPavilionUrl, getCategoryColor, PavilionConfig } from '@/config/pavilion';
 import type { WindowName } from '@/types';
 
@@ -11,12 +11,46 @@ interface PavilionWindowProps {
 export default function PavilionWindow({}: PavilionWindowProps) {
   const [selectedPavilion, setSelectedPavilion] = useState<PavilionConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCopyTooltip, setShowCopyTooltip] = useState(false);
+  const [previousPavilion, setPreviousPavilion] = useState<PavilionConfig | null>(null);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handlePavilionSelect = (pavilion: PavilionConfig) => {
+    if (selectedPavilion) {
+      setPreviousPavilion(selectedPavilion);
+    }
     setIsLoading(true);
     setSelectedPavilion(pavilion);
     // Set a timeout to hide loading state
     setTimeout(() => setIsLoading(false), 1000);
+  };
+
+  const handleGoBack = () => {
+    if (previousPavilion) {
+      setSelectedPavilion(previousPavilion);
+      setPreviousPavilion(null);
+    } else {
+      setSelectedPavilion(null);
+    }
+  };
+
+  const handleCopyUrl = () => {
+    if (selectedPavilion) {
+      const url = `pavilion-231.vercel.app/pavilion/visit?kioskId=${selectedPavilion.kioskId}`;
+      navigator.clipboard.writeText(url);
+      
+      setShowCopyTooltip(true);
+      
+      // Clear existing timeout
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+      
+      // Hide tooltip after 2 seconds
+      tooltipTimeoutRef.current = setTimeout(() => {
+        setShowCopyTooltip(false);
+      }, 2000);
+    }
   };
 
   return (
@@ -100,11 +134,29 @@ export default function PavilionWindow({}: PavilionWindowProps) {
       <div className="flex-1 flex flex-col bg-[#1a1a1a]">
         {/* Browser Chrome */}
         <div className="bg-[#0a0a0a] border-b border-neutral-700 p-3 flex items-center gap-3">
-          {/* Browser Buttons */}
-          <div className="flex gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/70 hover:bg-red-500 transition-colors cursor-not-allowed" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/70 hover:bg-yellow-500 transition-colors cursor-not-allowed" />
-            <div className="w-3 h-3 rounded-full bg-green-500/70 hover:bg-green-500 transition-colors cursor-not-allowed" />
+          {/* Navigation Buttons */}
+          <div className="flex gap-2 items-center">
+            {/* Back Button */}
+            <button
+              onClick={handleGoBack}
+              disabled={!selectedPavilion}
+              className="p-1.5 hover:bg-neutral-800 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Go back"
+            >
+              <svg
+                className="w-4 h-4 text-neutral-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+            </button>
           </div>
 
           {/* URL Bar */}
@@ -127,6 +179,38 @@ export default function PavilionWindow({}: PavilionWindowProps) {
                 ? `pavilion-231.vercel.app/pavilion/visit?kioskId=${selectedPavilion.kioskId}`
                 : 'Select a pavilion to visit'}
             </span>
+            
+            {/* Copy Button with Tooltip */}
+            {selectedPavilion && (
+              <div className="relative">
+                <button
+                  onClick={handleCopyUrl}
+                  className="p-1.5 hover:bg-neutral-800 rounded transition-colors"
+                  title="Copy URL"
+                >
+                  <svg
+                    className="w-4 h-4 text-neutral-400 hover:text-white transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                
+                {/* Tooltip */}
+                {showCopyTooltip && (
+                  <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-black/90 backdrop-blur-sm text-white text-xs font-mono rounded border border-white/20 whitespace-nowrap z-50 animate-fade-in">
+                    ✓ Copied!
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Reload Button */}
@@ -197,10 +281,10 @@ export default function PavilionWindow({}: PavilionWindowProps) {
               {/* iframe */}
               <iframe
                 key={selectedPavilion.id}
-                src={getPavilionUrl(selectedPavilion.kioskId)}
+                src={getPavilionUrl(selectedPavilion.kioskId, true)}
                 className="w-full h-full border-0"
                 title={`Pavilion: ${selectedPavilion.name}`}
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
                 onLoad={() => setIsLoading(false)}
               />
             </>

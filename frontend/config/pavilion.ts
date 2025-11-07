@@ -41,10 +41,15 @@ export const PAVILION_BASE_URL = 'https://pavilion-231.vercel.app/pavilion/visit
 /**
  * Generate Pavilion visit URL
  * @param kioskId - The Kiosk ID of the Pavilion
+ * @param embedded - Whether this is an embedded view (hides back button, etc.)
  * @returns Full URL to visit the Pavilion
  */
-export function getPavilionUrl(kioskId: string): string {
-  return `${PAVILION_BASE_URL}?kioskId=${kioskId}`;
+export function getPavilionUrl(kioskId: string, embedded: boolean = false): string {
+  const params = new URLSearchParams({
+    kioskId,
+    ...(embedded && { embedded: 'true' })
+  });
+  return `${PAVILION_BASE_URL}?${params.toString()}`;
 }
 
 /**
