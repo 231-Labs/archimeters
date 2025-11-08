@@ -191,6 +191,51 @@
 > 📖 **詳細任務清單請查看**: [`docs/hackathon/DAY3_TASKS.md`](./DAY3_TASKS.md)  
 > 包含完整的實施步驟、代碼示例、技術研究清單和檢查清單
 
+#### 完成事項
+
+##### 📦 **Marketplace 重構（階段 1-3）** ✅
+
+**階段 1: 重命名與路由調整**
+- [x] 重命名文件：`BrowseWindow.tsx` → `MarketplaceWindow.tsx`
+- [x] 重命名 Hook：`useSeriesImages.ts` → `useMarketplaceData.ts`
+- [x] 創建新的 marketplace 目錄結構：`features/marketplace/hooks/`
+- [x] 更新所有類型定義：`'gallery'` → `'marketplace'`
+  - `frontend/types/window.ts`
+  - `frontend/types/index.ts`
+  - `frontend/config/windows.ts`
+  - `frontend/components/layout/Dock.tsx`
+  - `frontend/app/page.tsx`
+- [x] 更新 Dock 圖標標籤：Gallery → Marketplace
+
+**階段 2: Kiosk SDK 整合（僅索引 Listed Sculpts）**
+- [x] 安裝並配置 `@mysten/kiosk` SDK
+- [x] 添加 Sculpt 數據結構和接口定義
+- [x] 使用 `ItemListed` 事件索引已上架的 Sculpts
+- [x] 實現 Sculpt 詳情獲取（從 Kiosk events）
+- [x] 添加 GLB 預覽圖加載功能
+- [x] 錯誤處理和加載狀態管理
+- [x] 修復依賴安裝和構建問題
+
+**階段 3: 復古 UI 統一**
+- [x] 集成 `RetroTabs` 實現 Ateliers / Sculpts 切換
+- [x] 統一 Grid / List 視圖切換為 SVG 圖標按鈕（與 Vault 一致）
+- [x] 使用 `Tabs.Content` 優化 Tab 內容渲染
+- [x] 實現 Grid 視圖（Masonry 布局）
+- [x] 實現 List 視圖（縮略圖 + 信息 + 箭頭圖標）
+- [x] 統一暗色系復古 OS 風格設計
+- [x] 修復 List 視圖渲染錯誤
+- [x] Header 合併 Tab 導航和視圖切換
+
+**技術細節**:
+- 使用 Kiosk SDK 的 `KioskClient` 和 `Network.TESTNET`
+- 通過 `queryEvents` 查詢 `0x2::kiosk::ItemListed` 事件
+- 過濾 Sculpt 類型並獲取詳細信息
+- Ateliers 保持原有的事件索引方式
+- Sculpts 僅顯示已上架到 Kiosk 的項目
+
+#### 進行中
+- [ ] Marketplace 階段 4: Detail Modal 整合
+
 #### 計劃任務
 
 ##### 📦 **任務 1: Gallery → Marketplace 重構**
