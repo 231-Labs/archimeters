@@ -23,7 +23,6 @@ export default function Home() {
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [zOrder, setZOrder] = useState<string[]>([]);
-  const atelierViewerRaised = useRef(false);
   const [paused, setPaused] = useState(false);
 
   const {
@@ -31,14 +30,13 @@ export default function Home() {
     activeWindow,
     windowPositions,
     windowSizes,
-    // windowZIndexes,
-    // activateWindow,
     openWindow,
     closeWindow,
     startDragging,
     resizeWindow,
   } = useWindowManager('entry');
 
+  // Single source of truth for window activation
   const activateWindow = (name: string) => {
     setZOrder(prev => [...prev.filter(n => n !== name), name]);
   };
@@ -46,26 +44,11 @@ export default function Home() {
   // Sync zOrder with openWindows - ensure all open windows are in zOrder
   useEffect(() => {
     setZOrder(prev => {
-      // Get windows that are open but not in zOrder
-      const newWindows = openWindows.filter(w => !prev.includes(w));
-      // Get windows that are in zOrder but not open anymore
-      const closedWindows = prev.filter(w => !openWindows.includes(w));
-      // Remove closed windows and add new windows
+      const newWindows = openWindows.filter(w => !prev.includes(w as string)) as string[];
+      const openWindowsSet = new Set(openWindows as string[]);
+      const closedWindows = prev.filter(w => !openWindowsSet.has(w));
       return [...prev.filter(w => !closedWindows.includes(w)), ...newWindows];
     });
-  }, [openWindows]);
-
-  useEffect(() => {
-    const isAtelierViewerOpen = openWindows.includes('atelier-viewer');
-  
-    if (isAtelierViewerOpen && !atelierViewerRaised.current) {
-      setZOrder((prev) => [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer']);
-      atelierViewerRaised.current = true;
-    }
-  
-    if (!isAtelierViewerOpen) {
-      atelierViewerRaised.current = false;
-    }
   }, [openWindows]);
 
   useEffect(() => {
