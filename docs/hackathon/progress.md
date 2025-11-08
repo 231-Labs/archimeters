@@ -868,16 +868,18 @@ Day 3 建議順序:
 - **問題 1**: 點擊窗口 header 只能拖動，無法置頂
 - **問題 2**: 拖動 header 時窗口會跳動
 - **問題 3**: 修復跳動後窗口又無法拖動
+- **問題 4**: 點擊 header 會讓窗口跳回起始位置
 - **根本原因**:
-  - `getBoundingClientRect()` 與 `transform: translate()` 不兼容
-  - `getBoundingClientRect()` 返回的是 layout 位置，不包含 transform
-  - 導致拖動偏移量計算錯誤
+  - DOM 問題: `getBoundingClientRect()` 與 `transform: translate()` 不兼容
+  - 閉包問題: `useCallback` 中訪問 `state.windowPositions` 導致 stale closure
+  - `state` 不在依賴數組中，每次獲取的都是創建 callback 時的舊值
 - **最終解決方案**:
   - 在 header 添加 `onClick` 處理器，點擊時激活窗口
-  - 改用 `state.windowPositions` 計算拖動偏移量，而非 DOM rect
-  - 拖動偏移 = 鼠標位置 - 窗口 state 位置
+  - 使用 `setState` 的回調形式獲取最新的窗口位置
+  - 在 `setState(prev => {...})` 內部訪問 `prev.windowPositions[name]`
+  - 確保每次都獲取最新的 state 值
 - **效果**:
-  - ✅ 點擊 header = 激活窗口（置頂）
+  - ✅ 點擊 header = 激活窗口（置頂），位置不變
   - ✅ 拖動 header = 平滑移動，無跳動
   - ✅ 點擊內容 = 激活窗口
   - ✅ 所有交互符合標準 OS 行為
