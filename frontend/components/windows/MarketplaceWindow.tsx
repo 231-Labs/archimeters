@@ -7,6 +7,7 @@ import Masonry from 'react-masonry-css';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useMarketplaceData } from '@/components/features/marketplace/hooks/useMarketplaceData';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
+import { AtelierMintModal } from '@/components/features/atelier-viewer/AtelierMintModal';
 
 interface MarketplaceWindowProps {
   name: WindowName;
@@ -60,6 +61,7 @@ export default function MarketplaceWindow({
   const [loadedImageIds, setLoadedImageIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>('ateliers');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedAtelier, setSelectedAtelier] = useState<Atelier | null>(null);
   
   // Preload and cache images
   const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
@@ -97,8 +99,11 @@ export default function MarketplaceWindow({
 
   const handleImageClick = (atelier: Atelier) => {
     console.log('Atelier clicked:', atelier);
-    sessionStorage.setItem('selected-atelier', JSON.stringify(atelier));
-    onOpenWindow('atelier-viewer');
+    setSelectedAtelier(atelier);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedAtelier(null);
   };
 
   const breakpointColumns = {
@@ -121,11 +126,12 @@ export default function MarketplaceWindow({
   };
 
   return (
-    <Tabs.Root 
-      value={activeTab} 
-      onValueChange={setActiveTab}
-      className="flex flex-col h-full bg-[#1a1a1a]"
-    >
+    <>
+      <Tabs.Root 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="flex flex-col h-full bg-[#1a1a1a]"
+      >
       {/* Loading overlay */}
       {isLoading && ateliers.length === 0 && sculpts.length === 0 && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -406,7 +412,17 @@ export default function MarketplaceWindow({
             )}
           </div>
         </Tabs.Content>
-    </Tabs.Root>
+      </Tabs.Root>
+
+      {/* Atelier Mint Modal */}
+      {selectedAtelier && (
+        <AtelierMintModal
+          atelier={selectedAtelier}
+          isOpen={!!selectedAtelier}
+          onClose={handleCloseModal}
+        />
+      )}
+    </>
   );
 }
 
