@@ -900,9 +900,25 @@ Day 3 建議順序:
   - ✅ Kiosk 信息正確加載
   - ✅ 為 List 功能準備好必要數據
 
+#### 14. ✅ 修復 3D 模型加載錯誤
+- **問題**: 點擊 "Show 3D" 按鈕時出現 500 錯誤，無法加載 3D 模型
+- **錯誤信息**:
+  - `net::ERR_NAME_NOT_RESOLVED` - 500 (Internal Server Error)
+  - 嘗試從 `/api/walrus/get-blob?blobId=...` 加載失敗
+- **根本原因**:
+  - `GLBViewer.tsx` 使用了不存在的 API 端點 `/api/walrus/get-blob`
+  - 實際存在的端點是 `/api/walrus?blobId=xxx`
+- **解決方案**:
+  - 修改 `GLBViewer.tsx` 中的 `modelUrl`
+  - 從 `/api/walrus/get-blob?blobId=${blobId}` 改為 `/api/walrus?blobId=${blobId}`
+- **效果**:
+  - ✅ 3D 模型正常加載
+  - ✅ GLB 文件從 Walrus 正確獲取
+  - ✅ Three.js 場景正確渲染 3D 模型
+
 ### 待處理問題
-- [ ] **Show 3D 錯誤**: My Sculpt > item > show 3D 點擊後報錯（需要具體錯誤信息）
-- [ ] **List 功能實現**: My Ateliers/Sculpts 的 List 功能需要 Kiosk SDK 整合
+- [ ] **List 功能實現 - Sculpt**: My Sculpts 的 List 功能需要 Kiosk SDK 整合（Kiosk 信息已正確獲取）
+- [ ] **List 功能實現 - Atelier**: My Ateliers 使用合約自定義邏輯，較複雜，暫緩實現
 
 ### 提交記錄
 - ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
