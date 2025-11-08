@@ -105,7 +105,7 @@ export default function DesignPublisher() {
 
   // 轉換 extractedParameters 從 Record 到 Array
   const parametersArray = useMemo(() => {
-    return Object.entries(extractedParameters).map(([key, param]) => ({
+    const params = Object.entries(extractedParameters).map(([key, param]) => ({
       name: key,
       type: param.type || 'text',
       label: param.label || key,
@@ -113,7 +113,22 @@ export default function DesignPublisher() {
       max: param.max,
       default: param.default
     }));
+    console.log('[Publisher] Extracted parameters:', params.length, 'parameters');
+    return params;
   }, [extractedParameters]);
+
+  // Debug logs
+  useEffect(() => {
+    console.log('[Publisher] State update:', {
+      hasImageFile: !!imageFile,
+      hasImageUrl: !!imageUrl,
+      imageUrl: imageUrl?.substring(0, 50),
+      hasAlgoFile: !!algoFile,
+      algoFileName: algoFile?.name,
+      hasUserScript: !!userScript,
+      parametersCount: parametersArray.length
+    });
+  }, [imageFile, imageUrl, algoFile, userScript, parametersArray]);
 
   return (
     <PublisherMintLayout
@@ -155,10 +170,13 @@ export default function DesignPublisher() {
       // 3D 預覽
       preview3D={
         userScript && algoFile ? (
-          <ParametricViewer
-            userScript={userScript}
-            parameters={previewParams}
-          />
+          <div className="w-full h-full">
+            <ParametricViewer
+              key={`${algoFile.name}-${Date.now()}`}
+              userScript={userScript}
+              parameters={previewParams}
+            />
+          </div>
         ) : undefined
       }
       

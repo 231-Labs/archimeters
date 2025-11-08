@@ -107,24 +107,36 @@ export function PublisherMintLayout({
   return (
     <div className="h-full bg-[#0a0a0a] text-white overflow-auto hide-scrollbar">
       <div className="relative min-h-full max-w-[1800px] mx-auto flex flex-col">
-        {/* Sticky header with title input */}
-        <div className="sticky top-0 z-30 bg-[#0a0a0a] border-b border-white/10">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-xs font-mono uppercase">ARTWORK TITLE</span>
-              {workNameError && (
-                <span className="text-[9px] text-red-400">REQUIRED</span>
-              )}
-            </div>
-            <input
-              type="text"
-              value={workName}
-              onChange={(e) => onWorkNameChange(e.target.value)}
-              placeholder="Enter artwork title..."
-              className={`w-full bg-transparent text-white text-2xl font-mono border-b-2 ${workNameError ? 'border-red-400/50' : 'border-white/20'} pb-2 focus:outline-none focus:border-white/40 placeholder:text-white/20 transition-colors`}
-            />
-            <div className="mt-2 text-white/40 text-xs font-mono">
-              BY {artistName?.toUpperCase() || 'ARTIST'} | @{artistAddress?.slice(0, 6)}...{artistAddress?.slice(-4)}
+        {/* Sticky header with title input - styled like DetailHeader */}
+        <div className="sticky top-0 z-30">
+          <div 
+            className="p-3 flex items-center justify-between"
+            style={{
+              background: '#1a1a1a',
+              borderTop: '2px solid #444',
+              borderLeft: '2px solid #444',
+              borderBottom: '2px solid #000',
+              borderRight: '2px solid #000',
+              boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <div className="flex-1">
+              <p className="text-white/50 text-sm font-mono tracking-widest mb-1">
+                CREATE NEW ATELIER
+                {workNameError && (
+                  <span className="ml-2 text-[9px] text-red-400">• TITLE REQUIRED</span>
+                )}
+              </p>
+              <input
+                type="text"
+                value={workName}
+                onChange={(e) => onWorkNameChange(e.target.value)}
+                placeholder="Enter artwork title..."
+                className={`w-full bg-transparent text-white/90 text-base font-mono tracking-wide border-none focus:outline-none placeholder:text-white/30`}
+              />
+              <div className="mt-1 text-white/40 text-xs font-mono">
+                BY {artistName?.toUpperCase() || 'ARTIST'} | @{artistAddress?.slice(0, 6)}...{artistAddress?.slice(-4)}
+              </div>
             </div>
           </div>
         </div>
@@ -188,6 +200,7 @@ export function PublisherMintLayout({
                       </div>
                     ) : (
                       <div 
+                        key={coverImage.name}
                         className="relative border-2 rounded overflow-hidden group"
                         style={{
                           borderTop: '2px solid #333',
@@ -199,9 +212,16 @@ export function PublisherMintLayout({
                         }}
                       >
                         <img 
+                          key={coverImageUrl}
                           src={coverImageUrl} 
                           alt="Cover" 
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Image failed to load:', coverImageUrl);
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded:', coverImageUrl);
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                           <RetroButton 
