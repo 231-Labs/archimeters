@@ -72,7 +72,6 @@ const Window: React.FC<WindowProps> = ({
       }}
       onClick={onClick}
     >
-      {/* 標題欄 */}
       <div
         className={`h-8 px-2 flex items-center justify-between ${
           isActive ? 'bg-[#0c0c0c]' : 'bg-[#141414]'
