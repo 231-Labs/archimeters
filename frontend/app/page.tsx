@@ -43,6 +43,18 @@ export default function Home() {
     setZOrder(prev => [...prev.filter(n => n !== name), name]);
   };
 
+  // Sync zOrder with openWindows - ensure all open windows are in zOrder
+  useEffect(() => {
+    setZOrder(prev => {
+      // Get windows that are open but not in zOrder
+      const newWindows = openWindows.filter(w => !prev.includes(w));
+      // Get windows that are in zOrder but not open anymore
+      const closedWindows = prev.filter(w => !openWindows.includes(w));
+      // Remove closed windows and add new windows
+      return [...prev.filter(w => !closedWindows.includes(w)), ...newWindows];
+    });
+  }, [openWindows]);
+
   useEffect(() => {
     const isAtelierViewerOpen = openWindows.includes('atelier-viewer');
   
