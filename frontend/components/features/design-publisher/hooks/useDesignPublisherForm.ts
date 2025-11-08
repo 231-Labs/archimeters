@@ -5,14 +5,11 @@ import { useValidation } from './useValidation';
 import { useFileUpload } from './useFileUpload';
 import { useMembership } from './useMembership';
 import { useTransaction } from './useTransaction';
-import { usePageNavigation } from './usePageNavigation';
 import { useUpload } from './useUpload';
 import { useKiosk } from '../../entry/hooks';
 import { createMetadataJson } from '../utils/metadata';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import type { UploadResults } from '../types';
-
-const TOTAL_PAGES = 4;
 
 export function useDesignPublisherForm() {
   const currentAccount = useCurrentAccount();
@@ -54,11 +51,6 @@ export function useDesignPublisherForm() {
   
   // Kiosk management
   const { selectedKiosk, kiosks } = useKiosk();
-  
-  // Page navigation
-  const { currentPage, goToNextPage: baseGoToNextPage, goToPreviousPage, goToPage } = usePageNavigation({
-    totalPages: TOTAL_PAGES,
-  });
   
   // Upload step management
   const [currentStep, setCurrentStep] = useState(0);
@@ -270,7 +262,7 @@ export function useDesignPublisherForm() {
   // Parameter change handler
   const handleParameterChange = useCallback((key: string, value: string | number | Record<string, any>) => {
     if (key === 'all' && typeof value === 'object') {
-      // Batch update - need to handle this differently
+      // Batch update for all parameters
       Object.entries(value).forEach(([k, v]) => {
         updateParameter(k, v);
       });
@@ -279,53 +271,40 @@ export function useDesignPublisherForm() {
     }
   }, [updateParameter]);
 
-  // Page validation and navigation
-  const goToNextPage = useCallback(() => {
-    if (currentPage === 1) {
-      // Validate page 1
-      const isValid = validateForm({
-        workName: artworkInfo.workName,
-        description: artworkInfo.description,
-        price: artworkInfo.price,
-        intro: artistInfo.intro,
-        imageFile,
-        algoFile: null, // Not required on page 1
-      });
-      
-      if (!isValid) return;
-    }
+  // Publish handler - validates and starts upload process
+  const handlePublish = useCallback(() => {
+    // Validate all required fields
+    const isValid = validateForm({
+      workName: artworkInfo.workName,
+      description: artworkInfo.description,
+      price: artworkInfo.price,
+      intro: artistInfo.intro,
+      imageFile,
+      algoFile,
+    });
+    
+    if (!isValid) return false;
 
-    if (currentPage === 2 && !algoFile) {
-      // Validate algorithm file on page 2
-      return;
+    // Create metadata and start upload
+    const metadata = createMetadataJson({
+      workName: artworkInfo.workName,
+      description: artworkInfo.description,
+      style: designSettings.style,
+      fontStyle: designSettings.fontStyle,
+      name: artistInfo.name,
+      address: currentAccount?.address || '',
+      intro: artistInfo.intro,
+      membershipData: membershipData,
+      extractedParameters: extractedParameters
+    });
+    
+    if (imageFile && algoFile) {
+      uploadFiles(imageFile, algoFile, metadata);
+      return true;
     }
-
-    if (currentPage === 3) {
-      // Upload and go to status page
-      goToPage(4);
-      const metadata = createMetadataJson({
-        workName: artworkInfo.workName,
-        description: artworkInfo.description,
-        style: designSettings.style,
-        fontStyle: designSettings.fontStyle,
-        name: artistInfo.name,
-        address: currentAccount?.address || '',
-        intro: artistInfo.intro,
-        membershipData: membershipData,
-        extractedParameters: extractedParameters
-      });
-      
-      if (imageFile && algoFile) {
-        uploadFiles(imageFile, algoFile, metadata);
-      }
-      return;
-    }
-
-    // Clear validation and go to next page
-    resetValidation();
-    baseGoToNextPage();
+    
+    return false;
   }, [
-    currentPage,
     validateForm,
     artworkInfo,
     artistInfo,
@@ -334,10 +313,8 @@ export function useDesignPublisherForm() {
     designSettings,
     currentAccount,
     membershipData,
-    goToPage,
+    extractedParameters,
     uploadFiles,
-    resetValidation,
-    baseGoToNextPage,
   ]);
 
   // Reset all state
@@ -421,11 +398,6 @@ export function useDesignPublisherForm() {
     membershipData,
     setMembershipData,
     
-    // Navigation
-    currentPage,
-    goToNextPage,
-    goToPreviousPage,
-    
     // Upload & Transaction
     isUploading,
     uploadStatus,
@@ -435,7 +407,7 @@ export function useDesignPublisherForm() {
     transactionDigest,
     transactionError,
     isTransactionProcessing,
-    handleMint,
+    handlePublish,
     uploadFiles,
     
     // Reset
