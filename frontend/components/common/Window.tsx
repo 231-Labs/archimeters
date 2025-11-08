@@ -85,6 +85,12 @@ const Window: React.FC<WindowProps> = ({
           background: 'linear-gradient(to bottom, #0f0f0f, #1a1a1a)',
           boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.6), inset -1px -1px 1px rgba(255, 255, 255, 0.03)'
         }}
+        onClick={(e) => {
+          // Activate window on header click
+          if (!(e.target as HTMLElement).closest('button')) {
+            onClick?.();
+          }
+        }}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           
