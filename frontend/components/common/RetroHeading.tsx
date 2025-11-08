@@ -17,7 +17,7 @@ export function RetroHeading({ title, subtitle, author, className = '' }: RetroH
   return (
     <div className={`relative ${className}`}>
       <div 
-        className="px-6 py-4"
+        className="px-6 py-2.5 flex items-center justify-between"
         style={{
           background: 'linear-gradient(to bottom, #1f1f1f, #1a1a1a)',
           borderTop: '2px solid #2a2a2a',
@@ -27,16 +27,18 @@ export function RetroHeading({ title, subtitle, author, className = '' }: RetroH
           boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.05), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
         }}
       >
-        <h1 className="text-white/90 text-2xl font-mono uppercase tracking-wider mb-1">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-white/60 text-xs font-mono uppercase tracking-widest">
-            {subtitle}
-          </p>
-        )}
+        <div className="flex-1">
+          <h1 className="text-white/90 text-3xl font-mono uppercase tracking-wider">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-white/60 text-xs font-mono uppercase tracking-widest mt-0.5">
+              {subtitle}
+            </p>
+          )}
+        </div>
         {author && (
-          <p className="text-white/40 text-[10px] font-mono uppercase tracking-widest mt-2">
+          <p className="text-white/40 text-[10px] font-mono uppercase tracking-widest ml-6">
             {author}
           </p>
         )}
