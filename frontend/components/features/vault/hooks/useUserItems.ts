@@ -46,6 +46,7 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [kioskInfo, setKioskInfo] = useState<KioskInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadFlag, setReloadFlag] = useState(0);
@@ -82,6 +83,16 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
 
         const membership = objects[0];
         const content = membership.data?.content as any;
+        
+        // Extract kiosk information from membership
+        const kioskId = content?.fields?.kiosk_id;
+        const kioskCapId = content?.fields?.kiosk_cap_id;
+        
+        if (kioskId && kioskCapId) {
+          setKioskInfo({ kioskId, kioskCapId });
+        } else {
+          console.warn('Kiosk information not found in membership');
+        }
         
         let objectIds: string[] = [];
         
@@ -189,6 +200,7 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
 
   return {
     items,
+    kioskInfo,
     isLoading,
     error,
     reload,

@@ -41,7 +41,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
             />
           </div>
         </RetroPanel>
-      </div>
+          </div>
 
       <div className="space-y-3 overflow-y-auto" style={{ maxHeight: '90vh' }}>
         <DetailHeader
@@ -63,7 +63,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
             <p className="text-white/50 text-xs font-mono tracking-wide mb-1">PUBLISHED</p>
             <p className="text-white/90 text-sm font-mono">{atelier.publish_time}</p>
           </RetroPanel>
-        </div>
+          </div>
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-1">DERIVED SCULPTS</h4>
@@ -73,39 +73,39 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">WITHDRAW EARNINGS</h4>
-          <AtelierWithdrawButton
-            atelierId={atelier.id}
-            poolId={atelier.poolId}
-            poolAmount={Number(atelier.pool)}
-            onSuccess={() => {
-              onUpdate();
-              onClose();
-            }}
-            onError={(error) => alert(`Withdrawal failed: ${error}`)}
-            onStatusChange={(status) => console.log('Withdraw status:', status)}
-          />
+              <AtelierWithdrawButton
+                atelierId={atelier.id}
+                poolId={atelier.poolId}
+                poolAmount={Number(atelier.pool)}
+                onSuccess={() => {
+                  onUpdate();
+                  onClose();
+                }}
+                onError={(error) => alert(`Withdrawal failed: ${error}`)}
+                onStatusChange={(status) => console.log('Withdraw status:', status)}
+              />
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
           <div className="flex gap-2 mb-1">
             <RetroInput
-              type="number"
-              placeholder="Price in SUI"
-              value={listPrice}
-              onChange={(e) => setListPrice(e.target.value)}
+                  type="number"
+                  placeholder="Price in SUI"
+                  value={listPrice}
+                  onChange={(e) => setListPrice(e.target.value)}
               className="flex-1"
-              step="0.01"
-              min="0"
-            />
+                  step="0.01"
+                  min="0"
+                />
             <RetroButton
               variant="primary"
               size="sm"
-              onClick={handleList}
-              disabled={marketplaceStatus === 'processing'}
+                  onClick={handleList}
+                  disabled={marketplaceStatus === 'processing'}
               isLoading={marketplaceStatus === 'processing'}
-            >
-              {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
+                >
+                  {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
             </RetroButton>
           </div>
           <p className="text-white/40 text-xs font-mono">ⓘ List for sale on marketplace</p>

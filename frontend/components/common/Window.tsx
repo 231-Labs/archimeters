@@ -88,7 +88,37 @@ const Window: React.FC<WindowProps> = ({
         }}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
-          onDragStart(e, name);
+          
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let hasMoved = false;
+          
+          const handleMouseMove = (moveEvent: MouseEvent) => {
+            const deltaX = Math.abs(moveEvent.clientX - startX);
+            const deltaY = Math.abs(moveEvent.clientY - startY);
+            
+            // Only start dragging if moved more than 5px
+            if (deltaX > 5 || deltaY > 5) {
+              hasMoved = true;
+              // Remove listeners and start actual drag
+              window.removeEventListener('mousemove', handleMouseMove);
+              window.removeEventListener('mouseup', handleMouseUp);
+              onDragStart(e, name);
+            }
+          };
+          
+          const handleMouseUp = () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            
+            // If didn't move, just activate window (onClick will handle this)
+            if (!hasMoved) {
+              onClick?.();
+            }
+          };
+          
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleMouseUp);
         }}
       >
         <span className="text-xs font-mono text-white font-bold">{title}</span>
