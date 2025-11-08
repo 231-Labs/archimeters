@@ -120,35 +120,35 @@ export default function DefaultTemplate({
               </button>
             </div>
 
-            <div className="mb-4 bg-white/5 rounded-md p-3">
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-white/60 text-sm">Model Alias</div>
-                <div className="text-xs text-white/40">Required</div>
+            <div className="mb-3 bg-white/5 rounded-md p-2">
+              <div className="flex justify-between items-center mb-1.5">
+                <div className="text-white/60 text-xs">Model Alias</div>
+                <div className="text-[10px] text-white/40">Required</div>
               </div>
               <input
                 type="text"
                 value={alias}
                 onChange={(e) => onAliasChange?.(e.target.value)}
                 placeholder="Name Your Model"
-                className="w-full bg-black/30 text-white/90 text-sm p-2 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                className="w-full bg-black/30 text-white/90 text-xs p-1.5 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {Object.entries(parameters).map(([key, paramDef]) => (
-                <div key={key} className="bg-white/5 rounded-md p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-white/60 capitalize text-sm">{paramDef.label || key}</div>
+                <div key={key} className="bg-white/5 rounded-md p-2">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <div className="text-white/60 capitalize text-xs truncate pr-1">{paramDef.label || key}</div>
                     <button 
-                      className="text-xs text-white/40 hover:text-white/60 transition-colors"
+                      className="text-[10px] text-white/40 hover:text-white/60 transition-colors flex-shrink-0"
                       onClick={() => onParameterChange(key, paramDef.default)}
                     >
                       Reset
                     </button>
                   </div>
                   {paramDef.type === 'number' ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
                         <input
                           type="range"
                           min={paramDef.min || 0}
@@ -156,7 +156,7 @@ export default function DefaultTemplate({
                           step={paramDef.step || 1}
                           value={previewParams[key] ?? paramDef.default}
                           onChange={(e) => onParameterChange(key, Number(e.target.value))}
-                          className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:hover:bg-white [&::-webkit-slider-thumb]:transition-colors [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white/80 [&::-moz-range-thumb]:hover:bg-white [&::-moz-range-thumb]:transition-colors [&::-moz-range-thumb]:border-0"
+                          className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:hover:bg-white [&::-webkit-slider-thumb]:transition-colors [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white/80 [&::-moz-range-thumb]:hover:bg-white [&::-moz-range-thumb]:transition-colors [&::-moz-range-thumb]:border-0"
                         />
                         <input
                           type="number"
@@ -196,10 +196,10 @@ export default function DefaultTemplate({
                               onParameterChange(key, clampedValue);
                             }
                           }}
-                          className="w-14 bg-black/30 text-white/90 text-right text-sm p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                          className="w-12 bg-black/30 text-white/90 text-right text-xs p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] text-white/30">
+                      <div className="flex justify-between text-[9px] text-white/30 px-0.5">
                         <span>{paramDef.min || 0}</span>
                         <span>{paramDef.max || 100}</span>
                       </div>
