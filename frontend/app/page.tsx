@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import Background from '@/components/background_animations/Background';
@@ -85,7 +85,10 @@ export default function Home() {
                       size={windowSizes.entry}
                       isActive={activeWindow === 'entry'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                       onClick={() => focusWindow(name)}
                       zIndex={getZIndex(name)}
                     >
@@ -108,7 +111,10 @@ export default function Home() {
                       size={windowSizes['publisher']}
                       isActive={activeWindow === 'publisher'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                       onClick={() => focusWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
@@ -127,7 +133,10 @@ export default function Home() {
                       size={windowSizes.marketplace}
                       isActive={activeWindow === 'marketplace'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                       onClick={() => focusWindow(name)}
                       resizable={defaultWindowConfigs['marketplace'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
@@ -149,7 +158,10 @@ export default function Home() {
                       size={windowSizes['atelier-viewer']}
                       isActive={activeWindow === 'atelier-viewer'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                       onClick={() => focusWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
@@ -168,7 +180,10 @@ export default function Home() {
                       size={windowSizes['vault']}
                       isActive={activeWindow === 'vault'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                       onClick={() => focusWindow(name)}
                       resizable={defaultWindowConfigs['vault'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
@@ -187,7 +202,10 @@ export default function Home() {
                         size={windowSizes.terminal}
                         isActive={activeWindow === 'terminal'}
                         onClose={() => closeWindow(name)}
-                        onDragStart={(e) => startDragging(e, name)}
+                        onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                         onClick={() => focusWindow(name)}
                         // resizable
                         onResize={(e) => resizeWindow(e, name)}
@@ -206,7 +224,10 @@ export default function Home() {
                         size={windowSizes['pavilion']}
                         isActive={activeWindow === 'pavilion'}
                         onClose={() => closeWindow(name)}
-                        onDragStart={(e) => startDragging(e, name)}
+                        onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
                         onClick={() => focusWindow(name)}
                         resizable
                         onResize={(e) => resizeWindow(e, name)}
