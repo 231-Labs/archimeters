@@ -45,9 +45,12 @@ const Window: React.FC<WindowProps> = ({
     }
   };
 
+  const windowRef = React.useRef<HTMLDivElement>(null);
+
   return (
     <>
     <div
+      ref={windowRef}
       className={`absolute flex flex-col bg-[#0a0a0a] ${isActive ? 'ring-1 ring-white/20' : ''} ${className || ''}`}
       style={{
         width: `${windowSize.width}px`,
@@ -94,8 +97,13 @@ const Window: React.FC<WindowProps> = ({
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           
-          // Always allow drag to start
-          onDragStart(e, name);
+          // Create a synthetic event with the window element as currentTarget
+          const syntheticEvent = {
+            ...e,
+            currentTarget: windowRef.current || e.currentTarget
+          } as React.MouseEvent<Element>;
+          
+          onDragStart(syntheticEvent, name);
         }}
       >
         <span className="text-xs font-mono text-white font-bold">{title}</span>
