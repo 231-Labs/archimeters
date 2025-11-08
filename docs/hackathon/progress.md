@@ -378,11 +378,13 @@
    - [x] 統一使用 RetroPanel 顯示卡片
    - [x] 修復 List 視圖渲染錯誤
 
-4. **階段 4: Atelier Mint Modal 整合** (2h) - 進行中
-   - [ ] 創建 AtelierMintModal 組件（模態框模式，不開新窗口）
-   - [ ] 優化參數布局（併排、緊湊）
-   - [ ] 整合到 MarketplaceWindow
-   - [ ] 測試 Modal 交互流程
+4. **階段 4: Atelier Mint Modal 整合** ✅ (2h)
+   - [x] 創建 AtelierMintModal 組件（模態框模式，不開新窗口）
+   - [x] 優化參數布局（併排、緊湊）
+   - [x] 整合到 MarketplaceWindow
+   - [x] 測試 Modal 交互流程
+   - [x] 修復 Modal 定位問題（添加 relative 容器）
+   - [x] 統一與 VaultWindow 的行為
 
 ---
 
