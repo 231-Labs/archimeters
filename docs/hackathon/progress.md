@@ -864,18 +864,23 @@ Day 3 建議順序:
   3. 更新 DetailModals 的 handleList 函數調用實際的 list API
   4. 測試 List/Delist 完整流程
 
-#### 12. ✅ 修復窗口 Header 點擊拖動行為
-- **問題**: 點擊窗口 header 時會立即觸發拖動，體驗不佳
-- **解決方案**:
-  - 區分點擊和拖動：只有移動超過 5px 才觸發拖動
-  - 純點擊只激活窗口（置頂），不拖動
-  - 使用臨時事件監聽器檢測鼠標移動
-  - mouseup 時清理事件監聽器
+#### 12. ✅ 修復窗口 Header 點擊和拖動行為
+- **問題 1**: 點擊窗口 header 只能拖動，無法置頂
+- **問題 2**: 拖動 header 時窗口會跳動
+- **問題 3**: 修復跳動後窗口又無法拖動
+- **根本原因**:
+  - `getBoundingClientRect()` 與 `transform: translate()` 不兼容
+  - `getBoundingClientRect()` 返回的是 layout 位置，不包含 transform
+  - 導致拖動偏移量計算錯誤
+- **最終解決方案**:
+  - 在 header 添加 `onClick` 處理器，點擊時激活窗口
+  - 改用 `state.windowPositions` 計算拖動偏移量，而非 DOM rect
+  - 拖動偏移 = 鼠標位置 - 窗口 state 位置
 - **效果**:
-  - 點擊 header = 激活窗口
-  - 拖動 header = 移動窗口
-  - 符合標準 OS 行為
-  - 無意外拖動
+  - ✅ 點擊 header = 激活窗口（置頂）
+  - ✅ 拖動 header = 平滑移動，無跳動
+  - ✅ 點擊內容 = 激活窗口
+  - ✅ 所有交互符合標準 OS 行為
 
 ### 待處理問題
 - [ ] **Show 3D 錯誤**: My Sculpt > item > show 3D 點擊後報錯（需要具體錯誤信息）
