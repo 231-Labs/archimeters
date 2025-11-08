@@ -901,20 +901,32 @@ Day 3 建議順序:
   - ✅ 為 List 功能準備好必要數據
 
 #### 14. ✅ 修復 3D 模型加載錯誤
-- **問題**: 點擊 "Show 3D" 按鈕時出現 500 錯誤，無法加載 3D 模型
-- **錯誤信息**:
-  - `net::ERR_NAME_NOT_RESOLVED` - 500 (Internal Server Error)
+- **問題 1**: 點擊 "Show 3D" 按鈕時出現 500 錯誤，無法加載 3D 模型
+  - 錯誤：`net::ERR_NAME_NOT_RESOLVED` - 500 (Internal Server Error)
   - 嘗試從 `/api/walrus/get-blob?blobId=...` 加載失敗
+- **問題 2**: 修復後出現新錯誤
+  - 錯誤：`RangeError: Offset is outside the bounds of the DataView`
+  - 進度顯示：`Loading: Infinity%`
+  - GLTFLoader 無法解析 GLB 文件
 - **根本原因**:
-  - `GLBViewer.tsx` 使用了不存在的 API 端點 `/api/walrus/get-blob`
-  - 實際存在的端點是 `/api/walrus?blobId=xxx`
+  - **問題 1**: `GLBViewer.tsx` 使用了不存在的 API 端點 `/api/walrus/get-blob`
+  - **問題 2**: `/api/walrus` 路由使用 `response.text()` 處理二進制數據
+    - `text()` 會將二進制數據轉換為字符串，破壞 GLB 文件結構
+    - GLTFLoader 期望完整的二進制 ArrayBuffer
+    - 導致 DataView 解析時出現偏移錯誤
 - **解決方案**:
-  - 修改 `GLBViewer.tsx` 中的 `modelUrl`
-  - 從 `/api/walrus/get-blob?blobId=${blobId}` 改為 `/api/walrus?blobId=${blobId}`
+  - **修復 1**: 修改 `GLBViewer.tsx` 中的 `modelUrl`
+    - 從 `/api/walrus/get-blob?blobId=${blobId}` 改為 `/api/walrus?blobId=${blobId}`
+  - **修復 2**: 修改 `/api/walrus/route.ts` 返回方式
+    - 從 `await response.text()` 改為 `response.body`
+    - 直接返回二進制流，保持數據完整性
+    - 添加 `Content-Length` header 以支持正確的進度顯示
 - **效果**:
-  - ✅ 3D 模型正常加載
+  - ✅ API 端點正確
+  - ✅ 二進制數據保持完整
   - ✅ GLB 文件從 Walrus 正確獲取
   - ✅ Three.js 場景正確渲染 3D 模型
+  - ✅ 加載進度正常顯示
 
 ### 待處理問題
 - [ ] **List 功能實現 - Sculpt**: My Sculpts 的 List 功能需要 Kiosk SDK 整合（Kiosk 信息已正確獲取）
