@@ -327,9 +327,11 @@ export default function VaultWindow({}: VaultWindowProps) {
                 <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : errorAteliers ? (
-              <div className="flex flex-col items-center justify-center h-full text-white/80">
-                <p className="text-lg mb-2">{errorAteliers}</p>
-              </div>
+              <RetroEmptyState 
+                title={errorAteliers.includes('wallet') ? 'WALLET NOT CONNECTED' : 'NO MEMBERSHIP NFT'}
+                message={errorAteliers}
+                icon={errorAteliers.includes('wallet') ? 'globe' : 'file'}
+              />
             ) : !ateliers.length ? (
               <RetroEmptyState 
                 title="NO ATELIERS FOUND"
@@ -480,9 +482,11 @@ export default function VaultWindow({}: VaultWindowProps) {
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : errorSculpts ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/80">
-              <p className="text-lg mb-2">{errorSculpts}</p>
-            </div>
+            <RetroEmptyState 
+              title={errorSculpts.includes('wallet') ? 'WALLET NOT CONNECTED' : 'NO MEMBERSHIP NFT'}
+              message={errorSculpts}
+              icon={errorSculpts.includes('wallet') ? 'globe' : 'file'}
+            />
           ) : !sculpts.length ? (
             <RetroEmptyState 
               title="NO SCULPTS FOUND"
