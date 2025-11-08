@@ -71,7 +71,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
             <span className={`text-xs font-mono ${
               allStepsComplete ? 'text-green-400' :
               isTransactionFailed ? 'text-red-400' :
-              'text-blue-400'
+              'text-white/70'
             }`}>
               {allStepsComplete ? 'COMPLETE' :
                isTransactionFailed ? 'FAILED' :
@@ -98,10 +98,8 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 ? 'linear-gradient(90deg, #059669 0%, #10b981 100%)'
                 : isTransactionFailed
                 ? 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)'
-                : 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
-              boxShadow: allStepsComplete || isTransactionFailed
-                ? 'none'
-                : '0 0 10px rgba(37, 99, 235, 0.5)',
+                : 'linear-gradient(90deg, #4b5563 0%, #6b7280 100%)',
+              boxShadow: 'none',
             }}
           />
           <div className="relative -mt-6 h-6 flex items-center justify-center">
@@ -176,7 +174,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
             boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
           }}
         >
-          <div className="text-green-400 text-lg font-mono mb-1">★ PUBLISH COMPLETE ★</div>
+          <div className="text-green-400 text-lg font-mono mb-1">PUBLISH COMPLETE</div>
           <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
         </div>
       )}

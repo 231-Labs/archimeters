@@ -12,7 +12,7 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'publisher': {
     title: 'Publisher',
-    defaultSize: { width: 1400, height: 890 },
+    defaultSize: { width: 1200, height: 760 },
     resizable: false,
   },
   'marketplace': {

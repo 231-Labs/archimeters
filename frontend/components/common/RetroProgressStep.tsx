@@ -41,7 +41,7 @@ export function RetroProgressStep({ step, isActive, isCompleted }: RetroProgress
       case 'error':
         return <span className="text-red-400">✗</span>;
       case 'processing':
-        return <span className="text-blue-400">⟳</span>;
+        return <span className="text-white/70">⟳</span>;
       default:
         return <span className="text-white/30">○</span>;
     }
@@ -54,7 +54,7 @@ export function RetroProgressStep({ step, isActive, isCompleted }: RetroProgress
       case 'error':
         return <span className="text-red-400/80 text-[10px]">FAILED</span>;
       case 'processing':
-        return <span className="text-blue-400/80 text-[10px]">PROCESSING{dots}</span>;
+        return <span className="text-white/60 text-[10px]">PROCESSING{dots}</span>;
       default:
         return <span className="text-white/40 text-[10px]">PENDING</span>;
     }
