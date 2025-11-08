@@ -32,6 +32,11 @@ export interface SculptItem extends BaseVaultItem {
 
 export type VaultItem = AtelierItem | SculptItem;
 
+export interface KioskInfo {
+  kioskId: string;
+  kioskCapId: string;
+}
+
 // Extract blob ID from URL
 function extractBlobId(url: string): string | null {
   if (!url) return null;

@@ -154,10 +154,9 @@ const Window: React.FC<WindowProps> = ({
         <div
           className="absolute"
           style={{
-            bottom: '4px',  // 原本是 0，往內推 4px，避免蓋住下方邊框
-            right: '4px',   // 原本是 0，往內推 4px，避免蓋住右方邊框
-            // cursor: 'se-resize',
-            // zIndex: 10, // 確保浮在最上面
+            bottom: '4px',
+            right: '4px',
+
           }}
           onMouseDown={handleResizeStart}
         >
