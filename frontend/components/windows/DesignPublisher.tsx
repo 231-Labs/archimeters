@@ -103,6 +103,18 @@ export default function DesignPublisher() {
     }
   }, [validatePublish, imageFile, algoFile, artworkInfo, designSettings, artistInfo, currentAccount, membershipData, extractedParameters, uploadFiles]);
 
+  // 轉換 extractedParameters 從 Record 到 Array
+  const parametersArray = useMemo(() => {
+    return Object.entries(extractedParameters).map(([key, param]) => ({
+      name: key,
+      type: param.type || 'text',
+      label: param.label || key,
+      min: param.min,
+      max: param.max,
+      default: param.default
+    }));
+  }, [extractedParameters]);
+
   return (
     <PublisherMintLayout
       // 藝術家信息
@@ -137,8 +149,8 @@ export default function DesignPublisher() {
       onDescriptionChange={(value) => updateArtworkInfo('description', value)}
       onPriceChange={handlePriceChange}
       
-      // 提取的參數
-      extractedParameters={extractedParameters}
+      // 提取的參數（轉換為陣列）
+      extractedParameters={parametersArray}
       
       // 3D 預覽
       preview3D={
