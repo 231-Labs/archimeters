@@ -1,0 +1,186 @@
+'use client';
+
+import { RetroProgressStep } from './RetroProgressStep';
+
+interface Step {
+  id: string;
+  label: string;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  subSteps?: {
+    id: string;
+    label: string;
+    status: 'pending' | 'processing' | 'success' | 'error';
+  }[];
+}
+
+interface RetroConsoleProps {
+  currentStep: number;
+  steps: Step[];
+  txHash?: string;
+  title?: string;
+}
+
+export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS' }: RetroConsoleProps) {
+  // 檢查交易狀態
+  const transactionStep = steps.find(step => step.id === 'transaction');
+  const isTransactionComplete = transactionStep?.status === 'success';
+  const isTransactionFailed = transactionStep?.status === 'error';
+
+  // 檢查所有步驟是否完成
+  const allStepsComplete = steps.every(step => {
+    if (step.status !== 'success') return false;
+    if (step.subSteps) {
+      return step.subSteps.every(sub => sub.status === 'success');
+    }
+    return true;
+  });
+
+  // 計算整體進度
+  const totalSteps = steps.reduce((acc, step) => {
+    return acc + 1 + (step.subSteps?.length || 0);
+  }, 0);
+
+  const completedSteps = steps.reduce((acc, step) => {
+    let count = step.status === 'success' ? 1 : 0;
+    if (step.subSteps) {
+      count += step.subSteps.filter(sub => sub.status === 'success').length;
+    }
+    return acc + count;
+  }, 0);
+
+  const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+  return (
+    <div className="h-full flex flex-col p-6 max-w-4xl mx-auto">
+      {/* Header */}
+      <div 
+        className="p-4 mb-4"
+        style={{
+          background: '#1a1a1a',
+          borderTop: '2px solid #444',
+          borderLeft: '2px solid #444',
+          borderBottom: '2px solid #000',
+          borderRight: '2px solid #000',
+          boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-white/90 text-sm font-mono uppercase tracking-wide">{title}</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-white/50 text-xs font-mono">{completedSteps}/{totalSteps} STEPS</span>
+            <span className={`text-xs font-mono ${
+              allStepsComplete ? 'text-green-400' :
+              isTransactionFailed ? 'text-red-400' :
+              'text-blue-400'
+            }`}>
+              {allStepsComplete ? 'COMPLETE' :
+               isTransactionFailed ? 'FAILED' :
+               'IN PROGRESS'}
+            </span>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-3 h-6 bg-black/60 border border-white/10 overflow-hidden"
+          style={{
+            borderTop: '2px solid #000',
+            borderLeft: '2px solid #000',
+            borderBottom: '2px solid #2a2a2a',
+            borderRight: '2px solid #2a2a2a',
+            boxShadow: 'inset 2px 2px 4px rgba(0, 0, 0, 0.8)',
+          }}
+        >
+          <div 
+            className="h-full transition-all duration-500"
+            style={{
+              width: `${progressPercent}%`,
+              background: allStepsComplete 
+                ? 'linear-gradient(90deg, #059669 0%, #10b981 100%)'
+                : isTransactionFailed
+                ? 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)'
+                : 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
+              boxShadow: allStepsComplete || isTransactionFailed
+                ? 'none'
+                : '0 0 10px rgba(37, 99, 235, 0.5)',
+            }}
+          />
+          <div className="relative -mt-6 h-6 flex items-center justify-center">
+            <span className="text-white/90 text-xs font-mono font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+              {progressPercent}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Steps List */}
+      <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+        {steps.map((step, index) => (
+          <RetroProgressStep
+            key={step.id}
+            step={step}
+            isActive={currentStep === index}
+            isCompleted={currentStep > index}
+          />
+        ))}
+      </div>
+
+      {/* Transaction Hash */}
+      {txHash && (isTransactionComplete || isTransactionFailed) && (
+        <div 
+          className="mt-4 p-4"
+          style={{
+            background: '#1a1a1a',
+            borderTop: '2px solid #444',
+            borderLeft: '2px solid #444',
+            borderBottom: '2px solid #000',
+            borderRight: '2px solid #000',
+            boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <div className="text-white/70 text-xs font-mono uppercase mb-2">Transaction Digest</div>
+          <div 
+            className="p-2 bg-black/60 border border-white/10 break-all font-mono text-xs"
+            style={{
+              borderTop: '2px solid #000',
+              borderLeft: '2px solid #000',
+              borderBottom: '2px solid #2a2a2a',
+              borderRight: '2px solid #2a2a2a',
+            }}
+          >
+            <span className={isTransactionComplete ? 'text-green-400' : 'text-red-400'}>
+              {txHash}
+            </span>
+          </div>
+          <a
+            href={`https://suiscan.xyz/testnet/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-white/60 hover:text-white/90 text-xs font-mono transition-colors"
+          >
+            <span>→</span>
+            <span>VIEW ON EXPLORER</span>
+          </a>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {allStepsComplete && (
+        <div 
+          className="mt-4 p-4 text-center"
+          style={{
+            background: '#1a1a1a',
+            borderTop: '2px solid #444',
+            borderLeft: '2px solid #444',
+            borderBottom: '2px solid #000',
+            borderRight: '2px solid #000',
+            boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <div className="text-green-400 text-lg font-mono mb-1">★ PUBLISH COMPLETE ★</div>
+          <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
