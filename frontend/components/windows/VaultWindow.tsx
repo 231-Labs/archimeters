@@ -16,6 +16,7 @@ import { RetroButton } from '@/components/common/RetroButton';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
+import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -359,35 +360,26 @@ export default function VaultWindow({}: VaultWindowProps) {
                 {ateliers.map((atelier) => {
                   const item = atelier as AtelierItem;
                   return (
-                    <div
+                    <RetroListItem
                       key={item.id}
                       onClick={() => setSelectedAtelier(item)}
-                      className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
                     >
-                      {/* Thumbnail */}
-                      <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
-                        <img
-                          src={`/api/image-proxy?blobId=${item.photoBlobId}`}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white/90 text-sm font-medium font-mono truncate">{item.title}</h3>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
-                          <span>POOL: {formatSuiAmount(item.pool)}</span>
-                          <span>PRICE: {formatSuiAmount(item.price)}</span>
-                          <span>{item.publish_time}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Icon */}
-                      <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                      <RetroListThumbnail
+                        src={`/api/image-proxy?blobId=${item.photoBlobId}`}
+                        alt={item.title}
+                      />
+                      <RetroListInfo
+                        title={item.title}
+                        metadata={
+                          <>
+                            <span>POOL: {formatSuiAmount(item.pool)}</span>
+                            <span>PRICE: {formatSuiAmount(item.price)}</span>
+                            <span>{item.publish_time}</span>
+                          </>
+                        }
+                      />
+                      <RetroListArrow />
+                    </RetroListItem>
                   );
                 })}
               </div>
@@ -514,34 +506,25 @@ export default function VaultWindow({}: VaultWindowProps) {
                 {sculpts.map((sculpt) => {
                   const item = sculpt as SculptItem;
                   return (
-                    <div
+                    <RetroListItem
                       key={item.id}
                       onClick={() => setSelectedSculpt(item)}
-                      className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
                     >
-                      {/* Thumbnail */}
-                      <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
-                        <img
-                          src={`/api/image-proxy?blobId=${item.photoBlobId}`}
-                          alt={item.alias}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white/90 text-sm font-medium font-mono truncate">{item.alias}</h3>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
-                          <span>CREATOR: {item.creator.substring(0, 6)}...{item.creator.slice(-4)}</span>
-                          <span>{item.time}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Icon */}
-                      <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                      <RetroListThumbnail
+                        src={`/api/image-proxy?blobId=${item.photoBlobId}`}
+                        alt={item.alias}
+                      />
+                      <RetroListInfo
+                        title={item.alias}
+                        metadata={
+                          <>
+                            <span>CREATOR: {item.creator.substring(0, 6)}...{item.creator.slice(-4)}</span>
+                            <span>{item.time}</span>
+                          </>
+                        }
+                      />
+                      <RetroListArrow />
+                    </RetroListItem>
                   );
                 })}
               </div>

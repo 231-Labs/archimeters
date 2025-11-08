@@ -9,6 +9,7 @@ import { useMarketplaceData } from '@/components/features/marketplace/hooks/useM
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { AtelierMintModal } from '@/components/features/atelier-viewer/AtelierMintModal';
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
+import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
 
 interface MarketplaceWindowProps {
   name: WindowName;
@@ -284,40 +285,26 @@ export default function MarketplaceWindow({
               /* List View */
               <div className="space-y-2">
                 {ateliers.map((atelier: Atelier) => (
-                  <div
+                  <RetroListItem
                     key={atelier.id}
                     onClick={() => handleImageClick(atelier)}
-                    className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
                   >
-                    {/* Thumbnail */}
-                    <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
-                      {atelier.url ? (
-                        <Image
-                          src={getImageUrl(atelier.url)}
-                          alt={atelier.title}
-                          width={96}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-neutral-800/50 animate-pulse" />
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white/90 text-sm font-medium font-mono truncate">{atelier.title}</h3>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
-                        <span>AUTHOR: @{atelier.author?.slice(0, 8)}</span>
-                        <span>PRICE: {scaleSuiPrice(atelier.price)} SUI</span>
-                      </div>
-                    </div>
-
-                    {/* Action Icon */}
-                    <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
+                    <RetroListThumbnail
+                      src={atelier.url || undefined}
+                      alt={atelier.title}
+                      fallback={<div className="w-full h-full bg-[#0f0f0f] animate-pulse" />}
+                    />
+                    <RetroListInfo
+                      title={atelier.title}
+                      metadata={
+                        <>
+                          <span>AUTHOR: @{atelier.author?.slice(0, 8)}</span>
+                          <span>PRICE: {scaleSuiPrice(atelier.price)} SUI</span>
+                        </>
+                      }
+                    />
+                    <RetroListArrow />
+                  </RetroListItem>
                 ))}
               </div>
             )}
@@ -384,32 +371,30 @@ export default function MarketplaceWindow({
               /* List View */
               <div className="space-y-2">
                 {sculpts.map((sculpt: Sculpt) => (
-                  <div
+                  <RetroListItem
                     key={sculpt.id}
                     onClick={() => console.log('Sculpt clicked:', sculpt)}
-                    className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
                   >
-                    {/* Thumbnail */}
-                    <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden flex items-center justify-center">
-                      <p className="text-white/60 text-xs font-mono">3D MODEL</p>
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white/90 text-sm font-medium font-mono truncate">
-                        Sculpt #{sculpt.id.slice(0, 8)}
-                      </h3>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
-                        <span>CREATOR: @{sculpt.creator?.slice(0, 8)}</span>
-                        <span>PRICE: {scaleSuiPrice(sculpt.price)} SUI</span>
-                      </div>
-                    </div>
-
-                    {/* Action Icon */}
-                    <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
+                    <RetroListThumbnail
+                      src={undefined}
+                      alt={`Sculpt #${sculpt.id.slice(0, 8)}`}
+                      fallback={
+                        <div className="w-full h-full flex items-center justify-center">
+                          <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">3D MODEL</p>
+                        </div>
+                      }
+                    />
+                    <RetroListInfo
+                      title={`Sculpt #${sculpt.id.slice(0, 8)}`}
+                      metadata={
+                        <>
+                          <span>CREATOR: @{sculpt.creator?.slice(0, 8)}</span>
+                          <span>PRICE: {scaleSuiPrice(sculpt.price)} SUI</span>
+                        </>
+                      }
+                    />
+                    <RetroListArrow />
+                  </RetroListItem>
                 ))}
               </div>
             )}
