@@ -24,14 +24,14 @@ export default function BaseTemplate({
   return (
     <div className="h-full bg-[#0a0a0a] text-white overflow-auto hide-scrollbar">
       <div className="relative min-h-full max-w-[1800px] mx-auto flex flex-col">
-        <RetroHeading 
-          title={workName}
-          subtitle={description}
-          author={`BY ${author?.toUpperCase()} | @${social}`}
-          className="mb-4"
-        />
+        <div className="sticky top-0 z-30">
+          <RetroHeading 
+            title={workName}
+            author={`BY ${author?.toUpperCase()} | @${social}`}
+          />
+        </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 mt-4">
           {children}
         </div>
       </div>

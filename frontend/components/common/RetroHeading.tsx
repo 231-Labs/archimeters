@@ -36,7 +36,7 @@ export function RetroHeading({ title, subtitle, author, className = '' }: RetroH
           </p>
         )}
         {author && (
-          <p className="text-white/40 text-xs font-mono uppercase tracking-widest mt-1.5">
+          <p className="text-white/40 text-xs font-mono uppercase tracking-widest mt-1">
             {author}
           </p>
         )}
