@@ -35,13 +35,28 @@ export function useMembership() {
           },
           options: {
             showType: true,
+            showContent: true,
           }
         });
 
         if (objects && objects.length > 0) {
-          setMembershipId(objects[0].data?.objectId || '');
+          const objectId = objects[0].data?.objectId || '';
+          setMembershipId(objectId);
+          
+          // Extract membership data from content
+          const membership = objects[0].data?.content;
+          if (membership && 'fields' in membership) {
+            const fields = membership.fields as Record<string, unknown>;
+            const data = {
+              username: String(fields.username || ''),
+              description: String(fields.description || ''),
+              address: currentAccount.address
+            };
+            setMembershipData(data);
+          }
         } else {
           setMembershipId('');
+          setMembershipData(null);
         }
       } catch (err) {
         console.error('Error fetching membership:', err);

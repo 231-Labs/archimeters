@@ -116,7 +116,7 @@ export default function Home() {
                         startDragging(e, name);
                       }}
                       onClick={() => focusWindow(name)}
-                      resizable
+                      resizable={defaultWindowConfigs['publisher'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={getZIndex(name)}
                     >
