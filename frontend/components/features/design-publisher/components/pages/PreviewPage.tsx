@@ -1,6 +1,7 @@
 import { AtelierMintLayout } from '@/components/features/atelier-viewer/components/AtelierMintLayout';
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { ParametricViewer } from './ParametricViewer';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import * as THREE from 'three';
 
 interface PreviewPageProps {
@@ -38,12 +39,22 @@ export const PreviewPage = ({
   userScript,
   membershipData
 }: PreviewPageProps) => {
+  const currentAccount = useCurrentAccount();
   const [showTooltip, setShowTooltip] = useState(false);
   const [alias, setAlias] = useState('');
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const mountedRef = useRef(false);
+
+  // Prepare author info with fallbacks
+  const authorName = membershipData?.username || name || 'Anonymous';
+  const authorSocial = membershipData?.address 
+    ? `${membershipData.address.slice(0, 6)}...${membershipData.address.slice(-4)}`
+    : currentAccount?.address
+    ? `${currentAccount.address.slice(0, 6)}...${currentAccount.address.slice(-4)}`
+    : social || 'Unknown';
+  const authorIntro = membershipData?.description || intro || 'No description provided';
 
   // Memoize the viewer props
   const viewerProps = useMemo(() => {
@@ -165,9 +176,9 @@ export const PreviewPage = ({
         workName={workName}
         description={description}
         price={price}
-        author={membershipData?.username || name}
-        social={membershipData?.address ? membershipData.address.slice(0, 6) + '...' + membershipData.address.slice(-4) : social}
-        intro={membershipData?.description || intro}
+        author={authorName}
+        social={authorSocial}
+        intro={authorIntro}
         imageUrl={imageUrl}
         parameters={parameters}
         previewParams={previewParams}
