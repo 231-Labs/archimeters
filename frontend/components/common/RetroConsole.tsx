@@ -113,9 +113,9 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       </div>
 
       {/* Main Content - Two Columns */}
-      <div className="flex-1 flex gap-4 overflow-hidden items-start">
+      <div className="flex gap-4 items-start" style={{ maxHeight: '60vh' }}>
         {/* Left Column - Steps List */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2" style={{ maxHeight: '60vh' }}>
           {steps.map((step, index) => (
             <RetroProgressStep
               key={step.id}
@@ -127,7 +127,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
         </div>
 
         {/* Right Column - Transaction & Success */}
-        <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2 shrink-0">
+        <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2 shrink-0" style={{ maxHeight: '60vh' }}>
           {/* Transaction Hash */}
           {txHash && (isTransactionComplete || isTransactionFailed) && (
             <div 
@@ -205,9 +205,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                     <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
                       OPEN VAULT
                     </div>
-                    <div className="text-white/40 text-[10px] font-mono">
-                      Manage your Atelier
-                    </div>
+
                   </button>
                 )}
 
@@ -229,9 +227,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                     <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
                       OPEN MARKETPLACE
                     </div>
-                    <div className="text-white/40 text-[10px] font-mono">
-                      See your published work
-                    </div>
+
                   </button>
                 )}
               </div>
