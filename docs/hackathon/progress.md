@@ -396,6 +396,41 @@
 - [ ] 測試發布流程（metadata 創建 + 文件上傳 + 合約調用）
 - [ ] 測試導航按鈕是否正確打開 Vault 和 Marketplace
 
+### Day 3 晚間 - Design Publisher 代碼清理與重構
+
+#### 已完成的清理工作
+
+**刪除的文件（19 個文件，2168 行代碼）**:
+- [X] 頁面組件：AlgorithmPage, BasicInfoPage, PreviewPage
+- [X] Algorithm 子資料夾（4 個文件）：AlgorithmFileUploader, DesignSettings, ParameterList, index.ts
+- [X] 動畫組件資料夾（4 個文件）：NoiseEffect, RetroConsole, StardustBackground, WaveformDisplay
+- [X] 不再使用的組件：NavigationButtons, TemplateInfo, UploadStatus, PublisherMintLayout
+- [X] 不再使用的 hooks：useAlgorithmFile, useGeometryScript, usePageNavigation
+
+**重構的文件**:
+- [X] useDesignPublisherForm.ts
+  - 移除分頁導航邏輯
+  - 移除 usePageNavigation 依賴
+  - 移除 currentPage, goToNextPage, goToPreviousPage
+  - 新增 handlePublish() 方法取代分頁驗證
+  - 簡化為單頁流程
+  - 減少 28 行代碼
+- [X] pages/index.ts
+  - 只保留 UploadStatusPage 導出
+
+**清理成果**:
+- ✅ 總共刪除 2196 行不再使用的代碼
+- ✅ 代碼庫更簡潔、可維護性更高
+- ✅ 單頁 Publisher 流程完全實現
+- ✅ 所有功能完整保留
+- ✅ 所有保留的代碼都在使用中
+
+**保留的核心文件**:
+- components/pages/: ParametricViewer.tsx, UploadStatusPage.tsx
+- hooks/: useArtworkForm, useDesignPublisherForm, useFileUpload, useMembership, useParameters, useTransaction, useUpload, useValidation
+- utils/: metadata.ts, templateConfig.ts
+- types/: index.ts
+
 #### 進行中
 - 無
 
