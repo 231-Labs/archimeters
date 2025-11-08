@@ -158,7 +158,7 @@ export const PreviewPage = ({
   
   return (
     <>
-      {/* 懸浮提示，放在最外層 */}
+      {/* Floating tooltip overlay */}
       <TooltipOverlay />
       
       <AtelierMintLayout
