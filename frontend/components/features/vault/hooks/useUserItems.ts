@@ -89,14 +89,35 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         const membership = objects[0];
         const content = membership.data?.content as any;
         
-        // Extract kiosk information from membership
-        const kioskId = content?.fields?.kiosk_id;
-        const kioskCapId = content?.fields?.kiosk_cap_id;
-        
-        if (kioskId && kioskCapId) {
-          setKioskInfo({ kioskId, kioskCapId });
-        } else {
-          console.warn('Kiosk information not found in membership');
+        // Query user's KioskOwnerCap to get kiosk information
+        try {
+          const { data: kioskCaps } = await suiClient.getOwnedObjects({
+            owner: currentAccount.address,
+            filter: {
+              StructType: '0x2::kiosk::KioskOwnerCap'
+            },
+            options: {
+              showContent: true,
+              showType: true,
+            }
+          });
+
+          if (kioskCaps && kioskCaps.length > 0) {
+            const capObj = kioskCaps[0];
+            if (capObj.data?.content && 'fields' in capObj.data.content) {
+              const fields = capObj.data.content.fields as any;
+              const kioskId = fields.for || fields.kiosk_id;
+              const kioskCapId = capObj.data.objectId;
+              
+              if (kioskId && kioskCapId) {
+                setKioskInfo({ kioskId, kioskCapId });
+              }
+            }
+          } else {
+            console.warn('No KioskOwnerCap found for user');
+          }
+        } catch (kioskError) {
+          console.error('Error fetching kiosk information:', kioskError);
         }
         
         let objectIds: string[] = [];
