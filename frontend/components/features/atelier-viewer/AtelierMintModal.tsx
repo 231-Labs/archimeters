@@ -127,8 +127,8 @@ export function AtelierMintModal({ atelier, isOpen, onClose }: AtelierMintModalP
         onClick={onClose}
       />
 
-      {/* Modal Content */}
-      <div className="absolute inset-0 z-50 overflow-auto hide-scrollbar">
+      {/* Modal Content - positioned below window header */}
+      <div className="absolute inset-x-0 top-[38px] bottom-0 z-50 overflow-auto hide-scrollbar">
         {/* Close Button */}
         <div className="absolute top-4 right-4 z-[60]">
           <RetroButton
@@ -136,7 +136,7 @@ export function AtelierMintModal({ atelier, isOpen, onClose }: AtelierMintModalP
             variant="secondary"
             onClick={onClose}
           >
-            ✕ CLOSE
+            BACK
           </RetroButton>
         </div>
 
