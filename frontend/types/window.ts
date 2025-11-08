@@ -7,7 +7,7 @@ export type WindowName =
   | 'entry'           // 入口窗口
   | 'terminal'        // 終端
   | 'publisher'       // 設計發布
-  | 'gallery'         // 圖片瀏覽
+  | 'marketplace'     // 市場 (原 Gallery)
   | 'atelier-viewer'  // 藝術品查看器
   | 'vault'           // 用戶資產窗口
   | 'pavilion'        // Pavilion 瀏覽器

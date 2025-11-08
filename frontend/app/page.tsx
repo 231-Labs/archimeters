@@ -9,7 +9,7 @@ import { Terminal } from '@/components/features/terminal';
 import Dock from '@/components/layout/Dock';
 import Header from '@/components/layout/Header';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
-import BrowseWindow from '@/components/windows/BrowseWindow';
+import MarketplaceWindow from '@/components/windows/MarketplaceWindow';
 import DesignPublisher from '@/components/windows/DesignPublisher';
 import EntryWindow, { WalletStatus } from '@/components/windows/EntryWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
@@ -136,15 +136,15 @@ export default function Home() {
                       <DesignPublisher />
                     </Window>
                   );
-                case 'gallery':
+                case 'marketplace':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title="Gallery"
-                      position={windowPositions.gallery}
-                      size={windowSizes.gallery}
-                      isActive={activeWindow === 'gallery'}
+                      title={defaultWindowConfigs['marketplace'].title}
+                      position={windowPositions.marketplace}
+                      size={windowSizes.marketplace}
+                      isActive={activeWindow === 'marketplace'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
@@ -152,7 +152,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={zOrder.indexOf(name) + 1}
                     >
-                      <BrowseWindow
+                      <MarketplaceWindow
                         name={name}
                         onOpenWindow={openWindow}
                       />

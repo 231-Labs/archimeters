@@ -42,10 +42,10 @@ export default function Dock({ onOpenWindow, onActivateWindow }: DockProps) {
         </div>
         <div className="group relative transition-transform hover:scale-110 duration-200 px-3 py-2">
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-[rgba(0,0,0,0.8)] rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap">
-            <span className="text-white/90 text-xs">Gallery</span>
+            <span className="text-white/90 text-xs">Marketplace</span>
           </div>
           <img
-            onClick={() => handleIconClick('gallery')}
+            onClick={() => handleIconClick('marketplace')}
             src="/gallery.png"
             className="w-11 h-11 flex items-center justify-center transition-all duration-200"
           />

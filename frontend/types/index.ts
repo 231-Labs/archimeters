@@ -2,7 +2,7 @@ export type WindowName =
   | 'entry'
   | 'terminal'
   | 'publisher'
-  | 'gallery'
+  | 'marketplace'
   | 'atelier-viewer'
   | 'vault'
   | 'pavilion';
