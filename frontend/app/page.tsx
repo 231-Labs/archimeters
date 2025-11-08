@@ -148,7 +148,7 @@ export default function Home() {
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
-                      resizable
+                      resizable={defaultWindowConfigs['marketplace'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={zOrder.indexOf(name) + 1}
                     >
@@ -189,7 +189,7 @@ export default function Home() {
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
                       onClick={() => activateWindow(name)}
-                      resizable
+                      resizable={defaultWindowConfigs['vault'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={zOrder.indexOf(name) + 1}
                     >
