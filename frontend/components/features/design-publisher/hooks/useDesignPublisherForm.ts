@@ -436,6 +436,7 @@ export function useDesignPublisherForm() {
     transactionError,
     isTransactionProcessing,
     handleMint,
+    uploadFiles,
     
     // Reset
     resetAll,
