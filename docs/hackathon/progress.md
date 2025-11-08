@@ -312,16 +312,28 @@
 
 **成功訊息導航按鈕**:
 - [X] 添加兩個操作按鈕到完成訊息
-  - **VIEW IN VAULT** - 跳轉到 Vault > Atelier（管理作品）
-  - **VIEW IN MARKETPLACE** - 跳轉到 Marketplace > Atelier（查看發布作品）
+  - **OPEN VAULT** - 跳轉到 Vault > Atelier（管理作品）
+  - **OPEN MARKETPLACE** - 跳轉到 Marketplace > Atelier（查看發布作品）
 - [X] 按鈕風格完全對齊 Retro OS
   - 3D 邊框效果
   - Hover 動畫（向上平移 + 顏色變化）
-  - Grid 佈局（2列）
+  - 垂直排列佈局（space-y-2）
 - [X] 添加提示語：「What would you like to do next?」
 - [X] 完整的數據流：
   - page.tsx → DesignPublisher → UploadStatusPage → RetroConsole
   - 點擊按鈕調用 openWindow() 打開對應窗口
+
+**雙欄排版優化**:
+- [X] 改為雙欄排版
+  - **左欄**：Steps List（flex-1，自適應寬度）
+  - **右欄**：Transaction Hash + Success Message（固定 400px）
+- [X] 容器寬度調整：max-w-4xl → max-w-6xl
+- [X] 右欄結構：
+  - 固定寬度 400px
+  - 垂直 flex 佈局（flex-col）
+  - 自動垂直滾動（overflow-y-auto）
+  - 區塊間距 gap-3
+- [X] 按鈕改為垂直排列（w-full + space-y-2）
 
 **配色方案**:
 - 灰色：處理中/進行中（中性）

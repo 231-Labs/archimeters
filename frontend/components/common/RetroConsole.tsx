@@ -180,10 +180,10 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <div className="text-center mb-4">
+              {/* <div className="text-center mb-4">
                 <div className="text-green-400 text-lg font-mono mb-1">PUBLISH COMPLETE</div>
                 <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
-              </div>
+              </div> */}
 
               {/* Action Buttons */}
               <div className="space-y-2">
