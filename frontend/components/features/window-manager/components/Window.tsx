@@ -113,7 +113,7 @@ const Window: React.FC<WindowProps> = ({
           ×
         </button>
       </div>
-      {/* 內容區 */}
+      {/* Content area */}
       <div
           className="flex-1 overflow-hidden bg-[#1a1a1a]"
           style={{

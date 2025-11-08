@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { WindowName, WindowPosition, WindowSize, WindowManagerState } from '../types';
 import { defaultWindowConfigs } from '@/config/windows';
 
-const BASE_Z_INDEX = 100;  // Base z-index value
-
 export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
   const [state, setState] = useState<WindowManagerState>({
     openWindows: [initialOpenWindow],
@@ -19,9 +17,9 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     }), {} as Record<WindowName, WindowSize>),
     windowZIndexes: Object.keys(defaultWindowConfigs).reduce((acc, name) => ({
       ...acc,
-      [name]: BASE_Z_INDEX
+      [name]: 100
     }), {} as Record<WindowName, number>),
-    maxZIndex: BASE_Z_INDEX,
+    maxZIndex: 100,
   });
 
   // Calculate window center position function
@@ -55,22 +53,13 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     });
   }, [getCenterPosition]);
 
-  // Activate window
+  // Activate window (sets as active, z-index managed by useWindowFocus)
   const activateWindow = useCallback((name: WindowName) => {
-    setState(prev => {
-      const newMaxZIndex = prev.maxZIndex + 1;
-      return {
-        ...prev,
-        activeWindow: name,
-        // Move activated window to the end of the array
-        openWindows: [...prev.openWindows.filter(w => w !== name), name],
-        maxZIndex: newMaxZIndex,
-        windowZIndexes: {
-          ...prev.windowZIndexes,
-          [name]: newMaxZIndex,
-        },
-      };
-    });
+    setState(prev => ({
+      ...prev,
+      activeWindow: name,
+      openWindows: [...prev.openWindows.filter(w => w !== name), name],
+    }));
   }, []);
 
   // Open window
@@ -79,17 +68,13 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
       const config = defaultWindowConfigs[name];
       const basePosition = getCenterPosition(config.defaultSize.width, config.defaultSize.height);
       
-      // Add a small offset to the new window to avoid complete overlap
+      // Add small offset to avoid complete overlap with other windows
       const offset = prev.openWindows.length * 20;
       const centerPosition = {
         x: Math.min(basePosition.x + offset, window.innerWidth - config.defaultSize.width - 20),
         y: Math.min(basePosition.y + offset, window.innerHeight - config.defaultSize.height - 68),
       };
 
-      // Set new z-index
-      const newMaxZIndex = prev.maxZIndex + 1;
-
-      // If window is already open, keep its position in the list, only update z-index
       const newOpenWindows = prev.openWindows.includes(name)
         ? prev.openWindows
         : [...prev.openWindows, name];
@@ -101,11 +86,6 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
         windowPositions: {
           ...prev.windowPositions,
           [name]: centerPosition,
-        },
-        maxZIndex: newMaxZIndex,
-        windowZIndexes: {
-          ...prev.windowZIndexes,
-          [name]: newMaxZIndex,
         },
       };
     });
