@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
+import { UploadStatusPage } from '@/components/features/design-publisher/components/pages/UploadStatusPage';
 import { useDesignPublisherForm } from '@/components/features/design-publisher/hooks/useDesignPublisherForm';
 import { createMetadataJson } from '@/components/features/design-publisher/utils/metadata';
 import { RetroButton } from '@/components/common/RetroButton';
@@ -11,6 +12,7 @@ export default function DesignPublisher() {
   const currentAccount = useCurrentAccount();
   const coverInputRef = useRef<HTMLInputElement>(null);
   const algoInputRef = useRef<HTMLInputElement>(null);
+  const [showUploadStatus, setShowUploadStatus] = useState(false);
 
   const {
     // Form state
@@ -41,7 +43,12 @@ export default function DesignPublisher() {
     
     // Upload & Transaction
     isUploading,
+    uploadStatus,
     uploadResults,
+    currentStep,
+    steps,
+    transactionDigest,
+    transactionError,
     
     // Upload function
     uploadFiles,
@@ -72,6 +79,9 @@ export default function DesignPublisher() {
       return;
     }
 
+    // Show upload status page
+    setShowUploadStatus(true);
+
     const metadata = createMetadataJson({
       workName: artworkInfo.workName,
       description: artworkInfo.description,
@@ -93,6 +103,37 @@ export default function DesignPublisher() {
     !artworkInfo.workName.trim() || 
     !artworkInfo.description.trim() ||
     isUploading;
+
+  // Show upload status page if upload is in progress or has started
+  if (showUploadStatus) {
+    return (
+      <div className="h-full bg-[#0a0a0a] text-white">
+        <UploadStatusPage
+          isLoading={isUploading}
+          uploadStatus={uploadStatus}
+          uploadResults={uploadResults}
+          currentStep={currentStep}
+          steps={steps}
+          workName={artworkInfo.workName}
+          description={artworkInfo.description}
+          style={designSettings.style}
+          fontStyle={designSettings.fontStyle}
+          name={membershipData?.username || artistInfo.name}
+          social={currentAccount?.address || ''}
+          intro={membershipData?.description || artistInfo.intro}
+          price={artworkInfo.price}
+          transactionDigest={transactionDigest}
+          transactionError={transactionError}
+          onSubmit={() => {
+            // Handle mint transaction if needed
+          }}
+          onPrevious={() => {
+            setShowUploadStatus(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-[#0a0a0a] text-white overflow-auto hide-scrollbar">
