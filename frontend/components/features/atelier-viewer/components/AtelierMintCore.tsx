@@ -4,8 +4,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import * as THREE from 'three';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
-import BaseTemplate from '@/components/templates/BaseTemplate';
-import DefaultTemplate from '@/components/templates/DefaultTemplate';
+import { AtelierMintLayout } from './AtelierMintLayout';
 import { useAtelierParameters } from '../hooks/useAtelierParameters';
 import { useSceneExport } from '../hooks/useSceneExport';
 import { useWalrusUpload } from '../hooks/useWalrusUpload';
@@ -102,27 +101,8 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
   ) : null;
 
   return (
-    <BaseTemplate
-      workName={atelier.title}
-      description={atelier.description || ''}
-      price={scaleSuiPrice(atelier.price)}
-      author={atelier.artistName || atelier.author}
-      social={formatAddress(atelier.artistAddress || '')}
-      intro={formatText(atelier.artistStatement || '')}
-      imageUrl={atelier.url || ''}
-      parameters={parameters}
-      previewParams={previewParams}
-      onParameterChange={handleParameterChange}
-      onMint={onMint}
-      exportFormatToggle={exportFormatToggle}
-      mintButtonState={{
-        ...mintButtonState,
-        tooltipComponent,
-      }}
-      alias={alias}
-      onAliasChange={setAlias}
-    >
-      <DefaultTemplate
+    <>
+      <AtelierMintLayout
         workName={atelier.title}
         description={atelier.description || ''}
         price={scaleSuiPrice(atelier.price)}
@@ -154,7 +134,7 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
         mintError={mintError}
         txDigest={txDigest}
       />
-    </BaseTemplate>
+    </>
   );
 }
 

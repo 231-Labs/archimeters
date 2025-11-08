@@ -1,5 +1,4 @@
-import BaseTemplate from '@/components/templates/BaseTemplate'
-import DefaultTemplate from '@/components/templates/DefaultTemplate';
+import { AtelierMintLayout } from '@/components/features/atelier-viewer/components/AtelierMintLayout';
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { ParametricViewer } from './ParametricViewer';
 import * as THREE from 'three';
@@ -162,7 +161,7 @@ export const PreviewPage = ({
       {/* 懸浮提示，放在最外層 */}
       <TooltipOverlay />
       
-      <BaseTemplate
+      <AtelierMintLayout
         workName={workName}
         description={description}
         price={price}
@@ -177,32 +176,15 @@ export const PreviewPage = ({
         mintButtonState={mintButtonState}
         alias={alias}
         onAliasChange={setAlias}
-      >
-        <DefaultTemplate
-          workName={workName}
-          description={description}
-          price={price}
-          author={membershipData?.username || name}
-          social={membershipData?.address ? membershipData.address.slice(0, 6) + '...' + membershipData.address.slice(-4) : social}
-          intro={membershipData?.description || intro}
-          imageUrl={imageUrl}
-          parameters={parameters}
-          previewParams={previewParams}
-          onParameterChange={onParameterChange}
-          onMint={handleMintClick}
-          mintButtonState={mintButtonState}
-          alias={alias}
-          onAliasChange={setAlias}
-          preview3D={
-            <div className="w-full h-full">
-              <ParametricViewer 
-                key={`preview_${userScript?.filename}`} // Force remount when script changes
-                {...viewerProps}
-              />
-            </div>
-          }
-        />
-      </BaseTemplate>
+        preview3D={
+          <div className="w-full h-full">
+            <ParametricViewer 
+              key={`preview_${userScript?.filename}`}
+              {...viewerProps}
+            />
+          </div>
+        }
+      />
     </>
   );
 }; 
