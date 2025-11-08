@@ -803,6 +803,31 @@ Day 3 建議順序:
 - `frontend/config/windows.ts` - Marketplace/Vault 尺寸調整和禁用縮放
 - `frontend/app/page.tsx` - 修復 resizable 配置讀取
 
+#### 10. ✅ 清理遺留的 Gallery 代碼
+- 刪除已被替換的文件：
+  - `frontend/components/windows/BrowseWindow.tsx` → 已被 `MarketplaceWindow.tsx` 替代
+  - `frontend/components/features/gallery/` 資料夾 → 已被 `marketplace/` 替代
+- 更新 UI 文字：
+  - `AtelierDetailModal.tsx`: "Gallery" → "Marketplace"
+- 保留的引用：
+  - `Dock.tsx`: `gallery.png` 圖標文件名（無需更改）
+  - `types/window.ts`: 歷史註釋（保留供參考）
+- 代碼清理：刪除 ~476 行已廢棄代碼
+
+#### 11. ✅ 修復窗口 z-index 堆疊問題
+- **問題**: 其他窗口無法高過 Vault 窗口
+- **根本原因**: 新打開的窗口沒有自動添加到 `zOrder` 陣列
+- **解決方案**:
+  - 添加 `useEffect` 同步 `zOrder` 與 `openWindows`
+  - 自動將新打開的窗口添加到 `zOrder`
+  - 自動移除已關閉的窗口
+  - 維護正確的堆疊順序
+- **效果**:
+  - 所有窗口現在可以正確堆疊
+  - 新打開的窗口出現在最上層
+  - 點擊任何窗口會將其置頂
+  - 清晰的 z-index 管理邏輯
+
 ### 提交記錄
 - ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
 - ✅ Fix modal positioning and window resizable config
@@ -810,4 +835,8 @@ Day 3 建議順序:
 - ✅ Replace VaultWindow error states with RetroEmptyState component
 - ✅ Unify list view with Retro UI components
 - ✅ Add RetroPrinterCard component for printer selection
+- ✅ Update progress.md: Day 3 afternoon UI refinement complete
+- ✅ Update progress.md: Mark Atelier Mint Modal integration as completed
+- ✅ Clean up legacy Gallery code and references
+- ✅ Fix window z-index issue - sync zOrder with openWindows
 
