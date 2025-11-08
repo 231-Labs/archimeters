@@ -180,7 +180,7 @@
 
 > ⚠️ **重要提醒**: 明天開始前請先查看 [`DAY3_TASKS.md`](./DAY3_TASKS.md) 獲取詳細實施步驟！
 
-- [ ] **Marketplace 重構** - Gallery → Marketplace 遷移
+- [X] **Marketplace 重構** - Gallery → Marketplace 遷移
 - [ ] **Publisher 復古 UI 重設計** - 簡化上傳流程
 - [ ] **Mint 流程優化** - Dry run + Seal SDK 加密
 
@@ -234,7 +234,38 @@
 - Sculpts 僅顯示已上架到 Kiosk 的項目
 
 #### 進行中
-- [ ] Marketplace 階段 4: Detail Modal 整合
+- [ ] **Atelier Mint Modal 優化與整合** (預計 2-3h)
+
+##### 🎨 **新增任務：Mint UI 重構與優化**
+
+**背景**: 當前 AtelierViewer 在新窗口打開，參數布局過於寬鬆，需要改為模態框模式並優化 UI
+
+**任務拆分**:
+
+1. **參數布局優化** (1h)
+   - [ ] 修改 DefaultTemplate 參數區域為 2 列布局（`grid-cols-2`）
+   - [ ] 減少每個參數卡片的內邊距（`p-3` → `p-2`）
+   - [ ] 減少參數間距（`gap-3` → `gap-2`）
+   - [ ] 優化參數標籤和數值輸入框的間距
+   - [ ] 測試不同參數數量下的顯示效果
+
+2. **創建 AtelierMintModal 組件** (1h)
+   - [ ] 基於 AtelierViewer 創建新的 Modal 組件
+   - [ ] 使用 RetroDetailModal 樣式框架
+   - [ ] 實現模態框打開/關閉邏輯
+   - [ ] 適配 3D 預覽和參數區域的布局
+   - [ ] 添加關閉按鈕和 ESC 鍵支持
+
+3. **整合到 Marketplace** (30min)
+   - [ ] 在 MarketplaceWindow 中添加 selectedAtelier 狀態
+   - [ ] 修改 Atelier 點擊事件：不再開新窗口，改為打開 Modal
+   - [ ] 傳遞 Atelier 數據到 Modal
+   - [ ] 測試完整的 Mint 流程
+
+**預期效果**:
+- 參數區域從單列變為雙列，頁面高度減少約 40%
+- 模態框模式提供更好的用戶體驗
+- 保持現有 Mint 功能完整性
 
 #### 計劃任務
 
@@ -244,32 +275,33 @@
 
 **遷移步驟**:
 
-1. **階段 1: 重命名與路由調整** (30min)
-   - [ ] 重命名文件
+1. **階段 1: 重命名與路由調整** ✅
+   - [x] 重命名文件
      - `GalleryWindow.tsx` → `MarketplaceWindow.tsx`
      - `useGalleryData.ts` → `useMarketplaceData.ts`
-   - [ ] 更新 Dock 配置
+   - [x] 更新 Dock 配置
      - Icon label: "Gallery" → "Marketplace"
      - Route path 保持不變或更新
-   - [ ] 更新所有 import 路徑
+   - [x] 更新所有 import 路徑
 
-2. **階段 2: Sculpt 索引優化** (1h)
-   - [ ] 引入 Kiosk SDK 的 Listed Items API
-   - [ ] 修改 `useMarketplaceData` hook
+2. **階段 2: Sculpt 索引優化** ✅
+   - [x] 引入 Kiosk SDK 的 Listed Items API
+   - [x] 修改 `useMarketplaceData` hook
      - Ateliers: 索引所有（可選顯示 listed 標記）
      - Sculpts: **僅索引已上架的** (Kiosk SDK)
-   - [ ] 添加加載狀態和錯誤處理
-   - [ ] 測試數據正確性
+   - [x] 添加加載狀態和錯誤處理
+   - [x] 測試數據正確性
 
-3. **階段 3: UI 統一為復古風格** (1h)
-   - [ ] 復用 Vault 的 Grid/List 切換
-   - [ ] 使用 RetroTabs 切換 Ateliers / Sculpts
-   - [ ] 統一使用 RetroPanel 顯示卡片
-   - [ ] 添加搜索和排序功能（可選）
+3. **階段 3: UI 統一為復古風格** ✅
+   - [x] 復用 Vault 的 Grid/List 切換
+   - [x] 使用 RetroTabs 切換 Ateliers / Sculpts
+   - [x] 統一使用 RetroPanel 顯示卡片
+   - [x] 修復 List 視圖渲染錯誤
 
-4. **階段 4: Detail Modal 整合** (30min)
-   - [ ] Atelier Detail Modal 添加 "Mint from this Atelier" 按鈕
-   - [ ] Sculpt Detail Modal 顯示購買信息
+4. **階段 4: Atelier Mint Modal 整合** (2h) - 進行中
+   - [ ] 創建 AtelierMintModal 組件（模態框模式，不開新窗口）
+   - [ ] 優化參數布局（併排、緊湊）
+   - [ ] 整合到 MarketplaceWindow
    - [ ] 測試 Modal 交互流程
 
 ---
