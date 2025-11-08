@@ -53,7 +53,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
   const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-6xl mx-auto">
+    <div className="h-full flex flex-col justify-center p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div 
         className="p-4 mb-4"
@@ -186,12 +186,12 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-3">
                 {/* Vault Button */}
                 {onGoToVault && (
                   <button
                     onClick={onGoToVault}
-                    className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                    className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
                     style={{
                       background: '#1a1a1a',
                       borderTop: '2px solid #444',
@@ -215,7 +215,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 {onGoToMarketplace && (
                   <button
                     onClick={onGoToMarketplace}
-                    className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                    className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
                     style={{
                       background: '#1a1a1a',
                       borderTop: '2px solid #444',
