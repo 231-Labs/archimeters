@@ -270,6 +270,47 @@
 - 模態框模式提供更好的用戶體驗
 - 保持現有 Mint 功能完整性
 
+##### 🎨 **Atelier Viewer Retro UI 重構** ✅
+
+**背景**: 將 AtelierViewer 的 UI 從 gradient 風格重構為統一的 Retro OS 風格
+
+**完成內容**:
+
+1. **創建新的 Retro 組件** ✅
+   - [x] `RetroCard` / `RetroSection`: 帶 3D 邊框效果的內容卡片，支持 default/inset 變體
+   - [x] `RetroHeading`: Retro OS 風格的頁面標題組件，支持 title/subtitle/author
+   - [x] `RetroPreview`: 3D/2D 預覽容器，使用 inset 邊框模擬屏幕效果
+   - [x] `RetroImage`: Retro 風格的圖片容器
+
+2. **BaseTemplate 重構** ✅
+   - [x] 移除 gradient border 和 backdrop blur
+   - [x] 整合 `RetroHeading` 組件
+   - [x] 更新背景色為 `#0a0a0a`（統一深色背景）
+   - [x] 優化布局間距
+
+3. **DefaultTemplate 重構** ✅
+   - [x] 左側：使用 `RetroPreview` 替換 gradient border 的 3D 預覽區
+   - [x] 左側：使用 `RetroSection` + `RetroImage` 重構 Artwork Info 區域
+   - [x] 右側：使用 `RetroSection` 替換 Parameters 區域
+   - [x] 右側：整合 `RetroButton` 用於 RESET ALL 按鈕
+   - [x] 右側：使用 `RetroSection` 重構 MINT SCULPT 區域
+   - [x] 統一所有輸入框樣式為 retro inset 邊框（`borderTop/Left: #0a0a0a, borderBottom/Right: #333`）
+   - [x] 添加 mono 字體樣式（`font-mono`）
+   - [x] 優化按鈕文字（Reset → RST, Mint Sculpt → MINT SCULPT）
+   - [x] 移除所有 gradient text 和 backdrop-blur 效果
+
+**技術細節**:
+- 3D 邊框效果：`borderTop/Left: light color, borderBottom/Right: dark color`
+- Inset 效果：反轉邊框顏色順序
+- Box shadow: 添加內部高光和陰影增強立體感
+- 統一色彩：`#0a0a0a`（深黑）、`#1a1a1a`（黑）、`#2a2a2a`（灰）、`#333`（淺灰）
+
+**效果**:
+- ✅ UI 風格完全統一為 Retro OS 風格
+- ✅ 所有組件可復用，代碼更清晰
+- ✅ 視覺一致性大幅提升
+- ✅ 無 lint 錯誤
+
 #### 計劃任務
 
 ##### 📦 **任務 1: Gallery → Marketplace 重構**
