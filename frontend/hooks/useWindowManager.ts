@@ -125,9 +125,10 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     e.preventDefault();
     activateWindow(name);
     
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
+    // Get current window position from state instead of DOM
+    const currentPos = state.windowPositions[name];
+    const offsetX = e.clientX - currentPos.x;
+    const offsetY = e.clientY - currentPos.y;
 
     const handleMouseMove = (e: MouseEvent) => {
       setState(prev => {
