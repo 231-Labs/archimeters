@@ -252,9 +252,14 @@
 - Sticky 標題欄含輸入框和藝術家信息
 - 價格輸入採用 Mint 頁面相同的內聯樣式（Sui icon + 大字體）
 
+**已完成 - 最終版本**:
+- [X] **Header 重設計**：移除 "CREATE NEW ATELIER"，改為簡潔輸入框 + 藝術家信息
+- [X] **Parameters 互動式控制**：滑桿 + 即時數值 + Reset 按鈕，對齊 Atelier Detail Modal
+- [X] **Membership 資料自動帶入**：修復 useMembership hook，正確提取 username 和 description
+- [X] **窗口尺寸優化**：1500x850 默認大小，resizable: false
+- [X] **文件上傳渲染修復**：圖片和算法文件上傳後即時渲染
+
 **待測試**:
-- [ ] 圖片上傳後即時顯示預覽
-- [ ] 算法文件上傳後即時提取參數和 3D 渲染
 - [ ] 發布流程（metadata 創建 + 文件上傳 + 合約調用）
 
 #### 進行中
