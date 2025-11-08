@@ -232,9 +232,33 @@
 - Ateliers 保持原有的事件索引方式
 - Sculpts 僅顯示已上架到 Kiosk 的項目
 
+#### 完成事項 - Day 3 晚上
+
+##### 🎨 **Publisher Retro UI 重設計** ✅
+
+**實施完成**:
+- [X] 創建 `PublisherMintLayout.tsx` (535行) - 單頁面合併 Page 1-3
+- [X] 標題輸入移至 Sticky Header（取代 RetroHeading）
+- [X] Cover Image 和 Description 高度優化（180px固定高度）
+- [X] 移除 BASIC INFO 區塊
+- [X] 價格輸入移至 PUBLISH ATELIER 區塊（對齊 Mint 頁面樣式）
+- [X] 修復類型錯誤：extractedParameters Record → Array 轉換
+- [X] 修復遺漏導出：uploadFiles 函數
+
+**UI 特點**:
+- 左側：3D 預覽（ParametricViewer）+ Artwork Info（Cover + Description + Artist Statement）
+- 右側：File Uploads（Cover + Algorithm）+ Extracted Parameters（只讀顯示）+ Publish
+- 完全復用 AtelierMintLayout 的佈局結構和 Retro UI 組件
+- Sticky 標題欄含輸入框和藝術家信息
+- 價格輸入採用 Mint 頁面相同的內聯樣式（Sui icon + 大字體）
+
+**待測試**:
+- [ ] 圖片上傳後即時顯示預覽
+- [ ] 算法文件上傳後即時提取參數和 3D 渲染
+- [ ] 發布流程（metadata 創建 + 文件上傳 + 合約調用）
+
 #### 進行中
-- [X] **Atelier Mint Modal 優化與整合** (已完成)
-- [X] **Publisher Retro UI 重設計** (已完成)
+- 無
 
 ##### 🎨 **新增任務：Mint UI 重構與優化**
 
