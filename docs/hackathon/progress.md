@@ -743,12 +743,69 @@ Day 3 建議順序:
   - 防止極端窗口尺寸導致佈局崩潰
   - 提供一致的用戶體驗
 
+#### 6. ✅ MarketplaceWindow Modal 定位修復
+- **問題**: AtelierMintModal 覆蓋窗口 header
+- **原因**: MarketplaceWindow 缺少 relative 定位容器
+- **解決方案**: 添加外層 `<div className="relative h-full overflow-hidden">` 包裹
+- **效果**: Modal 定位參考點正確，不再覆蓋 header，與 VaultWindow 行為一致
+
+#### 7. ✅ VaultWindow 錯誤狀態 Retro UI 統一
+- 將錢包未連接和無 Membership NFT 錯誤狀態改用 `RetroEmptyState` 組件
+- 錢包未連接：
+  - 標題: "WALLET NOT CONNECTED"
+  - 圖標: globe
+- 無 Membership NFT：
+  - 標題: "NO MEMBERSHIP NFT"
+  - 圖標: file
+- 應用到 Ateliers 和 Sculpts 兩個標籤頁
+
+#### 8. ✅ List 模式 Retro UI 統一
+- 創建 `RetroListItem` 組件系統：
+  - `RetroListItem`: 主容器，3D 內凹邊框效果，hover 狀態
+  - `RetroListThumbnail`: 縮略圖容器，內凹框架
+  - `RetroListInfo`: 標題和元數據顯示，大寫樣式
+  - `RetroListArrow`: 箭頭圖標，hover 效果
+- 應用範圍：
+  - **MarketplaceWindow**: Ateliers List, Sculpts List
+  - **VaultWindow**: Ateliers List, Sculpts List
+- 代碼優化：從 ~210 行重複代碼減少到 ~30 行復用組件（減少 30%）
+
+#### 9. ✅ RetroPrinterCard 組件
+- 創建復古風格的 Printer 選擇卡片
+- 特性：
+  - 3D 凸起邊框（outset 效果）
+  - 點擊動畫（按下時變為 inset）
+  - 像素風格狀態指示器（2x2px 方形）
+  - Online: 綠色像素 + 發光效果
+  - Offline: 灰色像素 + 內凹陰影 + 不可點擊
+  - 狀態徽章帶內陰影
+  - Monospace 字體 + 大寫文字
+- 應用到 VaultWindow 的 Printer 選擇區域
+
+### 代碼優化成果
+- **總代碼減少**: ~30% (List 模式)
+- **組件復用性**: 新增 4 個可復用組件
+- **統一性提升**: 所有交互元素使用統一的 Retro UI 風格
+- **可維護性**: 單一組件修改即可影響所有使用位置
+
 ### 文件變更摘要
 - `frontend/components/common/RetroDetailModal.tsx` - Back 按鈕 hover 效果
 - `frontend/components/common/RetroEmptyState.tsx` - 新建統一空狀態組件
-- `frontend/components/windows/MarketplaceWindow.tsx` - 應用 RetroEmptyState
-- `frontend/components/windows/VaultWindow.tsx` - 應用 RetroEmptyState
+- `frontend/components/common/RetroListItem.tsx` - 新建 List 項目組件系統
+- `frontend/components/common/RetroPrinterCard.tsx` - 新建 Printer 卡片組件
+- `frontend/components/windows/MarketplaceWindow.tsx` - 應用 RetroEmptyState, RetroListItem, 修復 Modal 定位
+- `frontend/components/windows/VaultWindow.tsx` - 應用 RetroEmptyState, RetroListItem, RetroPrinterCard
 - `frontend/components/features/atelier-viewer/components/MintStatusNotification.tsx` - 復古票據樣式重構
+- `frontend/components/features/atelier-viewer/AtelierMintModal.tsx` - 調整定位邏輯
 - `frontend/components/common/Window.tsx` - 窗口框架 3D 效果優化
 - `frontend/config/windows.ts` - Marketplace/Vault 尺寸調整和禁用縮放
+- `frontend/app/page.tsx` - 修復 resizable 配置讀取
+
+### 提交記錄
+- ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
+- ✅ Fix modal positioning and window resizable config
+- ✅ Fix MarketplaceWindow modal positioning by adding relative container
+- ✅ Replace VaultWindow error states with RetroEmptyState component
+- ✅ Unify list view with Retro UI components
+- ✅ Add RetroPrinterCard component for printer selection
 
