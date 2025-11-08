@@ -121,14 +121,14 @@ export function AtelierMintModal({ atelier, isOpen, onClose }: AtelierMintModalP
 
   return (
     <>
-      {/* Backdrop - no blur, positioned below header */}
+      {/* Backdrop - no blur, positioned below header, with padding for window borders */}
       <div
-        className="absolute inset-x-0 top-[38px] bottom-0 bg-black/50 z-40"
+        className="absolute left-0 right-[2px] top-[38px] bottom-[2px] bg-black/50 z-40"
         onClick={onClose}
       />
 
-      {/* Modal Content - positioned below window header */}
-      <div className="absolute inset-x-0 top-[38px] bottom-0 z-50 overflow-auto hide-scrollbar bg-[#0a0a0a]">
+      {/* Modal Content - positioned below window header, with padding for window borders */}
+      <div className="absolute left-0 right-[2px] top-[38px] bottom-[2px] z-50 overflow-auto hide-scrollbar bg-[#0a0a0a]">
         {/* Close Button */}
         <div className="absolute top-4 right-4 z-[60]">
           <RetroButton

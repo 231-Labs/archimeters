@@ -33,6 +33,10 @@ interface Atelier {
   title: string;
   author: string;
   price: string;
+  description?: string;
+  artistStatement?: string;
+  artistName?: string;
+  artistAddress?: string;
   isLoading: boolean;
   error: string | null;
 }
@@ -158,7 +162,16 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
       setAteliers(prev => {
         const newImages = prev.map(img => 
           img.id === id 
-            ? { ...img, configData, isLoading: false, error: null }
+            ? { 
+                ...img, 
+                configData, 
+                description: configData?.artwork?.description || '',
+                artistStatement: configData?.artist?.introduction || '',
+                artistName: configData?.artist?.name || img.author,
+                artistAddress: configData?.artist?.address || '',
+                isLoading: false, 
+                error: null 
+              }
             : img
         );
         return newImages;
