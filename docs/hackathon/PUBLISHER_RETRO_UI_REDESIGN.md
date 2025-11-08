@@ -43,21 +43,29 @@ frontend/components/features/design-publisher/
 
 #### 现有上传流程
 ```
-Step 1: UploadPage.tsx
-  └── 上传 STL, GLB, Cover Image
+Step 1: BasicInfoPage.tsx
+  └── 上传 Cover Image + 填写作品信息（标题、描述、价格）+ 艺术家信息
 
-Step 2: ConfigPage.tsx
-  └── 配置标题、描述、参数定义
+Step 2: AlgorithmPage.tsx
+  └── 上传算法文件（.js）→ 自动提取参数 → 3D 预览
 
 Step 3: PreviewPage.tsx (✅ 已使用 AtelierMintLayout)
-  └── 预览和发布
+  └── 调整参数 + 预览和发布
+
+Step 4: UploadStatusPage.tsx
+  └── 上传进度 + 合约调用
 ```
 
+**关键发现**:
+- ❌ **不需要上传 STL/GLB**: Publisher 只上传 Cover Image 和算法 .js 文件
+- 🔧 **参数自动提取**: 从算法 .js 文件中自动解析参数定义（`extractedParameters`）
+- 🎨 **3D 实时预览**: 使用 `ParametricViewer` 根据算法代码和参数生成 3D 预览
+
 ### 问题分析
-1. **多步骤流程复杂**: 用户需要在 3 个页面之间切换
-2. **视觉不一致**: UploadPage 和 ConfigPage 未使用 Retro UI 组件
-3. **用户体验割裂**: 预览页面是 Retro 风格，但前面的页面不是
-4. **冗余代码**: 多个页面组件可以合并
+1. **多步骤流程复杂**: 用户需要在 4 个页面之间切换
+2. **视觉不一致**: BasicInfoPage 和 AlgorithmPage 未使用 Retro UI 组件
+3. **用户体验割裂**: PreviewPage 是 Retro 风格，但前面的页面不是
+4. **冗余代码**: Page 1 和 Page 2 可以合并为单页面
 
 ---
 
@@ -76,31 +84,31 @@ Step 3: PreviewPage.tsx (✅ 已使用 AtelierMintLayout)
 │                                                              │
 │  ┌──── LEFT COLUMN (55%) ────┐  ┌─── RIGHT COLUMN (45%) ───┐
 │  │                            │  │                          │
-│  │  🖼️ 3D PREVIEW              │  │  📦 FILE UPLOADS        │
+│  │  🎨 3D PREVIEW              │  │  📦 FILE UPLOADS        │
 │  │  ┌──────────────────────┐  │  │  ┌──────────────────┐  │
-│  │  │                      │  │  │  │ STL Upload       │  │
-│  │  │  [缺省状态 or 3D]     │  │  │  │ [Drag & Drop]    │  │
+│  │  │  [缺省 or 3D 预览]    │  │  │  │ Cover Image *    │  │
+│  │  │  (ParametricViewer)  │  │  │  │ [Click Upload]   │  │
 │  │  │                      │  │  │  └──────────────────┘  │
 │  │  └──────────────────────┘  │  │  ┌──────────────────┐  │
-│  │                            │  │  │ GLB Upload       │  │
-│  │  📋 ARTWORK INFO           │  │  │ [Drag & Drop]    │  │
-│  │  ┌──────────────────────┐  │  │  └──────────────────┘  │
-│  │  │ Cover Image          │  │  │  ┌──────────────────┐  │
-│  │  │ [缺省 or 已上传]      │  │  │ Cover Upload     │  │
-│  │  ├──────────────────────┤  │  │  │ [Drag & Drop]    │  │
-│  │  │ Title Input          │  │  │  └──────────────────┘  │
-│  │  ├──────────────────────┤  │  │                          │
-│  │  │ Description Input    │  │  │  ⚙️ BASIC CONFIG        │
-│  │  ├──────────────────────┤  │  │  ┌──────────────────┐  │
-│  │  │ Artist Statement     │  │  │  │ Title *          │  │
-│  │  └──────────────────────┘  │  │  │ Description *    │  │
-│  │                            │  │  │ Price (SUI) *    │  │
+│  │                            │  │  │ Algorithm File * │  │
+│  │  📋 ARTWORK INFO           │  │  │ [Click Upload]   │  │
+│  │  ┌──────────────────────┐  │  │  │ (.js only)       │  │
+│  │  │ Cover Image Preview  │  │  │  └──────────────────┘  │
+│  │  │ [Square 1:1]         │  │  │                          │
+│  │  ├──────────────────────┤  │  │  ⚙️ BASIC INFO          │
+│  │  │ Title *              │  │  │  ┌──────────────────┐  │
+│  │  ├──────────────────────┤  │  │  │ Artwork Title *  │  │
+│  │  │ Description *        │  │  │  ├──────────────────┤  │
+│  │  ├──────────────────────┤  │  │  │ Description *    │  │
+│  │  │ Artist Statement     │  │  │  ├──────────────────┤  │
+│  │  │ [From Membership]    │  │  │  │ Price (SUI) *    │  │
+│  │  └──────────────────────┘  │  │  │ [0 or decimal]   │  │
 │  └────────────────────────────┘  │  └──────────────────┘  │
 │                                  │                          │
-│                                  │  🔧 PARAMETERS          │
+│                                  │  🔧 EXTRACTED PARAMS    │
 │                                  │  ┌──────────────────┐  │
-│                                  │  │ [动态参数配置]    │  │
-│                                  │  │ + Add Parameter  │  │
+│                                  │  │ [Auto from .js]  │  │
+│                                  │  │ [Read-only list] │  │
 │                                  │  └──────────────────┘  │
 │                                  │                          │
 │                                  │  🚀 PUBLISH             │
@@ -110,6 +118,13 @@ Step 3: PreviewPage.tsx (✅ 已使用 AtelierMintLayout)
 │                                  └──────────────────────────┘
 └──────────────────────────────────────────────────────────────┘
 ```
+
+**关键设计要点**:
+- ✅ 左侧 3D 预览使用 `ParametricViewer`（根据算法实时生成）
+- ✅ 右侧上传区只有 Cover Image 和 Algorithm File（.js）
+- ✅ 参数区显示从 .js 文件自动提取的参数（只读，供用户查看）
+- ✅ 艺术家信息自动从 Membership NFT 获取
+- ✅ 所有必填项标记为 *
 
 ---
 
@@ -194,10 +209,118 @@ border-right: 1px solid #333;
 
 ## 📦 文件上传缺省状态设计
 
-### 1. STL 文件上传区（未上传状态）
+### 1. Cover Image 上传区（未上传状态）
 
 ```tsx
-<RetroSection title="STL FILE UPLOAD" titleRight={<span className="text-[9px] text-red-400">REQUIRED</span>}>
+<RetroSection title="COVER IMAGE" titleRight={<span className="text-[9px] text-red-400">REQUIRED</span>}>
+  <div 
+    className="relative border-2 rounded cursor-pointer transition-colors hover:border-white/30"
+    style={{
+      borderTop: '2px solid #0a0a0a',
+      borderLeft: '2px solid #0a0a0a',
+      borderBottom: '2px solid #333',
+      borderRight: '2px solid #333',
+      backgroundColor: '#0a0a0a',
+      minHeight: '200px',
+      aspectRatio: '1/1' // Square aspect ratio
+    }}
+    onClick={() => imageInputRef.current?.click()}
+  >
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
+      {/* 图片图标 */}
+      <svg className="w-12 h-12 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+      
+      {/* 提示文字 */}
+      <div className="text-center">
+        <p className="text-xs text-white/60 font-mono uppercase mb-1">
+          COVER IMAGE
+        </p>
+        <p className="text-[10px] text-white/40 font-mono">
+          CLICK TO UPLOAD
+        </p>
+      </div>
+      
+      {/* 文件大小提示 */}
+      <div className="text-[9px] text-white/30 font-mono">
+        JPG, PNG, GIF • MAX 10MB
+      </div>
+    </div>
+    
+    <input 
+      ref={imageInputRef}
+      type="file" 
+      accept="image/jpeg,image/png,image/gif"
+      className="hidden"
+      onChange={handleImageChange}
+    />
+  </div>
+</RetroSection>
+```
+
+### 2. Cover Image 上传区（已上传状态）
+
+```tsx
+<RetroSection title="COVER IMAGE" titleRight={<span className="text-[9px] text-green-400">✓ UPLOADED</span>}>
+  <div 
+    className="relative border-2 rounded overflow-hidden group"
+    style={{
+      borderTop: '2px solid #333',
+      borderLeft: '2px solid #333',
+      borderBottom: '2px solid #0a0a0a',
+      borderRight: '2px solid #0a0a0a',
+      backgroundColor: '#1a1a1a',
+      aspectRatio: '1/1'
+    }}
+  >
+    {/* 图片预览 */}
+    <img 
+      src={imageUrl} 
+      alt="Cover" 
+      className="w-full h-full object-cover"
+    />
+    
+    {/* Hover 操作层 */}
+    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+      <RetroButton 
+        size="sm" 
+        variant="secondary"
+        onClick={() => imageInputRef.current?.click()}
+      >
+        CHANGE
+      </RetroButton>
+      <RetroButton 
+        size="sm" 
+        variant="secondary"
+        onClick={handleImageRemove}
+      >
+        REMOVE
+      </RetroButton>
+    </div>
+    
+    <input 
+      ref={imageInputRef}
+      type="file" 
+      accept="image/jpeg,image/png,image/gif"
+      className="hidden"
+      onChange={handleImageChange}
+    />
+  </div>
+  
+  {/* 文件信息 */}
+  <div className="mt-2 text-[10px] text-white/40 font-mono">
+    {imageFile?.name} • {formatFileSize(imageFile?.size || 0)}
+  </div>
+</RetroSection>
+```
+
+### 3. Algorithm File 上传区（未上传状态）
+
+```tsx
+<RetroSection title="ALGORITHM FILE" titleRight={<span className="text-[9px] text-red-400">REQUIRED</span>}>
   <div 
     className="relative border-2 rounded cursor-pointer transition-colors hover:border-white/30"
     style={{
@@ -208,47 +331,47 @@ border-right: 1px solid #333;
       backgroundColor: '#0a0a0a',
       minHeight: '120px'
     }}
-    onDragOver={(e) => e.preventDefault()}
-    onDrop={handleSTLDrop}
+    onClick={() => algoInputRef.current?.click()}
   >
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
-      {/* 文件图标 */}
+      {/* 代码文件图标 */}
       <svg className="w-10 h-10 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} 
-          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" 
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
         />
       </svg>
       
       {/* 提示文字 */}
       <div className="text-center">
         <p className="text-xs text-white/60 font-mono uppercase mb-1">
-          DROP STL FILE HERE
+          ALGORITHM FILE
         </p>
         <p className="text-[10px] text-white/40 font-mono">
-          OR CLICK TO BROWSE
+          CLICK TO UPLOAD .JS FILE
         </p>
       </div>
       
       {/* 文件大小提示 */}
       <div className="text-[9px] text-white/30 font-mono">
-        MAX 50MB
+        JAVASCRIPT ONLY • MAX 1MB
       </div>
     </div>
     
     <input 
+      ref={algoInputRef}
       type="file" 
-      accept=".stl"
-      className="absolute inset-0 opacity-0 cursor-pointer"
-      onChange={handleSTLChange}
+      accept=".js,application/javascript,text/javascript"
+      className="hidden"
+      onChange={handleAlgoChange}
     />
   </div>
 </RetroSection>
 ```
 
-### 2. STL 文件上传区（已上传状态）
+### 4. Algorithm File 上传区（已上传状态）
 
 ```tsx
-<RetroSection title="STL FILE UPLOAD" titleRight={<span className="text-[9px] text-green-400">✓ UPLOADED</span>}>
+<RetroSection title="ALGORITHM FILE" titleRight={<span className="text-[9px] text-green-400">✓ UPLOADED</span>}>
   <div 
     className="relative border-2 rounded"
     style={{
@@ -264,15 +387,20 @@ border-right: 1px solid #333;
       {/* 左侧：文件信息 */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 flex items-center justify-center bg-black/40 rounded border border-white/10">
-          <span className="text-xs text-white/60 font-mono">STL</span>
+          <span className="text-xs text-white/60 font-mono">.JS</span>
         </div>
         <div>
           <p className="text-xs text-white/90 font-mono truncate max-w-[200px]">
-            {file.name}
+            {algoFile.name}
           </p>
           <p className="text-[10px] text-white/40 font-mono">
-            {formatFileSize(file.size)}
+            {formatFileSize(algoFile.size)}
           </p>
+          {extractedParameters.length > 0 && (
+            <p className="text-[10px] text-green-400 font-mono mt-1">
+              ✓ {extractedParameters.length} parameters extracted
+            </p>
+          )}
         </div>
       </div>
       
@@ -281,150 +409,182 @@ border-right: 1px solid #333;
         <RetroButton 
           size="sm" 
           variant="secondary"
-          onClick={handleSTLRemove}
+          onClick={() => algoInputRef.current?.click()}
+        >
+          CHANGE
+        </RetroButton>
+        <RetroButton 
+          size="sm" 
+          variant="secondary"
+          onClick={handleAlgoRemove}
         >
           REMOVE
         </RetroButton>
       </div>
     </div>
   </div>
+  
+  <input 
+    ref={algoInputRef}
+    type="file" 
+    accept=".js,application/javascript,text/javascript"
+    className="hidden"
+    onChange={handleAlgoChange}
+  />
 </RetroSection>
 ```
 
-### 3. GLB 文件上传区（类似 STL，调整文字和图标）
-
-```tsx
-// 缺省状态图标使用 cube icon
-<svg className="w-10 h-10 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-  />
-</svg>
-
-// 提示文字
-<p className="text-xs text-white/60 font-mono uppercase mb-1">
-  DROP GLB FILE HERE
-</p>
-```
-
-### 4. Cover Image 上传区（未上传）
-
-```tsx
-<RetroImage 
-  src={''} // 空字符串触发缺省状态
-  alt="Cover"
-  emptyState={
-    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-      <svg className="w-12 h-12 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
-      <p className="text-xs text-white/60 font-mono uppercase">COVER IMAGE</p>
-      <p className="text-[10px] text-white/40 font-mono">CLICK TO UPLOAD</p>
-    </div>
-  }
-  onClick={() => coverInputRef.current?.click()}
-  className="cursor-pointer hover:opacity-80 transition-opacity"
-/>
-```
-
-### 5. 3D 预览区（未上传 GLB）
+### 5. 3D 预览区（未上传算法文件）
 
 ```tsx
 <RetroPreview height="500px">
   <RetroEmptyState
     icon="box"
-    title="NO 3D MODEL"
-    message="Upload GLB file to preview"
+    title="NO ALGORITHM LOADED"
+    message="Upload .js file to generate 3D preview"
   />
 </RetroPreview>
 ```
 
-### 6. 参数配置区（动态添加/删除）
+### 6. 3D 预览区（算法已上传，使用 ParametricViewer）
+
+```tsx
+<RetroPreview height="500px">
+  <div className="w-full h-full">
+    <ParametricViewer
+      userScript={geometryScript}
+      parameters={previewParams}
+    />
+  </div>
+</RetroPreview>
+```
+
+### 7. 提取的参数列表展示区（无参数）
+
+```tsx
+<RetroSection title="EXTRACTED PARAMETERS">
+  <div className="py-8 text-center">
+    <p className="text-xs text-white/40 font-mono uppercase">
+      NO PARAMETERS FOUND
+    </p>
+    <p className="text-[10px] text-white/30 font-mono mt-1">
+      Upload algorithm file to extract parameters
+    </p>
+  </div>
+</RetroSection>
+```
+
+### 8. 提取的参数列表展示区（有参数，只读显示）
 
 ```tsx
 <RetroSection 
-  title="PARAMETERS"
+  title="EXTRACTED PARAMETERS"
   titleRight={
-    <RetroButton 
-      size="sm"
-      variant="secondary"
-      onClick={handleAddParameter}
-      className="text-[10px] px-2 py-0.5"
-    >
-      + ADD
-    </RetroButton>
+    <span className="text-[9px] text-green-400">
+      ✓ {extractedParameters.length} FOUND
+    </span>
   }
 >
-  {parameters.length === 0 ? (
-    <div className="py-8 text-center">
-      <p className="text-xs text-white/40 font-mono uppercase">
-        NO PARAMETERS DEFINED
-      </p>
-      <p className="text-[10px] text-white/30 font-mono mt-1">
-        Click + ADD to create a parameter
-      </p>
-    </div>
-  ) : (
-    <div className="space-y-2">
-      {parameters.map((param, index) => (
-        <div key={index} className="bg-black/40 rounded p-2 border border-white/5">
-          {/* 参数配置 UI */}
-          <div className="flex items-center justify-between mb-2">
-            <input
-              type="text"
-              placeholder="PARAMETER NAME"
-              value={param.name}
-              onChange={(e) => handleParameterNameChange(index, e.target.value)}
-              className="flex-1 bg-transparent text-white/90 text-xs font-mono uppercase border-none focus:outline-none"
-            />
-            <RetroButton
-              size="sm"
-              variant="secondary"
-              onClick={() => handleRemoveParameter(index)}
-              className="text-[10px] px-2 py-0.5"
-            >
-              ✕
-            </RetroButton>
-          </div>
-          
-          {/* Min/Max/Default 配置 */}
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="text-[9px] text-white/50 font-mono uppercase block mb-1">MIN</label>
-              <RetroInput
-                type="number"
-                value={param.min}
-                onChange={(e) => handleParameterChange(index, 'min', e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[9px] text-white/50 font-mono uppercase block mb-1">MAX</label>
-              <RetroInput
-                type="number"
-                value={param.max}
-                onChange={(e) => handleParameterChange(index, 'max', e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[9px] text-white/50 font-mono uppercase block mb-1">DEFAULT</label>
-              <RetroInput
-                type="number"
-                value={param.default}
-                onChange={(e) => handleParameterChange(index, 'default', e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-          </div>
+  <div className="space-y-2 max-h-[300px] overflow-auto hide-scrollbar">
+    {extractedParameters.map((param, index) => (
+      <div 
+        key={index} 
+        className="bg-black/40 rounded p-2 border border-white/5"
+        style={{
+          borderTop: '1px solid #0a0a0a',
+          borderLeft: '1px solid #0a0a0a',
+          borderBottom: '1px solid #222',
+          borderRight: '1px solid #222',
+        }}
+      >
+        {/* 参数名称和类型 */}
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-white/90 font-mono uppercase font-semibold">
+            {param.label || param.name}
+          </span>
+          <span className="text-[9px] text-white/40 font-mono uppercase px-2 py-0.5 bg-white/5 rounded">
+            {param.type}
+          </span>
         </div>
-      ))}
-    </div>
-  )}
+        
+        {/* 参数值范围（仅 number 类型）*/}
+        {param.type === 'number' && (
+          <div className="grid grid-cols-3 gap-2 text-[10px] text-white/50 font-mono">
+            <div>
+              <span className="text-white/40">MIN:</span> {param.min ?? 'N/A'}
+            </div>
+            <div>
+              <span className="text-white/40">MAX:</span> {param.max ?? 'N/A'}
+            </div>
+            <div>
+              <span className="text-white/40">DEFAULT:</span> {param.default ?? 'N/A'}
+            </div>
+          </div>
+        )}
+        
+        {/* 参数默认值（非 number 类型）*/}
+        {param.type !== 'number' && (
+          <div className="text-[10px] text-white/50 font-mono">
+            <span className="text-white/40">DEFAULT:</span> {String(param.default)}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+  
+  <style jsx>{`
+    .hide-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  `}</style>
 </RetroSection>
 ```
+
+**说明**:
+- ✅ 只读展示，用户无法修改
+- ✅ 显示参数名称、类型、min/max/default
+- ✅ 自动从上传的 .js 文件中提取
+- ✅ 使用 Retro inset 边框效果
+- ✅ 支持滚动（当参数较多时）
+
+---
+
+## ⚠️ 关键技术说明
+
+### 实际实施要点
+
+**与文档初稿的主要差异**:
+
+1. **❌ 不上传 STL/GLB 文件**
+   - Publisher 只上传 Cover Image（封面图）和 Algorithm File（.js 算法文件）
+   - 不需要处理 STL 加密或 GLB 预览文件
+
+2. **🔧 参数自动提取**
+   - 参数不是手动配置的，而是从上传的 .js 文件中自动提取
+   - 使用 `useParameters` hook 中的 `processSceneFile(content)` 处理算法文件
+   - 提取结果存储在 `extractedParameters` 中
+   - Publisher 页面只需**展示**这些参数（只读），不需要编辑功能
+
+3. **🎨 3D 预览生成方式**
+   - 使用 `ParametricViewer` 组件
+   - 根据上传的算法代码和提取的参数实时生成 3D 几何体
+   - 不是加载预先上传的 GLB 文件
+
+4. **📄 现有代码复用**
+   - `BasicInfoPage.tsx` - 基本信息和封面上传（可直接复用）
+   - `AlgorithmPage.tsx` - 算法上传和预览（可直接复用）
+   - `useDesignPublisherForm.ts` - 完整的表单逻辑（可直接复用）
+   - `useParameters` hook - 参数提取逻辑（已实现）
+   - `ParametricViewer` - 3D 预览组件（已实现）
+
+5. **🎯 重构目标**
+   - 将 Page 1 (BasicInfoPage) 和 Page 2 (AlgorithmPage) 合并为单页面
+   - 使用 Retro UI 组件重新设计界面
+   - 保持所有现有功能和逻辑
 
 ---
 
@@ -836,4 +996,5 @@ export function DesignPublisher() {
 ---
 
 **祝实施顺利！如有问题，请参考现有代码或查阅上述参考文档。** 🚀
+
 
