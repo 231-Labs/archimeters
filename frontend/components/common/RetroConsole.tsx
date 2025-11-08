@@ -113,7 +113,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       </div>
 
       {/* Main Content - Two Columns */}
-      <div className="flex-1 flex gap-4 overflow-hidden">
+      <div className="flex-1 flex gap-4 overflow-hidden items-start">
         {/* Left Column - Steps List */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-2">
           {steps.map((step, index) => (
@@ -127,7 +127,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
         </div>
 
         {/* Right Column - Transaction & Success */}
-        <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2">
+        <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2 shrink-0">
           {/* Transaction Hash */}
           {txHash && (isTransactionComplete || isTransactionFailed) && (
             <div 
@@ -141,7 +141,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <div className="text-white/70 text-xs font-mono uppercase mb-2">Transaction Digest</div>
+              <div className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Transaction Digest</div>
               <div 
                 className="p-2 bg-black/60 border border-white/10 break-all font-mono text-xs"
                 style={{
@@ -180,63 +180,60 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
               }}
             >
-              {/* <div className="text-center mb-4">
-                <div className="text-green-400 text-lg font-mono mb-1">PUBLISH COMPLETE</div>
-                <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
-              </div> */}
+              <div className="text-center mb-3">
+                <div className="text-green-400 text-lg font-mono mb-2">PUBLISH COMPLETE</div>
+                <div className="text-white/60 text-xs font-mono">What would you like to do next?</div>
+              </div>
 
               {/* Action Buttons */}
               <div className="space-y-2">
-                <div className="text-white/60 text-xs font-mono mb-2">What would you like to do next?</div>
-                <div className="space-y-2">
-                  {/* Vault Button */}
-                  {onGoToVault && (
-                    <button
-                      onClick={onGoToVault}
-                      className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                      style={{
-                        background: '#1a1a1a',
-                        borderTop: '2px solid #444',
-                        borderLeft: '2px solid #444',
-                        borderBottom: '2px solid #000',
-                        borderRight: '2px solid #000',
-                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '12px',
-                      }}
-                    >
-                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                        OPEN VAULT
-                      </div>
-                      <div className="text-white/40 text-[10px] font-mono">
-                        Manage your Atelier
-                      </div>
-                    </button>
-                  )}
+                {/* Vault Button */}
+                {onGoToVault && (
+                  <button
+                    onClick={onGoToVault}
+                    className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                    style={{
+                      background: '#1a1a1a',
+                      borderTop: '2px solid #444',
+                      borderLeft: '2px solid #444',
+                      borderBottom: '2px solid #000',
+                      borderRight: '2px solid #000',
+                      boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                      padding: '12px',
+                    }}
+                  >
+                    <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                      OPEN VAULT
+                    </div>
+                    <div className="text-white/40 text-[10px] font-mono">
+                      Manage your Atelier
+                    </div>
+                  </button>
+                )}
 
-                  {/* Marketplace Button */}
-                  {onGoToMarketplace && (
-                    <button
-                      onClick={onGoToMarketplace}
-                      className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                      style={{
-                        background: '#1a1a1a',
-                        borderTop: '2px solid #444',
-                        borderLeft: '2px solid #444',
-                        borderBottom: '2px solid #000',
-                        borderRight: '2px solid #000',
-                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '12px',
-                      }}
-                    >
-                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                        OPEN MARKETPLACE
-                      </div>
-                      <div className="text-white/40 text-[10px] font-mono">
-                        See your published work
-                      </div>
-                    </button>
-                  )}
-                </div>
+                {/* Marketplace Button */}
+                {onGoToMarketplace && (
+                  <button
+                    onClick={onGoToMarketplace}
+                    className="w-full group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                    style={{
+                      background: '#1a1a1a',
+                      borderTop: '2px solid #444',
+                      borderLeft: '2px solid #444',
+                      borderBottom: '2px solid #000',
+                      borderRight: '2px solid #000',
+                      boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                      padding: '12px',
+                    }}
+                  >
+                    <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                      OPEN MARKETPLACE
+                    </div>
+                    <div className="text-white/40 text-[10px] font-mono">
+                      See your published work
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
           )}
