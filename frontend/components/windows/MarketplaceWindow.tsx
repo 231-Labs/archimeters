@@ -127,7 +127,7 @@ export default function MarketplaceWindow({
   };
 
   return (
-    <>
+    <div className="relative h-full overflow-hidden">
       <Tabs.Root 
         value={activeTab} 
         onValueChange={setActiveTab}
@@ -425,7 +425,7 @@ export default function MarketplaceWindow({
           onClose={handleCloseModal}
         />
       )}
-    </>
+    </div>
   );
 }
 
