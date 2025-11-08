@@ -80,8 +80,9 @@ export default function DefaultTemplate({
       </div>
 
       <div className="lg:w-[45%] flex flex-col gap-3">
-        <RetroSection title="PARAMETERS">
-          <div className="flex justify-end mb-3">
+        <RetroSection 
+          title="PARAMETERS"
+          titleRight={
             <RetroButton 
               size="sm"
               variant="secondary"
@@ -92,11 +93,12 @@ export default function DefaultTemplate({
                 onParameterChange('all', defaultParams);
                 onAliasChange?.('');
               }}
+              className="text-[10px] px-2 py-0.5"
             >
-              RESET ALL
+              RESET
             </RetroButton>
-          </div>
-
+          }
+        >
           <div className="space-y-3">
             <div className="bg-black/40 rounded p-2 border border-white/5">
                 <div className="flex justify-between items-center mb-1.5">

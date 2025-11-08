@@ -41,20 +41,21 @@ export function RetroCard({ children, className = '', variant = 'default' }: Ret
 
 interface RetroSectionProps {
   title?: string;
+  titleRight?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   variant?: 'default' | 'inset';
 }
 
 /**
- * RetroSection - RetroCard with optional title
+ * RetroSection - RetroCard with optional title and title-right content
  */
-export function RetroSection({ title, children, className = '', variant = 'default' }: RetroSectionProps) {
+export function RetroSection({ title, titleRight, children, className = '', variant = 'default' }: RetroSectionProps) {
   return (
     <RetroCard variant={variant} className={className}>
       {title && (
         <div 
-          className="px-4 py-2 border-b border-white/10"
+          className="px-4 py-2 border-b border-white/10 flex items-center justify-between"
           style={{
             background: 'linear-gradient(to bottom, #1f1f1f, #1a1a1a)',
           }}
@@ -62,6 +63,7 @@ export function RetroSection({ title, children, className = '', variant = 'defau
           <h3 className="text-white/90 text-sm font-mono uppercase tracking-wide">
             {title}
           </h3>
+          {titleRight && <div>{titleRight}</div>}
         </div>
       )}
       <div className="p-4">
