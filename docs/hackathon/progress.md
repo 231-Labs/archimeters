@@ -310,6 +310,19 @@
 - [X] RetroConsole 顏色方案調整：藍色 → 灰色（更專業中性）
 - [X] 移除完成訊息的星星符號：「★ PUBLISH COMPLETE ★」→「PUBLISH COMPLETE」
 
+**成功訊息導航按鈕**:
+- [X] 添加兩個操作按鈕到完成訊息
+  - **VIEW IN VAULT** - 跳轉到 Vault > Atelier（管理作品）
+  - **VIEW IN MARKETPLACE** - 跳轉到 Marketplace > Atelier（查看發布作品）
+- [X] 按鈕風格完全對齊 Retro OS
+  - 3D 邊框效果
+  - Hover 動畫（向上平移 + 顏色變化）
+  - Grid 佈局（2列）
+- [X] 添加提示語：「What would you like to do next?」
+- [X] 完整的數據流：
+  - page.tsx → DesignPublisher → UploadStatusPage → RetroConsole
+  - 點擊按鈕調用 openWindow() 打開對應窗口
+
 **配色方案**:
 - 灰色：處理中/進行中（中性）
 - 綠色：成功/完成
@@ -318,6 +331,7 @@
 
 **待測試**:
 - [ ] 測試發布流程（metadata 創建 + 文件上傳 + 合約調用）
+- [ ] 測試導航按鈕是否正確打開 Vault 和 Marketplace
 
 #### 進行中
 - 無
