@@ -17,39 +17,12 @@ import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
+import { RetroPrinterCard } from '@/components/common/RetroPrinterCard';
 
 interface VaultWindowProps {
   name: WindowName;
 }
 
-// printer component
-const PrinterCard: React.FC<{ printer: Printer, onSelect: () => void }> = ({ printer, onSelect }) => {
-  return (
-    <div 
-      onClick={printer.online ? onSelect : undefined}
-      className={`p-3 border border-neutral-700 rounded-md transition-colors flex flex-col w-full h-full shadow-sm ${
-        printer.online 
-          ? 'bg-neutral-800 hover:bg-neutral-700 cursor-pointer' 
-          : 'bg-neutral-900/80 opacity-70 cursor-not-allowed'
-      }`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${printer.online ? 'bg-green-500' : 'bg-neutral-500'}`} />
-          <div className="text-sm font-medium truncate">{printer.alias || 'Unknown Printer'}</div>
-        </div>
-        <div className={`text-xs px-1.5 py-0.5 rounded ${
-          printer.online 
-            ? 'bg-green-900/30 text-green-400' 
-            : 'bg-neutral-800/70 text-neutral-500'
-        }`}>
-          {printer.online ? 'Online' : 'Offline'}
-        </div>
-      </div>
-      <div className="text-xs text-neutral-500 truncate mt-1">ID: {printer.id.substring(0, 6)}...{printer.id.slice(-6)}</div>
-    </div>
-  );
-};
 
 const ImageItem: React.FC<{
   atelier: VaultItem;
@@ -450,7 +423,7 @@ export default function VaultWindow({}: VaultWindowProps) {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {printers.map(printer => (
-                      <PrinterCard
+                      <RetroPrinterCard
                         key={printer.id}
                         printer={printer}
                         onSelect={() => {
