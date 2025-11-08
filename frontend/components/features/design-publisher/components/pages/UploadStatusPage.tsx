@@ -29,6 +29,8 @@ interface UploadStatusPageProps {
   transactionError?: string;
   onSubmit: () => void;
   onPrevious: () => void;
+  onGoToVault?: () => void;
+  onGoToMarketplace?: () => void;
 }
 
 export function UploadStatusPage({
@@ -46,7 +48,9 @@ export function UploadStatusPage({
   intro,
   price,
   transactionDigest,
-  transactionError
+  transactionError,
+  onGoToVault,
+  onGoToMarketplace
 }: UploadStatusPageProps) {
   // 檢查當前狀態
   const currentStepInfo = steps[currentStep];
@@ -159,6 +163,8 @@ export function UploadStatusPage({
         steps={steps}
         txHash={transactionDigest}
         title="PUBLISHING ATELIER"
+        onGoToVault={onGoToVault}
+        onGoToMarketplace={onGoToMarketplace}
       />
     </div>
   );

@@ -18,9 +18,11 @@ interface RetroConsoleProps {
   steps: Step[];
   txHash?: string;
   title?: string;
+  onGoToVault?: () => void;
+  onGoToMarketplace?: () => void;
 }
 
-export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS' }: RetroConsoleProps) {
+export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS', onGoToVault, onGoToMarketplace }: RetroConsoleProps) {
   // 檢查交易狀態
   const transactionStep = steps.find(step => step.id === 'transaction');
   const isTransactionComplete = transactionStep?.status === 'success';
@@ -164,7 +166,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       {/* Success Message */}
       {allStepsComplete && (
         <div 
-          className="mt-4 p-4 text-center"
+          className="mt-4 p-4"
           style={{
             background: '#1a1a1a',
             borderTop: '2px solid #444',
@@ -174,8 +176,64 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
             boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
           }}
         >
-          <div className="text-green-400 text-lg font-mono mb-1">PUBLISH COMPLETE</div>
-          <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
+          <div className="text-center mb-4">
+            <div className="text-green-400 text-lg font-mono mb-1">PUBLISH COMPLETE</div>
+            <div className="text-white/50 text-xs font-mono">Your Atelier has been successfully published to the blockchain</div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <div className="text-white/60 text-xs font-mono mb-2">What would you like to do next?</div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Vault Button */}
+              {onGoToVault && (
+                <button
+                  onClick={onGoToVault}
+                  className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                  style={{
+                    background: '#1a1a1a',
+                    borderTop: '2px solid #444',
+                    borderLeft: '2px solid #444',
+                    borderBottom: '2px solid #000',
+                    borderRight: '2px solid #000',
+                    boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                    padding: '12px',
+                  }}
+                >
+                  <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                    VIEW IN VAULT
+                  </div>
+                  <div className="text-white/40 text-[10px] font-mono">
+                    Manage your Atelier
+                  </div>
+                </button>
+              )}
+
+              {/* Marketplace Button */}
+              {onGoToMarketplace && (
+                <button
+                  onClick={onGoToMarketplace}
+                  className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                  style={{
+                    background: '#1a1a1a',
+                    borderTop: '2px solid #444',
+                    borderLeft: '2px solid #444',
+                    borderBottom: '2px solid #000',
+                    borderRight: '2px solid #000',
+                    boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                    padding: '12px',
+                  }}
+                >
+                  <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                    VIEW IN MARKETPLACE
+                  </div>
+                  <div className="text-white/40 text-[10px] font-mono">
+                    See your published work
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

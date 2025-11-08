@@ -120,7 +120,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={getZIndex(name)}
                     >
-                      <DesignPublisher />
+                      <DesignPublisher onOpenWindow={openWindow} />
                     </Window>
                   );
                 case 'marketplace':

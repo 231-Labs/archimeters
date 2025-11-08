@@ -8,7 +8,11 @@ import { RetroButton } from '@/components/common/RetroButton';
 import { RetroInput } from '@/components/common/RetroInput';
 import { ParameterControls } from '@/components/common/ParameterControls';
 
-export default function DesignPublisher() {
+interface DesignPublisherProps {
+  onOpenWindow?: (windowName: string) => void;
+}
+
+export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps = {}) {
   const currentAccount = useCurrentAccount();
   const coverInputRef = useRef<HTMLInputElement>(null);
   const algoInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +133,12 @@ export default function DesignPublisher() {
           }}
           onPrevious={() => {
             setShowUploadStatus(false);
+          }}
+          onGoToVault={() => {
+            onOpenWindow?.('vault');
+          }}
+          onGoToMarketplace={() => {
+            onOpenWindow?.('marketplace');
           }}
         />
       </div>
