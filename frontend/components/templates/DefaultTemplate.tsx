@@ -205,9 +205,9 @@ export default function DefaultTemplate({
                       </div>
                     </div>
                   ) : paramDef.type === 'color' ? (
-                    <div className="flex items-center gap-2 relative group">
+                    <div className="flex items-center gap-1.5 relative group">
                       <button
-                        className="w-6 h-6 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors"
+                        className="w-5 h-5 rounded relative overflow-hidden border border-white/10 group-hover:border-white/30 transition-colors flex-shrink-0"
                         onClick={(e) => {
                           const input = e.currentTarget.nextElementSibling as HTMLInputElement;
                           input?.click();
@@ -225,7 +225,7 @@ export default function DefaultTemplate({
                         type="text"
                         value={previewParams[key] || paramDef.default}
                         onChange={(e) => onParameterChange(key, e.target.value)}
-                        className="flex-1 bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                        className="flex-1 bg-black/30 text-white/90 text-xs p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
                       />
                     </div>
                   ) : (
