@@ -55,17 +55,19 @@ const Window: React.FC<WindowProps> = ({
         transform: `translate(${position.x}px, ${position.y}px)`,
         zIndex: zIndex,
   
-        borderTop: '3px solid #888',
-        borderLeft: '3px solid #777',
-        borderBottom: '3px solid #0a0a0a',
-        borderRight: '3px solid #111',
+        // Outer frame - raised 3D effect
+        borderTop: '2px solid #666',
+        borderLeft: '2px solid #666',
+        borderBottom: '2px solid #0a0a0a',
+        borderRight: '2px solid #0a0a0a',
   
         boxShadow: `
-          inset 0 1px 1px #1c1c1c,  
-          inset 1px 0 1px #1c1c1c, 
-          inset -1px 0 1px #000000, 
-          inset 0 -1px 1px #000000,
-          0 0 0 0.5px #999    
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          inset 1px 0 0 rgba(255, 255, 255, 0.08),
+          inset -1px 0 0 rgba(0, 0, 0, 0.6),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+          0 4px 12px rgba(0, 0, 0, 0.6),
+          0 0 0 1px #333
         `
       }}
       onClick={onClick}
@@ -76,12 +78,13 @@ const Window: React.FC<WindowProps> = ({
           isActive ? 'bg-[#0c0c0c]' : 'bg-[#141414]'
         }`}
         style={{
-          // 內層壓紋（左上暗，右下亮，形成內凹）
-          borderTop: '4px solid #1a1a1a',
-          borderLeft: '4px solid #111',
-          borderBottom: '4px solid #555',
-          borderRight: '4px solid #444',
-          background: 'linear-gradient(to right,rgb(50, 50, 50), rgb(29, 29, 29), rgb(19, 19, 19),rgb(11, 11, 11))'
+          // Title bar inset effect
+          borderTop: '2px solid #0a0a0a',
+          borderLeft: '2px solid #0a0a0a',
+          borderBottom: '2px solid #333',
+          borderRight: '2px solid #2a2a2a',
+          background: 'linear-gradient(to bottom, #0f0f0f, #1a1a1a)',
+          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.6), inset -1px -1px 1px rgba(255, 255, 255, 0.03)'
         }}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;

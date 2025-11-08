@@ -17,8 +17,8 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'marketplace': {
     title: 'Marketplace',
-    defaultSize: { width: 700, height: 650 },
-    resizable: true,
+    defaultSize: { width: 1100, height: 700 },
+    resizable: false,
   },
   'atelier-viewer': {
     title: 'Atelier Viewer',
@@ -27,8 +27,8 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'vault': {
     title: 'Vault',
-    defaultSize: { width: 800, height: 600 },
-    resizable: true,
+    defaultSize: { width: 1100, height: 700 },
+    resizable: false,
   },
   'pavilion': {
     title: 'Pavilion',

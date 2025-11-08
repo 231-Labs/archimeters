@@ -682,3 +682,73 @@ Day 3 建議順序:
 - [專案 GitHub](https://github.com/231-Labs/archimeters)
 - [Sui Explorer (Testnet)](https://suiexplorer.com/?network=testnet)
 
+---
+
+## Day 3 下午 - UI 精修 (2025-01-08 Afternoon)
+
+### UI/UX 改進任務完成
+
+#### 1. ✅ Detail Modal Back 按鈕 Hover 效果修復
+- 為 `RetroDetailModal` 的 BACK 按鈕添加 hover 狀態
+- 添加 `hover:bg-[#252525]` 和 `hover:text-white` 樣式
+- 改善交互反饋，提升用戶體驗
+
+#### 2. ✅ 所有窗口無 Item 狀態 Retro UI 統一設計
+- 創建 `RetroEmptyState` 可復用組件
+- 特性：
+  - 3D 內凹面板效果
+  - 可自定義圖標（box, file, image, globe）
+  - 統一的 mono 字體和大寫標題
+  - 可在所有窗口中復用
+- 應用到：
+  - `MarketplaceWindow`: "NO ATELIERS FOUND", "NO LISTED SCULPTS"
+  - `VaultWindow`: "NO ATELIERS FOUND", "NO SCULPTS FOUND"
+
+#### 3. ✅ Mint 狀態 Toast 改為復古 Ticket 樣式
+- 完全重新設計 `MintStatusNotification` 組件
+- 復古票據美學特性：
+  - 左右兩側的打孔效果
+  - 虛線邊框分隔頭部和內容
+  - "ARCHIMETERS SYSTEM" 頭部，帶漸變背景
+  - 簡潔的大寫狀態標籤
+  - 狀態/進度的雙欄佈局
+  - 3D 斜面邊框和陰影效果
+- 狀態類型：
+  - 上傳中：加載動畫 + 進度百分比
+  - 上傳成功：✓ 圖標 + 確認訊息
+  - 上傳失敗：✕ 圖標 + 錯誤訊息
+  - 準備中/鑄造中：加載動畫 + 狀態文字
+  - 鑄造成功：✓ 圖標 + 交易連結（帶虛線分隔）
+  - 鑄造失敗：✕ 圖標 + 錯誤詳情
+
+#### 4. ✅ Window 外框組件立體感優化
+- 優化 `Window.tsx` 中的窗口邊框和陰影系統：
+  - 外框：凸起 3D 效果，頂部/左側較亮，底部/右側較暗
+  - 邊框從 3px 簡化為 2px，外觀更簡潔
+  - 增強 box-shadow，包含內部高光和陰影
+  - 添加細微的 1px 輪廓線以增強定義
+- 標題欄改進：
+  - 改為正確的內凹效果（頂部/左側暗，底部/右側亮）
+  - 添加漸變背景（從上到下）
+  - 優化內部陰影以呈現真實深度感
+- 結果：更加統一和真實的復古 OS 窗口外觀
+
+#### 5. ✅ Marketplace/Vault 預設尺寸調整，取消縮放功能
+- 更新 `windows.ts` 配置：
+  - Marketplace: 1100x700px（從 700x650px 調整）
+  - Vault: 1100x700px（從 800x600px 調整）
+  - 兩個窗口都設置為 `resizable: false`
+- 優點：
+  - 為雙欄 DetailModal 佈局提供最佳尺寸
+  - 防止極端窗口尺寸導致佈局崩潰
+  - 提供一致的用戶體驗
+
+### 文件變更摘要
+- `frontend/components/common/RetroDetailModal.tsx` - Back 按鈕 hover 效果
+- `frontend/components/common/RetroEmptyState.tsx` - 新建統一空狀態組件
+- `frontend/components/windows/MarketplaceWindow.tsx` - 應用 RetroEmptyState
+- `frontend/components/windows/VaultWindow.tsx` - 應用 RetroEmptyState
+- `frontend/components/features/atelier-viewer/components/MintStatusNotification.tsx` - 復古票據樣式重構
+- `frontend/components/common/Window.tsx` - 窗口框架 3D 效果優化
+- `frontend/config/windows.ts` - Marketplace/Vault 尺寸調整和禁用縮放
+

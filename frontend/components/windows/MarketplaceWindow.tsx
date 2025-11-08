@@ -8,6 +8,7 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { useMarketplaceData } from '@/components/features/marketplace/hooks/useMarketplaceData';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { AtelierMintModal } from '@/components/features/atelier-viewer/AtelierMintModal';
+import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 
 interface MarketplaceWindowProps {
   name: WindowName;
@@ -193,10 +194,11 @@ export default function MarketplaceWindow({
       <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
         <div className="p-4">
           {ateliers.length === 0 && !isLoading ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/80">
-              <p className="text-lg mb-2">No Atelier Found</p>
-              <p className="text-sm">Be the first one to create an Atelier!</p>
-            </div>
+            <RetroEmptyState 
+              title="NO ATELIERS FOUND"
+              message="Be the first one to create an Atelier!"
+              icon="box"
+            />
           ) : viewMode === 'grid' ? (
             <Masonry
               breakpointCols={breakpointColumns}
@@ -325,10 +327,11 @@ export default function MarketplaceWindow({
         <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
           <div className="p-4">
             {sculpts.length === 0 && !isLoading ? (
-              <div className="flex flex-col items-center justify-center h-full text-white/80">
-                <p className="text-lg mb-2">No Listed Sculpts Found</p>
-                <p className="text-sm">Check back later for new listings!</p>
-              </div>
+              <RetroEmptyState 
+                title="NO LISTED SCULPTS"
+                message="Check back later for new listings!"
+                icon="image"
+              />
             ) : viewMode === 'grid' ? (
               <Masonry
                 breakpointCols={breakpointColumns}

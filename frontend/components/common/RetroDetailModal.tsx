@@ -55,7 +55,7 @@ export function DetailHeader({ title, subtitle, onClose }: DetailHeaderProps) {
       </div>
       <button
         onClick={onClose}
-        className="px-3 py-1 text-xs font-medium transition-all duration-75 bg-[#1a1a1a] text-[#cccccc]"
+        className="px-3 py-1 text-xs font-medium transition-all duration-75 bg-[#1a1a1a] text-[#cccccc] hover:bg-[#252525] hover:text-white"
         style={{
           borderTop: '2px solid #2a2a2a',
           borderLeft: '2px solid #2a2a2a',

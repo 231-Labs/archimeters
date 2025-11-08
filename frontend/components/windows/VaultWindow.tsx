@@ -15,6 +15,7 @@ import { formatSuiAmount } from '@/utils/formatters';
 import { RetroButton } from '@/components/common/RetroButton';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { RetroPanel } from '@/components/common/RetroPanel';
+import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -330,10 +331,11 @@ export default function VaultWindow({}: VaultWindowProps) {
                 <p className="text-lg mb-2">{errorAteliers}</p>
               </div>
             ) : !ateliers.length ? (
-              <div className="flex flex-col items-center justify-center h-full text-white/80">
-                <p className="text-lg mb-2">No Atelier Found</p>
-                <p className="text-sm">Create your first Atelier to get started!</p>
-              </div>
+              <RetroEmptyState 
+                title="NO ATELIERS FOUND"
+                message="Create your first Atelier to get started!"
+                icon="box"
+              />
             ) : viewMode === 'grid' ? (
               <Masonry
                 breakpointCols={breakpointColumns}
@@ -482,10 +484,11 @@ export default function VaultWindow({}: VaultWindowProps) {
               <p className="text-lg mb-2">{errorSculpts}</p>
             </div>
           ) : !sculpts.length ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/80">
-              <p className="text-lg mb-2">No Sculpts Found</p>
-              <p className="text-sm">Create your first Sculpt to get started!</p>
-              </div>
+            <RetroEmptyState 
+              title="NO SCULPTS FOUND"
+              message="Create your first Sculpt to get started!"
+              icon="file"
+            />
             ) : viewMode === 'grid' ? (
               <Masonry
                 breakpointCols={breakpointColumns}
