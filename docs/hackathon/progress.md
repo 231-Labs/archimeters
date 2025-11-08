@@ -884,6 +884,22 @@ Day 3 建議順序:
   - ✅ 點擊內容 = 激活窗口
   - ✅ 所有交互符合標準 OS 行為
 
+#### 13. ✅ 修復 VaultWindow Kiosk 信息查詢錯誤
+- **問題**: 點擊 Vault 窗口顯示 "Kiosk information not found in membership" 錯誤
+- **根本原因**:
+  - `useUserItems` 嘗試從 membership NFT 的 fields 中讀取 `kiosk_id` 和 `kiosk_cap_id`
+  - 但 membership NFT 並不存儲 kiosk 數據
+- **解決方案**:
+  - 改用與 `useKiosk.ts` 相同的方法：直接查詢用戶的 `KioskOwnerCap` 對象
+  - 查詢 `0x2::kiosk::KioskOwnerCap` 類型的對象
+  - 從 `fields.for` 或 `fields.kiosk_id` 提取 kioskId
+  - 從對象 ID 提取 kioskCapId
+  - 優雅處理沒有 kiosk 的情況（僅警告，不報錯）
+- **效果**:
+  - ✅ Vault 窗口正常打開，無錯誤
+  - ✅ Kiosk 信息正確加載
+  - ✅ 為 List 功能準備好必要數據
+
 ### 待處理問題
 - [ ] **Show 3D 錯誤**: My Sculpt > item > show 3D 點擊後報錯（需要具體錯誤信息）
 - [ ] **List 功能實現**: My Ateliers/Sculpts 的 List 功能需要 Kiosk SDK 整合
