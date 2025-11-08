@@ -69,7 +69,7 @@ export default function GLBViewer({ blobId, className = 'w-full h-full' }: GLBVi
 
     // Load GLB model
     const loader = new GLTFLoader();
-    const modelUrl = `/api/walrus/get-blob?blobId=${blobId}`;
+    const modelUrl = `/api/walrus?blobId=${blobId}`;
 
     console.log('Loading GLB from:', modelUrl);
 
