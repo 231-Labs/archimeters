@@ -1,4 +1,4 @@
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 import AtelierViewer from '@/components/features/atelier-viewer';
 
 interface AtelierViewerProps {

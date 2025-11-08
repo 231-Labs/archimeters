@@ -1,4 +1,4 @@
-import { WindowName } from '@/types';
+import { WindowName } from '@/components/features/window-manager';
 
 export interface DockProps {
   onOpenWindow: (name: WindowName) => void;

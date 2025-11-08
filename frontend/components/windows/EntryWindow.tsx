@@ -2,7 +2,7 @@ import { ConnectButton, useCurrentAccount, useSuiClient, useSignAndExecuteTransa
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
-import { WindowName } from '@/types';
+import { WindowName } from '@/components/features/window-manager';
 import KioskSelector from '@/components/features/entry/components/KioskSelector';
 
 // Wallet connection status types

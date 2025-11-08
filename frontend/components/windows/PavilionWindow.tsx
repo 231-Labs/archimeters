@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { PAVILION_KIOSKS, getPavilionUrl, getCategoryColor, PavilionConfig } from '@/config/pavilion';
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 
 interface PavilionWindowProps {
   name: WindowName;

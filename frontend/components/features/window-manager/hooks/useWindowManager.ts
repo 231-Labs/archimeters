@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WindowName, WindowPosition, WindowSize, WindowManagerState } from '@/types/window';
+import { WindowName, WindowPosition, WindowSize, WindowManagerState } from '../types';
 import { defaultWindowConfigs } from '@/config/windows';
 
 const BASE_Z_INDEX = 100;  // Base z-index value
@@ -120,7 +120,7 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     }));
   }, []);
 
-  // 開始拖動窗口
+  // Start dragging window
   const startDragging = useCallback((e: React.MouseEvent<Element>, name: WindowName) => {
     e.preventDefault();
     activateWindow(name);
@@ -211,4 +211,5 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     startDragging,
     resizeWindow,
   };
-} 
+}
+

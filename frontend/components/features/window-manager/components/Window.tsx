@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { WindowName } from '@/types';
+import type { WindowName } from '../types';
 
 interface WindowProps {
   name: WindowName;
@@ -149,4 +149,5 @@ const Window: React.FC<WindowProps> = ({
   );
 };
 
-export default Window; 
+export default Window;
+

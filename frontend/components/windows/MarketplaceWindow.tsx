@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 import Masonry from 'react-masonry-css';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useMarketplaceData } from '@/components/features/marketplace/hooks/useMarketplaceData';

@@ -1,6 +1,6 @@
 import { useAtelierData } from './hooks/useAtelierData';
 import { AtelierMintCore } from './components/AtelierMintCore';
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 
 interface AtelierViewerProps {
   name: WindowName;

@@ -1,6 +1,5 @@
 import Terminal from '../features/terminal/Terminal';
-import Window from '@/components/common/Window';
-import type { WindowName } from '@/types';
+import { Window, WindowName } from '@/components/features/window-manager';
 import { defaultWindowConfigs } from '@/config/windows';
 
 /**

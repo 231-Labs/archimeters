@@ -1,4 +1,4 @@
-import { WindowName, WindowConfig } from '@/types/window';
+import { WindowName, WindowConfig } from '@/components/features/window-manager';
 
 export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   entry: {

@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
 import { usePrinters } from '@/components/features/vault/hooks/usePrinters';
 import { useWithdrawAll } from '@/components/features/vault/hooks/useWithdrawAll';
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
 import { SculptDetailModal } from '@/components/features/vault/components/SculptDetailModal';
 import { formatSuiAmount } from '@/utils/formatters';

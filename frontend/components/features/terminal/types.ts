@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import type { WindowName } from '@/types';
+import type { WindowName } from '@/components/features/window-manager';
 
 /**
  * Props for the terminal window component

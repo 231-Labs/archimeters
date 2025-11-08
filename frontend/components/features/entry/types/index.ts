@@ -1,4 +1,4 @@
-import { WindowName } from '@/types';
+import { WindowName } from '@/components/features/window-manager';
 
 export type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
 

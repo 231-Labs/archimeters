@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import Background from '@/components/background_animations/Background';
-import Window from '@/components/common/Window';
 import { Terminal } from '@/components/features/terminal';
+import { Window, useWindowManager, useWindowFocus } from '@/components/features/window-manager';
 import Dock from '@/components/layout/Dock';
 import Header from '@/components/layout/Header';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
@@ -14,7 +14,6 @@ import DesignPublisher from '@/components/windows/DesignPublisher';
 import EntryWindow, { WalletStatus } from '@/components/windows/EntryWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
 import PavilionWindow from '@/components/windows/PavilionWindow';
-import { useWindowManager } from '@/hooks/useWindowManager';
 import { defaultWindowConfigs } from '@/config/windows';
 import { PACKAGE_ID } from '@/utils/transactions';
 
@@ -22,7 +21,6 @@ export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
-  const [zOrder, setZOrder] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
 
   const {
@@ -36,20 +34,8 @@ export default function Home() {
     resizeWindow,
   } = useWindowManager('entry');
 
-  // Single source of truth for window activation
-  const activateWindow = (name: string) => {
-    setZOrder(prev => [...prev.filter(n => n !== name), name]);
-  };
-
-  // Sync zOrder with openWindows - ensure all open windows are in zOrder
-  useEffect(() => {
-    setZOrder(prev => {
-      const newWindows = openWindows.filter(w => !prev.includes(w as string)) as string[];
-      const openWindowsSet = new Set(openWindows as string[]);
-      const closedWindows = prev.filter(w => !openWindowsSet.has(w));
-      return [...prev.filter(w => !closedWindows.includes(w)), ...newWindows];
-    });
-  }, [openWindows]);
+  // Use unified focus management hook
+  const { focusWindow, getZIndex } = useWindowFocus(openWindows);
 
   useEffect(() => {
     const fetchOsId = async () => {
@@ -84,7 +70,7 @@ export default function Home() {
       <div className="min-h-screen bg-black overflow-hidden relative">
         <Header paused={paused} onToggle={() => setPaused(p => !p)}/>
         <Background walletStatus={walletStatus} paused={paused}/>
-        <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
+        <Dock onOpenWindow={openWindow} onActivateWindow={focusWindow} />
         <div className="fixed top-[27px]">
           <div className="h-full relative">
             {openWindows.map(name => {
@@ -100,8 +86,8 @@ export default function Home() {
                       isActive={activeWindow === 'entry'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      onClick={() => focusWindow(name)}
+                      zIndex={getZIndex(name)}
                     >
                       <EntryWindow
                         onDragStart={(e, name) => startDragging(e, name)}
@@ -123,10 +109,10 @@ export default function Home() {
                       isActive={activeWindow === 'publisher'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
+                      onClick={() => focusWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <DesignPublisher />
                     </Window>
@@ -142,10 +128,10 @@ export default function Home() {
                       isActive={activeWindow === 'marketplace'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
+                      onClick={() => focusWindow(name)}
                       resizable={defaultWindowConfigs['marketplace'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <MarketplaceWindow
                         name={name}
@@ -164,10 +150,10 @@ export default function Home() {
                       isActive={activeWindow === 'atelier-viewer'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
+                      onClick={() => focusWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <AtelierViewerWindow name={name} />
                     </Window>
@@ -183,10 +169,10 @@ export default function Home() {
                       isActive={activeWindow === 'vault'}
                       onClose={() => closeWindow(name)}
                       onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
+                      onClick={() => focusWindow(name)}
                       resizable={defaultWindowConfigs['vault'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <VaultWindow name={name} />
                     </Window>
@@ -202,10 +188,10 @@ export default function Home() {
                         isActive={activeWindow === 'terminal'}
                         onClose={() => closeWindow(name)}
                         onDragStart={(e) => startDragging(e, name)}
-                        onClick={() => activateWindow(name)}
+                        onClick={() => focusWindow(name)}
                         // resizable
                         onResize={(e) => resizeWindow(e, name)}
-                        zIndex={zOrder.indexOf(name) + 1}
+                        zIndex={getZIndex(name)}
                       >
                         <Terminal />
                       </Window>
@@ -221,10 +207,10 @@ export default function Home() {
                         isActive={activeWindow === 'pavilion'}
                         onClose={() => closeWindow(name)}
                         onDragStart={(e) => startDragging(e, name)}
-                        onClick={() => activateWindow(name)}
+                        onClick={() => focusWindow(name)}
                         resizable
                         onResize={(e) => resizeWindow(e, name)}
-                        zIndex={zOrder.indexOf(name) + 1}
+                        zIndex={getZIndex(name)}
                       >
                         <PavilionWindow name={name} />
                       </Window>
