@@ -268,11 +268,19 @@
 - 完全移除 Publisher 中的重複參數控件代碼
 - 統一參數控制 UX 體驗
 
-**待測試**:
-- [ ] 發布流程（metadata 創建 + 文件上傳 + 合約調用）
+**最新更新 - 上傳狀態頁面整合**:
+- [X] 添加 showUploadStatus 狀態追蹤
+- [X] 整合 UploadStatusPage 組件
+- [X] 點擊 PUBLISH ATELIER 後跳轉到上傳狀態頁
+- [X] 傳遞所有必要 props（上傳狀態、步驟、作品信息、交易狀態）
+- [X] 添加返回按鈕（onPrevious）
+
+**待測試 & 優化**:
+- [ ] 測試發布流程（metadata 創建 + 文件上傳 + 合約調用）
+- [ ] UploadStatusPage UI 美化（對齊 Retro OS 風格）
 
 #### 進行中
-- 無
+- UploadStatusPage UI 美化
 
 ##### 🎨 **新增任務：Mint UI 重構與優化**
 
