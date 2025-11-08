@@ -67,7 +67,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-1">DERIVED SCULPTS</h4>
-          <p className="text-white/70 text-sm font-mono mb-1">View all sculpts in Gallery</p>
+          <p className="text-white/70 text-sm font-mono mb-1">View all sculpts in Marketplace</p>
           <p className="text-white/40 text-xs font-mono">ⓘ Tracking coming soon</p>
         </RetroPanel>
 

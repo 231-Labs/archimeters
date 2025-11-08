@@ -6,7 +6,7 @@ import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
 import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
-import { usePrinters, Printer } from '@/components/features/vault/hooks/usePrinters';
+import { usePrinters } from '@/components/features/vault/hooks/usePrinters';
 import { useWithdrawAll } from '@/components/features/vault/hooks/useWithdrawAll';
 import type { WindowName } from '@/types';
 import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
