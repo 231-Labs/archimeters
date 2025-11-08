@@ -1,6 +1,9 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { RetroSection } from '@/components/common/RetroCard';
+import { RetroPreview, RetroImage } from '@/components/common/RetroPreview';
+import { RetroButton } from '@/components/common/RetroButton';
 
 export interface TemplateProps {
   workName: string;
@@ -42,108 +45,89 @@ export default function DefaultTemplate({
   exportFormatToggle
 }: TemplateProps) {
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-6">
-      <div className="lg:w-[55%] flex flex-col gap-4">
-        <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-          <div className="relative bg-black/50 backdrop-blur-sm p-6">
-            <div className="absolute left-0 top-0 w-6 h-6 border-l border-t border-white/20"></div>
-            <div className="absolute right-0 top-0 w-6 h-6 border-r border-t border-white/20"></div>
-            <div className="absolute left-0 bottom-0 w-6 h-6 border-l border-b border-white/20"></div>
-            <div className="absolute right-0 bottom-0 w-6 h-6 border-r border-b border-white/20"></div>
-
-            <div className="relative w-full bg-black/70 border border-white/10" style={{ height: '500px' }}>
-              {preview3D ? (
-                preview3D
-              ) : (
-                <div className="flex h-full items-center justify-center text-white/50">
-                  No 3D preview available
-                </div>
-              )}
+    <div className="flex-1 flex flex-col lg:flex-row gap-3">
+      <div className="lg:w-[55%] flex flex-col gap-3">
+        <RetroPreview height="500px">
+          {preview3D ? (
+            preview3D
+          ) : (
+            <div className="flex h-full items-center justify-center text-white/50 font-mono text-xs">
+              NO 3D PREVIEW
             </div>
-          </div>
-        </div>
+          )}
+        </RetroPreview>
 
-        <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-          <div className="relative bg-black/50 backdrop-blur-sm p-6">
-            <div className="space-y-6">
-              <div className="flex gap-6">
-                <div className="w-1/2">
-                  <div className="relative aspect-square bg-black/70 border border-white/10 overflow-hidden">
-                    {imageUrl ? (
-                      <div className="relative group h-full">
-                        <img
-                          src={imageUrl}
-                          alt={workName}
-                          className="w-full h-full object-contain transition-all duration-1000 group-hover:contrast-125 group-hover:brightness-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
-                      </div>
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-white/50">
-                        No image available
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="w-1/2">
-                  <h2 className="text-lg font-semibold mb-2 text-white/90">Artwork Description</h2>
-                  <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{description}</p>
-                </div>
-              </div>
-
-              <div className="border-t border-white/10 pt-6">
-                <h2 className="text-lg font-semibold mb-2 text-white/90">Artist Statement</h2>
-                <p className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{intro}</p>
+        <RetroSection title="ARTWORK INFO">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <RetroImage 
+                src={imageUrl || '/placeholder.png'} 
+                alt={workName}
+              />
+              
+              <div>
+                <h3 className="text-white/90 text-xs font-mono uppercase mb-2 tracking-wide">DESCRIPTION</h3>
+                <p className="text-white/60 text-xs font-mono leading-relaxed">{description}</p>
               </div>
             </div>
+
+            <div className="border-t border-white/10 pt-3">
+              <h3 className="text-white/90 text-xs font-mono uppercase mb-2 tracking-wide">ARTIST STATEMENT</h3>
+              <p className="text-white/60 text-xs font-mono leading-relaxed">{intro}</p>
+            </div>
           </div>
-        </div>
+        </RetroSection>
       </div>
 
-      <div className="lg:w-[45%] flex flex-col gap-4">
-        <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-          <div className="relative bg-black/50 backdrop-blur-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-white/90">Parameters</h2>
-              <button 
-                onClick={() => {
-                  const defaultParams = Object.fromEntries(
-                    Object.entries(parameters).map(([key, value]) => [key, value.default])
-                  );
-                  onParameterChange('all', defaultParams); // 單次批量更新
-                  onAliasChange?.('');
-                }}
-                className="text-sm text-white/50 hover:text-white/70 transition-colors"
-              >
-                Reset All
-              </button>
-            </div>
+      <div className="lg:w-[45%] flex flex-col gap-3">
+        <RetroSection title="PARAMETERS">
+          <div className="flex justify-end mb-3">
+            <RetroButton 
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const defaultParams = Object.fromEntries(
+                  Object.entries(parameters).map(([key, value]) => [key, value.default])
+                );
+                onParameterChange('all', defaultParams);
+                onAliasChange?.('');
+              }}
+            >
+              RESET ALL
+            </RetroButton>
+          </div>
 
-            <div className="mb-3 bg-white/5 rounded-md p-2">
-              <div className="flex justify-between items-center mb-1.5">
-                <div className="text-white/60 text-xs">Model Alias</div>
-                <div className="text-[10px] text-white/40">Required</div>
+          <div className="space-y-3">
+            <div className="bg-black/40 rounded p-2 border border-white/5">
+                <div className="flex justify-between items-center mb-1.5">
+                  <div className="text-white/60 text-xs font-mono uppercase tracking-wide">Model Alias</div>
+                  <div className="text-[9px] text-white/40 font-mono">REQUIRED</div>
+                </div>
+                <input
+                  type="text"
+                  value={alias}
+                  onChange={(e) => onAliasChange?.(e.target.value)}
+                  placeholder="NAME YOUR MODEL"
+                  className="w-full bg-black/60 text-white/90 text-xs p-1.5 font-mono border border-white/10 focus:outline-none focus:border-white/30 transition-colors"
+                  style={{
+                    borderTop: '1px solid #0a0a0a',
+                    borderLeft: '1px solid #0a0a0a',
+                    borderBottom: '1px solid #333',
+                    borderRight: '1px solid #333',
+                  }}
+                />
               </div>
-              <input
-                type="text"
-                value={alias}
-                onChange={(e) => onAliasChange?.(e.target.value)}
-                placeholder="Name Your Model"
-                className="w-full bg-black/30 text-white/90 text-xs p-1.5 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
-              />
-            </div>
 
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(parameters).map(([key, paramDef]) => (
-                <div key={key} className="bg-white/5 rounded-md p-2">
+                <div key={key} className="bg-black/40 border border-white/5 p-2">
                   <div className="flex justify-between items-center mb-1.5">
-                    <div className="text-white/60 capitalize text-xs truncate pr-1">{paramDef.label || key}</div>
+                    <div className="text-white/60 capitalize text-xs font-mono truncate pr-1">{paramDef.label || key}</div>
                     <button 
-                      className="text-[10px] text-white/40 hover:text-white/60 transition-colors flex-shrink-0"
+                      className="text-[9px] text-white/40 hover:text-white/60 transition-colors flex-shrink-0 font-mono"
                       onClick={() => onParameterChange(key, paramDef.default)}
                     >
-                      Reset
+                      RST
                     </button>
                   </div>
                   {paramDef.type === 'number' ? (
@@ -166,26 +150,17 @@ export default function DefaultTemplate({
                           value={previewParams[key] ?? paramDef.default}
                           onChange={(e) => {
                             const inputValue = e.target.value;
-                            
-                            // Allow empty value or intermediate decimal input (e.g., "0.", "0.5", "-")
-                            // This enables editing decimal numbers between 0 and 1
                             if (inputValue === '' || inputValue === '-' || inputValue.endsWith('.')) {
                               onParameterChange(key, inputValue);
                               return;
                             }
-                            
-                            // Parse as number
                             const numValue = Number(inputValue);
-                            
-                            // If it's a valid number, allow it (will be clamped on blur)
                             if (!isNaN(numValue)) {
                               onParameterChange(key, numValue);
                             }
                           }}
                           onBlur={(e) => {
-                            // When focus is lost, ensure value is within range or set to default
                             const inputValue = e.target.value;
-                            
                             if (inputValue === '' || inputValue === '-' || inputValue === '.' || isNaN(Number(inputValue))) {
                               onParameterChange(key, paramDef.default);
                             } else {
@@ -196,7 +171,13 @@ export default function DefaultTemplate({
                               onParameterChange(key, clampedValue);
                             }
                           }}
-                          className="w-12 bg-black/30 text-white/90 text-right text-xs p-1 rounded border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                          className="w-12 bg-black/60 text-white/90 text-right text-xs p-1 font-mono border border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-white/30"
+                          style={{
+                            borderTop: '1px solid #0a0a0a',
+                            borderLeft: '1px solid #0a0a0a',
+                            borderBottom: '1px solid #333',
+                            borderRight: '1px solid #333',
+                          }}
                         />
                       </div>
                       <div className="flex justify-between text-[9px] text-white/30 px-0.5">
@@ -225,7 +206,13 @@ export default function DefaultTemplate({
                         type="text"
                         value={previewParams[key] || paramDef.default}
                         onChange={(e) => onParameterChange(key, e.target.value)}
-                        className="flex-1 bg-black/30 text-white/90 text-xs p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                        className="flex-1 bg-black/60 text-white/90 text-xs p-1 font-mono border border-white/10 focus:outline-none focus:border-white/30"
+                        style={{
+                          borderTop: '1px solid #0a0a0a',
+                          borderLeft: '1px solid #0a0a0a',
+                          borderBottom: '1px solid #333',
+                          borderRight: '1px solid #333',
+                        }}
                       />
                     </div>
                   ) : (
@@ -233,50 +220,51 @@ export default function DefaultTemplate({
                       type="text"
                       value={previewParams[key] || paramDef.default}
                       onChange={(e) => onParameterChange(key, e.target.value)}
-                      className="w-full bg-black/30 text-white/90 text-sm p-1 rounded border border-white/10 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                      className="w-full bg-black/60 text-white/90 text-xs p-1 font-mono border border-white/10 focus:outline-none focus:border-white/30"
+                      style={{
+                        borderTop: '1px solid #0a0a0a',
+                        borderLeft: '1px solid #0a0a0a',
+                        borderBottom: '1px solid #333',
+                        borderRight: '1px solid #333',
+                      }}
                     />
                   )}
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </RetroSection>
 
-        <div className="relative p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
-          <div className="relative bg-black/50 backdrop-blur-sm p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-white/60 mb-1">Price</div>
-                <div className="flex items-baseline gap-4">
-                  <img src="/sui_symbol_white.png" alt="Sui Symbol" width={18} height={30} />
-                  <span className="text-3xl font-light bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80">
-                    {price}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 items-end">
-                {exportFormatToggle}
-                <div className="relative group">
-                  <button 
-                    onClick={onMint}
-                    disabled={mintButtonState.disabled}
-                    className="relative px-8 py-3 bg-black border border-white/10 rounded-sm hover:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/10"
-                  >
-                    <div className="flex flex-col items-center">
-                      <span className="text-base font-light text-white/90 group-hover:text-white transition-colors">
-                        Mint Sculpt
-                      </span>
-                      <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors">
-                        Initialize Sculpture
-                      </span>
-                    </div>
-                  </button>
-                  {mintButtonState.tooltipComponent}
-                </div>
+        <RetroSection title="MINT SCULPT">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-1 border-b border-white/10">
+              <span className="text-white/60 text-xs font-mono uppercase tracking-wide">Price</span>
+              <div className="flex items-baseline gap-2">
+                <img src="/sui_symbol_white.png" alt="Sui Symbol" width={14} height={24} />
+                <span className="text-white/90 text-xl font-mono">{price}</span>
               </div>
             </div>
+
+            {exportFormatToggle && (
+              <div className="py-1">
+                {exportFormatToggle}
+              </div>
+            )}
+
+            <div className="relative">
+              <RetroButton 
+                onClick={onMint}
+                disabled={mintButtonState.disabled}
+                size="lg"
+                variant="primary"
+                className="w-full"
+              >
+                MINT SCULPT
+              </RetroButton>
+              {mintButtonState.tooltipComponent}
+            </div>
           </div>
-        </div>
+        </RetroSection>
       </div>
     </div>
   );
