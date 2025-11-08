@@ -252,12 +252,21 @@
 - Sticky 標題欄含輸入框和藝術家信息
 - 價格輸入採用 Mint 頁面相同的內聯樣式（Sui icon + 大字體）
 
-**已完成 - 最終版本**:
-- [X] **Header 重設計**：移除 "CREATE NEW ATELIER"，改為簡潔輸入框 + 藝術家信息
-- [X] **Parameters 互動式控制**：滑桿 + 即時數值 + Reset 按鈕，對齊 Atelier Detail Modal
+**已完成 - 最終版本 v2**:
+- [X] **Header 極簡重設計**：移除提示語行，單行 RetroInput + 藝術家信息，降低高度
+- [X] **ParameterControls 組件提取**：
+  - 從 AtelierMintLayout 提取為獨立可復用組件
+  - 支援 number (range + input), color, text 類型
+  - 完全對齊 Atelier Detail Modal 的排版和邏輯
+  - 滑桿現在完全可用，即時更新 3D 預覽
 - [X] **Membership 資料自動帶入**：修復 useMembership hook，正確提取 username 和 description
-- [X] **窗口尺寸優化**：1500x850 默認大小，resizable: false
+- [X] **窗口尺寸優化**：1400x890（與 Vault 1100x700 相同比例 11:7，整體更大），resizable: false
 - [X] **文件上傳渲染修復**：圖片和算法文件上傳後即時渲染
+
+**代碼優化**:
+- 新增 `ParameterControls.tsx` 可復用組件
+- 完全移除 Publisher 中的重複參數控件代碼
+- 統一參數控制 UX 體驗
 
 **待測試**:
 - [ ] 發布流程（metadata 創建 + 文件上傳 + 合約調用）
