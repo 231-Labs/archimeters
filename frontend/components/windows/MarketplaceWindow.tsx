@@ -7,7 +7,6 @@ import Masonry from 'react-masonry-css';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useMarketplaceData } from '@/components/features/marketplace/hooks/useMarketplaceData';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
-import RetroPanel from '@/components/common/RetroPanel';
 
 interface MarketplaceWindowProps {
   name: WindowName;
@@ -122,7 +121,11 @@ export default function MarketplaceWindow({
   };
 
   return (
-    <div className="flex flex-col h-full relative bg-[#1a1a1a]">
+    <Tabs.Root 
+      value={activeTab} 
+      onValueChange={setActiveTab}
+      className="flex flex-col h-full bg-[#1a1a1a]"
+    >
       {/* Loading overlay */}
       {isLoading && ateliers.length === 0 && sculpts.length === 0 && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -137,58 +140,64 @@ export default function MarketplaceWindow({
         </div>
       )}
 
-      {/* Tab navigation and view controls */}
-      <div className="px-4 pt-4 pb-2 space-y-3">
-        <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
-          <RetroTabsList>
-            <RetroTabsTrigger value="ateliers">Ateliers</RetroTabsTrigger>
-            <RetroTabsTrigger value="sculpts">Sculpts</RetroTabsTrigger>
-          </RetroTabsList>
-        </Tabs.Root>
+      {/* Header with Tabs and View Mode Toggle */}
+      <div 
+        className="flex items-center justify-between bg-[#0f0f0f] px-2"
+        style={{
+          borderBottom: '2px solid #0a0a0a',
+          boxShadow: 'inset 0 -1px 2px rgba(0, 0, 0, 0.5)',
+        }}
+      >
+        <RetroTabsList className="flex-1">
+          <RetroTabsTrigger value="ateliers">Ateliers</RetroTabsTrigger>
+          <RetroTabsTrigger value="sculpts">Sculpts</RetroTabsTrigger>
+        </RetroTabsList>
 
-        {/* View mode toggle */}
-        <div className="flex justify-end gap-2">
+        {/* View Mode Toggle */}
+        <div className="flex gap-1 p-1">
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-3 py-1 text-xs font-mono uppercase transition-all ${
+            className={`p-1.5 rounded transition-colors ${
               viewMode === 'grid'
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                ? 'bg-white/10 text-white/90'
+                : 'text-white/40 hover:text-white/70'
             }`}
+            title="Grid View"
           >
-            Grid
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-3 py-1 text-xs font-mono uppercase transition-all ${
+            className={`p-1.5 rounded transition-colors ${
               viewMode === 'list'
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                ? 'bg-white/10 text-white/90'
+                : 'text-white/40 hover:text-white/70'
             }`}
+            title="List View"
           >
-            List
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* Content area: scrollable */}
-      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
         <div className="p-4">
-          {/* Ateliers Tab */}
-          {activeTab === 'ateliers' && (
-            <>
-              {ateliers.length === 0 && !isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full text-white/80">
-                  <p className="text-lg mb-2">No Atelier Found</p>
-                  <p className="text-sm">Be the first one to create an Atelier!</p>
-                </div>
-              ) : viewMode === 'grid' ? (
-                <Masonry
-                  breakpointCols={breakpointColumns}
-                  className="flex w-auto -ml-3"
-                  columnClassName="pl-3 bg-clip-padding"
-                >
-                  {ateliers.map((atelier: Atelier) => (
+          {ateliers.length === 0 && !isLoading ? (
+            <div className="flex flex-col items-center justify-center h-full text-white/80">
+              <p className="text-lg mb-2">No Atelier Found</p>
+              <p className="text-sm">Be the first one to create an Atelier!</p>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <Masonry
+              breakpointCols={breakpointColumns}
+              className="flex w-auto -ml-3"
+              columnClassName="pl-3 bg-clip-padding"
+            >
+              {ateliers.map((atelier: Atelier) => (
                 <div key={atelier.id} className="mb-3">
                   {atelier.isLoading ? (
                     <div className="w-full aspect-square bg-neutral-800/50 animate-pulse rounded-sm" />
@@ -261,58 +270,66 @@ export default function MarketplaceWindow({
                     </button>
                   )}
                 </div>
-                  ))}
-                </Masonry>
-              ) : (
-                <div className="space-y-2">
-                  {ateliers.map((atelier: Atelier) => (
-                    <RetroPanel key={atelier.id} variant="inset" className="p-3">
-                      <div className="flex gap-3">
-                        {atelier.url ? (
-                          <Image
-                            src={getImageUrl(atelier.url)}
-                            alt={atelier.title}
-                            width={80}
-                            height={80}
-                            className="w-20 h-20 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 bg-neutral-800/50 animate-pulse rounded" />
-                        )}
-                        <div className="flex-1 flex flex-col justify-center">
-                          <p className="text-sm font-mono text-white/90">{atelier.title}</p>
-                          <p className="text-xs font-mono text-white/60">@{atelier.author?.slice(0, 8)}</p>
-                          <p className="text-xs font-mono text-white/70 mt-1">{scaleSuiPrice(atelier.price)} SUI</p>
-                        </div>
-                        <button
-                          onClick={() => handleImageClick(atelier)}
-                          className="px-4 py-2 text-xs font-mono uppercase bg-white/10 hover:bg-white/20 transition-all"
-                        >
-                          View
-                        </button>
-                      </div>
-                    </RetroPanel>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+                ))}
+              </Masonry>
+            ) : (
+              /* List View */
+              <div className="space-y-2">
+                {ateliers.map((atelier: Atelier) => (
+                  <div
+                    key={atelier.id}
+                    onClick={() => handleImageClick(atelier)}
+                    className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden">
+                      {atelier.url ? (
+                        <Image
+                          src={getImageUrl(atelier.url)}
+                          alt={atelier.title}
+                          width={96}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-800/50 animate-pulse" />
+                      )}
+                    </div>
 
-          {/* Sculpts Tab */}
-          {activeTab === 'sculpts' && (
-            <>
-              {sculpts.length === 0 && !isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full text-white/80">
-                  <p className="text-lg mb-2">No Listed Sculpts Found</p>
-                  <p className="text-sm">Check back later for new listings!</p>
-                </div>
-              ) : viewMode === 'grid' ? (
-                <Masonry
-                  breakpointCols={breakpointColumns}
-                  className="flex w-auto -ml-3"
-                  columnClassName="pl-3 bg-clip-padding"
-                >
-                  {sculpts.map((sculpt: Sculpt) => (
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white/90 text-sm font-medium font-mono truncate">{atelier.title}</h3>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
+                        <span>AUTHOR: @{atelier.author?.slice(0, 8)}</span>
+                        <span>PRICE: {scaleSuiPrice(atelier.price)} SUI</span>
+                      </div>
+                    </div>
+
+                    {/* Action Icon */}
+                    <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Tabs.Content>
+
+        <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
+          <div className="p-4">
+            {sculpts.length === 0 && !isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full text-white/80">
+                <p className="text-lg mb-2">No Listed Sculpts Found</p>
+                <p className="text-sm">Check back later for new listings!</p>
+              </div>
+            ) : viewMode === 'grid' ? (
+              <Masonry
+                breakpointCols={breakpointColumns}
+                className="flex w-auto -ml-3"
+                columnClassName="pl-3 bg-clip-padding"
+              >
+                {sculpts.map((sculpt: Sculpt) => (
                     <div key={sculpt.id} className="mb-3">
                       {sculpt.isLoading ? (
                         <div className="w-full aspect-square bg-neutral-800/50 animate-pulse rounded-sm" />
@@ -352,37 +369,44 @@ export default function MarketplaceWindow({
                         </button>
                       )}
                     </div>
-                  ))}
-                </Masonry>
-              ) : (
-                <div className="space-y-2">
-                  {sculpts.map((sculpt: Sculpt) => (
-                    <RetroPanel key={sculpt.id} variant="inset" className="p-3">
-                      <div className="flex gap-3">
-                        <div className="w-20 h-20 bg-neutral-800/50 rounded flex items-center justify-center">
-                          <p className="text-white/60 text-[10px] font-mono">3D</p>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-center">
-                          <p className="text-sm font-mono text-white/90">Sculpt #{sculpt.id.slice(0, 8)}</p>
-                          <p className="text-xs font-mono text-white/60">@{sculpt.creator?.slice(0, 8)}</p>
-                          <p className="text-xs font-mono text-white/70 mt-1">{scaleSuiPrice(sculpt.price)} SUI</p>
-                        </div>
-                        <button
-                          onClick={() => console.log('Sculpt clicked:', sculpt)}
-                          className="px-4 py-2 text-xs font-mono uppercase bg-white/10 hover:bg-white/20 transition-all"
-                        >
-                          View
-                        </button>
+                ))}
+              </Masonry>
+            ) : (
+              /* List View */
+              <div className="space-y-2">
+                {sculpts.map((sculpt: Sculpt) => (
+                  <div
+                    key={sculpt.id}
+                    onClick={() => console.log('Sculpt clicked:', sculpt)}
+                    className="flex items-center gap-4 p-3 bg-[#0f0f0f] hover:bg-[#1a1a1a] border border-white/5 rounded cursor-pointer transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-24 h-16 flex-shrink-0 bg-neutral-800 rounded overflow-hidden flex items-center justify-center">
+                      <p className="text-white/60 text-xs font-mono">3D MODEL</p>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white/90 text-sm font-medium font-mono truncate">
+                        Sculpt #{sculpt.id.slice(0, 8)}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-white/60 font-mono">
+                        <span>CREATOR: @{sculpt.creator?.slice(0, 8)}</span>
+                        <span>PRICE: {scaleSuiPrice(sculpt.price)} SUI</span>
                       </div>
-                    </RetroPanel>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+                    </div>
+
+                    {/* Action Icon */}
+                    <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Tabs.Content>
+    </Tabs.Root>
   );
 }
 
