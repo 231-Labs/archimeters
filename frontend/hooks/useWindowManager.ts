@@ -125,10 +125,16 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
     e.preventDefault();
     activateWindow(name);
     
-    // Get current window position from state instead of DOM
-    const currentPos = state.windowPositions[name];
-    const offsetX = e.clientX - currentPos.x;
-    const offsetY = e.clientY - currentPos.y;
+    // Get current window position from state using setState callback to avoid stale closure
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    setState(prev => {
+      const currentPos = prev.windowPositions[name];
+      offsetX = e.clientX - currentPos.x;
+      offsetY = e.clientY - currentPos.y;
+      return { ...prev, draggingWindow: name };
+    });
 
     const handleMouseMove = (e: MouseEvent) => {
       setState(prev => {
@@ -157,7 +163,6 @@ export function useWindowManager(initialOpenWindow: WindowName = 'entry') {
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    setState(prev => ({ ...prev, draggingWindow: name }));
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, [activateWindow]);
