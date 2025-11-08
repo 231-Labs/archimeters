@@ -864,6 +864,23 @@ Day 3 建議順序:
   3. 更新 DetailModals 的 handleList 函數調用實際的 list API
   4. 測試 List/Delist 完整流程
 
+#### 12. ✅ 修復窗口 Header 點擊拖動行為
+- **問題**: 點擊窗口 header 時會立即觸發拖動，體驗不佳
+- **解決方案**:
+  - 區分點擊和拖動：只有移動超過 5px 才觸發拖動
+  - 純點擊只激活窗口（置頂），不拖動
+  - 使用臨時事件監聽器檢測鼠標移動
+  - mouseup 時清理事件監聽器
+- **效果**:
+  - 點擊 header = 激活窗口
+  - 拖動 header = 移動窗口
+  - 符合標準 OS 行為
+  - 無意外拖動
+
+### 待處理問題
+- [ ] **Show 3D 錯誤**: My Sculpt > item > show 3D 點擊後報錯（需要具體錯誤信息）
+- [ ] **List 功能實現**: My Ateliers/Sculpts 的 List 功能需要 Kiosk SDK 整合
+
 ### 提交記錄
 - ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
 - ✅ Fix modal positioning and window resizable config
@@ -875,5 +892,6 @@ Day 3 建議順序:
 - ✅ Update progress.md: Mark Atelier Mint Modal integration as completed
 - ✅ Clean up legacy Gallery code and references
 - ✅ Fix window z-index issue - sync zOrder with openWindows
+- ✅ Fix window header click-drag behavior
 - ✅ Refactor z-index logic - remove duplicate and conflicting code
 
