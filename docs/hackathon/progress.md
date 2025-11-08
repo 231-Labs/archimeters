@@ -940,7 +940,22 @@ Day 3 建議順序:
 - **Bug 修復**: 窗口拖動、Kiosk 查詢、3D 加載全部修復
 - **新增組件**: 8 個可復用的 Retro UI 組件
 
-#### 提交記錄
+##### 15. ✅ 窗口系統代碼重構與優化
+- **問題**: 窗口管理代碼分散在 3 個位置，存在重複邏輯
+- **重構方案**: Feature-based 結構，集中管理
+  - 創建統一目錄：`components/features/window-manager/`
+  - 分離關注點：UI (Window.tsx)、狀態 (useWindowManager)、焦點 (useWindowFocus)
+  - 更新 20 個文件的 import 路徑
+  - 刪除遺留代碼：`hooks/useWindowManager.ts`, `components/common/Window.tsx`, `components/core/Window/`
+- **優化結果**:
+  - 代碼減少：page.tsx 241 → 210 行（13%）
+  - 消除重複：~40 行 z-index 邏輯
+  - 刪除 147 行遺留代碼
+  - 單一真實來源：useWindowFocus 統一管理焦點和 z-index
+- **UX 改進**: 修復拖動時立即置頂功能，符合標準桌面操作系統行為
+- **E2E 測試**: ✅ 所有功能測試通過
+
+### 提交記錄
 - ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
 - ✅ Fix modal positioning and window resizable config
 - ✅ Fix MarketplaceWindow modal positioning by adding relative container
@@ -955,4 +970,7 @@ Day 3 建議順序:
 - ✅ Refactor z-index logic - remove duplicate and conflicting code
 - ✅ Fix VaultWindow kiosk information query error
 - ✅ Fix 3D model loading - API endpoint and binary data handling
+- ✅ Refactor: Centralize window management system
+- ✅ Fix: Window should focus immediately when drag starts
+- ✅ Clean up: Remove legacy code and simplify window manager
 
