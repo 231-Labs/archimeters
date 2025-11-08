@@ -275,12 +275,41 @@
 - [X] 傳遞所有必要 props（上傳狀態、步驟、作品信息、交易狀態）
 - [X] 添加返回按鈕（onPrevious）
 
-**待測試 & 優化**:
+**RetroConsole 重新設計 - 完全對齊 Retro OS 風格**:
+- [X] **創建 RetroProgressStep.tsx** - 可復用進度步驟組件
+  - 3D 邊框效果（與 RetroPanel 一致）
+  - 狀態圖標：✓ (成功), ✗ (失敗), ⟳ (處理中), ○ (待處理)
+  - 支援子步驟顯示（樹狀結構）
+  - 處理中狀態的動畫點點點
+  - 顏色編碼狀態文字
+
+- [X] **重新設計 RetroConsole.tsx**
+  - 移除 WaveformDisplay 和複雜動畫
+  - 添加顯眼的 Header 顯示進度追蹤
+  - 橫向進度條（0-100%）帶漸變填充
+  - 使用 RetroProgressStep 組件顯示步驟列表
+  - Transaction digest 顯示（3D inset panel）
+  - 完成訊息帶星星裝飾
+  - 所有面板使用 Retro OS 3D 邊框風格
+  - 緊湊佈局（max-w-4xl）
+
+- [X] **簡化 UploadStatusPage.tsx**
+  - 移除冗餘的狀態顯示代碼
+  - 現在只包裝 RetroConsole
+  - 單一職責組件
+
+**UI 改進**:
+- 一致的 3D 邊框
+- 進度條帶漸變和發光效果
+- 緊湊佈局，減少空白
+- 視覺層次：Header > Progress > Steps > Transaction
+- 配色：藍色（處理中）、綠色（成功）、紅色（失敗）
+
+**待測試**:
 - [ ] 測試發布流程（metadata 創建 + 文件上傳 + 合約調用）
-- [ ] UploadStatusPage UI 美化（對齊 Retro OS 風格）
 
 #### 進行中
-- UploadStatusPage UI 美化
+- 無
 
 ##### 🎨 **新增任務：Mint UI 重構與優化**
 
