@@ -4,6 +4,8 @@ import { ParametricViewer } from '@/components/features/design-publisher/compone
 import { useDesignPublisherForm } from '@/components/features/design-publisher/hooks/useDesignPublisherForm';
 import { createMetadataJson } from '@/components/features/design-publisher/utils/metadata';
 import { RetroButton } from '@/components/common/RetroButton';
+import { RetroInput } from '@/components/common/RetroInput';
+import { ParameterControls } from '@/components/common/ParameterControls';
 
 export default function DesignPublisher() {
   const currentAccount = useCurrentAccount();
@@ -20,6 +22,7 @@ export default function DesignPublisher() {
     // Parameters
     extractedParameters,
     previewParams,
+    handleParameterChange,
     
     // Validation
     validationState,
@@ -91,44 +94,31 @@ export default function DesignPublisher() {
     !artworkInfo.description.trim() ||
     isUploading;
 
-  const parametersArray = Object.entries(extractedParameters).map(([key, param]) => ({
-    name: key,
-    type: param.type || 'text',
-    label: param.label || key,
-    min: param.min,
-    max: param.max,
-    default: param.default
-  }));
-
   return (
     <div className="h-full bg-[#0a0a0a] text-white overflow-auto hide-scrollbar">
       <div className="relative min-h-full max-w-[1800px] mx-auto flex flex-col">
         {/* Sticky header */}
         <div 
-          className="sticky top-0 z-30 px-6 py-4"
+          className="sticky top-0 z-30 px-6 py-3 flex items-center gap-4"
           style={{
             background: '#1a1a1a',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-white/50 text-xs font-mono uppercase tracking-wider">Artwork Title</span>
-            {validationState.workNameRequired && (
-              <span className="text-[9px] text-red-400 font-mono">REQUIRED</span>
-            )}
+          <div className="flex-1">
+            <RetroInput
+              type="text"
+              value={artworkInfo.workName}
+              onChange={(e) => updateArtworkInfo('workName', e.target.value)}
+              placeholder="Enter artwork title..."
+              className="text-xl"
+            />
           </div>
-          <input
-            type="text"
-            value={artworkInfo.workName}
-            onChange={(e) => updateArtworkInfo('workName', e.target.value)}
-            placeholder="Enter artwork title..."
-            className="w-full bg-transparent text-white text-2xl font-light border-b border-white/20 pb-2 focus:outline-none focus:border-white/40 placeholder:text-white/20 transition-colors"
-          />
-          <div className="mt-2 flex items-center text-white/40 text-sm">
+          <div className="flex items-center text-white/40 text-sm font-mono">
             <span className="font-light">by</span>
-            <span className="mx-2 font-mono">{membershipData?.username || artistInfo.name || 'Artist'}</span>
+            <span className="mx-2">{membershipData?.username || artistInfo.name || 'Artist'}</span>
             <span className="text-white/30">|</span>
-            <span className="ml-2 font-mono text-xs">@{(currentAccount?.address || '0x0000...0000').slice(0, 6)}...{(currentAccount?.address || '0x0000...0000').slice(-4)}</span>
+            <span className="ml-2 text-xs">@{(currentAccount?.address || '0x0000...0000').slice(0, 6)}...{(currentAccount?.address || '0x0000...0000').slice(-4)}</span>
           </div>
         </div>
 
@@ -383,83 +373,21 @@ export default function DesignPublisher() {
                 boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide">Parameters</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-white/40 text-[10px] font-mono">
-                    {parametersArray.length} parameters
-                  </span>
-                  {parametersArray.length > 0 && (
-                    <button
-                      onClick={() => {
-                        const defaults = Object.fromEntries(
-                          parametersArray.map((p) => [p.name, p.default])
-                        );
-                        Object.entries(defaults).forEach(([key, value]) => {
-                          const handleParameterChange = (k: string, v: any) => {
-                            // Update preview params through the form
-                          };
-                          handleParameterChange(key, value);
-                        });
-                      }}
-                      className="text-white/50 hover:text-white/80 text-[10px] font-mono uppercase transition-colors"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-              </div>
+              <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Parameters</h3>
               
-              {parametersArray.length === 0 ? (
+              {Object.keys(extractedParameters).length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-white/40 text-xs font-mono">NO PARAMETERS FOUND</p>
                   <p className="text-white/30 text-[10px] font-mono mt-2">Upload algorithm file to extract parameters</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                  {parametersArray.map((param) => {
-                    if (param.type === 'number') {
-                      return (
-                        <div key={param.name} className="bg-black/40 border border-white/5 p-3 rounded">
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-white/70 text-xs font-mono">{param.label || param.name}</label>
-                            <span className="text-white/50 text-[10px] font-mono">
-                              {previewParams[param.name] ?? param.default}
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={param.min || 0}
-                            max={param.max || 100}
-                            step={(param as any).step || 1}
-                            value={previewParams[param.name] ?? param.default}
-                            onChange={(e) => {
-                              const numValue = Number(e.target.value);
-                              // This will update previewParams through the parent hook
-                              // Since we're in preview mode, we don't need to update anything here
-                            }}
-                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white/80 [&::-webkit-slider-thumb]:hover:bg-white [&::-webkit-slider-thumb]:transition-colors [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white/80 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:hover:bg-white"
-                          />
-                          <div className="flex justify-between mt-1">
-                            <span className="text-white/30 text-[9px] font-mono">{param.min || 0}</span>
-                            <span className="text-white/30 text-[9px] font-mono">{param.max || 100}</span>
-                          </div>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div key={param.name} className="bg-black/40 border border-white/5 p-3 rounded">
-                          <label className="text-white/70 text-xs font-mono block mb-2">{param.label || param.name}</label>
-                          <input
-                            type="text"
-                            value={previewParams[param.name] ?? param.default}
-                            readOnly
-                            className="w-full bg-black/60 text-white/70 text-xs p-2 font-mono border border-white/10 rounded"
-                          />
-                        </div>
-                      );
-                    }
-                  })}
+                <div className="max-h-[350px] overflow-y-auto pr-2">
+                  <ParameterControls
+                    parameters={extractedParameters}
+                    previewParams={previewParams}
+                    onParameterChange={handleParameterChange}
+                    showResetAll={true}
+                  />
                 </div>
               )}
             </div>
