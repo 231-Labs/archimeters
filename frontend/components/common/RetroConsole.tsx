@@ -128,33 +128,37 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
 
         {/* Right Column - Transaction & Success */}
         <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2 shrink-0" style={{ maxHeight: '60vh' }}>
-          {/* Transaction Hash */}
-          {txHash && (isTransactionComplete || isTransactionFailed) && (
+          {/* Transaction Hash - Always visible */}
+          <div 
+            className="p-4"
+            style={{
+              background: '#1a1a1a',
+              borderTop: '2px solid #444',
+              borderLeft: '2px solid #444',
+              borderBottom: '2px solid #000',
+              borderRight: '2px solid #000',
+              boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Transaction Digest</div>
             <div 
-              className="p-4"
+              className="p-2 bg-black/60 border border-white/10 break-all font-mono text-xs"
               style={{
-                background: '#1a1a1a',
-                borderTop: '2px solid #444',
-                borderLeft: '2px solid #444',
-                borderBottom: '2px solid #000',
-                borderRight: '2px solid #000',
-                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+                borderTop: '2px solid #000',
+                borderLeft: '2px solid #000',
+                borderBottom: '2px solid #2a2a2a',
+                borderRight: '2px solid #2a2a2a',
               }}
             >
-              <div className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Transaction Digest</div>
-              <div 
-                className="p-2 bg-black/60 border border-white/10 break-all font-mono text-xs"
-                style={{
-                  borderTop: '2px solid #000',
-                  borderLeft: '2px solid #000',
-                  borderBottom: '2px solid #2a2a2a',
-                  borderRight: '2px solid #2a2a2a',
-                }}
-              >
+              {txHash && (isTransactionComplete || isTransactionFailed) ? (
                 <span className={isTransactionComplete ? 'text-green-400' : 'text-red-400'}>
                   {txHash}
                 </span>
-              </div>
+              ) : (
+                <span className="text-white/40">Waiting for transaction...</span>
+              )}
+            </div>
+            {txHash && (isTransactionComplete || isTransactionFailed) && (
               <a
                 href={`https://suiscan.xyz/testnet/tx/${txHash}`}
                 target="_blank"
@@ -164,75 +168,80 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 <span>→</span>
                 <span>VIEW ON EXPLORER</span>
               </a>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Success Message */}
-          {allStepsComplete && (
-            <div 
-              className="p-4"
-              style={{
-                background: '#1a1a1a',
-                borderTop: '2px solid #444',
-                borderLeft: '2px solid #444',
-                borderBottom: '2px solid #000',
-                borderRight: '2px solid #000',
-                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
-              }}
-            >
-              <div className="text-center mb-3">
-                <div className="text-green-400 text-lg font-mono mb-2">PUBLISH COMPLETE</div>
-                <div className="text-white/60 text-xs font-mono">What would you like to do next?</div>
+          {/* Status Message - Always visible */}
+          <div 
+            className="p-4"
+            style={{
+              background: '#1a1a1a',
+              borderTop: '2px solid #444',
+              borderLeft: '2px solid #444',
+              borderBottom: '2px solid #000',
+              borderRight: '2px solid #000',
+              boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {allStepsComplete ? (
+              <>
+                <div className="text-center mb-3">
+                  <div className="text-green-400 text-lg font-mono mb-2">PUBLISH COMPLETE</div>
+                  <div className="text-white/60 text-xs font-mono">What would you like to do next?</div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Vault Button */}
+                  {onGoToVault && (
+                    <button
+                      onClick={onGoToVault}
+                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                      style={{
+                        background: '#1a1a1a',
+                        borderTop: '2px solid #444',
+                        borderLeft: '2px solid #444',
+                        borderBottom: '2px solid #000',
+                        borderRight: '2px solid #000',
+                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                        padding: '12px',
+                      }}
+                    >
+                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                        OPEN VAULT
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Marketplace Button */}
+                  {onGoToMarketplace && (
+                    <button
+                      onClick={onGoToMarketplace}
+                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                      style={{
+                        background: '#1a1a1a',
+                        borderTop: '2px solid #444',
+                        borderLeft: '2px solid #444',
+                        borderBottom: '2px solid #000',
+                        borderRight: '2px solid #000',
+                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                        padding: '12px',
+                      }}
+                    >
+                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                        OPEN MARKETPLACE
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="text-white/70 text-lg font-mono mb-2">PUBLISHING IN PROGRESS</div>
+                <div className="text-white/40 text-xs font-mono">Please wait while your Atelier is being published...</div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Vault Button */}
-                {onGoToVault && (
-                  <button
-                    onClick={onGoToVault}
-                    className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                    style={{
-                      background: '#1a1a1a',
-                      borderTop: '2px solid #444',
-                      borderLeft: '2px solid #444',
-                      borderBottom: '2px solid #000',
-                      borderRight: '2px solid #000',
-                      boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                      padding: '12px',
-                    }}
-                  >
-                    <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                      OPEN VAULT
-                    </div>
-
-                  </button>
-                )}
-
-                {/* Marketplace Button */}
-                {onGoToMarketplace && (
-                  <button
-                    onClick={onGoToMarketplace}
-                    className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                    style={{
-                      background: '#1a1a1a',
-                      borderTop: '2px solid #444',
-                      borderLeft: '2px solid #444',
-                      borderBottom: '2px solid #000',
-                      borderRight: '2px solid #000',
-                      boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                      padding: '12px',
-                    }}
-                  >
-                    <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                      OPEN MARKETPLACE
-                    </div>
-
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
