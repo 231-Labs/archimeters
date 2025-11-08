@@ -828,6 +828,42 @@ Day 3 建議順序:
   - 點擊任何窗口會將其置頂
   - 清晰的 z-index 管理邏輯
 
+#### 12. ✅ 重構 Z-Index 邏輯 - 移除重複和衝突代碼
+- **問題**: 
+  - 重複的 z-index 管理邏輯
+  - `atelierViewerRaised` 邏輯與正常窗口堆疊衝突
+  - 自動將 atelier-viewer 置頂的 useEffect 干擾點擊行為
+- **解決方案**:
+  - 移除 `atelierViewerRaised` ref 和相關邏輯
+  - 移除自動提升 atelier-viewer 的 useEffect
+  - 簡化 zOrder 同步邏輯
+  - 修復 TypeScript 類型錯誤
+- **效果**:
+  - 單一真實來源的窗口激活邏輯
+  - 真正的 OS-like 行為：點擊任何窗口即置頂
+  - 更清晰的代碼，無重複邏輯
+  - 可預測的窗口堆疊行為
+
+### 待修復問題
+
+#### ⚠️ Show 3D 功能報錯
+- **位置**: Vault > My Sculpts > item > 點擊 3D 按鈕
+- **狀態**: 需要調查
+- **可能原因**: GLBViewer 加載錯誤或 blob ID 問題
+
+#### ⚠️ List 功能無法操作
+- **位置**: Vault > My Ateliers/Sculpts > item > List 按鈕
+- **現狀**: 只顯示 "Coming soon" alert
+- **問題**: 
+  - Kiosk SDK 實現已存在（`useAtelierMarketplace`, `useSculptMarketplace`）
+  - 缺少 `kioskId` 和 `kioskCapId` 參數
+  - Membership 數據中未獲取 kiosk 信息
+- **需要**:
+  1. 在 `useUserItems` 中添加獲取用戶 kiosk 信息的邏輯
+  2. 將 kioskId 和 kioskCapId 傳遞給 DetailModals
+  3. 更新 DetailModals 的 handleList 函數調用實際的 list API
+  4. 測試 List/Delist 完整流程
+
 ### 提交記錄
 - ✅ UI refinement: Detail modal, empty states, mint toast, window frame, window sizing
 - ✅ Fix modal positioning and window resizable config
@@ -839,4 +875,5 @@ Day 3 建議順序:
 - ✅ Update progress.md: Mark Atelier Mint Modal integration as completed
 - ✅ Clean up legacy Gallery code and references
 - ✅ Fix window z-index issue - sync zOrder with openWindows
+- ✅ Refactor z-index logic - remove duplicate and conflicting code
 
