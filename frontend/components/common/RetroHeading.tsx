@@ -31,12 +31,12 @@ export function RetroHeading({ title, subtitle, author, className = '' }: RetroH
           {title}
         </h1>
         {subtitle && (
-          <p className="text-white/60 text-xs font-mono uppercase tracking-widest mt-0.5">
+          <p className="text-white/60 text-sm font-mono tracking-wide mt-1">
             {subtitle}
           </p>
         )}
         {author && (
-          <p className="text-white/40 text-[10px] font-mono uppercase tracking-widest mt-1">
+          <p className="text-white/40 text-xs font-mono uppercase tracking-widest mt-1.5">
             {author}
           </p>
         )}
