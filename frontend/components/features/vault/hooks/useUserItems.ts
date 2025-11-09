@@ -2,6 +2,7 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { useState, useEffect } from 'react';
 import { KioskClient, Network } from '@mysten/kiosk';
 import { PACKAGE_ID } from '@/utils/transactions';
+import { extractBlobId } from '@/utils/formatters';
 
 export interface BaseVaultItem {
   id: string;
@@ -29,8 +30,8 @@ export interface SculptItem extends BaseVaultItem {
   printed: string;
   structure: string;
   time: string;
-  kioskId: string;      // The Kiosk where this sculpt is located
-  kioskCapId: string;   // The corresponding KioskOwnerCap
+  kioskId: string;
+  kioskCapId: string;
 }
 
 export type VaultItem = AtelierItem | SculptItem;
@@ -38,16 +39,6 @@ export type VaultItem = AtelierItem | SculptItem;
 export interface KioskInfo {
   kioskId: string;
   kioskCapId: string;
-}
-
-// Extract blob ID from URL
-function extractBlobId(url: string): string | null {
-  if (!url) return null;
-
-  const regex = /\/blobs\/([A-Za-z0-9_-]+)/;
-  const match = url.match(regex);
-  
-  return match ? match[1] : null;
 }
 
 export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {

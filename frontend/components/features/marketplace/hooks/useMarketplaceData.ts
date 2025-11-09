@@ -2,70 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { PACKAGE_ID } from '@/utils/transactions';
 import { getWalrusBlobUrl } from '@/config/walrus';
-
-interface AtelierState {
-  all_ateliers: string[];
-}
-
-interface AtelierFields {
-  photo: string;
-  name: string;
-  author: string;
-  price: string;
-  pool_id: string;
-  publish_time: string;
-  algorithm: string;
-  artificials: string[];
-  data: string;
-  id: { id: string };
-}
-
-interface Atelier {
-  id: string;
-  photoBlobId: string;
-  algorithmBlobId: string;
-  dataBlobId: string;
-  poolId: string;
-  url: string | null;
-  algorithmContent: string | null;
-  configData: any | null;
-  title: string;
-  author: string;
-  price: string;
-  description?: string;
-  artistStatement?: string;
-  artistName?: string;
-  artistAddress?: string;
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface Sculpt {
-  id: string;
-  atelierId: string;
-  blueprint: string;
-  photoBlobId: string;
-  stlBlobId: string;
-  glbBlobId: string;
-  creator: string;
-  paramKeys: string[];
-  paramValues: string[];
-  price: string;
-  kioskId: string;
-  glbUrl: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-// Extract blob ID from URL
-function extractBlobId(url: string): string | null {
-  if (!url) return null;
-
-  const regex = /\/blobs\/([A-Za-z0-9_-]+)/;
-  const match = url.match(regex);
-  
-  return match ? match[1] : null;
-}
+import { extractBlobId } from '@/utils/formatters';
+import type { Atelier, Sculpt } from '../types';
 
 interface UseMarketplaceDataReturn {
   ateliers: Atelier[];
@@ -83,163 +21,76 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch image from Walrus
-  const fetchImageFromWalrus = async (id: string, blobId: string) => {
+  const fetchFromWalrus = async <T extends Atelier | Sculpt>(
+    id: string,
+    blobId: string,
+    resourceType: 'image' | 'algorithm' | 'config' | 'glb',
+    setState: React.Dispatch<React.SetStateAction<T[]>>
+  ) => {
     try {
-      setAteliers(prev => prev.map(img => 
-        img.id === id 
-          ? { ...img, isLoading: true, error: null }
-          : img
-      ));
-
-      const imageUrl = getWalrusBlobUrl(blobId);
-      const response = await fetch(imageUrl);
+      const url = getWalrusBlobUrl(blobId);
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error('Failed to load image');
+        throw new Error(`Failed to load ${resourceType}`);
       }
 
-      setAteliers(prev => {
-        const newImages = prev.map(img => 
-          img.id === id 
-            ? { ...img, url: imageUrl, isLoading: false, error: null }
-            : img
-        );
-        return newImages;
-      });
-
-    } catch (err) {
-      console.error(`Error loading image for ${id}:`, err);
-      setAteliers(prev => prev.map(img => 
-        img.id === id 
-          ? { ...img, error: 'Failed to load image', isLoading: false }
-          : img
-      ));
-    }
-  };
-
-  // Fetch algorithm content from Walrus
-  const fetchAlgorithmFromWalrus = async (id: string, blobId: string) => {
-    try {
-      const algorithmUrl = getWalrusBlobUrl(blobId);
-      const response = await fetch(algorithmUrl);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load algorithm');
-      }
-
-      const algorithmContent = await response.text();
-
-      setAteliers(prev => {
-        const newImages = prev.map(img => 
-          img.id === id 
-            ? { ...img, algorithmContent, isLoading: false, error: null }
-            : img
-        );
-        return newImages;
-      });
-
-    } catch (err) {
-      console.error(`Error loading algorithm for ${id}:`, err);
-      setAteliers(prev => prev.map(img => 
-        img.id === id 
-          ? { ...img, error: 'Failed to load algorithm', isLoading: false }
-          : img
-      ));
-    }
-  };
-
-  // Fetch config file from Walrus
-  const fetchConfigDataFromWalrus = async (id: string, blobId: string) => {
-    try {
-      const configUrl = getWalrusBlobUrl(blobId);
-      
-      const response = await fetch(configUrl);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load config data');
-      }
-
-      const configText = await response.text();
-      let configData;
-      
-      try {
-        configData = JSON.parse(configText);
-      } catch (parseErr) {
-        console.error('Failed to parse config data as JSON:', parseErr);
-        configData = { rawText: configText };
-      }
-
-      setAteliers(prev => {
-        const newImages = prev.map(img => 
-          img.id === id 
+      if (resourceType === 'image' || resourceType === 'glb') {
+        setState(prev => prev.map(item => 
+          item.id === id 
+            ? { ...item, [resourceType === 'glb' ? 'glbUrl' : 'url']: url, isLoading: false, error: null } as T
+            : item
+        ));
+      } else if (resourceType === 'algorithm') {
+        const content = await response.text();
+        setState(prev => prev.map(item => 
+          item.id === id 
+            ? { ...item, algorithmContent: content, isLoading: false, error: null } as T
+            : item
+        ));
+      } else if (resourceType === 'config') {
+        const text = await response.text();
+        let configData;
+        try {
+          configData = JSON.parse(text);
+        } catch {
+          configData = { rawText: text };
+        }
+        
+        setState(prev => prev.map(item => 
+          item.id === id 
             ? { 
-                ...img, 
-                configData, 
+                ...item, 
+                configData,
                 description: configData?.artwork?.description || '',
                 artistStatement: configData?.artist?.introduction || '',
-                artistName: configData?.artist?.name || img.author,
+                artistName: configData?.artist?.name || (item as Atelier).author,
                 artistAddress: configData?.artist?.address || '',
                 isLoading: false, 
                 error: null 
-              }
-            : img
-        );
-        return newImages;
-      });
-
-    } catch (err) {
-      console.error(`Error loading config data for ${id}:`, err);
-      setAteliers(prev => prev.map(img => 
-        img.id === id 
-          ? { ...img, error: 'Failed to load config data', isLoading: false }
-          : img
-      ));
-    }
-  };
-
-  // Fetch GLB from Walrus for Sculpts
-  const fetchGLBFromWalrus = async (id: string, blobId: string) => {
-    try {
-      const glbUrl = getWalrusBlobUrl(blobId);
-      const response = await fetch(glbUrl);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load GLB');
+              } as T
+            : item
+        ));
       }
-
-      setSculpts(prev => prev.map(sculpt => 
-        sculpt.id === id 
-          ? { ...sculpt, glbUrl, isLoading: false, error: null }
-          : sculpt
-      ));
-
     } catch (err) {
-      console.error(`Error loading GLB for ${id}:`, err);
-      setSculpts(prev => prev.map(sculpt => 
-        sculpt.id === id 
-          ? { ...sculpt, error: 'Failed to load GLB', isLoading: false }
-          : sculpt
+      console.error(`Error loading ${resourceType} for ${id}:`, err);
+      setState(prev => prev.map(item => 
+        item.id === id 
+          ? { ...item, error: `Failed to load ${resourceType}`, isLoading: false } as T
+          : item
       ));
     }
   };
 
-  // Fetch listed Sculpts using Event-based indexing
   const fetchListedSculpts = useCallback(async () => {
-    if (!suiClient) {
-      return;
-    }
- 
+    if (!suiClient) return;
+
     try {
-      const allListedSculpts: Sculpt[] = [];
-      
       const sculptType = `${PACKAGE_ID}::sculpt::Sculpt<${PACKAGE_ID}::atelier::ATELIER>`;
       const listedEventType = `0x2::kiosk::ItemListed<${sculptType}>`;
       
       const listedEvents = await suiClient.queryEvents({
-        query: {
-          MoveEventType: listedEventType
-        },
+        query: { MoveEventType: listedEventType },
         limit: 200,
         order: 'descending'
       });
@@ -260,7 +111,6 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
         })
       ]);
 
-      // Build a map of removed items (itemId -> latest removal timestamp)
       const removedItems = new Map<string, number>();
       
       [...delistedEvents.data, ...purchasedEvents.data].forEach(eventData => {
@@ -275,72 +125,75 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
         }
       });
 
-      // Process ItemListed events
+      const validItems: Array<{ itemId: string; price: string; kioskId: string }> = [];
       for (const eventData of listedEvents.data) {
         const event = eventData.parsedJson as any;
         const itemId = event?.id || event?.item_id || event?.itemId;
         
-        if (!itemId) {
-          continue;
-        }
+        if (!itemId) continue;
 
         const listedTimestamp = Number(eventData.timestampMs || '0');
         const removalTimestamp = removedItems.get(itemId);
         
-        if (removalTimestamp && removalTimestamp > listedTimestamp) {
-          continue;
-        }
+        if (removalTimestamp && removalTimestamp > listedTimestamp) continue;
 
+        validItems.push({
+          itemId,
+          price: event.price || event.list_price || '0',
+          kioskId: event.kiosk || event.kiosk_id || '',
+        });
+      }
+
+      if (validItems.length > 0) {
         try {
-          const itemObj = await suiClient.getObject({
-            id: itemId,
+          const itemObjects = await suiClient.multiGetObjects({
+            ids: validItems.map(item => item.itemId),
             options: {
               showContent: true,
               showType: true,
             }
           });
 
-          const price = event.price || event.list_price || '0';
-          const kioskId = event.kiosk || event.kiosk_id || '';
+          const allListedSculpts: Sculpt[] = [];
 
-          if (itemObj.data?.content && 'fields' in itemObj.data.content) {
-            const fields = itemObj.data.content.fields as any;
-            const blueprint = fields.blueprint || '';
-            const photoBlobId = extractBlobId(blueprint) || '';
-            
-            const sculptData: Sculpt = {
-              id: itemId,
-              atelierId: fields.atelier_id || '',
-              blueprint: blueprint,
-              photoBlobId: photoBlobId,
-              stlBlobId: fields.stl_data || '',
-              glbBlobId: fields.glb_data || '',
-              creator: fields.creator || '',
-              paramKeys: fields.param_keys || [],
-              paramValues: fields.param_values || [],
-              price: price.toString(),
-              kioskId: kioskId,
-              glbUrl: null,
-              isLoading: false,
-              error: null,
-            };
+          itemObjects.forEach((itemObj, index) => {
+            const { itemId, price, kioskId } = validItems[index];
 
-            allListedSculpts.push(sculptData);
-          }
+            if (itemObj.data?.content && 'fields' in itemObj.data.content) {
+              const fields = itemObj.data.content.fields as any;
+              const blueprint = fields.blueprint || '';
+              const photoBlobId = extractBlobId(blueprint) || '';
+              
+              allListedSculpts.push({
+                id: itemId,
+                atelierId: fields.atelier_id || '',
+                blueprint,
+                photoBlobId,
+                stlBlobId: fields.stl_data || '',
+                glbBlobId: fields.glb_data || '',
+                creator: fields.creator || '',
+                paramKeys: fields.param_keys || [],
+                paramValues: fields.param_values || [],
+                price: price.toString(),
+                kioskId,
+                glbUrl: null,
+                isLoading: false,
+                error: null,
+              });
+            }
+          });
+
+          setSculpts(allListedSculpts);
+
+          allListedSculpts.forEach(sculpt => {
+            if (sculpt.glbBlobId) {
+              fetchFromWalrus(sculpt.id, sculpt.glbBlobId, 'glb', setSculpts);
+            }
+          });
         } catch (err) {
-          // Skip failed items
+          console.error('Error fetching sculpt objects:', err);
         }
       }
-
-      setSculpts(allListedSculpts);
-
-      // Load GLB previews
-      allListedSculpts.forEach(sculpt => {
-        if (sculpt.glbBlobId) {
-          fetchGLBFromWalrus(sculpt.id, sculpt.glbBlobId);
-        }
-      });
-
     } catch (err) {
       console.error('Error fetching listed Sculpts:', err);
     }
@@ -369,7 +222,6 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
         return;
       }
 
-      // Build Atelier data from events
       const atelierData = events.data.map((eventData: any) => {
         const event = eventData.parsedJson;
         
@@ -410,24 +262,19 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
 
       setAteliers(atelierData);
 
-      // Start loading resources for each Atelier
       atelierData.forEach(atelier => {
         if (atelier.photoBlobId) {
-          fetchImageFromWalrus(atelier.id, atelier.photoBlobId);
+          fetchFromWalrus(atelier.id, atelier.photoBlobId, 'image', setAteliers);
         }
-        
         if (atelier.algorithmBlobId) {
-          fetchAlgorithmFromWalrus(atelier.id, atelier.algorithmBlobId);
+          fetchFromWalrus(atelier.id, atelier.algorithmBlobId, 'algorithm', setAteliers);
         }
-        
         if (atelier.dataBlobId) {
-          fetchConfigDataFromWalrus(atelier.id, atelier.dataBlobId);
+          fetchFromWalrus(atelier.id, atelier.dataBlobId, 'config', setAteliers);
         }
       });
 
-      // Also fetch listed Sculpts
       await fetchListedSculpts();
-
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching marketplace data:', error);
@@ -448,4 +295,3 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
     refetch: fetchAtelierData
   };
 }
-

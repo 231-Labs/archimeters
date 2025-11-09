@@ -11,49 +11,23 @@ import { MarketplaceSculptDetailModal } from '@/components/features/marketplace/
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
 import { RetroImageItem } from '@/components/common/RetroImageItem';
+import { SuiLogo } from '@/components/common/SuiLogo';
+import { formatSuiPrice } from '@/utils/formatters';
+import type { Atelier, Sculpt, KioskInfo } from '@/components/features/marketplace/types';
 
 interface MarketplaceWindowProps {
   name: WindowName;
   onOpenWindow: (name: WindowName) => void;
 }
 
-// Atelier type
-interface Atelier {
-  id: string;
-  photoBlobId: string;
-  algorithmBlobId: string;
-  dataBlobId: string;
-  poolId: string;
-  url: string | null;
-  algorithmContent: string | null;
-  configData: any | null;
-  title: string;
-  author: string;
-  price: string;
-  isLoading: boolean;
-  error: string | null;
-}
-
-// Sculpt type
-interface Sculpt {
-  id: string;
-  atelierId: string;
-  blueprint: string;
-  photoBlobId: string;
-  stlBlobId: string;
-  glbBlobId: string;
-  creator: string;
-  paramKeys: string[];
-  paramValues: string[];
-  price: string;
-  kioskId: string;
-  glbUrl: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-// Image cache Map
 const imageCache = new Map<string, string>();
+
+const breakpointColumns = {
+  default: 4,
+  1400: 3,
+  1100: 2,
+  700: 1
+};
 
 export default function MarketplaceWindow({
   onOpenWindow,
@@ -67,9 +41,7 @@ export default function MarketplaceWindow({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedAtelier, setSelectedAtelier] = useState<Atelier | null>(null);
   const [selectedSculpt, setSelectedSculpt] = useState<Sculpt | null>(null);
-  
-  // Get user's selected kiosk from sessionStorage (set in entry window)
-  const [targetKioskInfo, setTargetKioskInfo] = useState<{kioskId: string; kioskCapId: string} | null>(null);
+  const [targetKioskInfo, setTargetKioskInfo] = useState<KioskInfo | null>(null);
   
   useEffect(() => {
     const kioskId = sessionStorage.getItem('kiosk-id');
@@ -80,11 +52,8 @@ export default function MarketplaceWindow({
     }
   }, []);
   
-  // Preload and cache images
   const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
-    if (!url || imageCache.has(url)) {
-      return;
-    }
+    if (!url || imageCache.has(url)) return;
 
     try {
       const response = await fetch(url, {
@@ -97,11 +66,10 @@ export default function MarketplaceWindow({
       const objectUrl = URL.createObjectURL(blob);
       imageCache.set(url, objectUrl);
     } catch (error) {
-      // Image cache error - silently fail
+      // Silently fail
     }
   }, []);
 
-  // When image data changes, preload images
   useEffect(() => {
     ateliers.forEach(atelier => {
       if (atelier.url) {
@@ -118,39 +86,14 @@ export default function MarketplaceWindow({
     setSelectedAtelier(atelier);
   };
 
-  const handleCloseModal = () => {
-    setSelectedAtelier(null);
-  };
-
-  const handleCloseSculptModal = () => {
-    setSelectedSculpt(null);
-  };
-
   const handlePurchaseSuccess = () => {
-    // Refetch marketplace data after successful purchase
     if (result?.refetch) {
       result.refetch();
     }
   };
 
-  const breakpointColumns = {
-    default: 4,
-    1400: 3,
-    1100: 2,
-    700: 1
-  };
-
-  // Check if Atelier is fully loaded
   const isAtelierLoaded = (atelier: Atelier) => {
     return !atelier.isLoading && !atelier.error && atelier.url !== null;
-  };
-
-  // Scale Sui Price
-  const scaleSuiPrice = (price: string | number) => {
-    const numPrice = typeof price === 'string' ? parseInt(price) : price;
-    const scaled = numPrice / 1_000_000_000;
-    // Format to remove trailing zeros, keep reasonable precision
-    return scaled.toFixed(9).replace(/\.?0+$/, '');
   };
 
   return (
@@ -160,21 +103,18 @@ export default function MarketplaceWindow({
         onValueChange={setActiveTab}
         className="flex flex-col h-full bg-[#1a1a1a]"
       >
-      {/* Loading overlay */}
       {isLoading && ateliers.length === 0 && sculpts.length === 0 && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
           <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       
-      {/* Error message */}
       {error && ateliers.length === 0 && sculpts.length === 0 && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
           <p className="text-red-500">{error}</p>
         </div>
       )}
 
-      {/* Header with Tabs and View Mode Toggle */}
       <div 
         className="flex items-center justify-between bg-[#0f0f0f] px-2"
         style={{
@@ -187,7 +127,6 @@ export default function MarketplaceWindow({
           <RetroTabsTrigger value="sculpts">Sculpts</RetroTabsTrigger>
         </RetroTabsList>
 
-        {/* View Mode Toggle */}
         <div className="flex gap-1 p-1">
           <button
             onClick={() => setViewMode('grid')}
@@ -239,10 +178,8 @@ export default function MarketplaceWindow({
                       {atelier.title} | @{atelier.author?.slice(0, 8)}
                     </div>
                     <div className="flex gap-1 justify-center items-center text-xs text-white/70">
-                      <svg width="10" height="12" viewBox="0 0 300 384" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M240.057 159.914C255.698 179.553 265.052 204.39 265.052 231.407C265.052 258.424 255.414 284.019 239.362 303.768L237.971 305.475L237.608 303.31C237.292 301.477 236.929 299.613 236.502 297.749C228.46 262.421 202.265 232.134 159.148 207.597C130.029 191.071 113.361 171.195 108.985 148.586C106.157 133.972 108.258 119.294 112.318 106.717C116.379 94.1569 122.414 83.6187 127.549 77.2831L144.328 56.7754C147.267 53.1731 152.781 53.1731 155.719 56.7754L240.073 159.914H240.057ZM266.584 139.422L154.155 1.96703C152.007 -0.655678 147.993 -0.655678 145.845 1.96703L33.4316 139.422L33.0683 139.881C12.3868 165.555 0 198.181 0 233.698C0 316.408 67.1635 383.461 150 383.461C232.837 383.461 300 316.408 300 233.698C300 198.181 287.613 165.555 266.932 139.896L266.568 139.438L266.584 139.422ZM60.3381 159.472L70.3866 147.164L70.6868 149.439C70.9237 151.24 71.2239 153.041 71.5715 154.858C78.0809 189.001 101.322 217.456 140.173 239.496C173.952 258.724 193.622 280.828 199.278 305.064C201.648 315.176 202.059 325.129 201.032 333.835L200.969 334.372L200.479 334.609C185.233 342.05 168.09 346.237 149.984 346.237C86.4546 346.237 34.9484 294.826 34.9484 231.391C34.9484 204.153 44.4439 179.142 60.3065 159.44L60.3381 159.472Z" fill="white"/>
-                      </svg>
-                      {scaleSuiPrice(atelier.price)}
+                      <SuiLogo />
+                      {formatSuiPrice(atelier.price)}
                     </div>
                   </>
                 );
@@ -266,7 +203,6 @@ export default function MarketplaceWindow({
               })}
               </Masonry>
             ) : (
-              /* List View */
               <div className="space-y-2">
                 {ateliers.map((atelier: Atelier) => (
                   <RetroListItem
@@ -283,7 +219,7 @@ export default function MarketplaceWindow({
                       metadata={
                         <>
                           <span>AUTHOR: @{atelier.author?.slice(0, 8)}</span>
-                          <span>PRICE: {scaleSuiPrice(atelier.price)} SUI</span>
+                          <span>PRICE: {formatSuiPrice(atelier.price)} SUI</span>
                         </>
                       }
                     />
@@ -315,10 +251,8 @@ export default function MarketplaceWindow({
                       <span className="font-semibold">Sculpt #{sculpt.id.slice(0, 8)}</span>
                       <span>Creator: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
                       <span className="flex gap-1 items-center justify-center mt-1">
-                        <svg width="8" height="10" viewBox="0 0 300 384" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path fillRule="evenodd" clipRule="evenodd" d="M240.057 159.914C255.698 179.553 265.052 204.39 265.052 231.407C265.052 258.424 255.414 284.019 239.362 303.768L237.971 305.475L237.608 303.31C237.292 301.477 236.929 299.613 236.502 297.749C228.46 262.421 202.265 232.134 159.148 207.597C130.029 191.071 113.361 171.195 108.985 148.586C106.157 133.972 108.258 119.294 112.318 106.717C116.379 94.1569 122.414 83.6187 127.549 77.2831L144.328 56.7754C147.267 53.1731 152.781 53.1731 155.719 56.7754L240.073 159.914H240.057ZM266.584 139.422L154.155 1.96703C152.007 -0.655678 147.993 -0.655678 145.845 1.96703L33.4316 139.422L33.0683 139.881C12.3868 165.555 0 198.181 0 233.698C0 316.408 67.1635 383.461 150 383.461C232.837 383.461 300 316.408 300 233.698C300 198.181 287.613 165.555 266.932 139.896L266.568 139.438L266.584 139.422ZM60.3381 159.472L70.3866 147.164L70.6868 149.439C70.9237 151.24 71.2239 153.041 71.5715 154.858C78.0809 189.001 101.322 217.456 140.173 239.496C173.952 258.724 193.622 280.828 199.278 305.064C201.648 315.176 202.059 325.129 201.032 333.835L200.969 334.372L200.479 334.609C185.233 342.05 168.09 346.237 149.984 346.237C86.4546 346.237 34.9484 294.826 34.9484 231.391C34.9484 204.153 44.4439 179.142 60.3065 159.44L60.3381 159.472Z" fill="white"/>
-                        </svg>
-                        {scaleSuiPrice(sculpt.price)} SUI
+                        <SuiLogo width={8} height={10} />
+                        {formatSuiPrice(sculpt.price)} SUI
                       </span>
                     </div>
                   );
@@ -336,7 +270,6 @@ export default function MarketplaceWindow({
                 })}
               </Masonry>
             ) : (
-              /* List View */
               <div className="space-y-2">
                 {sculpts.map((sculpt: Sculpt) => (
                   <RetroListItem
@@ -357,7 +290,7 @@ export default function MarketplaceWindow({
                       metadata={
                         <>
                           <span>CREATOR: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
-                          <span>PRICE: {scaleSuiPrice(sculpt.price)} SUI</span>
+                          <span>PRICE: {formatSuiPrice(sculpt.price)} SUI</span>
                         </>
                       }
                     />
@@ -370,21 +303,19 @@ export default function MarketplaceWindow({
         </Tabs.Content>
       </Tabs.Root>
 
-      {/* Atelier Mint Modal */}
       {selectedAtelier && (
         <AtelierMintModal
           atelier={selectedAtelier}
           isOpen={!!selectedAtelier}
-          onClose={handleCloseModal}
+          onClose={() => setSelectedAtelier(null)}
         />
       )}
 
-      {/* Sculpt Detail Modal */}
       {selectedSculpt && (
         <MarketplaceSculptDetailModal
           sculpt={selectedSculpt}
           isOpen={!!selectedSculpt}
-          onClose={handleCloseSculptModal}
+          onClose={() => setSelectedSculpt(null)}
           onPurchaseSuccess={handlePurchaseSuccess}
           targetKioskInfo={targetKioskInfo}
         />
@@ -392,4 +323,3 @@ export default function MarketplaceWindow({
     </div>
   );
 }
-

@@ -137,11 +137,6 @@ export function formatNumber(num: number | string): string {
   return value.toLocaleString('en-US');
 }
 
-/**
- * Format file size to human-readable format
- * @param bytes - Size in bytes
- * @returns Formatted size string
- */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
   
@@ -152,3 +147,15 @@ export function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
+export function formatSuiPrice(priceInMist: string | number): string {
+  const numPrice = typeof priceInMist === 'string' ? parseInt(priceInMist) : priceInMist;
+  const scaled = numPrice / MIST_PER_SUI;
+  return scaled.toFixed(9).replace(/\.?0+$/, '');
+}
+
+export function extractBlobId(url: string): string | null {
+  if (!url) return null;
+  const regex = /\/blobs\/([A-Za-z0-9_-]+)/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}

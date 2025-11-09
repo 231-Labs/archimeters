@@ -1,19 +1,10 @@
-/**
- * Marketplace Purchase Hook
- * Handles purchasing Sculpts from marketplace using KioskTransaction
- */
-
 import { useState, useCallback } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { NETWORK, SCULPT_TYPE, PACKAGE_ID, SCULPT_TRANSFER_POLICY } from '@/utils/transactions';
+import type { KioskInfo } from '../types';
 
 export type PurchaseStatus = 'idle' | 'loading_kiosk' | 'processing' | 'success' | 'error';
-
-interface KioskInfo {
-  kioskId: string;
-  kioskCapId: string;
-}
 
 interface UseMarketplacePurchaseReturn {
   purchaseSculpt: (sculptId: string, sellerKioskId: string, price: string, targetKioskInfo?: KioskInfo | null) => Promise<void>;
@@ -32,9 +23,7 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
   const suiClient = useSuiClient();
 
   const getUserKioskInfo = async (): Promise<KioskInfo | null> => {
-    if (!currentAccount?.address) {
-      return null;
-    }
+    if (!currentAccount?.address) return null;
 
     try {
       const { data: kioskCaps } = await suiClient.getOwnedObjects({
@@ -98,7 +87,6 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
       setStatus('processing');
 
       const tx = new Transaction();
-      
       const priceNum = parseInt(price);
       const royaltyBps = 1000;
       const royaltyAmount = Math.floor((priceNum * royaltyBps) / 10000);
@@ -149,7 +137,6 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
         typeArguments: [SCULPT_TYPE],
       });
 
-      // Sign and execute
       signAndExecuteTransaction(
         {
           transaction: tx as any,
@@ -188,4 +175,3 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
     resetStatus,
   };
 }
-
