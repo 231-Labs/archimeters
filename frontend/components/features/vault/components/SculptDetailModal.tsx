@@ -158,8 +158,8 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
         <RetroPanel variant="inset" className="w-full">
           <div className="aspect-square bg-[#000000] overflow-hidden relative">
             {show3DPreview ? (
-              sculpt.structure ? (
-                <GLBViewer blobId={sculpt.structure} className="w-full h-full" />
+              sculpt.glbFile ? (
+                <GLBViewer blobId={sculpt.glbFile} className="w-full h-full" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a]">
                   <div className="text-center">
@@ -167,7 +167,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                     <p className="text-white/50 text-sm font-mono">3D MODEL NOT AVAILABLE</p>
-                    <p className="text-white/30 text-xs font-mono mt-2">This sculpt has no 3D structure data</p>
+                    <p className="text-white/30 text-xs font-mono mt-2">This sculpt has no GLB file data</p>
                   </div>
                 </div>
               )
@@ -183,7 +183,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
                 variant="primary"
                 size="sm"
                 onClick={() => setShow3DPreview(!show3DPreview)}
-                disabled={!sculpt.structure && show3DPreview}
+                disabled={!sculpt.glbFile && show3DPreview}
               >
                 {show3DPreview ? '2D' : '3D'}
               </RetroButton>
@@ -287,10 +287,16 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
               value={`${sculpt.id.slice(0, 8)}...${sculpt.id.slice(-6)}`}
             />
             <InfoField
-              label="STRUCTURE"
-              value={`${sculpt.structure.slice(0, 15)}...`}
-              isLast
+              label="GLB FILE"
+              value={sculpt.glbFile ? `${sculpt.glbFile.slice(0, 15)}...` : 'N/A'}
             />
+            {sculpt.structure && (
+              <InfoField
+                label="STL FILE"
+                value={`${sculpt.structure.slice(0, 15)}... 🔐`}
+                isLast
+              />
+            )}
           </div>
         </RetroPanel>
       </div>

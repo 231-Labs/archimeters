@@ -1,5 +1,14 @@
 module archimeters::atelier {
     use archimeters::archimeters::{ Self, MemberShip };
+    use archimeters::atelier_validation::{
+        Self,
+        ParameterRule,
+        ParameterRules,
+        verify_membership_ownership,
+        verify_owner_permission,
+        build_parameter_rules,
+        validate_parameter as validation_validate_parameter,
+    };
     use archimeters::royalty_rule;
     use std::string::{ String };
     use std::type_name;
@@ -8,7 +17,6 @@ module archimeters::atelier {
         clock,
         package,
         display,
-        vec_map::{ Self, VecMap },
         transfer_policy,
     };
     
@@ -18,23 +26,17 @@ module archimeters::atelier {
         sui::SUI,
     };
 
-    // == Errors ==
-    const ENO_MEMBERSHIP: u64 = 0;
     const ENO_PERMISSION: u64 = 1;
     const ENO_AMOUNT: u64 = 2;
     const ENO_POOL_MISMATCH: u64 = 3;
     const ENO_CAP_MISMATCH: u64 = 4;
     const ENO_INVALID_CREATOR_ROYALTY: u64 = 5;
-    
-    // == Constants ==
-    const DEFAULT_CREATOR_ROYALTY_BPS: u64 = 250; // 2.5% default royalty to original creator
-    const MAX_CREATOR_ROYALTY_BPS: u64 = 5000; // Max 50% royalty
+    const DEFAULT_CREATOR_ROYALTY_BPS: u64 = 250;
+    const MAX_CREATOR_ROYALTY_BPS: u64 = 5000;
     const BPS_BASE: u64 = 10000;
 
-    // == One Time Witness ==
     public struct ATELIER has drop {}
 
-    // == Structs ==
     public struct AtelierState has key {
         id: UID,
         all_ateliers: vector<ID>,
@@ -48,18 +50,6 @@ module archimeters::atelier {
         min_value: u64,
         max_value: u64,
         default_value: u64,
-    }
-    
-    public struct ParameterRule has store, copy, drop {
-        param_type: String,
-        label: String,
-        min_value: u64,
-        max_value: u64,
-        default_value: u64,
-    }
-    
-    public struct ParameterRules has store {
-        rules: VecMap<String, ParameterRule>,
     }
 
     public struct Atelier<phantom T> has key, store {
@@ -167,7 +157,7 @@ module archimeters::atelier {
         let sender = tx_context::sender(ctx);
         verify_membership_ownership(membership, sender);
         
-        let param_rules = build_parameter_rules_from_vectors(
+        let param_rules = build_parameter_rules(
             param_keys, param_types, param_labels,
             param_min_values, param_max_values, param_default_values
         );
@@ -180,40 +170,6 @@ module archimeters::atelier {
         finalize_atelier_mint<T>(atelier, atelier_id, pool_id, pool_cap_id, ctx);
     }
     
-    fun verify_membership_ownership(membership: &MemberShip, sender: address) {
-        assert!(archimeters::owner(membership) == sender, ENO_MEMBERSHIP);
-    }
-    
-    fun build_parameter_rules_from_vectors(
-        keys: vector<String>,
-        types: vector<String>,
-        labels: vector<String>,
-        min_values: vector<u64>,
-        max_values: vector<u64>,
-        default_values: vector<u64>
-    ): ParameterRules {
-        let mut rules_map = vec_map::empty<String, ParameterRule>();
-        let len = vector::length(&keys);
-        
-        assert!(vector::length(&types) == len, 0);
-        assert!(vector::length(&labels) == len, 0);
-        assert!(vector::length(&min_values) == len, 0);
-        assert!(vector::length(&max_values) == len, 0);
-        assert!(vector::length(&default_values) == len, 0);
-        
-        let mut i = 0;
-        while (i < len) {
-            vec_map::insert(&mut rules_map, *vector::borrow(&keys, i), ParameterRule {
-                param_type: *vector::borrow(&types, i),
-                label: *vector::borrow(&labels, i),
-                min_value: *vector::borrow(&min_values, i),
-                max_value: *vector::borrow(&max_values, i),
-                default_value: *vector::borrow(&default_values, i),
-            });
-            i = i + 1;
-        };
-        ParameterRules { rules: rules_map }
-    }
     
     fun create_atelier_object<T>(
         name: String,
@@ -353,7 +309,7 @@ module archimeters::atelier {
         ctx: &TxContext
     ) {
         let sender = ctx.sender();
-        assert!(atelier.current_owner == sender, ENO_PERMISSION);
+        verify_owner_permission(atelier.current_owner, sender);
         atelier.current_owner = new_owner;
     }
     
@@ -423,16 +379,16 @@ module archimeters::atelier {
         atelier_state.all_ateliers.push_back(atelier_id);
     }
 
-    // == Validation Functions ==
     public(package) fun validate_parameter(rules: &ParameterRules, key: String, value: u64): bool {
-        if (!vec_map::contains(&rules.rules, &key)) return false;
-        let rule = vec_map::get(&rules.rules, &key);
-        value >= rule.min_value && value <= rule.max_value
+        validation_validate_parameter(rules, key, value)
     }
     
     public(package) fun get_parameter_rules<T>(atelier: &Atelier<T>): &ParameterRules {
         &atelier.parameter_rules
     }
+    
+    public fun get_min_value(rule: &ParameterRule): u64 { atelier_validation::get_min_value(rule) }
+    public fun get_max_value(rule: &ParameterRule): u64 { atelier_validation::get_max_value(rule) }
     
     #[test_only]
     public fun new_atelier_state_for_testing(ctx: &mut TxContext) {

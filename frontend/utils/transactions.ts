@@ -1,24 +1,24 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Phase 2.5 (Day 2 - 2025-11-07)
-export const PACKAGE_ID = '0xb1c35c962187b1b2eebe934b69300fba986efb187297b2abfaff7f1711275dd3';
-export const STATE_ID = '0x487442cd090c87f150e647acf23972ba2181b2a08d3c87f25d01e9f522800623';
-export const ATELIER_STATE_ID = '0x164c661144d99e752869476844090bf43c3a57b8aa5d81e0b901c89db351e56d';
-export const UPGRADE_CAP = '0x2ab8a8dc4433230cec93899899459dba44d66a9cfc9bf56df86ce2d641f5f78f';
+// Contract addresses - Day 4 (2025-11-09) - Seal Integration
+export const PACKAGE_ID = '0xdeac9eea36d5ae4941a8ca9e120ed4ad1890440b97c788838c274ad8f5cfee21';
+export const STATE_ID = '0x90604227936f4407b1d92621067c2a93925ca72b3b227b9132883eeb1958c73d';
+export const ATELIER_STATE_ID = '0x47323c903cce10ebff83229d1a7b6515f3bdab22668a2696a7b2428679ccf060';
+export const UPGRADE_CAP = '0xa2383c792d115224cf6f3a7d6b3ac853bc74bf47df94377d954f5f033d1ce837';
 
-export const ATELIER_TRANSFER_POLICY = '0xc3847aedaea432d60aae13bb03d247818ed032baa58ea12ac86f4a7619008d3a';
-export const ATELIER_TRANSFER_POLICY_CAP = '0xd30ac43b168d30cee8b385cb65ba70f5fcf29fc4e530936dc5ac9ba2b1e71235';
-export const SCULPT_TRANSFER_POLICY = '0xfd0a3358958b7d5d51b52a89c06247375fbacfe36f2e739f114eeb540cb2cf43';
-export const SCULPT_TRANSFER_POLICY_CAP = '0x47f129fd1fdd7e6a2da4dd3450b466a921882227822b0ae80ed9bd8aaf999f7f';
+export const ATELIER_TRANSFER_POLICY = '0xe7156b1e24b06a52119453110b0416ae1d3ace2362850d240a36ab5933dc14c9';
+export const ATELIER_TRANSFER_POLICY_CAP = '0x4ef9610bbaba14d47f0729da184e08ace5271043d61fd9a8a5df0c03e9125a5e';
+export const SCULPT_TRANSFER_POLICY = '0x62d6a75334d53c5049b72a22508323087d58e07a1084c5d2523f7326902928dd';
+export const SCULPT_TRANSFER_POLICY_CAP = '0x40381a02e685b64ee0ac43874625b47d8afab407ce01d594bc60c3cc17e61329';
 
-export const MEMBERSHIP_DISPLAY = '0xa02e3269c5f532dba6955bd9d246278cfb2efa13a8ae636bc9035cb35c83f96f';
-export const ATELIER_DISPLAY = '0x959633d91f630861c43ce8531266c7737cbc196ab1c7e0b22d821c567717040a';
-export const SCULPT_DISPLAY = '0x77495149fd4679a9eeedd1ed3db3b700539b9973b35f68ef2e221059e88cac3f';
+export const MEMBERSHIP_DISPLAY = '0x6d0e006de624243acfd71ccfa1f0751b2b07d03651ed9013d23d33be758bcd8a';
+export const ATELIER_DISPLAY = '0xd1ec3882e05b837a56155c08f3728dc4d0291b54414258281f4481d061c953ed';
+export const SCULPT_DISPLAY = '0x20857acbd3fffb962b57634aac252bc446c2dedede2237ec759d5f9a2b4b81c3';
 
-export const PUBLISHER_ARCHIMETERS = '0xd7fc8ca31c419ed76de604ddc87b359b5c39c51be52ee2fe222eafbeb332373e';
-export const PUBLISHER_ATELIER = '0xb89f8d030e5810c88d849a97f138a537ae8c870c9a6d063d3aec8350413118ea';
-export const PUBLISHER_SCULPT = '0xa1f0467633a3282eb7649219ea06eda0ee401990fd2a59301879c058a099e570';
+export const PUBLISHER_ARCHIMETERS = '0xb3215049dbc1fe36dba8fa44e605a8da72d04048271257bdb2150cf00cea9f70';
+export const PUBLISHER_ATELIER = '0xea43b3f265ddd750536f53b5ab4d4710206617c0273021c2beec396ca440c670';
+export const PUBLISHER_SCULPT = '0xea8804cec0db02cbde1a6fdc6d8177a7830df4b13bcacbb6844238205345fb6e';
 
 export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
 export const PRINTER_REGISTRY = '0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c';
@@ -104,13 +104,20 @@ export const mintSculpt = (
   kioskCapId: string,
   alias: string,
   blueprint: string,
-  structure: string,
+  glbFile: string,
+  structure: string | null, // Optional STL blob ID
   paramKeys: string[],
   paramValues: number[],
   priceInMist: number,
 ) => {
   const tx = new Transaction();
   const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)]);
+  
+  // Serialize Option<String> for structure
+  // If structure is null, serialize as None; otherwise as Some(string)
+  const structureOption = structure 
+    ? bcs.option(bcs.string()).serialize(structure)
+    : bcs.option(bcs.string()).serialize(null);
   
   tx.moveCall({
     target: `${PACKAGE_ID}::sculpt::mint_sculpt`,
@@ -123,7 +130,8 @@ export const mintSculpt = (
       tx.object(kioskCapId),
       tx.pure.string(alias),
       tx.pure.string(blueprint),
-      tx.pure.string(structure),
+      tx.pure.string(glbFile),
+      tx.pure(structureOption),
       tx.pure(bcs.vector(bcs.string()).serialize(paramKeys)),
       tx.pure(bcs.vector(bcs.u64()).serialize(paramValues)),
       paymentCoin,

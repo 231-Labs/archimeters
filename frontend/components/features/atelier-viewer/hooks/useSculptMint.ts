@@ -13,6 +13,9 @@ interface UseSculptMintProps {
   exportScene: (scene: THREE.Scene, fileName: string, format: ExportFormat) => Promise<File>;
   uploadToWalrus: (file: File, fileType: string) => Promise<string>;
   exportFormat: ExportFormat;
+  generateStl: boolean;
+  parameters: Record<string, any>; // Parsed parameters from useAtelierParameters
+  previewParams: Record<string, any>; // Current parameter values
   options?: UseSculptMintOptions;
 }
 
@@ -22,6 +25,9 @@ export const useSculptMint = ({
   exportScene,
   uploadToWalrus,
   exportFormat,
+  generateStl,
+  parameters,
+  previewParams,
   options = {},
 }: UseSculptMintProps) => {
   const [mintStatus, setMintStatus] = useState<MintStatus>('idle');
@@ -29,6 +35,7 @@ export const useSculptMint = ({
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const { selectedKiosk, kiosks } = useKiosk();
+  // const suiClient = useSuiClient();
 
   const handleMint = useCallback(async (alias: string) => {
     if (!atelier) {
@@ -60,49 +67,66 @@ export const useSculptMint = ({
       const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
       const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
 
-      // Step 2: Export 3D model
+      // Step 2: Export GLB (always, for 3D preview)
       const baseName = `${atelier.title}_${Date.now()}`;
-      const modelFile = await exportScene(scene, baseName, exportFormat);
+      const glbFile = await exportScene(scene, baseName, 'glb');
+      console.log('📦 GLB file exported for 3D preview');
 
-      // 🔑 SEAL ENCRYPTION
-      // Encrypt the model file before uploading to Walrus
-      let fileToUpload: File | Blob = modelFile;
-      let sealMetadata: any = null;
+      // Step 3: Upload GLB to Walrus (required for glb_file field)
+      const glbBlobId = await uploadToWalrus(glbFile, 'GLB');
+      console.log('✅ GLB uploaded:', glbBlobId);
+
+      // Step 4: Optionally generate and encrypt STL for printing
+      let stlBlobId: string | null = null;
       
-      if (SEAL_CONFIG.enabled && SEAL_CONFIG.supportedTypes.includes(exportFormat.toLowerCase())) {
-        setMintStatus('preparing'); // Update status for encryption
-        console.log('🔐 Encrypting model file with Seal...');
+      if (generateStl) {
+        console.log('🏗️ Generating STL file for printing...');
+        const stlFile = await exportScene(scene, baseName, 'stl');
+        
+        // SEAL ENCRYPTION for STL
+        let fileToUpload: File | Blob = stlFile;
+        let encrypted = false;
+      
+        if (SEAL_CONFIG.enabled) {
+          setMintStatus('preparing');
+          console.log('🔐 Encrypting STL with Seal...');
         
         try {
-          const encryptionResult = await encryptModelFile(modelFile, {
+            const encryptionResult = await encryptModelFile(
+              stlFile, 
+              {
             sculptId: `sculpt_${Date.now()}`,
             atelierId: atelier.id,
-          });
+              },
+              'testnet' // Network for Seal key servers
+            );
           
           fileToUpload = encryptionResult.encryptedBlob;
-          sealMetadata = {
-            resourceId: encryptionResult.resourceId,
-            ...encryptionResult.metadata,
-          };
+            encrypted = encryptionResult.metadata.encrypted;
           
-          console.log('✅ Seal encryption completed:', sealMetadata);
+            console.log('✅ Seal encryption completed:', {
+              encrypted,
+              originalSize: encryptionResult.metadata.originalSize,
+              encryptedSize: encryptionResult.metadata.encryptedSize,
+            });
         } catch (error) {
-          console.error('⚠️ Seal encryption failed, uploading unencrypted:', error);
-          // Fall back to unencrypted upload
+            console.error('⚠️ Seal encryption failed, uploading unencrypted STL:', error);
+          }
         }
+
+        // Upload STL (encrypted or unencrypted)
+        stlBlobId = await uploadToWalrus(
+          fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], stlFile.name),
+          encrypted ? 'STL (Encrypted)' : 'STL'
+        );
+        console.log('✅ STL uploaded:', stlBlobId, encrypted ? '🔐' : '');
+      } else {
+        console.log('⏭️ Skipping STL generation (toggle off)');
       }
 
-      // Step 3: Upload model to Walrus
-      const modelBlobId = await uploadToWalrus(
-        fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], modelFile.name),
-        exportFormat.toUpperCase()
-      );
-
-      if (!screenshotBlobId || !modelBlobId) {
-        throw new Error('Failed to get blob IDs');
+      if (!screenshotBlobId || !glbBlobId) {
+        throw new Error('Failed to get required blob IDs');
       }
-
-      setMintStatus('minting');
 
       // Step 4: Verify kiosk selection
       if (!selectedKiosk) {
@@ -114,25 +138,32 @@ export const useSculptMint = ({
 
       const kioskId = selectedKiosk.kioskId;
       const kioskCapId = selectedKiosk.kioskCapId;
+
+      // Get membership ID
+      const membershipId = sessionStorage.getItem('membership-id');
+      if (!membershipId) {
+        throw new Error('No membership ID found');
+      }
       
-      // Step 5: Get parameter values from atelier and convert to on-chain format
-      // Get user's current parameter values (from preview or use defaults)
+      // Step 5: Get parameter values and convert to on-chain format
+      // Use the current parameter values from previewParams (already processed by useAtelierParameters)
       const userParams: Record<string, number> = {};
       
-      // Read parameters from configData (which contains metadata from Walrus)
-      const parameters = atelier.configData?.parameters || atelier.metadata?.parameters || {};
-      
-      // For now, use default values from parameters
-      // TODO: In the future, allow users to customize parameters before minting
-      if (Object.keys(parameters).length > 0) {
-        Object.entries(parameters).forEach(([key, paramMeta]: [string, any]) => {
-          if (paramMeta.type === 'number') {
-            // Use the original default value (can be negative)
-            userParams[key] = paramMeta.originalDefault ?? paramMeta.default ?? 0;
+      // Use previewParams which contains the user's current parameter values
+      if (Object.keys(previewParams).length > 0 && Object.keys(parameters).length > 0) {
+        Object.entries(previewParams).forEach(([key, value]) => {
+          // Ensure value is a number
+          if (typeof value === 'number') {
+            userParams[key] = value;
+          } else if (typeof value === 'string') {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              userParams[key] = numValue;
+            }
           }
         });
       } else {
-        console.warn('⚠️ No parameters found in atelier data. Empty parameters will be sent to contract.');
+        console.warn('⚠️ No parameters found. Check if Atelier has parameters defined.');
       }
       
       // Convert parameters to on-chain values (with offset)
@@ -144,17 +175,15 @@ export const useSculptMint = ({
       // Debug logging
       console.log('🔍 Mint Debug Info:', {
         hasParameters: Object.keys(parameters).length > 0,
+        previewParams,
         userParams,
         paramKeys,
         paramValues,
-        parameters: Object.keys(parameters),
+        parameterKeys: Object.keys(parameters),
       });
       
-      // Step 6: Execute on-chain transaction
-      const membershipId = sessionStorage.getItem('membership-id');
-      if (!membershipId) {
-        throw new Error('No membership ID found');
-      }
+      // Step 7: Execute on-chain transaction
+      setMintStatus('minting');
 
       const tx = mintSculpt(
         atelier.id,
@@ -164,7 +193,8 @@ export const useSculptMint = ({
         kioskCapId,
         alias,
         `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
-        modelBlobId,
+        glbBlobId, // glb_file: String (required)
+        stlBlobId, // structure: Option<String> (optional STL blob ID)
         paramKeys,
         paramValues,
         Number(atelier.price),

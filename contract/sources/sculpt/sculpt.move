@@ -29,7 +29,6 @@ module archimeters::sculpt {
     };
     use archimeters::royalty_rule;
 
-    // == Errors ==
     const ENO_CORRECT_FEE: u64 = 0;
     const ENO_INVALID_PARAMETER: u64 = 1;
     const ENO_PARAMETER_COUNT_MISMATCH: u64 = 2;
@@ -39,7 +38,6 @@ module archimeters::sculpt {
     const ENO_PERMISSION: u64 = 6;
     const ENO_EMPTY_PARAMETERS: u64 = 7;
 
-    // == One Time Witness ==
     public struct SCULPT has drop {}
 
     public struct Sculpt<phantom ATELIER> has key, store {
@@ -49,7 +47,8 @@ module archimeters::sculpt {
         owner: address,
         creator: address,
         blueprint: String,
-        structure: String,
+        glb_file: String,
+        structure: option::Option<String>,
         parameters: VecMap<String, u64>,
         printed: u64,
         time: u64,
@@ -57,20 +56,9 @@ module archimeters::sculpt {
         encrypted: bool,
     }
 
-    // == Events ==
-    public struct New_sculpt has copy, drop {
-        id: ID,
-    }
-    
-    public struct PrinterAdded has copy, drop {
-        sculpt_id: ID,
-        printer_id: ID,
-    }
-    
-    public struct PrinterRemoved has copy, drop {
-        sculpt_id: ID,
-        printer_id: ID,
-    }
+    public struct New_sculpt has copy, drop { id: ID }
+    public struct PrinterAdded has copy, drop { sculpt_id: ID, printer_id: ID }
+    public struct PrinterRemoved has copy, drop { sculpt_id: ID, printer_id: ID }
 
     #[allow(lint(share_owned))]
     fun init(otw: SCULPT, ctx: &mut TxContext) {
@@ -83,9 +71,8 @@ module archimeters::sculpt {
         display.add(b"image_url".to_string(), b"{blueprint}".to_string());
         display.update_version();
 
-        // Create TransferPolicy and set default 2.5% royalty
         let (mut policy, policy_cap) = transfer_policy::new<Sculpt<ATELIER>>(&publisher, ctx);
-        royalty_rule::add(&mut policy, &policy_cap, 250, ctx.sender()); // 2.5% royalty to deployer
+        royalty_rule::add(&mut policy, &policy_cap, 250, ctx.sender());
 
         transfer::public_share_object(policy);
         transfer::public_transfer(policy_cap, ctx.sender());
@@ -101,7 +88,8 @@ module archimeters::sculpt {
         sculpt_kiosk_cap: &KioskOwnerCap,
         alias: String,
         blueprint: String,
-        structure: String,
+        glb_file: String,
+        structure: option::Option<String>,
         param_keys: vector<String>,
         param_values: vector<u64>,
         payment: Coin<SUI>,
@@ -114,11 +102,9 @@ module archimeters::sculpt {
         assert!(archimeters_module::owner(membership) == sender, ENO_MEMBERSHIP);
         assert!(!string::is_empty(&alias), ENO_EMPTY_STRING);
         assert!(!string::is_empty(&blueprint), ENO_EMPTY_STRING);
-        assert!(!string::is_empty(&structure), ENO_EMPTY_STRING);
+        assert!(!string::is_empty(&glb_file), ENO_EMPTY_STRING);
         assert!(get_pool_id(atelier) == object::id(pool), ENO_POOL_MISMATCH);
         assert!(coin::value(&payment) == get_price(atelier), ENO_CORRECT_FEE);
-        
-        // Ensure parameters are provided (cannot be empty)
         assert!(vector::length(&param_keys) > 0, ENO_EMPTY_PARAMETERS);
         assert!(vector::length(&param_values) > 0, ENO_EMPTY_PARAMETERS);
         
@@ -128,7 +114,7 @@ module archimeters::sculpt {
         add_payment_to_pool<T>(pool, payment);
         
         let (sculpt, sculpt_id) = create_sculpt<T>(
-            atelier_id, alias, sender, creator, blueprint, structure, params, clock, ctx
+            atelier_id, alias, sender, creator, blueprint, glb_file, structure, params, clock, ctx
         );
         
         add_sculpt_to_membership(membership, sculpt_id);
@@ -162,7 +148,8 @@ module archimeters::sculpt {
         owner: address,
         creator: address,
         blueprint: String,
-        structure: String,
+        glb_file: String,
+        structure: option::Option<String>,
         parameters: VecMap<String, u64>,
         clock: &clock::Clock,
         ctx: &mut TxContext
@@ -171,11 +158,14 @@ module archimeters::sculpt {
         let id = object::new(ctx);
         let id_inner = object::uid_to_inner(&id);
         
+        // Check if STL is encrypted
+        let encrypted = option::is_some(&structure);
+        
         (Sculpt<T> {
-            id, atelier_id, alias, owner, creator, blueprint, structure,
+            id, atelier_id, alias, owner, creator, blueprint, glb_file, structure,
             parameters, printed: 0, time: clock::timestamp_ms(clock),
             printer_whitelist: vec_set::empty(),
-            encrypted: false,
+            encrypted,
         }, id_inner)
     }
     
@@ -198,8 +188,8 @@ module archimeters::sculpt {
         sui::dynamic_object_field::add(&mut sculpt.id, clock::timestamp_ms(clock), record);
     }
 
-    public fun get_sculpt_info<T>(sculpt: &Sculpt<T>): (ID, String, String) {
-        (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.structure)
+    public fun get_sculpt_info<T>(sculpt: &Sculpt<T>): (ID, String, String, option::Option<String>) {
+        (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.glb_file, sculpt.structure)
     }
 
     public fun get_sculpt_printed<T>(sculpt: &Sculpt<T>): u64 { sculpt.printed }
@@ -207,6 +197,25 @@ module archimeters::sculpt {
     public fun get_sculpt_atelier_id<T>(sculpt: &Sculpt<T>): ID { sculpt.atelier_id }
     
     // == Seal Authorization Functions ==
+    
+    /// Seal authorization function for printer access control
+    /// Verifies if the given Printer ID is authorized to decrypt the STL file
+    /// 
+    /// The `id` parameter contains the Printer ID (without package prefix)
+    /// This function checks if the Printer ID is in the sculpt's whitelist
+    entry fun seal_approve_printer<T>(
+        id: vector<u8>,
+        sculpt: &Sculpt<T>,
+        _ctx: &TxContext
+    ) {
+        // Convert the printer ID bytes to ID type
+        let printer_id = object::id_from_bytes(id);
+        
+        // Check if the Printer ID is in the whitelist
+        assert!(vec_set::contains(&sculpt.printer_whitelist, &printer_id), ENO_PERMISSION);
+
+        // If we reach here, access is granted (function returns normally)
+    }
     
     /// Add a printer to the whitelist for this sculpt (owner only)
     public fun add_printer_to_whitelist<T>(
@@ -238,7 +247,7 @@ module archimeters::sculpt {
         });
     }
     
-    /// Check if a printer is authorized to print this sculpt
+    /// Check if a printer is authorized to decrypt this sculpt
     public fun is_printer_authorized<T>(sculpt: &Sculpt<T>, printer_id: ID): bool {
         vec_set::contains(&sculpt.printer_whitelist, &printer_id)
     }
@@ -260,5 +269,71 @@ module archimeters::sculpt {
     /// Get the printer whitelist
     public fun get_printer_whitelist<T>(sculpt: &Sculpt<T>): &VecSet<ID> {
         &sculpt.printer_whitelist
+    }
+    
+    /// Get the GLB file blobId
+    public fun get_glb_file<T>(sculpt: &Sculpt<T>): String {
+        sculpt.glb_file
+    }
+    
+    /// Get the STL file blobId (if encrypted)
+    public fun get_structure<T>(sculpt: &Sculpt<T>): option::Option<String> {
+        sculpt.structure
+    }
+    
+    // == Test Helper Functions ==
+    
+    #[test_only]
+    /// Test helper to call seal_approve_printer (since entry functions can't be called directly in tests)
+    public fun test_seal_approve_printer<T>(
+        id: &vector<u8>,
+        sculpt: &Sculpt<T>,
+        _ctx: &TxContext
+    ) {
+        let printer_id = object::id_from_bytes(*id);
+        assert!(vec_set::contains(&sculpt.printer_whitelist, &printer_id), ENO_PERMISSION);
+    }
+    
+    #[test_only]
+    /// Create a test Sculpt for unit testing
+    public fun create_test_sculpt<T>(
+        alias: String,
+        owner: address,
+        creator: address,
+        blueprint: String,
+        glb_file: String,
+        structure: option::Option<String>,
+        param_keys: vector<String>,
+        param_values: vector<u64>,
+        clock: &clock::Clock,
+        ctx: &mut TxContext
+    ): Sculpt<T> {
+        let atelier_id = object::id_from_address(@0x0);
+        let id = object::new(ctx);
+        
+        let mut parameters = vec_map::empty<String, u64>();
+        let mut i = 0;
+        while (i < vector::length(&param_keys)) {
+            vec_map::insert(&mut parameters, *vector::borrow(&param_keys, i), *vector::borrow(&param_values, i));
+            i = i + 1;
+        };
+        
+        let encrypted = option::is_some(&structure);
+        
+        Sculpt<T> {
+            id,
+            atelier_id,
+            alias,
+            owner,
+            creator,
+            blueprint,
+            glb_file,
+            structure,
+            parameters,
+            printed: 0,
+            time: clock::timestamp_ms(clock),
+            printer_whitelist: vec_set::empty(),
+            encrypted,
+        }
     }
 }

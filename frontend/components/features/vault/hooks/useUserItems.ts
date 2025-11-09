@@ -28,7 +28,8 @@ export interface SculptItem extends BaseVaultItem {
   alias: string;
   creator: string;
   printed: string;
-  structure: string;
+  glbFile: string; // GLB file for 3D preview
+  structure: string; // STL file for printing (optional, encrypted)
   time: string;
   kioskId: string;
   kioskCapId: string;
@@ -157,6 +158,16 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo.kioskId;
         const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo.kioskCapId;
         
+        // Handle Option<String> for structure field
+        // Sui returns Option as {vec: ["value"]} for Some(value) or {vec: []} for None
+        let structureValue = '';
+        if (content.fields.structure && typeof content.fields.structure === 'object') {
+          const structureOption = content.fields.structure as any;
+          if (structureOption.vec && Array.isArray(structureOption.vec) && structureOption.vec.length > 0) {
+            structureValue = structureOption.vec[0];
+          }
+        }
+        
         parsedItems.push({
           id: object.data.objectId,
           type: 'sculpt',
@@ -165,7 +176,8 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
           alias: content.fields.alias || '',
           creator: content.fields.creator || '',
           printed: content.fields.printed || '0',
-          structure: content.fields.structure || '',
+          glbFile: content.fields.glb_file || '', // glb_file is already a blob ID, not a URL
+          structure: structureValue, // structure is Option<String>, extract from vec if present
           time: content.fields.time
             ? new Date(Number(content.fields.time)).toLocaleDateString('en-CA')
             : '',

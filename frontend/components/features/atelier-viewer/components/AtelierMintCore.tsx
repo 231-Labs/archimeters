@@ -11,7 +11,7 @@ import { useWalrusUpload } from '../hooks/useWalrusUpload';
 import { useSculptMint } from '../hooks/useSculptMint';
 import { useMembershipCheck } from '../hooks/useMembershipCheck';
 import { useMintButtonState } from '../hooks/useMintButtonState';
-import { ExportFormatToggle } from './ExportFormatToggle';
+import { StlToggle } from './ExportFormatToggle';
 import { MintStatusNotification } from './MintStatusNotification';
 import { formatAddress, formatText, scaleSuiPrice } from '../utils/formatters';
 import { SceneRefs } from '../types';
@@ -26,6 +26,7 @@ interface AtelierMintCoreProps {
  */
 export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
   const [alias, setAlias] = useState('');
+  const [generateStl, setGenerateStl] = useState(false);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
@@ -49,6 +50,9 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
     exportScene,
     uploadToWalrus,
     exportFormat,
+    generateStl,
+    parameters,
+    previewParams,
   });
 
   const viewerProps = useMemo(() => ({
@@ -69,10 +73,10 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
     await handleMint(alias);
   };
 
-  const exportFormatToggle = (
-    <ExportFormatToggle 
-      exportFormat={exportFormat} 
-      onToggle={() => setExportFormat(prev => prev === 'glb' ? 'stl' : 'glb')} 
+  const stlToggle = (
+    <StlToggle 
+      generateStl={generateStl} 
+      onToggle={() => setGenerateStl(prev => !prev)} 
     />
   );
 
@@ -114,7 +118,7 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
         previewParams={previewParams}
         onParameterChange={handleParameterChange}
         onMint={onMint}
-        exportFormatToggle={exportFormatToggle}
+        exportFormatToggle={stlToggle}
         mintButtonState={{
           ...mintButtonState,
           tooltipComponent,

@@ -1,6 +1,7 @@
 #[test_only]
 module archimeters::integration_tests {
     use std::string;
+    use std::option;
     use sui::test_scenario::{Self as ts};
     use sui::clock;
     
@@ -149,7 +150,8 @@ module archimeters::integration_tests {
                 &cap,
                 string::utf8(b"Test Sculpt"),
                 string::utf8(b"blueprint_blob_id"),
-                string::utf8(b"structure_blob_id"),
+                string::utf8(b"glb_file_blob_id"),
+                option::none(), // No STL for this test
                 param_keys,
                 param_values,
                 payment,
@@ -237,7 +239,8 @@ module archimeters::integration_tests {
                 &cap,
                 string::utf8(b"Test Sculpt"),
                 string::utf8(b"blueprint_blob_id"),
-                string::utf8(b"structure_blob_id"),
+                string::utf8(b"glb_file_blob_id"),
+                option::none(), // No STL for this test
                 param_keys,
                 param_values,
                 payment,
@@ -326,7 +329,8 @@ module archimeters::integration_tests {
                 &cap,
                 string::utf8(b"Test Sculpt"),
                 string::utf8(b"blueprint_blob_id"),
-                string::utf8(b"structure_blob_id"),
+                string::utf8(b"glb_file_blob_id"),
+                option::none(), // No STL for this test
                 param_keys,
                 param_values,
                 payment,
@@ -413,7 +417,8 @@ module archimeters::integration_tests {
                 &cap,
                 string::utf8(b"Test Sculpt"),
                 string::utf8(b"blueprint_blob_id"),
-                string::utf8(b"structure_blob_id"),
+                string::utf8(b"glb_file_blob_id"),
+                option::none(), // No STL for this test
                 param_keys,
                 param_values,
                 payment,
