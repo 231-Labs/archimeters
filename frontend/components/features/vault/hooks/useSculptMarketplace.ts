@@ -3,6 +3,7 @@ import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@
 import { Transaction } from '@mysten/sui/transactions';
 import { SCULPT_TYPE, PACKAGE_ID } from '@/utils/transactions';
 import { KioskClient, KioskTransaction, Network } from '@mysten/kiosk';
+import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
 
 const KIOSK_PACKAGE = '0x2';
 
@@ -80,9 +81,16 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
-            if (onSuccessCallback) {
-              onSuccessCallback();
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+              if (onSuccessCallback) {
+                onSuccessCallback();
+              }
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
             }
           },
           onError: (err) => {
@@ -151,9 +159,16 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
-            if (onSuccessCallback) {
-              onSuccessCallback();
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+              if (onSuccessCallback) {
+                onSuccessCallback();
+              }
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
             }
           },
           onError: (err) => {
@@ -235,7 +250,14 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';

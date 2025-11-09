@@ -140,6 +140,7 @@ export function useKiosk() {
     setSelectedKiosk(kiosk);
     sessionStorage.setItem('kiosk-id', kiosk.kioskId);
     sessionStorage.setItem('kiosk-cap-id', kiosk.kioskCapId);
+    window.dispatchEvent(new CustomEvent('kiosk-selected', { detail: kiosk }));
   }, []);
 
   // When account changes, refetch kiosks
@@ -147,11 +148,12 @@ export function useKiosk() {
     fetchUserKiosks();
   }, [fetchUserKiosks]);
 
-  // When selection changes, save to session storage
+  // When selection changes, save to session storage and dispatch event
   useEffect(() => {
     if (selectedKiosk) {
       sessionStorage.setItem('kiosk-id', selectedKiosk.kioskId);
       sessionStorage.setItem('kiosk-cap-id', selectedKiosk.kioskCapId);
+      window.dispatchEvent(new CustomEvent('kiosk-selected', { detail: selectedKiosk }));
     }
   }, [selectedKiosk]);
 

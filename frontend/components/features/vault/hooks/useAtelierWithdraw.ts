@@ -1,6 +1,7 @@
 import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
 import { withdrawAtelierPool, ATELIER_TYPE } from '@/utils/transactions';
+import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
 
 interface UseAtelierWithdrawProps {
   atelierId: string;
@@ -79,9 +80,18 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
           },
           {
             onSuccess: (result) => {
-              const txHash = result?.digest ? ` (tx: ${result.digest})` : '';
-              onStatusChange?.('success', `Withdrawal successful!${txHash}`, result?.digest);
-              resolve(true);
+              if (isTransactionSuccessful(result)) {
+                const txHash = result?.digest ? ` (tx: ${result.digest})` : '';
+                onStatusChange?.('success', `Withdrawal successful!${txHash}`, result?.digest);
+                resolve(true);
+              } else {
+                const txError = getTransactionError(result);
+                const errorMsg = txError || 'Transaction execution failed';
+                setError(errorMsg);
+                onStatusChange?.('error', errorMsg);
+                setIsWithdrawing(false);
+                resolve(false);
+              }
             },
             onError: (error) => {
               console.error("Transaction failed:", error);

@@ -13,6 +13,7 @@ import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from
 import { RetroImageItem } from '@/components/common/RetroImageItem';
 import { SuiLogo } from '@/components/common/SuiLogo';
 import { formatSuiPrice } from '@/utils/formatters';
+import { MARKETPLACE_CONFIG } from '@/config/marketplace';
 import type { Atelier, Sculpt, KioskInfo } from '@/components/features/marketplace/types';
 
 interface MarketplaceWindowProps {
@@ -44,12 +45,28 @@ export default function MarketplaceWindow({
   const [targetKioskInfo, setTargetKioskInfo] = useState<KioskInfo | null>(null);
   
   useEffect(() => {
-    const kioskId = sessionStorage.getItem('kiosk-id');
-    const kioskCapId = sessionStorage.getItem('kiosk-cap-id');
-    
-    if (kioskId && kioskCapId) {
-      setTargetKioskInfo({ kioskId, kioskCapId });
-    }
+    const loadKioskInfo = () => {
+      const kioskId = sessionStorage.getItem('kiosk-id');
+      const kioskCapId = sessionStorage.getItem('kiosk-cap-id');
+      
+      if (kioskId && kioskCapId) {
+        setTargetKioskInfo({ kioskId, kioskCapId });
+      } else {
+        setTargetKioskInfo(null);
+      }
+    };
+
+    loadKioskInfo();
+
+    const handleKioskChange = () => {
+      loadKioskInfo();
+    };
+
+    window.addEventListener('kiosk-selected', handleKioskChange);
+
+    return () => {
+      window.removeEventListener('kiosk-selected', handleKioskChange);
+    };
   }, []);
   
   const preloadAndCacheImage = useCallback(async (url: string): Promise<void> => {
@@ -246,13 +263,14 @@ export default function MarketplaceWindow({
                 columnClassName="pl-3 bg-clip-padding"
               >
                 {sculpts.map((sculpt: Sculpt) => {
+                  const totalPrice = MARKETPLACE_CONFIG.calculateTotal(sculpt.price);
                   const infoContent = (
                     <div className="flex flex-col text-xs text-white/90">
                       <span className="font-semibold">Sculpt #{sculpt.id.slice(0, 8)}</span>
                       <span>Creator: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
                       <span className="flex gap-1 items-center justify-center mt-1">
                         <SuiLogo width={8} height={10} />
-                        {formatSuiPrice(sculpt.price)} SUI
+                        {formatSuiPrice(totalPrice)} SUI
                       </span>
                     </div>
                   );
@@ -272,32 +290,35 @@ export default function MarketplaceWindow({
               </Masonry>
             ) : (
               <div className="space-y-2">
-                {sculpts.map((sculpt: Sculpt) => (
-                  <RetroListItem
-                    key={sculpt.id}
-                    onClick={() => setSelectedSculpt(sculpt)}
-                  >
-                    <RetroListThumbnail
-                      src={sculpt.photoBlobId ? `/api/image-proxy?blobId=${sculpt.photoBlobId}` : undefined}
-                      alt={`Sculpt #${sculpt.id.slice(0, 8)}`}
-                      fallback={
-                        <div className="w-full h-full flex items-center justify-center bg-neutral-800/50">
-                          <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">IMAGE</p>
-                        </div>
-                      }
-                    />
-                    <RetroListInfo
-                      title={`Sculpt #${sculpt.id.slice(0, 8)}`}
-                      metadata={
-                        <>
-                          <span>CREATOR: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
-                          <span>PRICE: {formatSuiPrice(sculpt.price)} SUI</span>
-                        </>
-                      }
-                    />
-                    <RetroListArrow />
-                  </RetroListItem>
-                ))}
+                {sculpts.map((sculpt: Sculpt) => {
+                  const totalPrice = MARKETPLACE_CONFIG.calculateTotal(sculpt.price);
+                  return (
+                    <RetroListItem
+                      key={sculpt.id}
+                      onClick={() => setSelectedSculpt(sculpt)}
+                    >
+                      <RetroListThumbnail
+                        src={sculpt.photoBlobId ? `/api/image-proxy?blobId=${sculpt.photoBlobId}` : undefined}
+                        alt={`Sculpt #${sculpt.id.slice(0, 8)}`}
+                        fallback={
+                          <div className="w-full h-full flex items-center justify-center bg-neutral-800/50">
+                            <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">IMAGE</p>
+                          </div>
+                        }
+                      />
+                      <RetroListInfo
+                        title={`Sculpt #${sculpt.id.slice(0, 8)}`}
+                        metadata={
+                          <>
+                            <span>CREATOR: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
+                            <span>PRICE: {formatSuiPrice(totalPrice)} SUI</span>
+                          </>
+                        }
+                      />
+                      <RetroListArrow />
+                    </RetroListItem>
+                  );
+                })}
               </div>
             )}
           </div>

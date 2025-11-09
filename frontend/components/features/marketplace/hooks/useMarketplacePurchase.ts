@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { NETWORK, SCULPT_TYPE, PACKAGE_ID, SCULPT_TRANSFER_POLICY } from '@/utils/transactions';
+import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
 import type { KioskInfo } from '../types';
 
 export type PurchaseStatus = 'idle' | 'loading_kiosk' | 'processing' | 'success' | 'error';
@@ -145,7 +146,14 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';

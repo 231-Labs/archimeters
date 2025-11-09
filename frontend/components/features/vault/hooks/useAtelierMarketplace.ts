@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
+import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
 
 const MARKETPLACE_PACKAGE = process.env.NEXT_PUBLIC_MARKETPLACE_PACKAGE || '';
 const ATELIER_PACKAGE = process.env.NEXT_PUBLIC_ATELIER_PACKAGE || '';
@@ -76,7 +77,14 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
@@ -133,7 +141,14 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
@@ -203,7 +218,14 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         {
           onSuccess: (result) => {
             setTxDigest(result.digest);
-            setStatus('success');
+            
+            if (isTransactionSuccessful(result)) {
+              setStatus('success');
+            } else {
+              const txError = getTransactionError(result);
+              setError(txError || 'Transaction execution failed');
+              setStatus('error');
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
