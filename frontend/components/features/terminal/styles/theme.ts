@@ -1,9 +1,9 @@
 export const TERMINAL_THEME = {
-  background: '#1a1a1a',  // 背景
-  foreground: '#c9d1d9',  // 前景
-  cursor: '#FFC1E0', // 游標
-  cursorAccent: '#FFC1E0',  // 游標選取
-  selection: 'rgba(255, 194, 224, 0.65)', // 選取文字
+  background: '#1a1a1a',  // Background
+  foreground: '#c9d1d9',  // Foreground
+  cursor: '#FFC1E0', // Cursor
+  cursorAccent: '#FFC1E0',  // Cursor accent
+  selection: 'rgba(255, 194, 224, 0.65)', // Text selection
   black: '#181c20',
   red: '#e06c75',
   green: '#98c379',

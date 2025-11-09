@@ -6,10 +6,11 @@
 import { useState } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
+import { PACKAGE_ID } from '@/utils/transactions';
 import type { AtelierItem } from './useUserItems';
 
-const ATELIER_PACKAGE = process.env.NEXT_PUBLIC_ATELIER_PACKAGE || '';
-const ATELIER_TYPE = ATELIER_PACKAGE ? `${ATELIER_PACKAGE}::atelier::ATELIER` : '';
+// Type argument for withdraw_pool - just the generic type parameter
+const ATELIER_TYPE_ARG = `${PACKAGE_ID}::atelier::ATELIER`;
 
 export type WithdrawStatus = 'idle' | 'processing' | 'success' | 'error';
 
@@ -37,7 +38,7 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
       return;
     }
 
-    if (!ATELIER_PACKAGE) {
+    if (!PACKAGE_ID) {
       setError('Atelier package address not configured');
       setStatus('error');
       return;
@@ -66,26 +67,19 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
       }, 0);
       setTotalWithdrawn(total);
 
-      console.log(`📤 Withdrawing from ${ateliersWithBalance.length} ateliers, total: ${total} MIST`);
-
-      // Build PTB (Programmable Transaction Block)
       const tx = new Transaction();
 
-      // Add withdraw_pool call for each atelier
       ateliersWithBalance.forEach((atelier) => {
         const poolAmount = Number(atelier.pool);
-        
-        console.log(`  - Atelier ${atelier.id}: ${poolAmount} MIST`);
-
         tx.moveCall({
-          target: `${ATELIER_PACKAGE}::atelier::withdraw_pool`,
+          target: `${PACKAGE_ID}::atelier::withdraw_pool`,
+          typeArguments: [ATELIER_TYPE_ARG],
           arguments: [
             tx.object(atelier.id),
             tx.object(atelier.poolId),
             tx.pure.u64(poolAmount),
             tx.pure.address(currentAccount.address),
           ],
-          typeArguments: [ATELIER_TYPE],
         });
       });
 
@@ -98,8 +92,6 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log(`✅ Batch withdraw successful: ${result.digest}`);
-            console.log(`   Total withdrawn: ${total} MIST from ${ateliersWithBalance.length} ateliers`);
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to withdraw';

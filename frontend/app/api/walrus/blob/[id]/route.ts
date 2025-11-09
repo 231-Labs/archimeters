@@ -8,7 +8,7 @@ export async function GET(
   try {
     const response = await walrusApi.readBlob(params.id);
     
-    // 直接返回原始響應內容和正確的 Content-Type
+    // Return raw response with correct Content-Type
     return new NextResponse(response.body, {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',

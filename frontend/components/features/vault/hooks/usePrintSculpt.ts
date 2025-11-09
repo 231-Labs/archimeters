@@ -49,7 +49,6 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
               setStatus('success');
               setTxDigest(result.digest);
               if (result?.digest) {
-                console.log(`Print successful! (tx: ${result.digest})`);
                 onStatusChange?.('success', `Print successful! (tx: ${result.digest})`, result.digest);
               } else {
                 onStatusChange?.('success', 'Print successful!');

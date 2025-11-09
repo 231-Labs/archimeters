@@ -124,7 +124,6 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
         },
         {
           onSuccess: async (result) => {
-            console.log("Transaction successful:", result);
             setDigest(result.digest);
             
             // Check NFT ownership after transaction

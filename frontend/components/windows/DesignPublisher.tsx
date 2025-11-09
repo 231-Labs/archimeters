@@ -162,7 +162,7 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
               type="text"
               value={artworkInfo.workName}
               onChange={(e) => updateArtworkInfo('workName', e.target.value)}
-              placeholder="Enter artwork title..."
+              placeholder="ENTER ARTWORK TITLE"
               className="text-xl"
             />
           </div>
@@ -315,7 +315,7 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
 
               {/* Artist Statement */}
               <div className="border-t border-white/10 pt-3">
-                <h4 className="text-white/60 text-xs font-mono uppercase mb-2">Artist Statement</h4>
+                <h4 className="text-white/60 text-xs font-mono uppercase mb-2">ARTIST INFORMATION</h4>
                 <p className="text-white/50 text-xs font-mono leading-relaxed">
                   {membershipData?.description || artistInfo.intro || 'No artist statement provided'}
                 </p>

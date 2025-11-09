@@ -4,19 +4,18 @@
  */
 
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
+import { SCULPT_TYPE, PACKAGE_ID } from '@/utils/transactions';
+import { KioskClient, KioskTransaction, Network } from '@mysten/kiosk';
 
-// TODO: Update with actual contract addresses after deployment
 const KIOSK_PACKAGE = '0x2';
-const SCULPT_PACKAGE = process.env.NEXT_PUBLIC_SCULPT_PACKAGE || '';
-const ATELIER_TYPE = process.env.NEXT_PUBLIC_ATELIER_PACKAGE ? `${process.env.NEXT_PUBLIC_ATELIER_PACKAGE}::atelier::ATELIER` : '';
 
 export type MarketplaceStatus = 'idle' | 'processing' | 'success' | 'error';
 
 interface UseSculptMarketplaceReturn {
-  listSculpt: (sculptId: string, kioskId: string, kioskCapId: string, price: number) => Promise<void>;
-  delistSculpt: (sculptId: string, kioskId: string, kioskCapId: string) => Promise<void>;
+  listSculpt: (sculptId: string, kioskId: string, kioskCapId: string, price: number, onSuccessCallback?: () => void) => Promise<void>;
+  delistSculpt: (sculptId: string, kioskId: string, kioskCapId: string, onSuccessCallback?: () => void) => Promise<void>;
   purchaseSculpt: (sculptId: string, sellerKioskId: string, price: number, royaltyAmount: number, policyId: string) => Promise<void>;
   status: MarketplaceStatus;
   error: string | null;
@@ -30,12 +29,14 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
 
   const listSculpt = async (
     sculptId: string,
     kioskId: string,
     kioskCapId: string,
-    price: number
+    price: number,
+    onSuccessCallback?: () => void
   ) => {
     if (!currentAccount?.address) {
       setError('Please connect your wallet');
@@ -47,19 +48,40 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setStatus('processing');
       setError(null);
 
-      const tx = new Transaction();
-      
-      // List the sculpt in the kiosk
-      tx.moveCall({
-        target: `${KIOSK_PACKAGE}::kiosk::list`,
-        arguments: [
-          tx.object(kioskId),
-          tx.object(kioskCapId),
-          tx.pure.id(sculptId),
-          tx.pure.u64(price),
-        ],
-        typeArguments: [`${SCULPT_PACKAGE}::sculpt::Sculpt<${ATELIER_TYPE}>`],
+      // Initialize KioskClient
+      const kioskClient = new KioskClient({
+        client: suiClient as any,
+        network: Network.TESTNET,
       });
+
+      // Get all owned kiosks to find the complete cap object
+      const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
+        address: currentAccount.address,
+      });
+
+      // Find the cap for this specific kiosk
+      const cap = kioskOwnerCaps.find(c => c.kioskId === kioskId);
+      if (!cap) {
+        throw new Error(`Could not find KioskOwnerCap for Kiosk ${kioskId}`);
+      }
+
+      // Create transaction and KioskTransaction
+      const tx = new Transaction();
+      const kioskTx = new KioskTransaction({
+        transaction: tx,
+        kioskClient,
+        cap,
+      });
+
+      // List the sculpt using KioskTransaction
+      kioskTx.list({
+        itemId: sculptId,
+        itemType: SCULPT_TYPE,
+        price: BigInt(price),
+      });
+
+      // Finalize the transaction
+      kioskTx.finalize();
 
       signAndExecuteTransaction(
         {
@@ -70,7 +92,9 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Sculpt listed successfully:', result.digest);
+            if (onSuccessCallback) {
+              onSuccessCallback();
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to list sculpt';
@@ -91,7 +115,8 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
   const delistSculpt = async (
     sculptId: string,
     kioskId: string,
-    kioskCapId: string
+    kioskCapId: string,
+    onSuccessCallback?: () => void
   ) => {
     if (!currentAccount?.address) {
       setError('Please connect your wallet');
@@ -103,18 +128,39 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setStatus('processing');
       setError(null);
 
-      const tx = new Transaction();
-      
-      // Delist the sculpt from the kiosk
-      tx.moveCall({
-        target: `${KIOSK_PACKAGE}::kiosk::delist`,
-        arguments: [
-          tx.object(kioskId),
-          tx.object(kioskCapId),
-          tx.pure.id(sculptId),
-        ],
-        typeArguments: [`${SCULPT_PACKAGE}::sculpt::Sculpt<${ATELIER_TYPE}>`],
+      // Initialize KioskClient
+      const kioskClient = new KioskClient({
+        client: suiClient as any,
+        network: Network.TESTNET,
       });
+
+      // Get all owned kiosks to find the complete cap object
+      const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
+        address: currentAccount.address,
+      });
+
+      // Find the cap for this specific kiosk
+      const cap = kioskOwnerCaps.find(c => c.kioskId === kioskId);
+      if (!cap) {
+        throw new Error(`Could not find KioskOwnerCap for Kiosk ${kioskId}`);
+      }
+
+      // Create transaction and KioskTransaction
+      const tx = new Transaction();
+      const kioskTx = new KioskTransaction({
+        transaction: tx,
+        kioskClient,
+        cap,
+      });
+
+      // Delist the sculpt using KioskTransaction
+      kioskTx.delist({
+        itemId: sculptId,
+        itemType: SCULPT_TYPE,
+      });
+
+      // Finalize the transaction
+      kioskTx.finalize();
 
       signAndExecuteTransaction(
         {
@@ -125,7 +171,9 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Sculpt delisted successfully:', result.digest);
+            if (onSuccessCallback) {
+              onSuccessCallback();
+            }
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to delist sculpt';
@@ -163,9 +211,9 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       const tx = new Transaction();
       
       // Split coins for payment and royalty
-      const [paymentCoin] = tx.splitCoins(tx.gas, [price]);
+      const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(price)]);
       const [royaltyCoin] = royaltyAmount > 0 
-        ? tx.splitCoins(tx.gas, [royaltyAmount])
+        ? tx.splitCoins(tx.gas, [tx.pure.u64(royaltyAmount)])
         : [tx.pure.u64(0)];
 
       // Purchase from kiosk
@@ -176,19 +224,19 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
           tx.pure.id(sculptId),
           paymentCoin,
         ],
-        typeArguments: [`${SCULPT_PACKAGE}::sculpt::Sculpt<${ATELIER_TYPE}>`],
+        typeArguments: [SCULPT_TYPE],
       });
 
       // If there's royalty, pay it
       if (royaltyAmount > 0) {
         tx.moveCall({
-          target: `${process.env.NEXT_PUBLIC_ARCHIMETERS_PACKAGE}::royalty_rule::pay`,
+          target: `${PACKAGE_ID}::royalty_rule::pay`,
           arguments: [
             tx.object(policyId),
             purchased[1], // transfer_request
             royaltyCoin,
           ],
-          typeArguments: [`${SCULPT_PACKAGE}::sculpt::Sculpt<${ATELIER_TYPE}>`],
+          typeArguments: [SCULPT_TYPE],
         });
       }
 
@@ -199,7 +247,7 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
           tx.object(policyId),
           purchased[1], // transfer_request
         ],
-        typeArguments: [`${SCULPT_PACKAGE}::sculpt::Sculpt<${ATELIER_TYPE}>`],
+        typeArguments: [SCULPT_TYPE],
       });
 
       // Transfer to buyer
@@ -214,7 +262,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Sculpt purchased successfully:', result.digest);
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';

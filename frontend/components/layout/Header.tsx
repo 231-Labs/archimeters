@@ -40,7 +40,7 @@ const Header = ({ paused, onToggle }: HeaderProps) => {
     >
       <button 
         className="text-xs font-mono font-bold text-white hover:text-white/80 transition-colors cursor-pointer"
-        onClick={() => {/* 待實現 */}}
+        onClick={() => {/* TODO: implement */}}
       >
         Archimeters OS
       </button>

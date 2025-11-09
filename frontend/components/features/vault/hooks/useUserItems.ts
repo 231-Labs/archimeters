@@ -1,5 +1,6 @@
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { useState, useEffect } from 'react';
+import { KioskClient, Network } from '@mysten/kiosk';
 import { PACKAGE_ID } from '@/utils/transactions';
 
 export interface BaseVaultItem {
@@ -28,6 +29,8 @@ export interface SculptItem extends BaseVaultItem {
   printed: string;
   structure: string;
   time: string;
+  kioskId: string;      // The Kiosk where this sculpt is located
+  kioskCapId: string;   // The corresponding KioskOwnerCap
 }
 
 export type VaultItem = AtelierItem | SculptItem;
@@ -89,46 +92,104 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         const membership = objects[0];
         const content = membership.data?.content as any;
         
-        // Query user's KioskOwnerCap to get kiosk information
-        try {
-          const { data: kioskCaps } = await suiClient.getOwnedObjects({
-            owner: currentAccount.address,
-            filter: {
-              StructType: '0x2::kiosk::KioskOwnerCap'
-            },
-            options: {
-              showContent: true,
-              showType: true,
-            }
-          });
+        let objectIds: string[] = [];
+        let currentKioskInfo: KioskInfo | null = null;
+        
+        if (fieldKey === 'sculptures') {
+          try {
+            const kioskClient = new KioskClient({
+              client: suiClient as any,
+              network: Network.TESTNET,
+            });
 
-          if (kioskCaps && kioskCaps.length > 0) {
-            const capObj = kioskCaps[0];
-            if (capObj.data?.content && 'fields' in capObj.data.content) {
-              const fields = capObj.data.content.fields as any;
-              const kioskId = fields.for || fields.kiosk_id;
-              const kioskCapId = capObj.data.objectId;
+            const { kioskOwnerCaps, kioskIds } = await kioskClient.getOwnedKiosks({ 
+              address: currentAccount.address 
+            });
+
+            if (kioskOwnerCaps.length > 0 && kioskIds.length > 0) {
+              const firstKiosk = kioskOwnerCaps[0];
+              currentKioskInfo = {
+                kioskId: firstKiosk.kioskId,
+                kioskCapId: firstKiosk.objectId,
+              };
+              setKioskInfo(currentKioskInfo);
+
+              const allSculptIds: string[] = [];
+              const sculptToKioskMap = new Map<string, { kioskId: string; kioskCapId: string }>();
               
-              if (kioskId && kioskCapId) {
-                setKioskInfo({ kioskId, kioskCapId });
+              for (let i = 0; i < kioskIds.length; i++) {
+                const kioskId = kioskIds[i];
+                const kioskCapId = kioskOwnerCaps[i].objectId;
+
+                try {
+                  const kioskData = await kioskClient.getKiosk({
+                    id: kioskId,
+                    options: {
+                      withKioskFields: true,
+                      withObjects: true,
+                    }
+                  });
+
+                  const sculptsInKiosk = kioskData.items
+                    .filter(item => {
+                      const isSculpt = item.type?.includes('sculpt::Sculpt');
+                      const isCurrentPackage = item.type?.includes(PACKAGE_ID);
+                      return isSculpt && isCurrentPackage;
+                    })
+                    .map(item => {
+                      sculptToKioskMap.set(item.objectId, { kioskId, kioskCapId });
+                      return item.objectId;
+                    });
+                  
+                  allSculptIds.push(...sculptsInKiosk);
+                } catch (singleKioskError) {
+                  // Continue to next kiosk
+                }
+              }
+              
+              objectIds = allSculptIds;
+              (window as any).__sculptToKioskMap = sculptToKioskMap;
+            } else {
+              // Fallback to Membership data
+              if (content?.fields?.sculptures?.type?.includes('vec_set::VecSet')) {
+                objectIds = content?.fields?.sculptures?.fields?.contents || [];
+              } else {
+                objectIds = content?.fields?.sculptures || [];
               }
             }
-          } else {
-            console.warn('No KioskOwnerCap found for user');
+          } catch (kioskQueryError) {
+            console.error('❌ Error querying Kiosks:', kioskQueryError);
+            // Fallback to Membership data if Kiosk query fails
+            if (content?.fields?.sculptures?.type?.includes('vec_set::VecSet')) {
+              objectIds = content?.fields?.sculptures?.fields?.contents || [];
+            } else {
+              objectIds = content?.fields?.sculptures || [];
+            }
           }
-        } catch (kioskError) {
-          console.error('Error fetching kiosk information:', kioskError);
-        }
-        
-        let objectIds: string[] = [];
-        
-        if (fieldKey === 'ateliers') {
+        } else if (fieldKey === 'ateliers') {
+          // For ateliers, continue using Membership data
           objectIds = content?.fields?.ateliers?.fields?.contents || [];
-        } else if (fieldKey === 'sculptures') {
-          if (content?.fields?.sculptures?.type?.includes('vec_set::VecSet')) {
-            objectIds = content?.fields?.sculptures?.fields?.contents || [];
-          } else {
-            objectIds = content?.fields?.sculptures || [];
+          
+          // Still query Kiosk info for ateliers (needed for operations)
+          try {
+            const kioskClient = new KioskClient({
+              client: suiClient as any,
+              network: Network.TESTNET,
+            });
+
+            const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ 
+              address: currentAccount.address 
+            });
+
+            if (kioskOwnerCaps.length > 0) {
+              const firstKiosk = kioskOwnerCaps[0];
+              setKioskInfo({
+                kioskId: firstKiosk.kioskId,
+                kioskCapId: firstKiosk.objectId,
+              });
+            }
+          } catch (err) {
+            console.error('Error fetching kiosk info for ateliers:', err);
           }
         }
         
@@ -146,6 +207,7 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
           ids: objectIds,
           options: {
             showContent: true,
+            showType: true,
           },
         });
 
@@ -154,6 +216,13 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         for (const object of results) {
           if (!object.data?.content) continue;
           const content = object.data.content as any;
+          
+          if (fieldKey === 'sculptures') {
+            const objectType = object.data.type;
+            if (objectType && !objectType.includes(PACKAGE_ID)) {
+              continue;
+            }
+          }
           
           if (fieldKey === 'ateliers') {
             const poolId = content.fields.pool_id || '';
@@ -192,6 +261,11 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
               error: null,
             } as AtelierItem);
           } else {
+            // Get Kiosk info for this sculpt from the mapping
+            const sculptKioskInfo = (window as any).__sculptToKioskMap?.get(object.data.objectId);
+            const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo?.kioskId || '';
+            const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo?.kioskCapId || '';
+            
             parsedItems.push({
               id: object.data.objectId,
               type: 'sculpt',
@@ -204,6 +278,8 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
               time: content.fields.time
                 ? new Date(Number(content.fields.time)).toLocaleDateString('en-CA')
                 : '',
+              kioskId,
+              kioskCapId,
               isLoading: false,
               error: null,
             } as SculptItem);

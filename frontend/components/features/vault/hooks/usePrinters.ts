@@ -119,7 +119,6 @@ export function usePrinters() {
         }
         
         if (printerIds.length === 0) {
-          console.warn('No printer IDs found in registry');
           setPrinters([]);
           setIsLoading(false);
           return;

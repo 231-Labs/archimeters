@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { SculptItem } from '../hooks/useUserItems';
-import { formatAddress } from '@/utils/formatters';
+import { SculptItem, KioskInfo } from '../hooks/useUserItems';
+import { formatAddress, formatSuiAmount } from '@/utils/formatters';
 import { SculptPrintButton } from './SculptPrintButton';
 import { useSculptMarketplace } from '../hooks/useSculptMarketplace';
+import { useSculptListedStatus } from '../hooks/useSculptListedStatus';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroButton } from '@/components/common/RetroButton';
 import { RetroInput } from '@/components/common/RetroInput';
 import { RetroDetailModal, DetailHeader, InfoField } from '@/components/common/RetroDetailModal';
+import { MarketplaceStatusNotification } from './MarketplaceStatusNotification';
 
 const GLBViewer = dynamic(() => import('@/components/3d/GLBViewer'), {
   ssr: false,
@@ -26,19 +28,138 @@ interface SculptDetailModalProps {
   onClose: () => void;
   onUpdate: () => void;
   selectedPrinter?: string;
+  kioskInfo: KioskInfo | null;
 }
 
-export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedPrinter }: SculptDetailModalProps) {
+export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedPrinter, kioskInfo }: SculptDetailModalProps) {
   const [listPrice, setListPrice] = useState('');
   const [show3DPreview, setShow3DPreview] = useState(false);
-  const { status: marketplaceStatus } = useSculptMarketplace();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastAction, setLastAction] = useState<'list' | 'delist' | null>(null);
+  const { listSculpt, delistSculpt, status: marketplaceStatus, error: marketplaceError, txDigest, resetStatus } = useSculptMarketplace();
+  
+  // Stabilize kioskId to prevent unnecessary re-queries
+  // Use sculpt's own kioskId (from its actual location), fallback to global kioskInfo
+  const stableKioskId = useMemo(() => sculpt.kioskId || kioskInfo?.kioskId || null, [sculpt.kioskId, kioskInfo?.kioskId]);
+  
+  const { isListed, price: listedPrice, isLoading: isLoadingListedStatus } = useSculptListedStatus(
+    sculpt.id, 
+    refreshKey,
+    stableKioskId
+  );
+
+
+  // Initialize list price from listed status (only when status changes, not on every render)
+  useEffect(() => {
+    if (isListed && listedPrice && !isLoadingListedStatus) {
+      const priceInSui = (Number(listedPrice) / 1_000_000_000).toFixed(2);
+      setListPrice(priceInSui);
+    } else if (!isListed && !isLoadingListedStatus && marketplaceStatus !== 'success') {
+      // Only clear price if not loading and not in success state (to preserve user input)
+      setListPrice('');
+    }
+  }, [isListed, listedPrice, isLoadingListedStatus, marketplaceStatus]);
+
+  // Reset status when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      resetStatus();
+      setLastAction(null);
+      if (!isListed) {
+        setListPrice('');
+      }
+    }
+  }, [isOpen, resetStatus, isListed]);
+
+  // Store onUpdate in ref to avoid re-triggering effect when it changes
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+  
+  // Handle success status - use ref to prevent multiple refreshes
+  const hasHandledSuccessRef = useRef(false);
+  const successTimeoutsRef = useRef<{update: NodeJS.Timeout | null; refresh: NodeJS.Timeout | null}>({update: null, refresh: null});
+  
+  useEffect(() => {
+    if (marketplaceStatus === 'success' && !hasHandledSuccessRef.current) {
+      hasHandledSuccessRef.current = true;
+      
+      if (successTimeoutsRef.current.update) clearTimeout(successTimeoutsRef.current.update);
+      if (successTimeoutsRef.current.refresh) clearTimeout(successTimeoutsRef.current.refresh);
+      
+      successTimeoutsRef.current.update = setTimeout(() => {
+        onUpdateRef.current();
+      }, 1000);
+      
+      successTimeoutsRef.current.refresh = setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+        setTimeout(() => {
+          hasHandledSuccessRef.current = false;
+        }, 500);
+      }, 2000);
+      
+      return () => {
+        if (successTimeoutsRef.current.update) clearTimeout(successTimeoutsRef.current.update);
+        if (successTimeoutsRef.current.refresh) clearTimeout(successTimeoutsRef.current.refresh);
+      };
+    }
+    
+    if (marketplaceStatus !== 'success') {
+      hasHandledSuccessRef.current = false;
+    }
+  }, [marketplaceStatus]);
 
   const handleList = async () => {
     if (!listPrice || parseFloat(listPrice) <= 0) {
       alert('Please enter a valid price');
       return;
     }
-    alert('Marketplace listing requires kiosk integration. Coming soon!');
+
+    // Use sculpt's own kioskId if available, otherwise fall back to global kioskInfo
+    const effectiveKioskId = sculpt.kioskId || kioskInfo?.kioskId;
+    const effectiveKioskCapId = sculpt.kioskCapId || kioskInfo?.kioskCapId;
+
+    if (!effectiveKioskId || !effectiveKioskCapId) {
+      alert('Kiosk information not available. Please ensure you have a Kiosk.');
+      return;
+    }
+
+    setLastAction('list');
+    const priceInMist = Math.floor(parseFloat(listPrice) * 1_000_000_000);
+
+    await listSculpt(
+      sculpt.id,
+      effectiveKioskId,
+      effectiveKioskCapId,
+      priceInMist,
+      () => {
+        onUpdate();
+        setRefreshKey(prev => prev + 1);
+      }
+    );
+  };
+
+  const handleDelist = async () => {
+    // Use sculpt's own kioskId if available, otherwise fall back to global kioskInfo
+    const effectiveKioskId = sculpt.kioskId || kioskInfo?.kioskId;
+    const effectiveKioskCapId = sculpt.kioskCapId || kioskInfo?.kioskCapId;
+
+    if (!effectiveKioskId || !effectiveKioskCapId) {
+      alert('Kiosk information not available. Please ensure you have a Kiosk.');
+      return;
+    }
+
+    setLastAction('delist');
+    await delistSculpt(
+      sculpt.id,
+      effectiveKioskId,
+      effectiveKioskCapId,
+      () => {
+        onUpdate();
+        setRefreshKey(prev => prev + 1);
+      }
+    );
   };
 
   return (
@@ -81,7 +202,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
         </RetroPanel>
       </div>
 
-      <div className="space-y-3 overflow-y-auto" style={{ maxHeight: '90vh' }}>
+      <div className="space-y-3 overflow-y-auto" style={{ maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
         <DetailHeader
           title={sculpt.alias.toUpperCase()}
           subtitle="SCULPT DETAILS"
@@ -100,9 +221,15 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
         </div>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-1">LOCATION</h4>
-          <p className="text-white/70 text-sm font-mono mb-1">Stored in your Kiosk</p>
-          <p className="text-white/40 text-xs font-mono">ⓘ Transfer coming soon</p>
+          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">KIOSK</h4>
+          {sculpt.kioskId ? (
+            <div className="space-y-1">
+              <p className="text-white/70 text-xs font-mono break-all">{sculpt.kioskId}</p>
+              <p className="text-white/40 text-[10px] font-mono">ⓘ Sculpt is stored in this Kiosk</p>
+            </div>
+          ) : (
+            <p className="text-white/50 text-xs font-mono">No Kiosk assigned</p>
+          )}
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
@@ -115,7 +242,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
               onClose();
             }}
             onError={(error) => alert(`Print failed: ${error}`)}
-            onStatusChange={(status) => console.log('Print status:', status)}
+            onStatusChange={() => {}}
           />
           {!selectedPrinter && (
             <p className="text-white/40 text-xs font-mono mt-2">
@@ -126,27 +253,44 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
-          <div className="flex gap-2 mb-1">
-            <RetroInput
-              type="number"
-              placeholder="Price in SUI"
-              value={listPrice}
-              onChange={(e) => setListPrice(e.target.value)}
-              className="flex-1"
-              step="0.01"
-              min="0"
-            />
-            <RetroButton
-              variant="primary"
-              size="sm"
-              onClick={handleList}
-              disabled={marketplaceStatus === 'processing'}
-              isLoading={marketplaceStatus === 'processing'}
-            >
-              {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
-            </RetroButton>
-          </div>
-          <p className="text-white/40 text-xs font-mono">ⓘ List for sale on marketplace</p>
+          {!kioskInfo ? (
+            <div className="space-y-2">
+              <p className="text-white/50 text-xs font-mono">ⓘ Kiosk not found. Please create a Kiosk first.</p>
+            </div>
+          ) : isLoadingListedStatus ? (
+            <div className="space-y-2">
+              <p className="text-white/50 text-xs font-mono">Loading listing status...</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2 mb-1">
+                <RetroInput
+                  type="number"
+                  placeholder="Price in SUI"
+                  value={listPrice}
+                  onChange={(e) => !isListed && setListPrice(e.target.value)}
+                  className="flex-1"
+                  step="0.01"
+                  min="0"
+                  disabled={marketplaceStatus === 'processing' || isListed}
+                />
+                <RetroButton
+                  variant="primary"
+                  size="sm"
+                  onClick={isListed ? handleDelist : handleList}
+                  disabled={marketplaceStatus === 'processing' || (!isListed && (!listPrice || parseFloat(listPrice) <= 0))}
+                  isLoading={marketplaceStatus === 'processing'}
+                >
+                  {marketplaceStatus === 'processing' 
+                    ? (isListed ? 'Delisting...' : 'Listing...') 
+                    : (isListed ? 'Delist' : 'List')}
+                </RetroButton>
+              </div>
+              <p className="text-white/40 text-xs font-mono mt-1">
+                ⓘ {isListed ? `Currently listed at ${formatSuiAmount(listedPrice || '0')} SUI` : 'List for sale on marketplace'}
+              </p>
+            </>
+          )}
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
@@ -164,6 +308,14 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
           </div>
         </RetroPanel>
       </div>
+
+      {/* Marketplace Status Notification */}
+      <MarketplaceStatusNotification
+        status={marketplaceStatus}
+        error={marketplaceError}
+        txDigest={txDigest}
+        action={lastAction}
+      />
     </RetroDetailModal>
   );
 }

@@ -4,16 +4,16 @@
  */
 
 export const WALRUS_CONFIG = {
-  // Walrus Aggregator URL（用於讀取數據）
+  // Walrus Aggregator URL for reading data
   AGGREGATOR_URL: 'https://aggregator.testnet.walrus.atalma.io/v1/blobs',
   
-  // 獲取完整的 blob URL
+  // Get complete blob URL
   getBlobUrl: (blobId: string) => `https://aggregator.testnet.walrus.atalma.io/v1/blobs/${blobId}`,
   
-  // Epochs（上傳時的保存週期）
+  // Epochs for upload retention period
   DEFAULT_EPOCHS: 1,
 } as const;
 
-// 導出便捷函數
+// Export utility functions
 export const getWalrusBlobUrl = WALRUS_CONFIG.getBlobUrl;
 

@@ -1,9 +1,7 @@
 'use client';
 
 import * as Tabs from '@radix-ui/react-tabs';
-import Image from 'next/image';
 import Masonry from 'react-masonry-css';
-import { useInView } from 'react-intersection-observer';
 import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
 import { usePrinters } from '@/components/features/vault/hooks/usePrinters';
@@ -11,6 +9,7 @@ import { useWithdrawAll } from '@/components/features/vault/hooks/useWithdrawAll
 import type { WindowName } from '@/components/features/window-manager';
 import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
 import { SculptDetailModal } from '@/components/features/vault/components/SculptDetailModal';
+import { WithdrawStatusNotification } from '@/components/features/vault/components/WithdrawStatusNotification';
 import { formatSuiAmount } from '@/utils/formatters';
 import { RetroButton } from '@/components/common/RetroButton';
 import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
@@ -18,6 +17,7 @@ import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
 import { RetroPrinterCard } from '@/components/common/RetroPrinterCard';
+import { RetroImageItem } from '@/components/common/RetroImageItem';
 
 interface VaultWindowProps {
   name: WindowName;
@@ -28,77 +28,43 @@ const ImageItem: React.FC<{
   atelier: VaultItem;
   onClick: () => void;
 }> = ({ atelier, onClick }) => {
-  const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
-  const [loaded, setLoaded] = useState(false);
-
-  if (atelier.isLoading) {
-    return <div className="w-full aspect-square bg-neutral-800/50 rounded-sm" />;
-  }
-
-  if (atelier.error) {
-    return (
-      <div className="w-full aspect-square bg-red-900/20 flex items-center justify-center rounded-sm">
-        <p className="text-red-500 text-sm">{atelier.error}</p>
-      </div>
-    );
-  }
+  const infoContent = (
+    <div className="flex flex-col text-xs text-white/90">
+      {atelier.type === 'atelier' ? (
+        <>
+          <span className="font-semibold">{(atelier as AtelierItem).title}</span>
+          <span>Fee Pool: {formatSuiAmount((atelier as AtelierItem).pool)}</span>
+          <span>Published: {(atelier as AtelierItem).publish_time}</span>
+        </>
+      ) : (
+        <>
+          <span className="font-semibold">{(atelier as SculptItem).alias}</span>
+          <span>
+            {atelier.type === 'sculpt' && (atelier as SculptItem).creator
+              ? `Artist: ${(atelier as SculptItem).creator.substring(0, 4)}...${(atelier as SculptItem).creator.slice(-4)}`
+              : 'Artist: Unknown'}
+          </span>
+          <span>Created: {(atelier as SculptItem).time}</span>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <div
-      className="relative group w-full outline-none transition-all cursor-pointer"
+    <RetroImageItem
+      imageSrc={atelier.photoBlobId}
+      alt={
+        atelier.type === 'atelier'
+          ? (atelier as AtelierItem).title || 'Atelier item'
+          : (atelier as SculptItem).alias || 'Sculpt item'
+      }
       onClick={onClick}
-      ref={ref}
-      tabIndex={0}
-      role="button"
-    >
-      <div className="relative w-full">
-        <div className="absolute inset-0 bg-neutral-800/50 rounded-sm z-0" />
-        {inView && (
-          <Image
-            src={`/api/image-proxy?blobId=${atelier.photoBlobId}`}
-            alt={
-              atelier.type === 'atelier'
-                ? (atelier as AtelierItem).title || 'Atelier item'
-                : (atelier as SculptItem).alias || 'Sculpt item'
-            }
-            width={1200}
-            height={800}
-            quality={90}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/2wCEAAEBAQEBAQEBAQEBAQECAgICAgICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAALCAA4ADgBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z"
-            onLoad={() => setLoaded(true)}
-            className={`w-full h-auto object-cover rounded-sm shadow-md opacity-0 transition-opacity duration-500 group-hover:scale-[1.02] ${
-              loaded ? 'opacity-100' : ''
-            }`}
-            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
-          />
-        )}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end">
-          <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
-            <div className="flex flex-col text-xs text-white/90">
-              {atelier.type === 'atelier' ? (
-                <>
-                  <span className="font-semibold">{(atelier as AtelierItem).title}</span>
-                  <span>Fee Pool: {formatSuiAmount((atelier as AtelierItem).pool)}</span>
-                  <span>Published: {(atelier as AtelierItem).publish_time}</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-semibold">{(atelier as SculptItem).alias}</span>
-                  <span>
-                    Artist:{' '}
-                    {atelier.type === 'sculpt' && (atelier as SculptItem).creator
-                      ? `${(atelier as SculptItem).creator.substring(0, 4)}...${(atelier as SculptItem).creator.slice(-4)}`
-                      : 'Unknown'}
-                  </span>
-                  <span>Created: {(atelier as SculptItem).time}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      isLoading={atelier.isLoading}
+      error={atelier.error}
+      infoContent={infoContent}
+      infoOnHover={false}
+      lazyLoad={true}
+    />
   );
 };
 
@@ -115,6 +81,8 @@ export default function VaultWindow({}: VaultWindowProps) {
   
   // Adding timeout handler reference
   const processingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Track if we've already handled the current withdrawAllStatus to prevent infinite loops
+  const withdrawAllStatusHandledRef = useRef<string>('idle');
 
   const {
     items: ateliers,
@@ -128,6 +96,7 @@ export default function VaultWindow({}: VaultWindowProps) {
     isLoading: isLoadingSculpts,
     error: errorSculpts,
     reload: reloadSculpts,
+    kioskInfo: sculptKioskInfo,
   } = useUserItems('sculptures');
 
   const {
@@ -152,9 +121,7 @@ export default function VaultWindow({}: VaultWindowProps) {
     : null;
 
   useEffect(() => {
-    console.log('🔁 Active tab changed:', activeTab);
     if (activeTab === 'sculpts') {
-      console.log('🟢 Tab switched to My Sculpts');
       reloadPrinters();
     }
   }, [activeTab]);
@@ -216,6 +183,33 @@ export default function VaultWindow({}: VaultWindowProps) {
       }
     };
   }, []);
+
+  // Monitor withdrawAll status changes
+  useEffect(() => {
+    // Only handle status changes if we haven't already handled this status
+    if (withdrawAllStatus !== withdrawAllStatusHandledRef.current) {
+      withdrawAllStatusHandledRef.current = withdrawAllStatus;
+      
+      if (withdrawAllStatus === 'success') {
+        // Wait a bit before reloading to ensure transaction is confirmed
+        setTimeout(() => {
+          reloadAteliers();
+        }, 500);
+        // Reset status after showing success message for 3 seconds
+        setTimeout(() => {
+          resetWithdrawAll();
+          withdrawAllStatusHandledRef.current = 'idle';
+        }, 3000);
+      } else if (withdrawAllStatus === 'error') {
+        // Reset status after showing error message for 5 seconds
+        setTimeout(() => {
+          resetWithdrawAll();
+          withdrawAllStatusHandledRef.current = 'idle';
+        }, 5000);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withdrawAllStatus]); // Only depend on withdrawAllStatus, not the functions
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -534,7 +528,16 @@ export default function VaultWindow({}: VaultWindowProps) {
         </Tabs.Content>
       </Tabs.Root>
 
-      {/* Transaction status notification */}
+      {/* Withdraw All Status Notification */}
+      {withdrawAllStatus !== 'idle' && (
+        <WithdrawStatusNotification
+          status={withdrawAllStatus}
+          message={withdrawAllError}
+          txDigest={withdrawAllTxDigest}
+        />
+      )}
+
+      {/* Transaction status notification (for individual withdraws) */}
       {withdrawStatus !== 'idle' && (
         <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg z-50">
           <div className="flex flex-col gap-2">
@@ -618,6 +621,7 @@ export default function VaultWindow({}: VaultWindowProps) {
             reloadSculpts();
           }}
           selectedPrinter={selectedPrinter || undefined}
+          kioskInfo={sculptKioskInfo}
         />
       )}
     </div>

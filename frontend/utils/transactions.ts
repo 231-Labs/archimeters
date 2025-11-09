@@ -30,6 +30,7 @@ export const SCULPT_TYPE = `${PACKAGE_ID}::sculpt::Sculpt<${PACKAGE_ID}::atelier
 
 export const SUI_CLOCK = '0x6';
 export const MIST_PER_SUI = 1_000_000_000;
+export const NETWORK = 'testnet';
 
 export interface ParameterInput {
   key: string;

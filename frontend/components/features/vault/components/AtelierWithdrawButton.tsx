@@ -7,7 +7,7 @@ interface AtelierWithdrawButtonProps {
   poolAmount: number;
   onSuccess?: () => void;
   onError?: (error: string) => void;
-  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string) => void;
+  onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }
 
 export function AtelierWithdrawButton({
@@ -18,12 +18,17 @@ export function AtelierWithdrawButton({
   onError,
   onStatusChange,
 }: AtelierWithdrawButtonProps) {
-  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ atelierId, poolId });
+  const { handleWithdraw, isWithdrawing, error } = useAtelierWithdraw({ 
+    atelierId, 
+    poolId,
+    onStatusChange: (status, message, txDigest) => {
+      onStatusChange?.(status, message, txDigest);
+    }
+  });
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     try {
-      onStatusChange?.('processing', 'Processing withdrawal...');
       const success = await handleWithdraw(poolAmount);
       if (success) {
         onSuccess?.();
@@ -54,7 +59,7 @@ export function AtelierWithdrawButton({
       disabled={poolAmount <= 0}
       isLoading={isWithdrawing}
     >
-      {isWithdrawing ? 'Processing...' : 'Withdraw All'}
+      {isWithdrawing ? 'Processing...' : 'Withdraw Profit'}
     </RetroButton>
   );
 } 

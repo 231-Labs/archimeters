@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { KioskClient, Network } from '@mysten/kiosk';
-import { ATELIER_STATE_ID, PACKAGE_ID, SCULPT_TYPE } from '@/utils/transactions';
+import { PACKAGE_ID } from '@/utils/transactions';
 import { getWalrusBlobUrl } from '@/config/walrus';
 
 interface AtelierState {
@@ -44,6 +43,8 @@ interface Atelier {
 interface Sculpt {
   id: string;
   atelierId: string;
+  blueprint: string;
+  photoBlobId: string;
   stlBlobId: string;
   glbBlobId: string;
   creator: string;
@@ -54,6 +55,16 @@ interface Sculpt {
   glbUrl: string | null;
   isLoading: boolean;
   error: string | null;
+}
+
+// Extract blob ID from URL
+function extractBlobId(url: string): string | null {
+  if (!url) return null;
+
+  const regex = /\/blobs\/([A-Za-z0-9_-]+)/;
+  const match = url.match(regex);
+  
+  return match ? match[1] : null;
 }
 
 interface UseMarketplaceDataReturn {
@@ -213,70 +224,114 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
     }
   };
 
-  // Fetch listed Sculpts using ItemListed events
-  const fetchListedSculpts = async () => {
+  // Fetch listed Sculpts using Event-based indexing
+  const fetchListedSculpts = useCallback(async () => {
+    if (!suiClient) {
+      return;
+    }
+ 
     try {
-      console.log('Fetching listed Sculpts from Kiosk events...');
+      const allListedSculpts: Sculpt[] = [];
       
-      // Query ItemListed events for Sculpts
-      const events = await suiClient.queryEvents({
+      const sculptType = `${PACKAGE_ID}::sculpt::Sculpt<${PACKAGE_ID}::atelier::ATELIER>`;
+      const listedEventType = `0x2::kiosk::ItemListed<${sculptType}>`;
+      
+      const listedEvents = await suiClient.queryEvents({
         query: {
-          MoveEventType: '0x2::kiosk::ItemListed'
+          MoveEventType: listedEventType
         },
-        limit: 100,
+        limit: 200,
         order: 'descending'
       });
 
-      console.log('Found ItemListed events:', events.data.length);
+      const delistedEventType = `0x2::kiosk::ItemDelisted<${sculptType}>`;
+      const purchasedEventType = `0x2::kiosk::ItemPurchased<${sculptType}>`;
+      
+      const [delistedEvents, purchasedEvents] = await Promise.all([
+        suiClient.queryEvents({
+          query: { MoveEventType: delistedEventType },
+          limit: 200,
+          order: 'descending'
+        }),
+        suiClient.queryEvents({
+          query: { MoveEventType: purchasedEventType },
+          limit: 200,
+          order: 'descending'
+        })
+      ]);
 
-      const allListedSculpts: Sculpt[] = [];
-
-      // Filter for Sculpt type and fetch details
-      for (const eventData of events.data) {
+      // Build a map of removed items (itemId -> latest removal timestamp)
+      const removedItems = new Map<string, number>();
+      
+      [...delistedEvents.data, ...purchasedEvents.data].forEach(eventData => {
         const event = eventData.parsedJson as any;
-        
-        // Check if the type contains our SCULPT_TYPE
-        if (event && event.id) {
-          try {
-            // Fetch the Sculpt object details
-            const sculptObj = await suiClient.getObject({
-              id: event.id,
-              options: {
-                showContent: true,
-                showType: true,
-              }
-            });
-
-            // Check if it's a Sculpt type
-            if (sculptObj.data?.type?.includes('sculpt::Sculpt')) {
-              if (sculptObj.data?.content && 'fields' in sculptObj.data.content) {
-                const fields = sculptObj.data.content.fields as any;
-                
-                const sculptData: Sculpt = {
-                  id: sculptObj.data.objectId,
-                  atelierId: fields.atelier_id || '',
-                  stlBlobId: fields.stl_data || '',
-                  glbBlobId: fields.glb_data || '',
-                  creator: fields.creator || '',
-                  paramKeys: fields.param_keys || [],
-                  paramValues: fields.param_values || [],
-                  price: event.price || '0',
-                  kioskId: event.kiosk || '',
-                  glbUrl: null,
-                  isLoading: true,
-                  error: null,
-                };
-
-                allListedSculpts.push(sculptData);
-              }
-            }
-          } catch (objErr) {
-            console.error(`Error fetching Sculpt object ${event.id}:`, objErr);
+        const itemId = event?.id || event?.item_id || event?.itemId;
+        if (itemId) {
+          const timestamp = Number(eventData.timestampMs || '0');
+          const existing = removedItems.get(itemId);
+          if (!existing || timestamp > existing) {
+            removedItems.set(itemId, timestamp);
           }
+        }
+      });
+
+      // Process ItemListed events
+      for (const eventData of listedEvents.data) {
+        const event = eventData.parsedJson as any;
+        const itemId = event?.id || event?.item_id || event?.itemId;
+        
+        if (!itemId) {
+          continue;
+        }
+
+        const listedTimestamp = Number(eventData.timestampMs || '0');
+        const removalTimestamp = removedItems.get(itemId);
+        
+        if (removalTimestamp && removalTimestamp > listedTimestamp) {
+          continue;
+        }
+
+        try {
+          const itemObj = await suiClient.getObject({
+            id: itemId,
+            options: {
+              showContent: true,
+              showType: true,
+            }
+          });
+
+          const price = event.price || event.list_price || '0';
+          const kioskId = event.kiosk || event.kiosk_id || '';
+
+          if (itemObj.data?.content && 'fields' in itemObj.data.content) {
+            const fields = itemObj.data.content.fields as any;
+            const blueprint = fields.blueprint || '';
+            const photoBlobId = extractBlobId(blueprint) || '';
+            
+            const sculptData: Sculpt = {
+              id: itemId,
+              atelierId: fields.atelier_id || '',
+              blueprint: blueprint,
+              photoBlobId: photoBlobId,
+              stlBlobId: fields.stl_data || '',
+              glbBlobId: fields.glb_data || '',
+              creator: fields.creator || '',
+              paramKeys: fields.param_keys || [],
+              paramValues: fields.param_values || [],
+              price: price.toString(),
+              kioskId: kioskId,
+              glbUrl: null,
+              isLoading: false,
+              error: null,
+            };
+
+            allListedSculpts.push(sculptData);
+          }
+        } catch (err) {
+          // Skip failed items
         }
       }
 
-      console.log('Listed Sculpts found:', allListedSculpts.length);
       setSculpts(allListedSculpts);
 
       // Load GLB previews
@@ -289,9 +344,14 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
     } catch (err) {
       console.error('Error fetching listed Sculpts:', err);
     }
-  };
+  }, [suiClient]);
 
-  const fetchAtelierData = async () => {
+  const fetchAtelierData = useCallback(async () => {
+    if (!suiClient) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
     
@@ -302,8 +362,6 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
         limit: 50,
         order: 'descending'
       });
-
-      console.log('Found Atelier events:', events.data.length);
 
       if (events.data.length === 0) {
         setAteliers([]);
@@ -376,11 +434,11 @@ export function useMarketplaceData(): UseMarketplaceDataReturn {
       setError('Failed to fetch marketplace data');
       setIsLoading(false);
     }
-  };
+  }, [suiClient, fetchListedSculpts]);
 
   useEffect(() => {
     fetchAtelierData();
-  }, [currentAccount]);
+  }, [currentAccount, fetchAtelierData]);
 
   return {
     ateliers,

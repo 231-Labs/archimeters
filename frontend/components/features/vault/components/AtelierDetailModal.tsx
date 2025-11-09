@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AtelierItem } from '../hooks/useUserItems';
 import { formatSuiAmount } from '@/utils/formatters';
 import { AtelierWithdrawButton } from './AtelierWithdrawButton';
+import { WithdrawStatusNotification } from './WithdrawStatusNotification';
 import { useAtelierMarketplace } from '../hooks/useAtelierMarketplace';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroButton } from '@/components/common/RetroButton';
@@ -19,6 +20,9 @@ interface AtelierDetailModalProps {
 
 export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: AtelierDetailModalProps) {
   const [listPrice, setListPrice] = useState('');
+  const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [withdrawMessage, setWithdrawMessage] = useState<string | null>(null);
+  const [withdrawTxDigest, setWithdrawTxDigest] = useState<string | null>(null);
   const { status: marketplaceStatus } = useAtelierMarketplace();
 
   const handleList = async () => {
@@ -79,10 +83,26 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
                 poolAmount={Number(atelier.pool)}
                 onSuccess={() => {
                   onUpdate();
-                  onClose();
+                  // Don't close modal immediately, let user see success toast
                 }}
-                onError={(error) => alert(`Withdrawal failed: ${error}`)}
-                onStatusChange={(status) => console.log('Withdraw status:', status)}
+                onError={(error) => {
+                  setWithdrawStatus('error');
+                  setWithdrawMessage(error);
+                }}
+                onStatusChange={(status, message, txDigest) => {
+                  setWithdrawStatus(status);
+                  setWithdrawMessage(message || null);
+                  if (txDigest) {
+                    setWithdrawTxDigest(txDigest);
+                  }
+                  if (status === 'success') {
+                    // Auto close after 2 seconds on success
+                    setTimeout(() => {
+                      onUpdate();
+                      onClose();
+                    }, 2000);
+                  }
+                }}
               />
         </RetroPanel>
 
@@ -126,6 +146,13 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
           </div>
         </RetroPanel>
       </div>
+
+      {/* Withdraw Status Notification */}
+      <WithdrawStatusNotification
+        status={withdrawStatus}
+        message={withdrawMessage}
+        txDigest={withdrawTxDigest}
+      />
     </RetroDetailModal>
   );
 }

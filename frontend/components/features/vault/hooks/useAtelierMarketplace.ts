@@ -89,7 +89,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Atelier listed successfully:', result.digest);
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
@@ -149,7 +148,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Atelier delisted successfully:', result.digest);
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
@@ -224,7 +222,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setStatus('success');
-            console.log('✅ Atelier purchased successfully:', result.digest);
           },
           onError: (err) => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
