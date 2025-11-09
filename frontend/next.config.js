@@ -4,11 +4,22 @@ const nextConfig = {
   swcMinify: true,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
+    optimizePackageImports: ['@mysten/dapp-kit', '@mysten/sui'],
+  },
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
   webpack: (config, { dev, isServer }) => {
     // Ensure xterm.js loads correctly on client

@@ -264,6 +264,7 @@ export default function MarketplaceWindow({
                         alt={`Sculpt #${sculpt.id.slice(0, 8)}`}
                         onClick={() => setSelectedSculpt(sculpt)}
                         infoContent={infoContent}
+                        infoOnHover={true}
                       />
                     </div>
                   );

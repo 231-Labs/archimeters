@@ -68,14 +68,20 @@ export function RetroImageItem({
     );
   }
 
-  // Determine image URL
+  if (!imageSrc || imageSrc.trim() === '') {
+    return (
+      <div className={`w-full aspect-square bg-neutral-800/50 flex items-center justify-center rounded-sm ${className}`}>
+        <p className="text-neutral-500 text-xs">No image</p>
+      </div>
+    );
+  }
+
   const imageUrl = getImageUrl 
     ? getImageUrl(imageSrc) 
     : imageSrc.startsWith('http') || imageSrc.startsWith('/')
       ? imageSrc
       : `/api/image-proxy?blobId=${imageSrc}`;
 
-  // Check if we should render image
   const shouldRenderImage = !lazyLoad || inView;
 
   const Container = disabled ? 'div' : 'button';
@@ -90,7 +96,7 @@ export function RetroImageItem({
       disabled={disabled}
     >
       <div className="relative w-full">
-        {shouldRenderImage && (
+        {shouldRenderImage && imageUrl ? (
           <Image
             src={imageUrl}
             alt={alt}
@@ -104,7 +110,10 @@ export function RetroImageItem({
               loaded ? 'opacity-100' : 'opacity-0'
             }`}
             sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, (max-width: 1400px) 33vw, 25vw"
+            unoptimized={imageUrl.includes('/api/image-proxy')}
           />
+        ) : (
+          <div className="w-full aspect-square bg-neutral-800/50 animate-pulse rounded-sm" />
         )}
         {/* Subtle overlay for depth - very transparent, disappears on hover */}
         <div className="absolute inset-0 bg-black/10 rounded-sm pointer-events-none transition-opacity duration-300 group-hover:opacity-0" />
