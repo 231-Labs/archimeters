@@ -608,20 +608,20 @@
    ```
 
 2. **實施步驟** (2h)
-   - [ ] 創建新的 PublisherWindow 組件
+   - [X] 創建新的 PublisherWindow 組件
      - 使用兩欄佈局（類似 DetailModal）
      - 左側：GLBViewer 預覽
      - 右側：表單區域
-   - [ ] 設計 Upload 區域
+   - [X] 設計 Upload 區域
      - RetroPanel + Drag & Drop
      - 顯示文件名和大小
      - 支持 STL, GLB, Image
-   - [ ] 參數配置 UI
+   - [X] 參數配置 UI
      - 動態添加/刪除參數
      - RetroInput 輸入 min/max/default
-   - [ ] 統一使用復古組件
+   - [X] 統一使用復古組件
      - RetroButton, RetroInput, RetroPanel
-   - [ ] 移除多步驟流程，改為單頁
+   - [X] 移除多步驟流程，改為單頁
 
 ---
 

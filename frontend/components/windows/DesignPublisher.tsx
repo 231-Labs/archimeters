@@ -7,9 +7,10 @@ import { createMetadataJson } from '@/components/features/design-publisher/utils
 import { RetroButton } from '@/components/common/RetroButton';
 import { RetroInput } from '@/components/common/RetroInput';
 import { ParameterControls } from '@/components/common/ParameterControls';
+import { WindowName } from '@/components/features/window-manager/types';
 
 interface DesignPublisherProps {
-  onOpenWindow?: (windowName: string) => void;
+  onOpenWindow?: (windowName: WindowName) => void;
 }
 
 export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps = {}) {
