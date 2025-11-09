@@ -1,14 +1,7 @@
-/**
- * Atelier Marketplace Hook
- * Handles listing, delisting, and purchasing Ateliers through Kiosk
- * Includes pool balance transfer logic
- */
-
 import { useState } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 
-// TODO: Update with actual contract addresses after deployment
 const MARKETPLACE_PACKAGE = process.env.NEXT_PUBLIC_MARKETPLACE_PACKAGE || '';
 const ATELIER_PACKAGE = process.env.NEXT_PUBLIC_ATELIER_PACKAGE || '';
 const ATELIER_TYPE = ATELIER_PACKAGE ? `${ATELIER_PACKAGE}::atelier::ATELIER` : '';
@@ -64,11 +57,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
 
       const tx = new Transaction();
       
-      // Note: The atelier must be taken from kiosk first if it's already in one
-      // Then call list_atelier from marketplace contract
-      // This is a simplified version - actual implementation may need to handle
-      // taking from kiosk first if it's not already placed
-      
       tx.moveCall({
         target: `${MARKETPLACE_PACKAGE}::atelier_marketplace::list_atelier`,
         arguments: [
@@ -94,7 +82,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ List failed:', err);
           },
         }
       );
@@ -102,7 +89,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ List error:', err);
     }
   };
 
@@ -153,7 +139,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ Delist failed:', err);
           },
         }
       );
@@ -161,7 +146,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ Delist error:', err);
     }
   };
 
@@ -192,13 +176,11 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
 
       const tx = new Transaction();
       
-      // Split coins for payment and royalty
       const [paymentCoin] = tx.splitCoins(tx.gas, [price]);
       const [royaltyCoin] = royaltyAmount > 0 
         ? tx.splitCoins(tx.gas, [royaltyAmount])
         : [tx.pure.u64(0)];
 
-      // Use the improved purchase function that handles pool transfer
       tx.moveCall({
         target: `${MARKETPLACE_PACKAGE}::atelier_marketplace::purchase_atelier_with_pool`,
         arguments: [
@@ -227,7 +209,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ Purchase failed:', err);
           },
         }
       );
@@ -235,7 +216,6 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ Purchase error:', err);
     }
   };
 
@@ -255,4 +235,3 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
     resetStatus,
   };
 }
-

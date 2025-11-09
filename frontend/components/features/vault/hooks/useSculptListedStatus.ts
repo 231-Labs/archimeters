@@ -1,8 +1,3 @@
-/**
- * Hook to check if a sculpt is currently listed and get its listing price
- * Uses Kiosk SDK to query kiosk directly for listed items
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { useSuiClient } from '@mysten/dapp-kit';
 import { KioskClient, Network } from '@mysten/kiosk';
@@ -33,10 +28,9 @@ export function useSculptListedStatus(
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isQueryingRef = useRef(false);
   const lastQueryResultRef = useRef<{isListed: boolean; price: string | null; kioskId: string | null} | null>(null);
-  const MAX_RETRIES = 2; // Limit retries to prevent infinite loops
+  const MAX_RETRIES = 2;
 
   useEffect(() => {
-    // Clear any pending timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -59,20 +53,16 @@ export function useSculptListedStatus(
       return;
     }
 
-    // Reset retry count when sculptId or refreshKey changes
     retryCountRef.current = 0;
 
     const checkListedStatus = async () => {
-      if (isQueryingRef.current) {
-        return;
-      }
+      if (isQueryingRef.current) return;
       
       isQueryingRef.current = true;
       
       try {
         setStatus(prev => ({ ...prev, isLoading: true, error: null }));
 
-        // Initialize KioskClient
         const kioskClient = new KioskClient({
           client: suiClient as any,
           network: Network.TESTNET,
@@ -88,7 +78,6 @@ export function useSculptListedStatus(
               }
             });
 
-            // Find this sculpt in the Kiosk's items
             const item = kioskData.items.find(i => i.objectId === sculptId);
             
             if (item && item.listing && item.listing.isExclusive === false) {
@@ -110,11 +99,9 @@ export function useSculptListedStatus(
             }
           } catch (kioskErr) {
             console.error('Error querying kiosk with KioskClient:', kioskErr);
-            // Fall through to method 2: check sculpt owner
           }
         }
 
-        // Method 2: Check if sculpt is owned by a kiosk and query that kiosk
         try {
           const sculptObj = await suiClient.getObject({
             id: sculptId,
@@ -157,12 +144,10 @@ export function useSculptListedStatus(
               }
             } catch (ownerKioskErr) {
               console.error('Error querying owner kiosk:', ownerKioskErr);
-              // Fall through to event-based check
             }
           }
         } catch (sculptErr) {
           console.error('Error checking sculpt owner:', sculptErr);
-          // Fall through to event-based check
         }
 
         const listedEvents = await suiClient.queryEvents({
@@ -173,7 +158,6 @@ export function useSculptListedStatus(
           order: 'descending',
         });
 
-        // Query ItemDelisted events
         const delistedEvents = await suiClient.queryEvents({
           query: {
             MoveEventType: '0x2::kiosk::ItemDelisted',
@@ -182,13 +166,11 @@ export function useSculptListedStatus(
           order: 'descending',
         });
 
-        // Find the most recent listed event for this sculpt
         let latestListedEvent: any = null;
         let latestListedTimestamp = 0;
         
         for (const eventData of listedEvents.data) {
           const event = eventData.parsedJson as any;
-          // Check both event.id and event.item_id (different event formats)
           const eventItemId = event?.id || event?.item_id || event?.itemId;
           
           if (event && eventItemId === sculptId) {
@@ -200,7 +182,6 @@ export function useSculptListedStatus(
           }
         }
 
-        // Check if this sculpt was delisted after being listed
         if (latestListedEvent) {
           let wasDelisted = false;
           for (const eventData of delistedEvents.data) {
@@ -246,26 +227,22 @@ export function useSculptListedStatus(
           isLoading: false,
           error: null,
         });
-        // Reset retry count on success
         retryCountRef.current = 0;
         isQueryingRef.current = false;
       } catch (err) {
         console.error('Error checking listed status:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to check listed status';
         
-        // Only retry if we haven't exceeded max retries and it's a network error
         const isNetworkError = errorMessage.includes('Failed to fetch') || 
                               errorMessage.includes('CORS') ||
                               errorMessage.includes('network');
         
         if (isNetworkError && retryCountRef.current < MAX_RETRIES) {
           retryCountRef.current += 1;
-          // Retry after a delay with exponential backoff
           timeoutRef.current = setTimeout(() => {
             checkListedStatus();
           }, 2000 * retryCountRef.current);
         } else {
-          // Stop retrying and show error
           setStatus({
             isListed: false,
             price: null,
@@ -283,7 +260,6 @@ export function useSculptListedStatus(
 
     checkListedStatus();
 
-    // Cleanup function
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -291,8 +267,7 @@ export function useSculptListedStatus(
       }
       isQueryingRef.current = false;
     };
-  }, [sculptId, refreshKey, kioskId]); // Removed suiClient from dependencies to prevent unnecessary re-runs
+  }, [sculptId, refreshKey, kioskId]);
 
   return status;
 }
-

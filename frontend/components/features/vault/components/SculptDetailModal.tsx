@@ -38,8 +38,6 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
   const [lastAction, setLastAction] = useState<'list' | 'delist' | null>(null);
   const { listSculpt, delistSculpt, status: marketplaceStatus, error: marketplaceError, txDigest, resetStatus } = useSculptMarketplace();
   
-  // Stabilize kioskId to prevent unnecessary re-queries
-  // Use sculpt's own kioskId (from its actual location), fallback to global kioskInfo
   const stableKioskId = useMemo(() => sculpt.kioskId || kioskInfo?.kioskId || null, [sculpt.kioskId, kioskInfo?.kioskId]);
   
   const { isListed, price: listedPrice, isLoading: isLoadingListedStatus } = useSculptListedStatus(
@@ -48,19 +46,15 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
     stableKioskId
   );
 
-
-  // Initialize list price from listed status (only when status changes, not on every render)
   useEffect(() => {
     if (isListed && listedPrice && !isLoadingListedStatus) {
       const priceInSui = (Number(listedPrice) / 1_000_000_000).toFixed(2);
       setListPrice(priceInSui);
     } else if (!isListed && !isLoadingListedStatus && marketplaceStatus !== 'success') {
-      // Only clear price if not loading and not in success state (to preserve user input)
       setListPrice('');
     }
   }, [isListed, listedPrice, isLoadingListedStatus, marketplaceStatus]);
 
-  // Reset status when modal closes
   useEffect(() => {
     if (!isOpen) {
       resetStatus();
@@ -71,13 +65,11 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
     }
   }, [isOpen, resetStatus, isListed]);
 
-  // Store onUpdate in ref to avoid re-triggering effect when it changes
   const onUpdateRef = useRef(onUpdate);
   useEffect(() => {
     onUpdateRef.current = onUpdate;
   }, [onUpdate]);
   
-  // Handle success status - use ref to prevent multiple refreshes
   const hasHandledSuccessRef = useRef(false);
   const successTimeoutsRef = useRef<{update: NodeJS.Timeout | null; refresh: NodeJS.Timeout | null}>({update: null, refresh: null});
   
@@ -116,7 +108,6 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
       return;
     }
 
-    // Use sculpt's own kioskId if available, otherwise fall back to global kioskInfo
     const effectiveKioskId = sculpt.kioskId || kioskInfo?.kioskId;
     const effectiveKioskCapId = sculpt.kioskCapId || kioskInfo?.kioskCapId;
 
@@ -141,7 +132,6 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
   };
 
   const handleDelist = async () => {
-    // Use sculpt's own kioskId if available, otherwise fall back to global kioskInfo
     const effectiveKioskId = sculpt.kioskId || kioskInfo?.kioskId;
     const effectiveKioskCapId = sculpt.kioskCapId || kioskInfo?.kioskCapId;
 
@@ -254,13 +244,9 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
           {!kioskInfo ? (
-            <div className="space-y-2">
-              <p className="text-white/50 text-xs font-mono">ⓘ Kiosk not found. Please create a Kiosk first.</p>
-            </div>
+            <p className="text-white/50 text-xs font-mono">ⓘ Kiosk not found. Please create a Kiosk first.</p>
           ) : isLoadingListedStatus ? (
-            <div className="space-y-2">
-              <p className="text-white/50 text-xs font-mono">Loading listing status...</p>
-            </div>
+            <p className="text-white/50 text-xs font-mono">Loading listing status...</p>
           ) : (
             <>
               <div className="flex gap-2 mb-1">
@@ -309,7 +295,6 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
         </RetroPanel>
       </div>
 
-      {/* Marketplace Status Notification */}
       <MarketplaceStatusNotification
         status={marketplaceStatus}
         error={marketplaceError}

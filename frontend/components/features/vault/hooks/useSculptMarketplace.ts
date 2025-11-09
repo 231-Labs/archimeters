@@ -1,8 +1,3 @@
-/**
- * Sculpt Marketplace Hook
- * Handles listing, delisting, and purchasing Sculpts through Kiosk
- */
-
 import { useState } from 'react';
 import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
@@ -48,24 +43,20 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setStatus('processing');
       setError(null);
 
-      // Initialize KioskClient
       const kioskClient = new KioskClient({
         client: suiClient as any,
         network: Network.TESTNET,
       });
 
-      // Get all owned kiosks to find the complete cap object
       const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
         address: currentAccount.address,
       });
 
-      // Find the cap for this specific kiosk
       const cap = kioskOwnerCaps.find(c => c.kioskId === kioskId);
       if (!cap) {
         throw new Error(`Could not find KioskOwnerCap for Kiosk ${kioskId}`);
       }
 
-      // Create transaction and KioskTransaction
       const tx = new Transaction();
       const kioskTx = new KioskTransaction({
         transaction: tx,
@@ -73,14 +64,12 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         cap,
       });
 
-      // List the sculpt using KioskTransaction
       kioskTx.list({
         itemId: sculptId,
         itemType: SCULPT_TYPE,
         price: BigInt(price),
       });
 
-      // Finalize the transaction
       kioskTx.finalize();
 
       signAndExecuteTransaction(
@@ -100,7 +89,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to list sculpt';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ List failed:', err);
           },
         }
       );
@@ -108,7 +96,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to list sculpt';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ List error:', err);
     }
   };
 
@@ -128,24 +115,20 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setStatus('processing');
       setError(null);
 
-      // Initialize KioskClient
       const kioskClient = new KioskClient({
         client: suiClient as any,
         network: Network.TESTNET,
       });
 
-      // Get all owned kiosks to find the complete cap object
       const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
         address: currentAccount.address,
       });
 
-      // Find the cap for this specific kiosk
       const cap = kioskOwnerCaps.find(c => c.kioskId === kioskId);
       if (!cap) {
         throw new Error(`Could not find KioskOwnerCap for Kiosk ${kioskId}`);
       }
 
-      // Create transaction and KioskTransaction
       const tx = new Transaction();
       const kioskTx = new KioskTransaction({
         transaction: tx,
@@ -153,13 +136,11 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         cap,
       });
 
-      // Delist the sculpt using KioskTransaction
       kioskTx.delist({
         itemId: sculptId,
         itemType: SCULPT_TYPE,
       });
 
-      // Finalize the transaction
       kioskTx.finalize();
 
       signAndExecuteTransaction(
@@ -179,7 +160,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to delist sculpt';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ Delist failed:', err);
           },
         }
       );
@@ -187,7 +167,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delist sculpt';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ Delist error:', err);
     }
   };
 
@@ -210,13 +189,11 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
 
       const tx = new Transaction();
       
-      // Split coins for payment and royalty
       const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(price)]);
       const [royaltyCoin] = royaltyAmount > 0 
         ? tx.splitCoins(tx.gas, [tx.pure.u64(royaltyAmount)])
         : [tx.pure.u64(0)];
 
-      // Purchase from kiosk
       const purchased = tx.moveCall({
         target: `${KIOSK_PACKAGE}::kiosk::purchase`,
         arguments: [
@@ -227,30 +204,27 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
         typeArguments: [SCULPT_TYPE],
       });
 
-      // If there's royalty, pay it
       if (royaltyAmount > 0) {
         tx.moveCall({
           target: `${PACKAGE_ID}::royalty_rule::pay`,
           arguments: [
             tx.object(policyId),
-            purchased[1], // transfer_request
+            purchased[1],
             royaltyCoin,
           ],
           typeArguments: [SCULPT_TYPE],
         });
       }
 
-      // Confirm the transfer request
       tx.moveCall({
         target: `0x2::transfer_policy::confirm_request`,
         arguments: [
           tx.object(policyId),
-          purchased[1], // transfer_request
+          purchased[1],
         ],
         typeArguments: [SCULPT_TYPE],
       });
 
-      // Transfer to buyer
       tx.transferObjects([purchased[0]], currentAccount.address);
 
       signAndExecuteTransaction(
@@ -267,7 +241,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
             const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
             setError(errorMessage);
             setStatus('error');
-            console.error('❌ Purchase failed:', err);
           },
         }
       );
@@ -275,7 +248,6 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
       setError(errorMessage);
       setStatus('error');
-      console.error('❌ Purchase error:', err);
     }
   };
 
@@ -295,4 +267,3 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
     resetStatus,
   };
 }
-

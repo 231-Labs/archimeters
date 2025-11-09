@@ -33,6 +33,20 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
     alert('Marketplace listing requires kiosk integration. Coming soon!');
   };
 
+  const handleWithdrawSuccess = (status: 'idle' | 'processing' | 'success' | 'error', message: string | undefined, txDigest: string | undefined) => {
+    setWithdrawStatus(status);
+    setWithdrawMessage(message || null);
+    if (txDigest) {
+      setWithdrawTxDigest(txDigest);
+    }
+    if (status === 'success') {
+      setTimeout(() => {
+        onUpdate();
+        onClose();
+      }, 2000);
+    }
+  };
+
   return (
     <RetroDetailModal isOpen={isOpen} onClose={onClose}>
       <div className="flex items-start">
@@ -45,7 +59,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
             />
           </div>
         </RetroPanel>
-          </div>
+      </div>
 
       <div className="space-y-3 overflow-y-auto" style={{ maxHeight: '90vh' }}>
         <DetailHeader
@@ -67,7 +81,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
             <p className="text-white/50 text-xs font-mono tracking-wide mb-1">PUBLISHED</p>
             <p className="text-white/90 text-sm font-mono">{atelier.publish_time}</p>
           </RetroPanel>
-          </div>
+        </div>
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-1">DERIVED SCULPTS</h4>
@@ -77,55 +91,39 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">WITHDRAW EARNINGS</h4>
-              <AtelierWithdrawButton
-                atelierId={atelier.id}
-                poolId={atelier.poolId}
-                poolAmount={Number(atelier.pool)}
-                onSuccess={() => {
-                  onUpdate();
-                  // Don't close modal immediately, let user see success toast
-                }}
-                onError={(error) => {
-                  setWithdrawStatus('error');
-                  setWithdrawMessage(error);
-                }}
-                onStatusChange={(status, message, txDigest) => {
-                  setWithdrawStatus(status);
-                  setWithdrawMessage(message || null);
-                  if (txDigest) {
-                    setWithdrawTxDigest(txDigest);
-                  }
-                  if (status === 'success') {
-                    // Auto close after 2 seconds on success
-                    setTimeout(() => {
-                      onUpdate();
-                      onClose();
-                    }, 2000);
-                  }
-                }}
-              />
+          <AtelierWithdrawButton
+            atelierId={atelier.id}
+            poolId={atelier.poolId}
+            poolAmount={Number(atelier.pool)}
+            onSuccess={() => onUpdate()}
+            onError={(error) => {
+              setWithdrawStatus('error');
+              setWithdrawMessage(error);
+            }}
+            onStatusChange={handleWithdrawSuccess}
+          />
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
           <div className="flex gap-2 mb-1">
             <RetroInput
-                  type="number"
-                  placeholder="Price in SUI"
-                  value={listPrice}
-                  onChange={(e) => setListPrice(e.target.value)}
+              type="number"
+              placeholder="Price in SUI"
+              value={listPrice}
+              onChange={(e) => setListPrice(e.target.value)}
               className="flex-1"
-                  step="0.01"
-                  min="0"
-                />
+              step="0.01"
+              min="0"
+            />
             <RetroButton
               variant="primary"
               size="sm"
-                  onClick={handleList}
-                  disabled={marketplaceStatus === 'processing'}
+              onClick={handleList}
+              disabled={marketplaceStatus === 'processing'}
               isLoading={marketplaceStatus === 'processing'}
-                >
-                  {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
+            >
+              {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
             </RetroButton>
           </div>
           <p className="text-white/40 text-xs font-mono">ⓘ List for sale on marketplace</p>
@@ -147,7 +145,6 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
         </RetroPanel>
       </div>
 
-      {/* Withdraw Status Notification */}
       <WithdrawStatusNotification
         status={withdrawStatus}
         message={withdrawMessage}
