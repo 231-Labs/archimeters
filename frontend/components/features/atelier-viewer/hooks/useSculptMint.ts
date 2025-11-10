@@ -94,12 +94,22 @@ export const useSculptMint = ({
         
         try {
             // Generate unique resource ID for this sculpt
-            const uniqueResourceId = `${atelier.id}_${Date.now()}`;
+            // Seal requires a valid hex string (without 0x prefix)
+            // Use atelier ID (without 0x) + timestamp in hex
+            const timestamp = Date.now().toString(16).padStart(16, '0'); // Convert to hex
+            const atelierId = atelier.id.replace(/^0x/, '');
+            const uniqueResourceId = `${atelierId}${timestamp}`;
+            
+            console.log('🔐 Generated Seal resource ID:', {
+              atelierId: atelier.id,
+              timestamp,
+              uniqueResourceId: `0x${uniqueResourceId}`,
+            });
             
             const encryptionResult = await encryptModelFile(
               stlFile, 
               {
-            sculptId: uniqueResourceId,  // Unique ID for each sculpt
+            sculptId: uniqueResourceId,  // Unique ID for each sculpt (hex string without 0x)
             atelierId: atelier.id,
               },
               'testnet' // Network for Seal key servers

@@ -163,9 +163,24 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         let structureValue = '';
         if (content.fields.structure && typeof content.fields.structure === 'object') {
           const structureOption = content.fields.structure as any;
+          console.log('🔍 Reading structure field:', {
+            sculptId: object.data.objectId,
+            alias: content.fields.alias,
+            structureRaw: content.fields.structure,
+            structureOption,
+            hasVec: !!structureOption.vec,
+            vecLength: structureOption.vec?.length,
+          });
           if (structureOption.vec && Array.isArray(structureOption.vec) && structureOption.vec.length > 0) {
             structureValue = structureOption.vec[0];
           }
+        } else {
+          console.log('🔍 No structure field found:', {
+            sculptId: object.data.objectId,
+            alias: content.fields.alias,
+            structureExists: !!content.fields.structure,
+            structureType: typeof content.fields.structure,
+          });
         }
         
         parsedItems.push({

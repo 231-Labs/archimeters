@@ -135,12 +135,14 @@ export async function encryptModelFile(
     // packageId: The Move package ID (contract namespace)
     // id: The resource identifier (used in seal_approve function)
     const sealPackageId = PACKAGE_ID;
-    const sealId = options.sculptId.replace(/^sculpt_/, ''); // Remove prefix, use timestamp or object ID
+    // sculptId is already a valid hex string (without 0x prefix)
+    const sealId = options.sculptId;
     
     console.log('🔐 Encrypting with Seal SDK...', {
       dataSize: fileData.length,
       packageId: sealPackageId,
       id: sealId,
+      idLength: sealId.length,
       atelierId: options.atelierId,
     });
 

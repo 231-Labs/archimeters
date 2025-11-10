@@ -1,24 +1,24 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Day 4 (2025-11-09) - Seal Integration
-export const PACKAGE_ID = '0xdeac9eea36d5ae4941a8ca9e120ed4ad1890440b97c788838c274ad8f5cfee21';
-export const STATE_ID = '0x90604227936f4407b1d92621067c2a93925ca72b3b227b9132883eeb1958c73d';
-export const ATELIER_STATE_ID = '0x47323c903cce10ebff83229d1a7b6515f3bdab22668a2696a7b2428679ccf060';
-export const UPGRADE_CAP = '0xa2383c792d115224cf6f3a7d6b3ac853bc74bf47df94377d954f5f033d1ce837';
+// Contract addresses - Day 5 (2025-11-10) - New Deployment
+export const PACKAGE_ID = '0xd963bb95af74fb0b20c1181365e2e2d0bbb7c8f9a189d6e068999d6f76debf29';
+export const STATE_ID = '0xd72673dc80076d5c1feee06d8bf94907393fa0ed8dffe17688bfd10b537ab3db';
+export const ATELIER_STATE_ID = '0xb1ce5c4434c00dc76f006fb0f9cd17c37f5e033daaee404698aee2e2c9d554e1';
+export const UPGRADE_CAP = '0x652e5cba59df32d1379c4da8304949d5a327104e9ba84dafa4c8285cb098ab25';
 
-export const ATELIER_TRANSFER_POLICY = '0xe7156b1e24b06a52119453110b0416ae1d3ace2362850d240a36ab5933dc14c9';
-export const ATELIER_TRANSFER_POLICY_CAP = '0x4ef9610bbaba14d47f0729da184e08ace5271043d61fd9a8a5df0c03e9125a5e';
-export const SCULPT_TRANSFER_POLICY = '0x62d6a75334d53c5049b72a22508323087d58e07a1084c5d2523f7326902928dd';
-export const SCULPT_TRANSFER_POLICY_CAP = '0x40381a02e685b64ee0ac43874625b47d8afab407ce01d594bc60c3cc17e61329';
+export const ATELIER_TRANSFER_POLICY = '0x680403700e598daf17bcad0e82c3834e37ff9919668a700161bb9f09c51aab9e';
+export const ATELIER_TRANSFER_POLICY_CAP = '0x1ac7a3163390be4c68a94a52a7a8c2019430499f2b2ce7eaff10a3531b1b6a78';
+export const SCULPT_TRANSFER_POLICY = '0x48ca9b6da9fb7f6cbd796432b0255a03fce3b20ee5a604f7005de83f9b872e25';
+export const SCULPT_TRANSFER_POLICY_CAP = '0x2331641dea2b9369ee22f451d9b9cd78ca50e7d4986f31e149547e8d218518bc';
 
-export const MEMBERSHIP_DISPLAY = '0x6d0e006de624243acfd71ccfa1f0751b2b07d03651ed9013d23d33be758bcd8a';
-export const ATELIER_DISPLAY = '0xd1ec3882e05b837a56155c08f3728dc4d0291b54414258281f4481d061c953ed';
-export const SCULPT_DISPLAY = '0x20857acbd3fffb962b57634aac252bc446c2dedede2237ec759d5f9a2b4b81c3';
+export const MEMBERSHIP_DISPLAY = '0x9db5d3be8970d97c3c1bf9b1ca0ba585d7102e7be61c3b562baf9f7d832c0fed';
+export const ATELIER_DISPLAY = '0x531bc38eec11f5ff76767fe93fafb939679468158fd487af23537312e457d3cb';
+export const SCULPT_DISPLAY = '0xeaf90aaccc1538c8b4190866c73127c1a57212448aad010c49293ec695d8f783';
 
-export const PUBLISHER_ARCHIMETERS = '0xb3215049dbc1fe36dba8fa44e605a8da72d04048271257bdb2150cf00cea9f70';
-export const PUBLISHER_ATELIER = '0xea43b3f265ddd750536f53b5ab4d4710206617c0273021c2beec396ca440c670';
-export const PUBLISHER_SCULPT = '0xea8804cec0db02cbde1a6fdc6d8177a7830df4b13bcacbb6844238205345fb6e';
+export const PUBLISHER_ARCHIMETERS = '0x6dd461345986662b599b0494d784e5b1bcc9d787b3ae484a2d8c03bca101c089';
+export const PUBLISHER_ATELIER = '0x34a36879bc318974c8a4eaf0875086f110d30965953739e795d0ec31970d3546';
+export const PUBLISHER_SCULPT = '0xaff58932399257fa419973ef134f1ba03f116fc9ce99a580ee645d2106d8f377';
 
 export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
 export const PRINTER_REGISTRY = '0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c';
@@ -113,6 +113,16 @@ export const mintSculpt = (
 ) => {
   const tx = new Transaction();
   const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)]);
+  
+  // Debug logging
+  console.log('🔍 mintSculpt called with:', {
+    alias,
+    glbFile,
+    structure,
+    sealResourceId,
+    hasStructure: !!structure,
+    hasSealResourceId: !!sealResourceId,
+  });
   
   // Serialize Option<String> for structure
   const structureOption = structure 
