@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { PACKAGE_ID } from '@/utils/transactions';
 import type { AtelierItem } from './useUserItems';
@@ -30,6 +30,7 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
   const [totalWithdrawn, setTotalWithdrawn] = useState<number>(0);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
 
   const withdrawAll = async (ateliers: AtelierItem[]) => {
     if (!currentAccount?.address) {
@@ -67,14 +68,43 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
       }, 0);
       setTotalWithdrawn(total);
 
+      // Fetch all AtelierPoolCap objects owned by the user
+      const { data: poolCapObjects } = await suiClient.getOwnedObjects({
+        owner: currentAccount.address,
+        filter: {
+          StructType: `${PACKAGE_ID}::atelier::AtelierPoolCap<${ATELIER_TYPE_ARG}>`
+        },
+        options: {
+          showContent: true,
+        },
+      });
+
+      // Create a map of poolId -> poolCapId
+      const poolCapMap = new Map<string, string>();
+      for (const obj of poolCapObjects) {
+        if (!obj.data?.content) continue;
+        const content = obj.data.content as any;
+        const poolId = content.fields?.pool_id;
+        if (poolId) {
+          poolCapMap.set(poolId, obj.data.objectId);
+        }
+      }
+
       const tx = new Transaction();
 
       ateliersWithBalance.forEach((atelier) => {
+        const poolCapId = poolCapMap.get(atelier.poolId);
+        if (!poolCapId) {
+          console.warn(`No PoolCap found for atelier ${atelier.id}, skipping`);
+          return;
+        }
+
         const poolAmount = Number(atelier.pool);
         tx.moveCall({
           target: `${PACKAGE_ID}::atelier::withdraw_pool`,
           typeArguments: [ATELIER_TYPE_ARG],
           arguments: [
+            tx.object(poolCapId),  // PoolCap first
             tx.object(atelier.id),
             tx.object(atelier.poolId),
             tx.pure.u64(poolAmount),

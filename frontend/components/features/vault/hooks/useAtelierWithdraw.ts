@@ -1,6 +1,6 @@
 import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
-import { withdrawAtelierPool, ATELIER_TYPE } from '@/utils/transactions';
+import { withdrawAtelierPool, ATELIER_TYPE, PACKAGE_ID } from '@/utils/transactions';
 import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
 
 interface UseAtelierWithdrawProps {
@@ -16,7 +16,7 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
   const currentAccount = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
-  const fetchAtelierObject = async () => {
+  const fetchPoolCap = async () => {
     if (!currentAccount?.address) {
       const errorMessage = 'Please connect your wallet';
       setError(errorMessage);
@@ -25,27 +25,35 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
     }
 
     try {
+      // Fetch all AtelierPoolCap objects owned by the user
       const { data: objects } = await suiClient.getOwnedObjects({
         owner: currentAccount.address,
         filter: {
-          StructType: ATELIER_TYPE
+          StructType: `${PACKAGE_ID}::atelier::AtelierPoolCap<${PACKAGE_ID}::atelier::ATELIER>`
         },
         options: {
           showContent: true,
         },
       });
 
+      // Find the PoolCap that matches this pool
       for (const object of objects) {
-        if (object.data?.objectId === atelierId) {
-          return object.data?.objectId;
+        if (!object.data?.content) continue;
+        const content = object.data.content as any;
+        const capPoolId = content.fields?.pool_id;
+        
+        if (capPoolId === poolId) {
+          return object.data.objectId;
         }
       }
-      const errorMessage = 'No corresponding Atelier found in your wallet';
+
+      const errorMessage = 'No AtelierPoolCap found for this pool. You may not have withdrawal rights.';
       setError(errorMessage);
       onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
     } catch (error) {
-      const errorMessage = 'Error fetching Atelier object';
+      console.error('Error fetching PoolCap:', error);
+      const errorMessage = 'Error fetching withdrawal capability';
       setError(errorMessage);
       onStatusChange?.('error', `Withdrawal failed: ${errorMessage}`);
       return null;
@@ -65,12 +73,12 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
       setError(null);
       onStatusChange?.('processing', 'Withdrawal processing...');
 
-      const atelierObjectId = await fetchAtelierObject();
-      if (!atelierObjectId) {
+      const poolCapId = await fetchPoolCap();
+      if (!poolCapId) {
         return false;
       }
 
-      const tx = withdrawAtelierPool(atelierObjectId, poolId, poolAmount, currentAccount.address);
+      const tx = withdrawAtelierPool(poolCapId, atelierId, poolId, poolAmount, currentAccount.address);
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(

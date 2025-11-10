@@ -1,24 +1,24 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Day 5 (2025-11-10) - New Deployment
-export const PACKAGE_ID = '0xd963bb95af74fb0b20c1181365e2e2d0bbb7c8f9a189d6e068999d6f76debf29';
-export const STATE_ID = '0xd72673dc80076d5c1feee06d8bf94907393fa0ed8dffe17688bfd10b537ab3db';
-export const ATELIER_STATE_ID = '0xb1ce5c4434c00dc76f006fb0f9cd17c37f5e033daaee404698aee2e2c9d554e1';
-export const UPGRADE_CAP = '0x652e5cba59df32d1379c4da8304949d5a327104e9ba84dafa4c8285cb098ab25';
+// Contract addresses - Day 6 (2025-11-10) - PoolCap Tradable + Shared Atelier
+export const PACKAGE_ID = '0x8c902302be5b2cb272aa26d9486439caaab1fdd306610df473d7ebf5802c4165';
+export const STATE_ID = '0xd4ba9ad12cdc47fb99b69edc0634cb8357d50d953a3ca6e718325f8112ff0452';
+export const ATELIER_STATE_ID = '0xc9c059ea80f51ab23fbbe835377ff629c5a7dce26e70487a86cf7d73a641c249';
+export const UPGRADE_CAP = '0xcd085845e5135e2f9837b0f557ae5caf1cb36b9f7d9f8edf4386c5e3372f8b8c';
 
-export const ATELIER_TRANSFER_POLICY = '0x680403700e598daf17bcad0e82c3834e37ff9919668a700161bb9f09c51aab9e';
-export const ATELIER_TRANSFER_POLICY_CAP = '0x1ac7a3163390be4c68a94a52a7a8c2019430499f2b2ce7eaff10a3531b1b6a78';
-export const SCULPT_TRANSFER_POLICY = '0x48ca9b6da9fb7f6cbd796432b0255a03fce3b20ee5a604f7005de83f9b872e25';
-export const SCULPT_TRANSFER_POLICY_CAP = '0x2331641dea2b9369ee22f451d9b9cd78ca50e7d4986f31e149547e8d218518bc';
+export const ATELIER_TRANSFER_POLICY = '0x653303deeee38f47636d923d9cef0c3a766f81572b6c76a727b775a9bd7a5f81';
+export const ATELIER_TRANSFER_POLICY_CAP = '0x24546343bf83b978324cd7a7e0cc14a6860e0338d9bd21f41fc4275007fab735';
+export const SCULPT_TRANSFER_POLICY = '0x73a8e4cb4b7e3675f30a4f8636dd14d8b22adb3607e9f9a56f4be459f55fec0c';
+export const SCULPT_TRANSFER_POLICY_CAP = '0xfb60c2a6c8ed45a7c6cc3bc0f14d87da126868dcef2e6fc82d9bb87b7c8d7b17';
 
-export const MEMBERSHIP_DISPLAY = '0x9db5d3be8970d97c3c1bf9b1ca0ba585d7102e7be61c3b562baf9f7d832c0fed';
-export const ATELIER_DISPLAY = '0x531bc38eec11f5ff76767fe93fafb939679468158fd487af23537312e457d3cb';
-export const SCULPT_DISPLAY = '0xeaf90aaccc1538c8b4190866c73127c1a57212448aad010c49293ec695d8f783';
+export const MEMBERSHIP_DISPLAY = '0x4563db890232f0b08ffcb6ee9a2f4ae520ceb905c9192aefea2fb565b6d4f0a3';
+export const ATELIER_DISPLAY = '0x3116df5a28b90a195a5af618d8b1d07828b20ce5d188242419ab140453549742';
+export const SCULPT_DISPLAY = '0x29c207e121a2129b05cef6d3bd70aa25734c461e2dc2ca8dba3a8acf5e304c94';
 
-export const PUBLISHER_ARCHIMETERS = '0x6dd461345986662b599b0494d784e5b1bcc9d787b3ae484a2d8c03bca101c089';
-export const PUBLISHER_ATELIER = '0x34a36879bc318974c8a4eaf0875086f110d30965953739e795d0ec31970d3546';
-export const PUBLISHER_SCULPT = '0xaff58932399257fa419973ef134f1ba03f116fc9ce99a580ee645d2106d8f377';
+export const PUBLISHER_ARCHIMETERS = '0x68c566f51a71bc15bd93fb315580ff0adc88bcf286f4d8e117a5ccd27bbde6a2';
+export const PUBLISHER_ATELIER = '0x6a509f7d21710531a2870f429d31e73d4576427353266db4b8069badeaadedeb';
+export const PUBLISHER_SCULPT = '0x8636dd103fa1c432fcb2ceb650ba354985a5522c9082d251246291708ed0b72f';
 
 export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
 export const PRINTER_REGISTRY = '0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c';
@@ -158,6 +158,7 @@ export const mintSculpt = (
 };
 
 export const withdrawAtelierPool = (
+  poolCapId: string,
   atelierId: string,
   poolId: string,
   amountInMist: number,
@@ -168,6 +169,7 @@ export const withdrawAtelierPool = (
     target: `${PACKAGE_ID}::atelier::withdraw_pool`,
     typeArguments: [`${PACKAGE_ID}::atelier::ATELIER`],
     arguments: [
+      tx.object(poolCapId),  // PoolCap must be first parameter now
       tx.object(atelierId),
       tx.object(poolId),
       tx.pure.u64(amountInMist),
