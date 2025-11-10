@@ -106,6 +106,7 @@ export const mintSculpt = (
   blueprint: string,
   glbFile: string,
   structure: string | null, // Optional STL blob ID
+  sealResourceId: string | null, // Optional Seal resource ID
   paramKeys: string[],
   paramValues: number[],
   priceInMist: number,
@@ -114,9 +115,13 @@ export const mintSculpt = (
   const [paymentCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)]);
   
   // Serialize Option<String> for structure
-  // If structure is null, serialize as None; otherwise as Some(string)
   const structureOption = structure 
     ? bcs.option(bcs.string()).serialize(structure)
+    : bcs.option(bcs.string()).serialize(null);
+  
+  // Serialize Option<String> for seal_resource_id
+  const sealResourceIdOption = sealResourceId
+    ? bcs.option(bcs.string()).serialize(sealResourceId)
     : bcs.option(bcs.string()).serialize(null);
   
   tx.moveCall({
@@ -132,6 +137,7 @@ export const mintSculpt = (
       tx.pure.string(blueprint),
       tx.pure.string(glbFile),
       tx.pure(structureOption),
+      tx.pure(sealResourceIdOption),
       tx.pure(bcs.vector(bcs.string()).serialize(paramKeys)),
       tx.pure(bcs.vector(bcs.u64()).serialize(paramValues)),
       paymentCoin,

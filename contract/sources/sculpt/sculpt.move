@@ -54,6 +54,7 @@ module archimeters::sculpt {
         time: u64,
         printer_whitelist: VecSet<ID>,
         encrypted: bool,
+        seal_resource_id: option::Option<String>,
     }
 
     public struct New_sculpt has copy, drop { id: ID }
@@ -90,6 +91,7 @@ module archimeters::sculpt {
         blueprint: String,
         glb_file: String,
         structure: option::Option<String>,
+        seal_resource_id: option::Option<String>,
         param_keys: vector<String>,
         param_values: vector<u64>,
         payment: Coin<SUI>,
@@ -114,7 +116,7 @@ module archimeters::sculpt {
         add_payment_to_pool<T>(pool, payment);
         
         let (sculpt, sculpt_id) = create_sculpt<T>(
-            atelier_id, alias, sender, creator, blueprint, glb_file, structure, params, clock, ctx
+            atelier_id, alias, sender, creator, blueprint, glb_file, structure, seal_resource_id, params, clock, ctx
         );
         
         add_sculpt_to_membership(membership, sculpt_id);
@@ -150,6 +152,7 @@ module archimeters::sculpt {
         blueprint: String,
         glb_file: String,
         structure: option::Option<String>,
+        seal_resource_id: option::Option<String>,
         parameters: VecMap<String, u64>,
         clock: &clock::Clock,
         ctx: &mut TxContext
@@ -166,6 +169,7 @@ module archimeters::sculpt {
             parameters, printed: 0, time: clock::timestamp_ms(clock),
             printer_whitelist: vec_set::empty(),
             encrypted,
+            seal_resource_id,
         }, id_inner)
     }
     
@@ -334,6 +338,7 @@ module archimeters::sculpt {
             time: clock::timestamp_ms(clock),
             printer_whitelist: vec_set::empty(),
             encrypted,
+            seal_resource_id: option::none(),
         }
     }
 }

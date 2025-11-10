@@ -78,6 +78,7 @@ export const useSculptMint = ({
 
       // Step 4: Optionally generate and encrypt STL for printing
       let stlBlobId: string | null = null;
+      let sealResourceId: string | null = null;
       
       if (generateStl) {
         console.log('🏗️ Generating STL file for printing...');
@@ -92,10 +93,13 @@ export const useSculptMint = ({
           console.log('🔐 Encrypting STL with Seal...');
         
         try {
+            // Generate unique resource ID for this sculpt
+            const uniqueResourceId = `${atelier.id}_${Date.now()}`;
+            
             const encryptionResult = await encryptModelFile(
               stlFile, 
               {
-            sculptId: `sculpt_${Date.now()}`,
+            sculptId: uniqueResourceId,  // Unique ID for each sculpt
             atelierId: atelier.id,
               },
               'testnet' // Network for Seal key servers
@@ -103,9 +107,15 @@ export const useSculptMint = ({
           
           fileToUpload = encryptionResult.encryptedBlob;
             encrypted = encryptionResult.metadata.encrypted;
+            
+            // Save resource ID for on-chain storage
+            if (encrypted) {
+              sealResourceId = encryptionResult.resourceId;
+            }
           
             console.log('✅ Seal encryption completed:', {
               encrypted,
+              resourceId: encryptionResult.resourceId,
               originalSize: encryptionResult.metadata.originalSize,
               encryptedSize: encryptionResult.metadata.encryptedSize,
             });
@@ -195,6 +205,7 @@ export const useSculptMint = ({
         `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
         glbBlobId, // glb_file: String (required)
         stlBlobId, // structure: Option<String> (optional STL blob ID)
+        sealResourceId, // seal_resource_id: Option<String> (optional Seal resource ID)
         paramKeys,
         paramValues,
         Number(atelier.price),

@@ -393,24 +393,24 @@ sui client publish --gas-budget 500000000
 ## 📝 檢查清單
 
 ### 合約
-- [ ] 修改 Sculpt 結構（glb_file, Option<structure>, VecSet<address>）
-- [ ] 實現 seal_approve_printer 函數
-- [ ] 修改 mint_sculpt 支持可選 STL
-- [ ] 更新白名單管理函數（address 類型）
-- [ ] 更新相關 events
-- [ ] 編寫測試代碼
-- [ ] 運行所有測試
-- [ ] 部署到 testnet
+- [X] 修改 Sculpt 結構（glb_file, Option<structure>, VecSet<address>）
+- [X] 實現 seal_approve_printer 函數
+- [X] 修改 mint_sculpt 支持可選 STL
+- [X] 更新白名單管理函數（address 類型）
+- [X] 更新相關 events
+- [X] 編寫測試代碼
+- [X] 運行所有測試
+- [X] 部署到 testnet
 
 ### 前端
-- [ ] 添加 "Generate STL" toggle UI
-- [ ] 實現 STL 導出功能
-- [ ] 配置 Seal testnet key servers
-- [ ] 實現 encryptSTLFile 函數
-- [ ] 修改 useSculptMint 支持可選 STL
-- [ ] 更新 transactions.ts (Option<String> 參數)
-- [ ] 測試完整 Mint 流程
-- [ ] 更新 UI 顯示加密狀態
+- [X] 添加 "Generate STL" toggle UI
+- [X] 實現 STL 導出功能
+- [X] 配置 Seal testnet key servers
+- [X] 實現 encryptSTLFile 函數
+- [X] 修改 useSculptMint 支持可選 STL
+- [X] 更新 transactions.ts (Option<String> 參數)
+- [X] 測試完整 Mint 流程
+- [X] 更新 UI 顯示加密狀態
 
 ---
 
