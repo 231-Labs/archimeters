@@ -3,8 +3,8 @@ import { Transaction } from "@mysten/sui/transactions";
 
 // Contract addresses - Updated with printer_id parameter (2025-11-12)
 export const PACKAGE_ID = '0x9a4790f287d6571f1b984577a4a4bb8bfc656b7126c01aa8a8a8881dca073ba7';
-export const STATE_ID = '0x01edfd05da07d9096da22d1c9ca542fdb93f6cafa95e892ebec110303a3efc21';
-export const ATELIER_STATE_ID = '0x11adcda2fefbf4df73fe3571b2d5299a04d7cca6296aab33abdcfe9015165e42';
+export const STATE_ID = '0x11adcda2fefbf4df73fe3571b2d5299a04d7cca6296aab33abdcfe9015165e42'; // archimeters::State
+export const ATELIER_STATE_ID = '0x01edfd05da07d9096da22d1c9ca542fdb93f6cafa95e892ebec110303a3efc21'; // atelier::AtelierState
 export const UPGRADE_CAP = '0x8972f7f311d7042ece4e7c5d2e256f4d4b93f059379362164072bb24c9d3dc75';
 
 export const ATELIER_TRANSFER_POLICY = '0x1066ed5202d07152ec59c55774b21712dff1a330f99f9d1fdf9d33d96096d13a';
