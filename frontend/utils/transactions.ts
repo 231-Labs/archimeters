@@ -1,27 +1,27 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Day 6 (2025-11-10) - PoolCap Tradable + Shared Atelier
-export const PACKAGE_ID = '0x8c902302be5b2cb272aa26d9486439caaab1fdd306610df473d7ebf5802c4165';
-export const STATE_ID = '0xd4ba9ad12cdc47fb99b69edc0634cb8357d50d953a3ca6e718325f8112ff0452';
-export const ATELIER_STATE_ID = '0xc9c059ea80f51ab23fbbe835377ff629c5a7dce26e70487a86cf7d73a641c249';
-export const UPGRADE_CAP = '0xcd085845e5135e2f9837b0f557ae5caf1cb36b9f7d9f8edf4386c5e3372f8b8c';
+// Contract addresses - Updated with printer_id parameter (2025-11-12)
+export const PACKAGE_ID = '0x9a4790f287d6571f1b984577a4a4bb8bfc656b7126c01aa8a8a8881dca073ba7';
+export const STATE_ID = '0x01edfd05da07d9096da22d1c9ca542fdb93f6cafa95e892ebec110303a3efc21';
+export const ATELIER_STATE_ID = '0x11adcda2fefbf4df73fe3571b2d5299a04d7cca6296aab33abdcfe9015165e42';
+export const UPGRADE_CAP = '0x8972f7f311d7042ece4e7c5d2e256f4d4b93f059379362164072bb24c9d3dc75';
 
-export const ATELIER_TRANSFER_POLICY = '0x653303deeee38f47636d923d9cef0c3a766f81572b6c76a727b775a9bd7a5f81';
-export const ATELIER_TRANSFER_POLICY_CAP = '0x24546343bf83b978324cd7a7e0cc14a6860e0338d9bd21f41fc4275007fab735';
-export const SCULPT_TRANSFER_POLICY = '0x73a8e4cb4b7e3675f30a4f8636dd14d8b22adb3607e9f9a56f4be459f55fec0c';
-export const SCULPT_TRANSFER_POLICY_CAP = '0xfb60c2a6c8ed45a7c6cc3bc0f14d87da126868dcef2e6fc82d9bb87b7c8d7b17';
+export const ATELIER_TRANSFER_POLICY = '0x1066ed5202d07152ec59c55774b21712dff1a330f99f9d1fdf9d33d96096d13a';
+export const ATELIER_TRANSFER_POLICY_CAP = '0xa022d04ba025efee2aa40dcaee835c688aeb9f0dd5f49875431501f24ea0b1a8';
+export const SCULPT_TRANSFER_POLICY = '0x714acb68e72d2703d7c0f24b862d0fe1449ab9c1fd9cd24b119efd04f07220ed';
+export const SCULPT_TRANSFER_POLICY_CAP = '0xc878eb182970f9a42f79a99099b2737d0c7a4d9c94959be75fd2792a06c46fd9';
 
-export const MEMBERSHIP_DISPLAY = '0x4563db890232f0b08ffcb6ee9a2f4ae520ceb905c9192aefea2fb565b6d4f0a3';
-export const ATELIER_DISPLAY = '0x3116df5a28b90a195a5af618d8b1d07828b20ce5d188242419ab140453549742';
-export const SCULPT_DISPLAY = '0x29c207e121a2129b05cef6d3bd70aa25734c461e2dc2ca8dba3a8acf5e304c94';
+export const MEMBERSHIP_DISPLAY = '0x4b25b15a38a093d5d35aae75fdd608a8fbbd16acc9e614f07891c8fc525d13ab';
+export const ATELIER_DISPLAY = '0xd48fc0d0f05cd925712814761c23cb2c54375efcbc4203ee12749907efa16c19';
+export const SCULPT_DISPLAY = '0xed2e0e0b22669680508ebb59ea80a9d770d4e10077092891421d7eb4354705ec';
 
-export const PUBLISHER_ARCHIMETERS = '0x68c566f51a71bc15bd93fb315580ff0adc88bcf286f4d8e117a5ccd27bbde6a2';
-export const PUBLISHER_ATELIER = '0x6a509f7d21710531a2870f429d31e73d4576427353266db4b8069badeaadedeb';
-export const PUBLISHER_SCULPT = '0x8636dd103fa1c432fcb2ceb650ba354985a5522c9082d251246291708ed0b72f';
+export const PUBLISHER_ARCHIMETERS = '0xfc22092c5c0226891cf903356be9a0a9ef0f0c614051a0723363e355c7aa9263';
+export const PUBLISHER_ATELIER = '0x32cd1ed914224f8bca42c407112d714cf1af99952b75d2ee17273211ea8ba238';
+export const PUBLISHER_SCULPT = '0x32be213f6a31b9bad153f86ebd72cf0cde0c4e7a59464b8c5a223b800356a34a';
 
-export const EUREKA_PACKAGE_ID = '0xdf87f76e34fb02000a00fd6a58e5d7b5e1f1d76b1a6399ff7079cf7c9991bd2a';
-export const PRINTER_REGISTRY = '0x4aefe6483a8bbc5258b7668c867291581800da1d7c913c923a2c64a3beecfc3c';
+export const EUREKA_PACKAGE_ID = '0xc43f70a30c7de3bf10847f81b45279adfc0c1cc1a66f3acf10f1b5af3e1983ae';
+export const PRINTER_REGISTRY = '0x53d254fb51dce1544799d68df5610b9fc8cb022de27e9da42e0ad520929cab73';
 
 // Type definitions
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
@@ -214,18 +214,34 @@ export const updateCreatorRoyalty = (
 export const printSculpt = (
   sculptId: string,
   printerId: string,
+  kioskId: string,
+  kioskCapId: string,
   payment?: string,
 ) => {
   const tx = new Transaction();
+  
+  // Use the new kiosk-aware functions that handle borrowing internally
   const target = payment
-    ? `${EUREKA_PACKAGE_ID}::eureka::create_and_assign_print_job`
-    : `${EUREKA_PACKAGE_ID}::eureka::create_and_assign_print_job_free`;
+    ? `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk`
+    : `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk_free`;
   
   const args = payment
-    ? [tx.object(printerId), tx.object(sculptId), tx.object(payment)]
-    : [tx.object(printerId), tx.object(sculptId)];
+    ? [
+        tx.object(printerId),
+        tx.object(kioskId),
+        tx.object(kioskCapId),
+        tx.pure.id(sculptId),
+        tx.object(payment),
+      ]
+    : [
+        tx.object(printerId),
+        tx.object(kioskId),
+        tx.object(kioskCapId),
+        tx.pure.id(sculptId),
+      ];
   
   tx.moveCall({ target, arguments: args });
+  
   return tx;
 };
 
