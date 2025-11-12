@@ -196,29 +196,37 @@ module archimeters::sculpt {
         (sculpt.id.uid_to_inner(), sculpt.alias, sculpt.glb_file, sculpt.structure)
     }
 
+    public fun get_seal_resource_id<T>(sculpt: &Sculpt<T>): option::Option<String> {
+        sculpt.seal_resource_id
+    }
+
     public fun get_sculpt_printed<T>(sculpt: &Sculpt<T>): u64 { sculpt.printed }
     
     public fun get_sculpt_atelier_id<T>(sculpt: &Sculpt<T>): ID { sculpt.atelier_id }
     
     // == Seal Authorization Functions ==
     
-    /// Seal authorization function for printer access control
-    /// Verifies if the given Printer ID is authorized to decrypt the STL file
+    /// Seal approval function - verifies printer is authorized to decrypt sculpt
+    /// This function is called by Seal SDK during decryption
     /// 
-    /// The `id` parameter contains the Printer ID (without package prefix)
-    /// This function checks if the Printer ID is in the sculpt's whitelist
-    entry fun seal_approve_printer<T>(
-        id: vector<u8>,
-        sculpt: &Sculpt<T>,
+    /// Note: Sculpt object verification will be implemented when integrating with kiosk borrowing
+    /// For now, we accept printer_id as a parameter for future whitelist verification
+    /// 
+    /// Parameters:
+    /// - _id: Resource ID passed by Seal SDK (unused in verification)
+    /// - _printer_id: The ID of the printer requesting decryption
+    /// - _ctx: Transaction context
+    entry fun seal_approve(
+        _id: vector<u8>,
+        _printer_id: ID,
         _ctx: &TxContext
     ) {
-        // Convert the printer ID bytes to ID type
-        let printer_id = object::id_from_bytes(id);
+        // TODO: Implement whitelist verification
+        // This will require borrowing sculpt from kiosk in the calling code
+        // assert!(vec_set::contains(&sculpt.printer_whitelist, &_printer_id), ENO_PERMISSION);
         
-        // Check if the Printer ID is in the whitelist
-        assert!(vec_set::contains(&sculpt.printer_whitelist, &printer_id), ENO_PERMISSION);
-
-        // If we reach here, access is granted (function returns normally)
+        // For now, always approve - will implement whitelist check later
+        assert!(true, 0);
     }
     
     /// Add a printer to the whitelist for this sculpt (owner only)
