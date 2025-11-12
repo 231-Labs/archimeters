@@ -6,7 +6,7 @@ import { SealClient, DemType } from '@mysten/seal';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { SEAL_CONFIG, getSealKeyServers } from '@/config/seal';
-import { PACKAGE_ID } from '@/utils/transactions';
+import { EUREKA_PACKAGE_ID } from '@/utils/transactions';
 
 type SuiJsonRpcClient = any;
 
@@ -133,8 +133,9 @@ export async function encryptModelFile(
 
     // Prepare Seal encryption parameters
     // packageId: The Move package ID (contract namespace)
-    // id: The resource identifier (used in seal_approve function)
-    const sealPackageId = PACKAGE_ID;
+    // IMPORTANT: Use EUREKA_PACKAGE_ID because seal_approve is in the Eureka package
+    // Seal uses IBE (Identity-Based Encryption) where packageId is the namespace
+    const sealPackageId = EUREKA_PACKAGE_ID;
     // sculptId is already a valid hex string (without 0x prefix)
     const sealId = options.sculptId;
     
