@@ -4,7 +4,6 @@ import * as Tabs from '@radix-ui/react-tabs';
 import Masonry from 'react-masonry-css';
 import { useState, useEffect, useRef } from 'react';
 import { useUserItems, VaultItem, AtelierItem, SculptItem } from '@/components/features/vault/hooks/useUserItems';
-import { usePrinters } from '@/components/features/vault/hooks/usePrinters';
 import { useWithdrawAll } from '@/components/features/vault/hooks/useWithdrawAll';
 import type { WindowName } from '@/components/features/window-manager';
 import { AtelierDetailModal } from '@/components/features/vault/components/AtelierDetailModal';
@@ -16,7 +15,6 @@ import { RetroTabsList, RetroTabsTrigger } from '@/components/common/RetroTabs';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroEmptyState } from '@/components/common/RetroEmptyState';
 import { RetroListItem, RetroListThumbnail, RetroListInfo, RetroListArrow } from '@/components/common/RetroListItem';
-import { RetroPrinterCard } from '@/components/common/RetroPrinterCard';
 import { RetroImageItem } from '@/components/common/RetroImageItem';
 
 interface VaultWindowProps {
@@ -71,17 +69,13 @@ const ImageItem: React.FC<{
 export default function VaultWindow({}: VaultWindowProps) {
   const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>('ateliers');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null);
-  const [showPrinters, setShowPrinters] = useState<boolean>(false);
   const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [withdrawMessage, setWithdrawMessage] = useState<string>('');
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const [selectedAtelier, setSelectedAtelier] = useState<AtelierItem | null>(null);
   const [selectedSculpt, setSelectedSculpt] = useState<SculptItem | null>(null);
   
-  // Adding timeout handler reference
   const processingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  // Track if we've already handled the current withdrawAllStatus to prevent infinite loops
   const withdrawAllStatusHandledRef = useRef<string>('idle');
 
   const {
@@ -100,13 +94,6 @@ export default function VaultWindow({}: VaultWindowProps) {
   } = useUserItems('sculptures');
 
   const {
-    printers,
-    isLoading: isLoadingPrinters,
-    error: errorPrinters,
-    reload: reloadPrinters,
-  } = usePrinters();
-
-  const {
     withdrawAll,
     status: withdrawAllStatus,
     error: withdrawAllError,
@@ -115,22 +102,7 @@ export default function VaultWindow({}: VaultWindowProps) {
     resetStatus: resetWithdrawAll,
   } = useWithdrawAll();
 
-  // Selected printer data
-  const selectedPrinterData = selectedPrinter 
-    ? printers.find(p => p.id === selectedPrinter) 
-    : null;
-
-  useEffect(() => {
-    if (activeTab === 'sculpts') {
-      reloadPrinters();
-    }
-  }, [activeTab]);
-
   const breakpointColumns = { default: 4, 1400: 3, 1100: 2, 700: 1 };
-
-  const handlePrinterSelect = (printerId: string) => {
-    setSelectedPrinter(printerId);
-  };
 
   const handleWithdrawStatusChange = (status: 'idle' | 'processing' | 'success' | 'error', message?: string, digest?: string) => {
     // Clear previous timer (if exists)
@@ -357,84 +329,6 @@ export default function VaultWindow({}: VaultWindowProps) {
 
       <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
         <div className="p-4 space-y-4">
-          {/* Printer selection area */}
-          <RetroPanel className="p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                {selectedPrinter ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs font-medium text-white/90">
-                      PRINTER: {selectedPrinterData?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setShowPrinters(!showPrinters);
-                        if (!showPrinters) setSelectedPrinter(null);
-                      }}
-                      className="text-[10px] text-white/40 hover:text-white/80 underline font-mono"
-                    >
-                      {showPrinters ? "CANCEL" : "CHANGE"}
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-white/40 font-mono">Select a printer to print your sculpture</span>
-                  )}
-                </div>
-
-                {!selectedPrinter && (
-                  <RetroButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setShowPrinters(!showPrinters)}
-                  >
-                    {showPrinters ? 'Cancel' : 'Select Printer'}
-                  </RetroButton>
-                )}
-            </div>
-            
-            {showPrinters && (
-              <div className="mt-3">
-                {isLoadingPrinters ? (
-                  <div className="p-4 text-center">
-                    <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-neutral-400">Loading printers...</p>
-                  </div>
-                ) : errorPrinters ? (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-red-400">{errorPrinters}</p>
-                    <button 
-                      onClick={reloadPrinters}
-                      className="mt-2 text-xs text-neutral-400 hover:text-white underline"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                ) : printers.length === 0 ? (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-neutral-400">No printers available</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {printers.map(printer => (
-                      <RetroPrinterCard
-                        key={printer.id}
-                        printer={printer}
-                        onSelect={() => {
-                          if (printer.online) {
-                            handlePrinterSelect(printer.id);
-                            setShowPrinters(false);
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </RetroPanel>
-          
-          {/* Sculpture display area */}
           <div className="relative">
             {isLoadingSculpts && !sculpts.length ? (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -496,35 +390,8 @@ export default function VaultWindow({}: VaultWindowProps) {
                 })}
               </div>
             )}
-
-            {!selectedPrinter && sculpts.length > 0 && !showPrinters && (
-              <div className="fixed bottom-4 right-4 bg-neutral-900/90 text-white px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm max-w-xs border border-neutral-800">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-neutral-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <button
-                    onClick={() => setShowPrinters(true)}
-                    className="text-xs hover:underline"
-                  >
-                  Select a printer to print your sculptures
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-          </div>
+        </div>
         </Tabs.Content>
       </Tabs.Root>
 
@@ -620,7 +487,6 @@ export default function VaultWindow({}: VaultWindowProps) {
           onUpdate={() => {
             reloadSculpts();
           }}
-          selectedPrinter={selectedPrinter || undefined}
           kioskInfo={sculptKioskInfo}
         />
       )}

@@ -5,7 +5,7 @@ interface MarketplaceStatusNotificationProps {
   status: NotificationStatus;
   error: string | null;
   txDigest: string | null;
-  action: 'list' | 'delist' | 'purchase' | null;
+  action: 'list' | 'delist' | 'purchase' | 'print' | null;
 }
 
 export const MarketplaceStatusNotification = ({
@@ -66,6 +66,7 @@ export const MarketplaceStatusNotification = ({
                  action === 'list' ? 'LISTING SCULPT' : 
                  action === 'delist' ? 'DELISTING SCULPT' : 
                  action === 'purchase' ? 'PURCHASING SCULPT' : 
+                 action === 'print' ? 'CREATING PRINT JOB' :
                  'PROCESSING'}
               </span>
             </div>
@@ -79,6 +80,7 @@ export const MarketplaceStatusNotification = ({
                   {action === 'list' ? 'LISTED SUCCESSFULLY' : 
                    action === 'delist' ? 'DELISTED SUCCESSFULLY' : 
                    action === 'purchase' ? 'PURCHASED SUCCESSFULLY' : 
+                   action === 'print' ? 'PRINT JOB CREATED' :
                    'SUCCESS'}
                 </span>
               </div>
@@ -105,6 +107,7 @@ export const MarketplaceStatusNotification = ({
                   {action === 'list' ? 'LIST FAILED' : 
                    action === 'delist' ? 'DELIST FAILED' : 
                    action === 'purchase' ? 'PURCHASE FAILED' : 
+                   action === 'print' ? 'PRINT FAILED' :
                    'FAILED'}
                 </span>
               </div>

@@ -204,29 +204,22 @@ module archimeters::sculpt {
     
     public fun get_sculpt_atelier_id<T>(sculpt: &Sculpt<T>): ID { sculpt.atelier_id }
     
-    // == Seal Authorization Functions ==
+    // == Printer Whitelist Authorization ==
     
-    /// Seal approval function - verifies printer is authorized to decrypt sculpt
-    /// This function is called by Seal SDK during decryption
-    /// 
-    /// Note: Sculpt object verification will be implemented when integrating with kiosk borrowing
-    /// For now, we accept printer_id as a parameter for future whitelist verification
-    /// 
-    /// Parameters:
-    /// - _id: Resource ID passed by Seal SDK (unused in verification)
-    /// - _printer_id: The ID of the printer requesting decryption
-    /// - _ctx: Transaction context
-    entry fun seal_approve(
-        _id: vector<u8>,
-        _printer_id: ID,
-        _ctx: &TxContext
-    ) {
-        // TODO: Implement whitelist verification
-        // This will require borrowing sculpt from kiosk in the calling code
-        // assert!(vec_set::contains(&sculpt.printer_whitelist, &_printer_id), ENO_PERMISSION);
-        
-        // For now, always approve - will implement whitelist check later
-        assert!(true, 0);
+    /// Check if printer is in sculpt's whitelist
+    public fun verify_printer_access<T>(printer_id: ID, sculpt: &Sculpt<T>): bool {
+        vec_set::contains(&sculpt.printer_whitelist, &printer_id)
+    }
+    
+    /// Verify printer access for kiosk-stored sculpts
+    public fun verify_access_from_kiosk<T>(
+        printer_id: ID,
+        sculpt_id: ID,
+        kiosk: &Kiosk,
+        kiosk_cap: &KioskOwnerCap,
+    ): bool {
+        let sculpt = kiosk::borrow<Sculpt<T>>(kiosk, kiosk_cap, sculpt_id);
+        verify_printer_access(printer_id, sculpt)
     }
     
     /// Add a printer to the whitelist for this sculpt (owner only)
@@ -294,17 +287,6 @@ module archimeters::sculpt {
     }
     
     // == Test Helper Functions ==
-    
-    #[test_only]
-    /// Test helper to call seal_approve_printer (since entry functions can't be called directly in tests)
-    public fun test_seal_approve_printer<T>(
-        id: &vector<u8>,
-        sculpt: &Sculpt<T>,
-        _ctx: &TxContext
-    ) {
-        let printer_id = object::id_from_bytes(*id);
-        assert!(vec_set::contains(&sculpt.printer_whitelist, &printer_id), ENO_PERMISSION);
-    }
     
     #[test_only]
     /// Create a test Sculpt for unit testing

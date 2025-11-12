@@ -7,10 +7,12 @@ import { formatAddress, formatSuiAmount } from '@/utils/formatters';
 import { SculptPrintButton } from './SculptPrintButton';
 import { useSculptMarketplace } from '../hooks/useSculptMarketplace';
 import { useSculptListedStatus } from '../hooks/useSculptListedStatus';
+import { usePrinters } from '../hooks/usePrinters';
 import { RetroPanel } from '@/components/common/RetroPanel';
 import { RetroButton } from '@/components/common/RetroButton';
 import { RetroInput } from '@/components/common/RetroInput';
 import { RetroDetailModal, DetailHeader, InfoField } from '@/components/common/RetroDetailModal';
+import { RetroPrinterCard } from '@/components/common/RetroPrinterCard';
 import { MarketplaceStatusNotification } from './MarketplaceStatusNotification';
 
 const GLBViewer = dynamic(() => import('@/components/3d/GLBViewer'), {
@@ -27,16 +29,22 @@ interface SculptDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
-  selectedPrinter?: string;
   kioskInfo: KioskInfo | null;
 }
 
-export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedPrinter, kioskInfo }: SculptDetailModalProps) {
+export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo }: SculptDetailModalProps) {
   const [listPrice, setListPrice] = useState('');
   const [show3DPreview, setShow3DPreview] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [lastAction, setLastAction] = useState<'list' | 'delist' | null>(null);
+  const [lastAction, setLastAction] = useState<'list' | 'delist' | 'print' | null>(null);
+  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null);
+  const [showPrinters, setShowPrinters] = useState(false);
+  const [printStatus, setPrintStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [printTxDigest, setPrintTxDigest] = useState<string | null>(null);
+  
   const { listSculpt, delistSculpt, status: marketplaceStatus, error: marketplaceError, txDigest, resetStatus } = useSculptMarketplace();
+  const { printers, isLoading: isLoadingPrinters, error: errorPrinters, reload: reloadPrinters } = usePrinters();
   
   const stableKioskId = useMemo(() => sculpt.kioskId || kioskInfo?.kioskId || null, [sculpt.kioskId, kioskInfo?.kioskId]);
   
@@ -59,6 +67,11 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
     if (!isOpen) {
       resetStatus();
       setLastAction(null);
+      setSelectedPrinter(null);
+      setShowPrinters(false);
+      setPrintStatus('idle');
+      setPrintError(null);
+      setPrintTxDigest(null);
       if (!isListed) {
         setListPrice('');
       }
@@ -154,7 +167,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
 
   return (
     <RetroDetailModal isOpen={isOpen} onClose={onClose}>
-      <div className="flex items-start">
+      <div className="flex flex-col items-start space-y-3">
         <RetroPanel variant="inset" className="w-full">
           <div className="aspect-square bg-[#000000] overflow-hidden relative">
             {show3DPreview ? (
@@ -188,6 +201,27 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
                 {show3DPreview ? '2D' : '3D'}
               </RetroButton>
             </div>
+          </div>
+        </RetroPanel>
+
+        <RetroPanel variant="inset" className="p-2 w-full">
+          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
+          <div className="space-y-1">
+            <InfoField
+              label="SCULPT ID"
+              value={`${sculpt.id.slice(0, 8)}...${sculpt.id.slice(-6)}`}
+            />
+            <InfoField
+              label="GLB FILE"
+              value={sculpt.glbFile ? `${sculpt.glbFile.slice(0, 15)}...` : 'N/A'}
+            />
+            {sculpt.structure && (
+              <InfoField
+                label="STL FILE"
+                value={`${sculpt.structure.slice(0, 15)}... 🔐`}
+                isLast
+              />
+            )}
           </div>
         </RetroPanel>
       </div>
@@ -224,20 +258,112 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
 
         <RetroPanel variant="inset" className="p-2">
           <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">PRINT SCULPT</h4>
-          <SculptPrintButton
-            sculptId={sculpt.id}
-            printerId={selectedPrinter}
-            onSuccess={() => {
-              onUpdate();
-              onClose();
-            }}
-            onError={(error) => alert(`Print failed: ${error}`)}
-            onStatusChange={() => {}}
-          />
-          {!selectedPrinter && (
-            <p className="text-white/40 text-xs font-mono mt-2">
-              ⓘ Select a printer from Vault
-            </p>
+          
+          {selectedPrinter && (
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-xs font-medium text-white/90 font-mono">
+                {printers.find(p => p.id === selectedPrinter)?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedPrinter(null);
+                  setShowPrinters(true);
+                  reloadPrinters();
+                }}
+                className="text-[10px] text-white/40 hover:text-white/80 underline font-mono"
+              >
+                CHANGE
+              </button>
+            </div>
+          )}
+
+          {showPrinters && (
+            <div className="mb-2 max-h-48 overflow-y-auto" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#2a2a2a #0a0a0a'
+            }}>
+              {isLoadingPrinters ? (
+                <div className="p-4 text-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-sm text-white/50 font-mono">Loading printers...</p>
+                </div>
+              ) : errorPrinters ? (
+                <div className="p-4 text-center">
+                  <p className="text-sm text-red-400 font-mono">{errorPrinters}</p>
+                  <button 
+                    onClick={reloadPrinters}
+                    className="mt-2 text-xs text-white/40 hover:text-white/80 underline font-mono"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : printers.length === 0 ? (
+                <div className="p-4 text-center">
+                  <p className="text-sm text-white/50 font-mono">No printers available</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-1.5">
+                  {printers.map(printer => (
+                    <RetroPrinterCard
+                      key={printer.id}
+                      printer={printer}
+                      onSelect={() => {
+                        if (printer.online) {
+                          setSelectedPrinter(printer.id);
+                          setShowPrinters(false);
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!selectedPrinter ? (
+            <RetroButton
+              variant="primary"
+              size="md"
+              onClick={() => {
+                setShowPrinters(!showPrinters);
+                if (!showPrinters) {
+                  reloadPrinters();
+                }
+              }}
+            >
+              {showPrinters ? 'Cancel' : 'Select Printer'}
+            </RetroButton>
+          ) : (
+            <SculptPrintButton
+              sculptId={sculpt.id}
+              printerId={selectedPrinter}
+              kioskId={sculpt.kioskId || kioskInfo?.kioskId}
+              kioskCapId={sculpt.kioskCapId || kioskInfo?.kioskCapId}
+              onSuccess={() => {
+                setTimeout(() => {
+                  onUpdate();
+                }, 2000);
+              }}
+              onError={(error) => {
+                console.error('Print error:', error);
+              }}
+              onStatusChange={(status, message, digest) => {
+                setLastAction('print');
+                setPrintStatus(status);
+                setPrintError(message || null);
+                setPrintTxDigest(digest || null);
+                
+                if (status === 'success') {
+                  setTimeout(() => {
+                    setPrintStatus('idle');
+                    setPrintError(null);
+                    setPrintTxDigest(null);
+                    setLastAction(null);
+                  }, 3000);
+                }
+              }}
+            />
           )}
         </RetroPanel>
 
@@ -278,35 +404,23 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, selectedP
             </>
           )}
         </RetroPanel>
-
-        <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
-          <div className="space-y-1">
-            <InfoField
-              label="SCULPT ID"
-              value={`${sculpt.id.slice(0, 8)}...${sculpt.id.slice(-6)}`}
-            />
-            <InfoField
-              label="GLB FILE"
-              value={sculpt.glbFile ? `${sculpt.glbFile.slice(0, 15)}...` : 'N/A'}
-            />
-            {sculpt.structure && (
-              <InfoField
-                label="STL FILE"
-                value={`${sculpt.structure.slice(0, 15)}... 🔐`}
-                isLast
-              />
-            )}
-          </div>
-        </RetroPanel>
       </div>
 
-      <MarketplaceStatusNotification
-        status={marketplaceStatus}
-        error={marketplaceError}
-        txDigest={txDigest}
-        action={lastAction}
-      />
+      {lastAction === 'print' ? (
+        <MarketplaceStatusNotification
+          status={printStatus}
+          error={printError}
+          txDigest={printTxDigest}
+          action="print"
+        />
+      ) : (
+        <MarketplaceStatusNotification
+          status={marketplaceStatus}
+          error={marketplaceError}
+          txDigest={txDigest}
+          action={lastAction}
+        />
+      )}
     </RetroDetailModal>
   );
 }

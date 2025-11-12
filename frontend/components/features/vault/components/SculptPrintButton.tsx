@@ -4,6 +4,8 @@ import { RetroButton } from '@/components/common/RetroButton';
 interface SculptPrintButtonProps {
   sculptId: string;
   printerId?: string;
+  kioskId?: string;
+  kioskCapId?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
   onStatusChange?: (status: 'idle' | 'processing' | 'success' | 'error', message?: string, txDigest?: string) => void;
@@ -12,6 +14,8 @@ interface SculptPrintButtonProps {
 export function SculptPrintButton({
   sculptId,
   printerId,
+  kioskId,
+  kioskCapId,
   onSuccess,
   onError,
   onStatusChange
@@ -19,9 +23,10 @@ export function SculptPrintButton({
   const { handlePrint, isPrinting, error, txDigest } = usePrintSculpt({
     sculptId,
     printerId,
+    kioskId,
+    kioskCapId,
     onStatusChange: onStatusChange 
       ? (status, message, txDigest) => {
-          // 將 'preparing' 和 'printing' 映射為 'processing'
           const mappedStatus = status === 'preparing' || status === 'printing' 
             ? 'processing' 
             : status;
@@ -31,57 +36,15 @@ export function SculptPrintButton({
   });
 
   const handleClick = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    
-    if (onStatusChange) {
-      onStatusChange('processing', 'Preparing print transaction...');
-    }
+    e.stopPropagation();
     
     try {
       const success = await handlePrint();
-      
       if (success) {
-        if (onStatusChange) {
-          setTimeout(() => {
-            onStatusChange('success', 'Print transaction successful', txDigest || undefined);
-          }, 100);
-        }
         onSuccess?.();
-      } else if (error) {
-        const errorMsg = (error || '').toLowerCase();
-        if (errorMsg.includes('transaction cancelled') || 
-            errorMsg.includes('user rejected') ||
-            errorMsg.includes('user denied') ||
-            errorMsg.includes('rejected')) {
-          if (onStatusChange) {
-            // Force update to error state with clear message about cancellation
-            onStatusChange('error', 'Transaction cancelled by user', undefined);
-            setTimeout(() => {
-              onError?.('Transaction cancelled');
-            }, 50);
-          } else {
-            onError?.('Transaction cancelled');
-          }
-        } else {
-          if (onStatusChange) {
-            onStatusChange('error', `Print failed: ${error}`, undefined);
-          }
-          onError?.(error);
-        }
-      } else {
-        // No explicit error but also no success - handle implicit failure
-        if (onStatusChange) {
-          onStatusChange('error', 'Print operation failed', undefined);
-        }
-        onError?.('Print operation failed');
       }
     } catch (err) {
       console.error('Print button click handler error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Print processing error';
-      if (onStatusChange) {
-        onStatusChange('error', `Print failed: ${errorMessage}`, undefined);
-      }
-      onError?.(errorMessage);
     }
   };
 
@@ -94,7 +57,7 @@ export function SculptPrintButton({
       isLoading={isPrinting}
       title={!printerId ? 'Please select a printer' : undefined}
     >
-      {isPrinting ? 'Printing...' : 'Select Printer'}
+      {isPrinting ? 'Printing...' : 'Print'}
     </RetroButton>
   );
 } 

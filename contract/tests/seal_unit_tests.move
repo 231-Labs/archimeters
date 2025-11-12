@@ -169,9 +169,8 @@ module archimeters::seal_unit_tests {
             sculpt::add_printer_to_whitelist(&mut sculpt, printer1_id, ts::ctx(&mut scenario));
             assert!(sculpt::is_printer_authorized(&sculpt, printer1_id), 1);
             
-            // Test seal_approve with printer ID (should succeed)
-            let printer_id_bytes = object::id_to_bytes(&printer1_id);
-            sculpt::test_seal_approve_printer(&printer_id_bytes, &sculpt, ts::ctx(&mut scenario));
+            // Test printer authorization (should succeed)
+            assert!(sculpt::verify_printer_access(printer1_id, &sculpt), 1);
             
             test_utils::destroy(sculpt);
         };
@@ -180,7 +179,6 @@ module archimeters::seal_unit_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = sculpt::ENO_PERMISSION)]
     fun test_seal_approve_with_unauthorized_printer() {
         let mut scenario = ts::begin(UNAUTHORIZED_ADDR);
         
@@ -204,11 +202,9 @@ module archimeters::seal_unit_tests {
             // Create unauthorized printer ID (NOT added to whitelist)
             let unauthorized_id = object::id_from_address(UNAUTHORIZED_ADDR);
             
-            // Test seal_approve with unauthorized ID (should fail)
-            let unauthorized_id_bytes = object::id_to_bytes(&unauthorized_id);
-            
-            // This should abort with ENO_PERMISSION
-            sculpt::test_seal_approve_printer(&unauthorized_id_bytes, &sculpt, ts::ctx(&mut scenario));
+            // Test printer authorization with unauthorized ID (should return false)
+            let is_authorized = sculpt::verify_printer_access(unauthorized_id, &sculpt);
+            assert!(!is_authorized, 1); // Should be false since printer is not in whitelist
             
             test_utils::destroy(sculpt);
         };

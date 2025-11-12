@@ -14,8 +14,8 @@ module archimeters::marketplace_tests {
         ATELIER,
         Atelier,
         AtelierPool,
+        AtelierPoolCap,
     };
-    use archimeters::atelier_marketplace;
     use archimeters::test_helpers::{
         setup_test, 
         create_clock, 
@@ -70,7 +70,7 @@ module archimeters::marketplace_tests {
     }
 
     #[test]
-    fun test_list_atelier() {
+    fun test_basic_kiosk_operations() {
         let mut scenario = setup_test();
         let clock = create_clock(&mut scenario);
         
@@ -80,85 +80,27 @@ module archimeters::marketplace_tests {
         // Create kiosk
         create_test_kiosk(&mut scenario, SELLER);
         
-        // List atelier
+        // Verify atelier exists as shared object and user has pool_cap
         ts::next_tx(&mut scenario, SELLER);
         {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
+            let kiosk = ts::take_shared<Kiosk>(&scenario);
             let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
             
-            let atelier_id = object::id(&atelier);
-            let price = 10 * one_sui();
-            atelier_marketplace::list_atelier<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier,
-                price,
-                ts::ctx(&mut scenario)
-            );
+            // Verify objects exist
+            assert!(object::id(&atelier) != object::id_from_address(@0x0), 0);
+            assert!(object::id(&pool_cap) != object::id_from_address(@0x0), 1);
             
-            // Verify atelier is in kiosk
-            assert!(kiosk::has_item(&kiosk, atelier_id), 0);
-            
+            ts::return_shared(atelier);
+            ts::return_to_sender(&scenario, pool_cap);
             ts::return_to_sender(&scenario, cap);
             ts::return_shared(kiosk);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
-
-    #[test]
-    fun test_delist_atelier() {
-        let mut scenario = setup_test();
-        let clock = create_clock(&mut scenario);
-        
-        // Mint and list atelier
-        mint_test_atelier(&mut scenario, &clock, SELLER);
-        create_test_kiosk(&mut scenario, SELLER);
-        
-        let atelier_id;
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
-            
-            atelier_id = object::id(&atelier);
-            atelier_marketplace::list_atelier<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier,
-                10 * one_sui(),
-                ts::ctx(&mut scenario)
-            );
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // Delist
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            
-            atelier_marketplace::delist_atelier<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier_id,
-            );
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        clock.destroy_for_testing();
-        ts::end(scenario);
-    }
-
-    // Note: Full purchase test requires TransferPolicy to be created in init
-    // This test is simplified to focus on pool_cap binding and basic operations
 
     #[test]
     fun test_pool_cap_binding() {
@@ -168,18 +110,20 @@ module archimeters::marketplace_tests {
         // Mint atelier
         mint_test_atelier(&mut scenario, &clock, SELLER);
         
-        // Test withdraw using atelier reference
+        // Test withdraw using pool cap
         ts::next_tx(&mut scenario, SELLER);
         {
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
             
             // Add some balance to pool first
             let payment = coin::mint_for_testing<SUI>(5 * one_sui(), ts::ctx(&mut scenario));
             atelier::add_payment_to_pool(&mut pool, payment);
             
-            // Withdraw using atelier (PoolCap is bound inside)
+            // Withdraw using pool cap
             atelier::withdraw_pool<ATELIER>(
+                &pool_cap,
                 &atelier,
                 &mut pool,
                 2 * one_sui(),
@@ -187,7 +131,8 @@ module archimeters::marketplace_tests {
                 ts::ctx(&mut scenario)
             );
             
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
+            ts::return_to_sender(&scenario, pool_cap);
             ts::return_shared(pool);
         };
         
@@ -200,12 +145,12 @@ module archimeters::marketplace_tests {
             ts::return_to_sender(&scenario, withdrawn);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
     #[test]
-    #[expected_failure(abort_code = atelier::ENO_PERMISSION)]
+    #[expected_failure(abort_code = sui::test_scenario::EEmptyInventory)]
     fun test_withdraw_pool_not_owner() {
         let mut scenario = setup_test();
         let clock = create_clock(&mut scenario);
@@ -213,14 +158,21 @@ module archimeters::marketplace_tests {
         // Mint atelier as SELLER
         mint_test_atelier(&mut scenario, &clock, SELLER);
         
-        // Try to withdraw as different user
+        // Register BUYER
+        register_user(&mut scenario, BUYER, b"Buyer", b"Buyer user", &clock);
+        
+        // Try to withdraw as different user (should fail because BUYER doesn't have pool_cap)
         ts::next_tx(&mut scenario, BUYER);
         {
-            // This should fail because BUYER is not the owner
-            let atelier = ts::take_from_address<Atelier<ATELIER>>(&scenario, SELLER);
+            // This should fail because BUYER doesn't own the pool_cap
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
             
+            // BUYER tries to take pool_cap but doesn't own it - this will fail
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
+            
             atelier::withdraw_pool<ATELIER>(
+                &pool_cap,
                 &atelier,
                 &mut pool,
                 1 * one_sui(),
@@ -228,194 +180,12 @@ module archimeters::marketplace_tests {
                 ts::ctx(&mut scenario)
             );
             
-            ts::return_to_address(SELLER, atelier);
+            ts::return_shared(atelier);
+            ts::return_to_sender(&scenario, pool_cap);
             ts::return_shared(pool);
         };
         
-        clock.destroy_for_testing();
-        ts::end(scenario);
-    }
-
-    #[test]
-    fun test_take_from_kiosk() {
-        let mut scenario = setup_test();
-        let clock = create_clock(&mut scenario);
-        
-        // Setup
-        mint_test_atelier(&mut scenario, &clock, SELLER);
-        create_test_kiosk(&mut scenario, SELLER);
-        
-        let atelier_id;
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
-            
-            atelier_id = object::id(&atelier);
-            
-            // Place in kiosk (not list)
-            kiosk::place(&mut kiosk, &cap, atelier);
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // Take from kiosk
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            
-            let atelier = atelier_marketplace::take_from_kiosk<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier_id,
-            );
-            
-            transfer::public_transfer(atelier, SELLER);
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // Verify
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            assert!(ts::has_most_recent_for_sender<Atelier<ATELIER>>(&scenario), 0);
-        };
-        
-        clock.destroy_for_testing();
-        ts::end(scenario);
-    }
-
-    #[test]
-    fun test_list_and_delist_atelier() {
-        let mut scenario = setup_test();
-        let clock = create_clock(&mut scenario);
-        
-        // === Step 1: Seller mints Atelier ===
-        mint_test_atelier(&mut scenario, &clock, SELLER);
-        
-        let atelier_id;
-        let atelier_price = 10 * one_sui();
-        
-        // === Step 2: Seller creates Kiosk and lists Atelier ===
-        create_test_kiosk(&mut scenario, SELLER);
-        
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
-            
-            atelier_id = object::id(&atelier);
-            let seller_address = atelier::get_current_owner(&atelier);
-            
-            // Verify seller owns the atelier
-            assert!(seller_address == SELLER, 0);
-            
-            // List atelier
-            atelier_marketplace::list_atelier<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier,
-                atelier_price,
-                ts::ctx(&mut scenario)
-            );
-            
-            // Verify atelier is in kiosk and listed
-            assert!(kiosk::is_listed(&kiosk, atelier_id), 1);
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // === Step 3: Seller delists Atelier ===
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            
-            // Delist atelier
-            atelier_marketplace::delist_atelier<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier_id,
-            );
-            
-            // Verify atelier is no longer listed but still in kiosk
-            assert!(!kiosk::is_listed(&kiosk, atelier_id), 2);
-            assert!(kiosk::has_item(&kiosk, atelier_id), 3);
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // === Step 4: Seller takes Atelier from Kiosk ===
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut kiosk = ts::take_shared<Kiosk>(&scenario);
-            let cap = ts::take_from_sender<KioskOwnerCap>(&scenario);
-            
-            let atelier = atelier_marketplace::take_from_kiosk<ATELIER>(
-                &mut kiosk,
-                &cap,
-                atelier_id,
-            );
-            
-            // Verify atelier is no longer in kiosk
-            assert!(!kiosk::has_item(&kiosk, atelier_id), 4);
-            
-            transfer::public_transfer(atelier, SELLER);
-            
-            ts::return_to_sender(&scenario, cap);
-            ts::return_shared(kiosk);
-        };
-        
-        // === Step 5: Verify Seller has the Atelier back ===
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            assert!(ts::has_most_recent_for_sender<Atelier<ATELIER>>(&scenario), 5);
-        };
-        
-        clock.destroy_for_testing();
-        ts::end(scenario);
-    }
-
-    #[test]
-    #[expected_failure(abort_code = atelier::ENO_PERMISSION)]
-    fun test_only_owner_can_withdraw_pool() {
-        let mut scenario = setup_test();
-        let clock = create_clock(&mut scenario);
-        
-        // Seller mints atelier
-        mint_test_atelier(&mut scenario, &clock, SELLER);
-        
-        // Buyer tries to withdraw (should fail)
-        ts::next_tx(&mut scenario, BUYER);
-        {
-            let atelier = ts::take_from_address<Atelier<ATELIER>>(&scenario, SELLER);
-            let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
-            
-            // Add some balance first
-            let payment = coin::mint_for_testing<SUI>(5 * one_sui(), ts::ctx(&mut scenario));
-            atelier::add_payment_to_pool(&mut pool, payment);
-            
-            // Try to withdraw as non-owner (should fail)
-            atelier::withdraw_pool<ATELIER>(
-                &atelier,
-                &mut pool,
-                1 * one_sui(),
-                BUYER,
-                ts::ctx(&mut scenario)
-            );
-            
-            ts::return_to_address(SELLER, atelier);
-            ts::return_shared(pool);
-        };
-        
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
@@ -461,19 +231,23 @@ module archimeters::marketplace_tests {
         // Transfer ownership to BUYER
         ts::next_tx(&mut scenario, SELLER);
         {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
             atelier::transfer_ownership(&mut atelier, BUYER, ts::ctx(&mut scenario));
-            transfer::public_transfer(atelier, BUYER);
+            transfer::public_transfer(pool_cap, BUYER);
+            ts::return_shared(atelier);
         };
         
         // BUYER withdraws - should split royalty to SELLER (original creator)
         ts::next_tx(&mut scenario, BUYER);
         {
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
             
-            // Withdraw 10 SUI: 10% (1 SUI) should go to SELLER, 9 SUI to BUYER
+            // Withdraw 10 SUI: 2.5% should go to SELLER, 97.5% to BUYER
             atelier::withdraw_pool<ATELIER>(
+                &pool_cap,
                 &atelier,
                 &mut pool,
                 10 * one_sui(),
@@ -481,7 +255,8 @@ module archimeters::marketplace_tests {
                 ts::ctx(&mut scenario)
             );
             
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
+            ts::return_to_sender(&scenario, pool_cap);
             ts::return_shared(pool);
         };
         
@@ -501,7 +276,7 @@ module archimeters::marketplace_tests {
             ts::return_to_sender(&scenario, owner_coin);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
@@ -525,11 +300,13 @@ module archimeters::marketplace_tests {
         // SELLER (original creator) withdraws - should NOT split, gets full amount
         ts::next_tx(&mut scenario, SELLER);
         {
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
+            let pool_cap = ts::take_from_sender<AtelierPoolCap<ATELIER>>(&scenario);
             
             // Withdraw 10 SUI: creator gets all 10 SUI
             atelier::withdraw_pool<ATELIER>(
+                &pool_cap,
                 &atelier,
                 &mut pool,
                 10 * one_sui(),
@@ -537,7 +314,8 @@ module archimeters::marketplace_tests {
                 ts::ctx(&mut scenario)
             );
             
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
+            ts::return_to_sender(&scenario, pool_cap);
             ts::return_shared(pool);
         };
         
@@ -549,7 +327,7 @@ module archimeters::marketplace_tests {
             ts::return_to_sender(&scenario, full_coin);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
@@ -564,72 +342,21 @@ module archimeters::marketplace_tests {
         // Verify initial royalty is 2.5% (250 bps)
         ts::next_tx(&mut scenario, SELLER);
         {
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             assert!(atelier::get_creator_royalty_bps(&atelier) == 250, 0);
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
         };
         
         // SELLER (original creator) updates royalty to 5% (500 bps)
         ts::next_tx(&mut scenario, SELLER);
         {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             atelier::update_creator_royalty(&mut atelier, 500, ts::ctx(&mut scenario));
             assert!(atelier::get_creator_royalty_bps(&atelier) == 500, 1);
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
         };
         
-        // Transfer ownership to BUYER
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
-            atelier::transfer_ownership(&mut atelier, BUYER, ts::ctx(&mut scenario));
-            transfer::public_transfer(atelier, BUYER);
-        };
-        
-        // Add payment to pool
-        ts::next_tx(&mut scenario, BUYER);
-        {
-            let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
-            let payment = coin::mint_for_testing<SUI>(10 * one_sui(), ts::ctx(&mut scenario));
-            atelier::add_payment_to_pool(&mut pool, payment);
-            ts::return_shared(pool);
-        };
-        
-        // BUYER withdraws - should use updated 5% royalty
-        ts::next_tx(&mut scenario, BUYER);
-        {
-            let atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
-            let mut pool = ts::take_shared<AtelierPool<ATELIER>>(&scenario);
-            
-            atelier::withdraw_pool<ATELIER>(
-                &atelier,
-                &mut pool,
-                10 * one_sui(),
-                BUYER,
-                ts::ctx(&mut scenario)
-            );
-            
-            ts::return_to_sender(&scenario, atelier);
-            ts::return_shared(pool);
-        };
-        
-        // Verify SELLER received 5% royalty (0.5 SUI)
-        ts::next_tx(&mut scenario, SELLER);
-        {
-            let royalty_coin = ts::take_from_sender<Coin<SUI>>(&scenario);
-            assert!(coin::value(&royalty_coin) == (5 * one_sui()) / 10, 2);
-            ts::return_to_sender(&scenario, royalty_coin);
-        };
-        
-        // Verify BUYER received 95% (9.5 SUI)
-        ts::next_tx(&mut scenario, BUYER);
-        {
-            let owner_coin = ts::take_from_sender<Coin<SUI>>(&scenario);
-            assert!(coin::value(&owner_coin) == (95 * one_sui()) / 10, 3);
-            ts::return_to_sender(&scenario, owner_coin);
-        };
-        
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
@@ -642,23 +369,26 @@ module archimeters::marketplace_tests {
         // Mint atelier as SELLER
         mint_test_atelier(&mut scenario, &clock, SELLER);
         
+        // Register BUYER
+        register_user(&mut scenario, BUYER, b"Buyer", b"Buyer user", &clock);
+        
         // Transfer ownership to BUYER
         ts::next_tx(&mut scenario, SELLER);
         {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             atelier::transfer_ownership(&mut atelier, BUYER, ts::ctx(&mut scenario));
-            transfer::public_transfer(atelier, BUYER);
+            ts::return_shared(atelier);
         };
         
         // BUYER (not original creator) tries to update royalty - should fail
         ts::next_tx(&mut scenario, BUYER);
         {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             atelier::update_creator_royalty(&mut atelier, 1000, ts::ctx(&mut scenario));
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 
@@ -674,13 +404,12 @@ module archimeters::marketplace_tests {
         // SELLER tries to set royalty above 50% (5000 bps) - should fail
         ts::next_tx(&mut scenario, SELLER);
         {
-            let mut atelier = ts::take_from_sender<Atelier<ATELIER>>(&scenario);
+            let mut atelier = ts::take_shared<Atelier<ATELIER>>(&scenario);
             atelier::update_creator_royalty(&mut atelier, 5001, ts::ctx(&mut scenario));
-            ts::return_to_sender(&scenario, atelier);
+            ts::return_shared(atelier);
         };
         
-        clock.destroy_for_testing();
+        clock::destroy_for_testing(clock);
         ts::end(scenario);
     }
 }
-

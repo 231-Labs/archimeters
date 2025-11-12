@@ -1,27 +1,27 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Updated with printer_id parameter (2025-11-12)
-export const PACKAGE_ID = '0x9a4790f287d6571f1b984577a4a4bb8bfc656b7126c01aa8a8a8881dca073ba7';
-export const STATE_ID = '0x11adcda2fefbf4df73fe3571b2d5299a04d7cca6296aab33abdcfe9015165e42'; // archimeters::State
-export const ATELIER_STATE_ID = '0x01edfd05da07d9096da22d1c9ca542fdb93f6cafa95e892ebec110303a3efc21'; // atelier::AtelierState
-export const UPGRADE_CAP = '0x8972f7f311d7042ece4e7c5d2e256f4d4b93f059379362164072bb24c9d3dc75';
+// Contract addresses - Updated with simplified seal_approve (PrintJob-based auth)
+export const PACKAGE_ID = '0xc1814c4cbd4c23f306e886c7f8aace3ce1635d0a6e896b3bf35835139945d693';
+export const STATE_ID = '0x85963a4931321216f7437d2553bee6f0f5e9c84ee99365593080cc4e49eacae4'; // archimeters::State
+export const ATELIER_STATE_ID = '0x798380c7609c7baf783bfda0e605881dab053890fcfdd6b37df38de53d34416f'; // atelier::AtelierState
+export const UPGRADE_CAP = '0xafaac9c484de17c83cd7be20557fe3fb9bbd1352864f549402cc463c88f06404';
 
-export const ATELIER_TRANSFER_POLICY = '0x1066ed5202d07152ec59c55774b21712dff1a330f99f9d1fdf9d33d96096d13a';
-export const ATELIER_TRANSFER_POLICY_CAP = '0xa022d04ba025efee2aa40dcaee835c688aeb9f0dd5f49875431501f24ea0b1a8';
-export const SCULPT_TRANSFER_POLICY = '0x714acb68e72d2703d7c0f24b862d0fe1449ab9c1fd9cd24b119efd04f07220ed';
-export const SCULPT_TRANSFER_POLICY_CAP = '0xc878eb182970f9a42f79a99099b2737d0c7a4d9c94959be75fd2792a06c46fd9';
+export const ATELIER_TRANSFER_POLICY = '0x2917ca572a3a08ddd63b2c905a3e971306121781544a27c4be8cb0ab3cc321af';
+export const ATELIER_TRANSFER_POLICY_CAP = '0x51878c1f00080915eb1aec7860adeb283fb8178434c89eabfe98d180ceb78005';
+export const SCULPT_TRANSFER_POLICY = '0x9262f6a26fb1b5f57651d5019a60f83e7aebd093e7e03553c6ba681b5987eb28';
+export const SCULPT_TRANSFER_POLICY_CAP = '0xf8a24870fde03b88a0110e57ec110f716eb32217bb8ad35187de50c1254768b0';
 
-export const MEMBERSHIP_DISPLAY = '0x4b25b15a38a093d5d35aae75fdd608a8fbbd16acc9e614f07891c8fc525d13ab';
-export const ATELIER_DISPLAY = '0xd48fc0d0f05cd925712814761c23cb2c54375efcbc4203ee12749907efa16c19';
-export const SCULPT_DISPLAY = '0xed2e0e0b22669680508ebb59ea80a9d770d4e10077092891421d7eb4354705ec';
+export const MEMBERSHIP_DISPLAY = '0xf6967fbf6e6a46e32bcf0e41edaf4820db695375994c70302075c3df3261d7e6';
+export const ATELIER_DISPLAY = '0x2eb95e690958d9939d3960f52f4306c9cdd348338913a24c9b3cf3122a774346';
+export const SCULPT_DISPLAY = '0xc28077564e7ef5972741e945a3b65225d0220f7f35778b28242a46f8927ce55b';
 
-export const PUBLISHER_ARCHIMETERS = '0xfc22092c5c0226891cf903356be9a0a9ef0f0c614051a0723363e355c7aa9263';
-export const PUBLISHER_ATELIER = '0x32cd1ed914224f8bca42c407112d714cf1af99952b75d2ee17273211ea8ba238';
-export const PUBLISHER_SCULPT = '0x32be213f6a31b9bad153f86ebd72cf0cde0c4e7a59464b8c5a223b800356a34a';
+export const PUBLISHER_ARCHIMETERS = '0xe2aef16ac3ae67382444e9d57f5a916b5218506f626f47ae1a2b3a688f500919';
+export const PUBLISHER_ATELIER = '0xd3534970becc4469f714e6bf2a998d04878d6ec250e103e6855e49cce9c32e55';
+export const PUBLISHER_SCULPT = '0xd17920c9d31da535739ac08e8f91fa697345af1f8288dfddfedcb75d17cf4049';
 
-export const EUREKA_PACKAGE_ID = '0xc43f70a30c7de3bf10847f81b45279adfc0c1cc1a66f3acf10f1b5af3e1983ae';
-export const PRINTER_REGISTRY = '0x53d254fb51dce1544799d68df5610b9fc8cb022de27e9da42e0ad520929cab73';
+export const EUREKA_PACKAGE_ID = '0x4e43c7642828f9d8c410a47d7ed80b3df7711e49662c4704549dc05b23076bec';
+export const PRINTER_REGISTRY = '0xc368483b3bb2d6695d44f4e53e75a82cd5db36e32c59298f56452945eb46e302';
 
 // Type definitions
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;

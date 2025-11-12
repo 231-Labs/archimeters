@@ -22,7 +22,7 @@ export function RetroPrinterCard({ printer, onSelect }: RetroPrinterCardProps) {
   return (
     <div
       onClick={isDisabled ? undefined : onSelect}
-      className={`p-3 font-mono transition-all ${
+      className={`p-2 font-mono transition-all ${
         isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
       }`}
       style={{
@@ -62,26 +62,23 @@ export function RetroPrinterCard({ printer, onSelect }: RetroPrinterCardProps) {
         }
       }}
     >
-      {/* Header with status */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          {/* Status indicator - square pixel style */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <div 
-            className={`w-2 h-2 ${printer.online ? 'bg-green-500' : 'bg-[#555]'}`}
+            className={`w-1.5 h-1.5 flex-shrink-0 ${printer.online ? 'bg-green-500' : 'bg-[#555]'}`}
             style={{
               boxShadow: printer.online 
-                ? '0 0 4px rgba(34, 197, 94, 0.6)' 
+                ? '0 0 3px rgba(34, 197, 94, 0.6)' 
                 : 'inset 1px 1px 1px rgba(0, 0, 0, 0.8)',
             }}
           />
-          <span className="text-sm font-medium text-white/90 truncate uppercase tracking-wider">
-            {printer.alias || 'UNKNOWN PRINTER'}
+          <span className="text-xs font-medium text-white/90 truncate uppercase tracking-wide">
+            {printer.alias || 'UNKNOWN'}
           </span>
         </div>
         
-        {/* Status badge */}
         <div 
-          className={`text-[10px] px-2 py-0.5 uppercase tracking-widest ${
+          className={`text-[9px] px-1.5 py-0.5 uppercase tracking-widest flex-shrink-0 ${
             printer.online ? 'text-green-400' : 'text-white/40'
           }`}
           style={{
@@ -93,13 +90,8 @@ export function RetroPrinterCard({ printer, onSelect }: RetroPrinterCardProps) {
             boxShadow: 'inset 1px 1px 1px rgba(0, 0, 0, 0.6)',
           }}
         >
-          {printer.online ? 'ONLINE' : 'OFFLINE'}
+          {printer.online ? 'ON' : 'OFF'}
         </div>
-      </div>
-      
-      {/* Printer ID */}
-      <div className="text-[10px] text-white/40 truncate tracking-wider">
-        ID: {printer.id.substring(0, 6)}...{printer.id.slice(-6)}
       </div>
     </div>
   );

@@ -159,11 +159,13 @@ export async function encryptModelFile(
     // Convert encrypted data to Blob
     const encryptedBlob = new Blob([encryptedObject], { type: 'application/octet-stream' });
 
-    // Generate resource ID (combination of packageId and id)
-    const resourceId = `${sealPackageId}:${sealId}`;
+    // Store only the id part (without package_id prefix)
+    // package_id is a contract-level constant and can be obtained from config during decryption
+    const resourceId = sealId;
 
     console.log('✅ Seal encryption completed', {
       resourceId,
+      packageId: sealPackageId,
       originalSize: file.size,
       encryptedSize: encryptedBlob.size,
       compressionRatio: (encryptedBlob.size / file.size * 100).toFixed(2) + '%',

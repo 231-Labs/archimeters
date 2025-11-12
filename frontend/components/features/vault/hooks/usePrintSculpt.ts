@@ -5,10 +5,12 @@ import { printSculpt } from '@/utils/transactions';
 interface UsePrintSculptProps {
   sculptId: string;
   printerId?: string;
+  kioskId?: string;
+  kioskCapId?: string;
   onStatusChange?: (status: 'idle' | 'preparing' | 'printing' | 'success' | 'error', message?: string, txDigest?: string) => void;
 }
 
-export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrintSculptProps) {
+export function usePrintSculpt({ sculptId, printerId, kioskId, kioskCapId, onStatusChange }: UsePrintSculptProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'preparing' | 'printing' | 'success' | 'error'>('idle');
@@ -20,12 +22,21 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
     if (!currentAccount?.address) {
       setError('Please connect your wallet');
       setStatus('error');
+      onStatusChange?.('error', 'Please connect your wallet');
       return false;
     }
 
     if (!printerId) {
       setError('Please select a printer');
       setStatus('error');
+      onStatusChange?.('error', 'Please select a printer');
+      return false;
+    }
+
+    if (!kioskId || !kioskCapId) {
+      setError('Kiosk information missing');
+      setStatus('error');
+      onStatusChange?.('error', 'Kiosk information missing');
       return false;
     }
 
@@ -33,10 +44,12 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
       setIsPrinting(true);
       setError(null);
       setStatus('preparing');
+      onStatusChange?.('preparing', 'Preparing print transaction...');
 
-      const tx = await printSculpt(sculptId, printerId);
+      const tx = await printSculpt(sculptId, printerId, kioskId, kioskCapId);
       
       setStatus('printing');
+      onStatusChange?.('printing', 'Waiting for wallet approval...');
 
       return new Promise<boolean>((resolve) => {
         signAndExecuteTransaction(
@@ -48,23 +61,29 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
             onSuccess: (result) => {
               setStatus('success');
               setTxDigest(result.digest);
-              if (result?.digest) {
-                onStatusChange?.('success', `Print successful! (tx: ${result.digest})`, result.digest);
-              } else {
-                onStatusChange?.('success', 'Print successful!');
-              }
+              setIsPrinting(false);
+              onStatusChange?.('success', 'Print job created successfully!', result.digest);
               resolve(true);
             },
             onError: (error) => {
-              const finalErrorMsg = (error.message || 'Print transaction failed')
-                .includes('rejected')
-                  ? 'Transaction cancelled by user'
-                  : error.message || 'Print transaction failed';
+              console.error("Print transaction error:", error);
+              
+              let finalErrorMsg = 'Print transaction failed';
+              const errorMsg = error.message || '';
+              
+              if (errorMsg.toLowerCase().includes('rejected') || 
+                  errorMsg.toLowerCase().includes('user rejected') ||
+                  errorMsg.toLowerCase().includes('user denied') ||
+                  errorMsg.toLowerCase().includes('cancelled')) {
+                finalErrorMsg = 'Transaction cancelled by user';
+              } else if (errorMsg) {
+                finalErrorMsg = errorMsg;
+              }
               
               setError(finalErrorMsg);
               setStatus('error');
-              onStatusChange?.('error', finalErrorMsg);
               setIsPrinting(false);
+              onStatusChange?.('error', finalErrorMsg);
               resolve(false);
             }
           }
@@ -72,11 +91,12 @@ export function usePrintSculpt({ sculptId, printerId, onStatusChange }: UsePrint
       });
     } catch (error) {
       console.error("Print failed:", error);
-      setError(error instanceof Error ? error.message : 'Print preparation failed');
+      const errorMsg = error instanceof Error ? error.message : 'Print preparation failed';
+      setError(errorMsg);
       setStatus('error');
-      return false;
-    } finally {
       setIsPrinting(false);
+      onStatusChange?.('error', errorMsg);
+      return false;
     }
   };
 
