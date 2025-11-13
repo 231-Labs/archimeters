@@ -1,8 +1,8 @@
 # Walrus Haulout Hackathon 進度追蹤
 
-> **更新日期**: 2025-11-12 (Day 7)  
+> **更新日期**: 2025-11-13 (Day 8)  
 > **黑客松期間**: 2025-11-06 ~ 2025-11-16 (共 10 天)  
-> **剩餘天數**: 4 天
+> **剩餘天數**: 3 天
 
 ---
 
@@ -10,20 +10,17 @@
 
 | 優先級 | 模組 | 狀態 | 完成度 |
 |--------|------|------|--------|
-| **P0** | Seal SDK 整合 - 合約層 | ✅ 已完成 | 100% |
+| **P0** | Seal SDK 整合 | ✅ 已完成 | 100% |
 | **P0** | Printer NFT 系統 | ✅ 已完成 | 100% |
-| **P0** | 合約代碼優化 | ✅ 已完成 | 100% |
-| **P0** | Seal SDK 整合 - 前端層 | ✅ 已完成 | 100% |
-| **P0** | Seal 加密 E2E 測試 | ✅ 已完成 | 100% |
-| **P0** | Seal 解密流程驗證 | ✅ 已完成 | 100% |
-| **P0** | Eureka 合約升級 | ✅ 已完成 | 100% |
 | **P0** | Sculpt 二級市場 | ✅ 已完成 | 100% |
-| **🔄 P0** | **Atelier 二級市場** | 🔄 需要返工 | **50%** |
-| **P1** | Vault - Atelier 詳情頁 | ✅ 已完成 | 100% |
-| **P1** | Vault - Sculpt 詳情頁 | ✅ 已完成 | 100% |
+| **🔄 P0** | **Atelier 二級市場** | 🚧 進行中 | **50%** |
+| **🔄 P0** | **Publisher 功能完善** | 🚧 進行中 | **40%** |
+| **🔄 P0** | **Pavilion 接入** | 🚧 進行中 | **30%** |
+| **P1** | Vault 詳情頁 | ✅ 已完成 | 100% |
 | **P1** | Marketplace 重構 | ✅ 已完成 | 100% |
-| **🔄 P1** | **Pavilion 接入** | 🔄 需要返工 | **30%** |
-| **P2** | 其他優化 | ✅ 已完成 | 100% |
+| **⏳ P1** | **品牌設計** | ⏳ 未開始 | **0%** |
+| **⏳ P1** | **落地頁** | ⏳ 未開始 | **0%** |
+| **⏳ P2** | **演算法增強** | ⏳ 未開始 | **0%** |
 
 **圖例**: ✅ 已完成 | 🚧 進行中 | ⏳ 未開始 | ⚠️ 遇到問題 | 🔄 需要返工
 
@@ -31,50 +28,66 @@
 
 ## 🎯 優先級執行計劃
 
-### 🔴 TODAY (Day 7) - 代碼整理與完善
+### 🔴 TODAY (Day 7) - 關鍵功能修復
 
-**Task 1: Codebase 整理** [⏱️ 2 小時]
+**Task 1: Atelier 二級市場修復** [⏱️ 2-3 小時] 🔴 P0
+- [ ] My Ateliers List 點選後無法操作問題
+- [ ] 實現自定義轉移方法
+- [ ] 測試轉移流程
+
+**Task 2: Publisher 功能完善** [⏱️ 1-2 小時] 🔴 P0
+- [ ] Printable 標籤：用 STL 區別顯示
+- [ ] Publisher Toggle：Printable=true 時顯示 STL toggle，反之隱藏
+- [ ] Mint Sculpt 上傳器復用同一元件
+- [ ] 修改流程展示以對應 Mint sculpt 功能
+
+**Task 3: UI/UX 改進** [⏱️ 1-2 小時] 🟡 P1
+- [ ] 前端把 Sculpt 放在卡片裡
+- [ ] 移除 Terminal 窗口（改為教學提示）
+
+**Task 4: 代碼整理** [⏱️ 1 小時] 🟡 P1
 - [ ] 清理未使用的文件和依賴
-- [ ] 統一代碼格式和命名規範
-- [ ] 更新文檔和註釋
+- [ ] 移除 Pavilion 內建（如不需要）
 
-**Task 2: Seal 授權邏輯實現** [⏱️ 1-2 小時]
-- [ ] 實現真正的 `seal_approve` 驗證邏輯（基於 printer_whitelist）
-- [ ] 添加訪問控制測試
-- [ ] 更新合約文檔
+### 🟡 Day 8 - Pavilion 優化 & 品牌
 
-**Task 3: Git 管理** [⏱️ 1 小時]
-- [ ] 處理 repo 提交和推送
-- [ ] 更新 README 和部署文檔
-- [ ] Tag 關鍵版本
+**Task 1: Pavilion 修復** [⏱️ 2 小時] 🔴 P0
+- [ ] Iframe copy 添加 tooltip
+- [ ] 修復上一頁會跑回 pavilion 首頁的問題
+- [ ] 實現 Pavilion 列表索引
+- [ ] 測試 iframe 打開和參數傳遞
 
-**Task 4: 品牌設計** [⏱️ 1-2 小時]
-- [ ] 設計 project logo
+**Task 2: 品牌設計** [⏱️ 2-3 小時] 🟡 P1
+- [ ] 設計 Project LOGO
 - [ ] 更新前端 favicon 和 logo
 
-**Task 5: Eureka 測試完善** [⏱️ 1-2 小時]
-- [ ] 完善 Eureka 合約測試套件
-- [ ] 添加 print job 相關測試
-- [ ] 驗證 Kiosk 整合
+**Task 3: 落地頁準備** [⏱️ 2-3 小時] 🟡 P1
+- [ ] 落地頁內容規劃
+- [ ] 落地頁範本尋找 + 生成
+- [ ] Mint 完成後自動彈出新手教程彈窗
 
-### 🟡 Day 8-9 - 次優先級
+### 🟢 Day 9 - 功能增強 & 測試
 
-**Task 3: Pavilion 接入優化** [⏱️ 2-3 小時]
-- [ ] 實現 Pavilion 列表索引
-- [ ] 配置合約地址和 Kiosk ID
-- [ ] 測試 iframe 打開和參數傳遞
-- [ ] 修復 CORS 問題
+**Task 1: 演算法開發** [⏱️ 3-4 小時] 🟢 P2
+- [ ] 開發其他幾個演算法
+- [ ] 添加動畫效果
 
-**Task 4: Marketplace Trending** [⏱️ 1-2 小時]
-- [ ] 按 Mint 數量排序
-- [ ] Sculpts 多的靠前
-- [ ] UI 排序按鈕實現
-
-### 🟢 Day 9-10 - Polish
-
+**Task 2: 系統測試** [⏱️ 2-3 小時] 🔴 P0
 - [ ] E2E 系統測試
 - [ ] Bug 修復
-- [ ] Demo 準備
+- [ ] 功能回歸測試
+
+### 🟢 Day 10 - Demo 準備 & 提交
+
+**Task 1: Demo 準備** [⏱️ 3-4 小時] 🔴 P0
+- [ ] 錄製 Demo Video
+- [ ] 準備演示腳本
+- [ ] 測試所有關鍵流程
+
+**Task 2: 最終提交** [⏱️ 1-2 小時] 🔴 P0
+- [ ] 提交 Project
+- [ ] 更新所有文檔
+- [ ] 最終代碼審查
 
 ---
 
@@ -208,12 +221,12 @@ ATELIER_STATE_ID: 0x47323c903cce10ebff83229d1a7b6515f3bdab22668a2696a7b2428679cc
 ## 🎯 關鍵里程碑
 
 - [X] **Milestone 1** (Day 2): 合約開發完成並部署
-- [X] **Milestone 2** (Day 4): P0 前端核心功能完成
-- [X] **Milestone 3** (Day 5): Vault 詳情頁完成
-- [X] **Milestone 4** (Day 6): Seal 解密流程驗證完成
-- [ ] **Milestone 5** (Day 8): Atelier 市場 & 代碼優化完成
-- [ ] **Milestone 6** (Day 9): 所有功能測試完成
-- [ ] **Milestone 7** (Day 10): Demo 準備 & 提交黑客松
+- [X] **Milestone 2** (Day 4): Seal SDK 整合完成
+- [X] **Milestone 3** (Day 6): Seal 解密流程驗證完成
+- [ ] **Milestone 4** (Day 7): Atelier 市場 & Publisher 功能修復完成
+- [ ] **Milestone 5** (Day 8): Pavilion 優化 & 品牌設計完成
+- [ ] **Milestone 6** (Day 9): 系統測試 & 功能增強完成
+- [ ] **Milestone 7** (Day 10): Demo Video & 最終提交完成
 
 ---
 
@@ -246,21 +259,24 @@ ATELIER_STATE_ID: 0x47323c903cce10ebff83229d1a7b6515f3bdab22668a2696a7b2428679cc
 
 ---
 
-## 📞 常見問題
+## 📞 當前重點
 
-**Q: Seal 解密已經完成了嗎?**  
-A: ✅ 是的！Day 6 已完成，成功解密 STL 文件並驗證完整性
+**🔴 今日優先 (Day 7)**:
+- Atelier 二級市場修復（My Ateliers List 轉移功能）
+- Publisher 功能完善（Printable 標籤、STL Toggle）
+- UI/UX 改進（Sculpt 卡片化、移除 Terminal）
 
-**Q: 下一步重點是什麼?**  
-A: Day 7 專注於代碼整理、seal_approve 實現和測試完善
+**🟡 明日重點 (Day 8)**:
+- Pavilion 修復（iframe tooltip、導航問題）
+- 品牌設計（LOGO、favicon）
+- 落地頁準備（內容規劃、新手教程）
 
-**Q: Atelier 二級市場什麼時候完成?**  
-A: 計劃在 Day 8 完成，目前進度 50%
-
-**Q: 還有多少時間?**  
-A: 還剩 4 天，需要加速完成剩餘的 P0 和 P1 任務
+**🟢 後續 (Day 9-10)**:
+- 演算法增強（動畫效果）
+- 系統測試與 Bug 修復
+- Demo Video 錄製與提交
 
 ---
 
-**Last Updated**: 2025-11-12 02:00 UTC+8  
-**Next Update**: Day 7 結束時更新
+**Last Updated**: 2025-11-13 (Day 8)  
+**Next Update**: Day 8 結束時更新
