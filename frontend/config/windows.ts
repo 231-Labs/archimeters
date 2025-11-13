@@ -1,4 +1,4 @@
-import { WindowName, WindowConfig } from '@/types/window';
+import { WindowName, WindowConfig } from '@/components/features/window-manager';
 
 export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   entry: {
@@ -12,13 +12,13 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'publisher': {
     title: 'Publisher',
-    defaultSize: { width: 1140, height: 600 },
-    resizable: true,
+    defaultSize: { width: 1200, height: 760 },
+    resizable: false,
   },
-  'gallery': {
-    title: 'Gallery',
-    defaultSize: { width: 700, height: 650 },
-    resizable: true,
+  'marketplace': {
+    title: 'Marketplace',
+    defaultSize: { width: 1100, height: 700 },
+    resizable: false,
   },
   'atelier-viewer': {
     title: 'Atelier Viewer',
@@ -27,7 +27,12 @@ export const defaultWindowConfigs: Record<WindowName, WindowConfig> = {
   },
   'vault': {
     title: 'Vault',
-    defaultSize: { width: 800, height: 600 },
+    defaultSize: { width: 1100, height: 700 },
+    resizable: false,
+  },
+  'pavilion': {
+    title: 'Pavilion',
+    defaultSize: { width: 1000, height: 700 },
     resizable: true,
   },
 }; 

@@ -1,19 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '@mysten/dapp-kit/dist/index.css';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import Background from '@/components/background_animations/Background';
-import Window from '@/components/common/Window';
 import { Terminal } from '@/components/features/terminal';
+import { Window, useWindowManager, useWindowFocus } from '@/components/features/window-manager';
 import Dock from '@/components/layout/Dock';
 import Header from '@/components/layout/Header';
 import AtelierViewerWindow from '@/components/windows/AtelierViewerWindow';
-import BrowseWindow from '@/components/windows/BrowseWindow';
+import MarketplaceWindow from '@/components/windows/MarketplaceWindow';
 import DesignPublisher from '@/components/windows/DesignPublisher';
 import EntryWindow, { WalletStatus } from '@/components/windows/EntryWindow';
 import VaultWindow from '@/components/windows/VaultWindow';
-import { useWindowManager } from '@/hooks/useWindowManager';
+import PavilionWindow from '@/components/windows/PavilionWindow';
 import { defaultWindowConfigs } from '@/config/windows';
 import { PACKAGE_ID } from '@/utils/transactions';
 
@@ -21,8 +21,6 @@ export default function Home() {
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
-  const [zOrder, setZOrder] = useState<string[]>([]);
-  const atelierViewerRaised = useRef(false);
   const [paused, setPaused] = useState(false);
 
   const {
@@ -30,30 +28,14 @@ export default function Home() {
     activeWindow,
     windowPositions,
     windowSizes,
-    // windowZIndexes,
-    // activateWindow,
     openWindow,
     closeWindow,
     startDragging,
     resizeWindow,
   } = useWindowManager('entry');
 
-  const activateWindow = (name: string) => {
-    setZOrder(prev => [...prev.filter(n => n !== name), name]);
-  };
-
-  useEffect(() => {
-    const isAtelierViewerOpen = openWindows.includes('atelier-viewer');
-  
-    if (isAtelierViewerOpen && !atelierViewerRaised.current) {
-      setZOrder((prev) => [...prev.filter(n => n !== 'atelier-viewer'), 'atelier-viewer']);
-      atelierViewerRaised.current = true;
-    }
-  
-    if (!isAtelierViewerOpen) {
-      atelierViewerRaised.current = false;
-    }
-  }, [openWindows]);
+  // Use unified focus management hook
+  const { focusWindow, getZIndex } = useWindowFocus(openWindows);
 
   useEffect(() => {
     const fetchOsId = async () => {
@@ -88,7 +70,7 @@ export default function Home() {
       <div className="min-h-screen bg-black overflow-hidden relative">
         <Header paused={paused} onToggle={() => setPaused(p => !p)}/>
         <Background walletStatus={walletStatus} paused={paused}/>
-        <Dock onOpenWindow={openWindow} onActivateWindow={activateWindow} />
+        <Dock onOpenWindow={openWindow} onActivateWindow={focusWindow} />
         <div className="fixed top-[27px]">
           <div className="h-full relative">
             {openWindows.map(name => {
@@ -103,9 +85,12 @@ export default function Home() {
                       size={windowSizes.entry}
                       isActive={activeWindow === 'entry'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                      onClick={() => focusWindow(name)}
+                      zIndex={getZIndex(name)}
                     >
                       <EntryWindow
                         onDragStart={(e, name) => startDragging(e, name)}
@@ -126,32 +111,38 @@ export default function Home() {
                       size={windowSizes['publisher']}
                       isActive={activeWindow === 'publisher'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      resizable
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                      onClick={() => focusWindow(name)}
+                      resizable={defaultWindowConfigs['publisher'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
-                      <DesignPublisher />
+                      <DesignPublisher onOpenWindow={openWindow} />
                     </Window>
                   );
-                case 'gallery':
+                case 'marketplace':
                   return (
                     <Window
                       key={name}
                       name={name}
-                      title="Gallery"
-                      position={windowPositions.gallery}
-                      size={windowSizes.gallery}
-                      isActive={activeWindow === 'gallery'}
+                      title={defaultWindowConfigs['marketplace'].title}
+                      position={windowPositions.marketplace}
+                      size={windowSizes.marketplace}
+                      isActive={activeWindow === 'marketplace'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      resizable
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                      onClick={() => focusWindow(name)}
+                      resizable={defaultWindowConfigs['marketplace'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
-                      <BrowseWindow
+                      <MarketplaceWindow
                         name={name}
                         onOpenWindow={openWindow}
                       />
@@ -167,11 +158,14 @@ export default function Home() {
                       size={windowSizes['atelier-viewer']}
                       isActive={activeWindow === 'atelier-viewer'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                      onClick={() => focusWindow(name)}
                       resizable
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <AtelierViewerWindow name={name} />
                     </Window>
@@ -186,11 +180,14 @@ export default function Home() {
                       size={windowSizes['vault']}
                       isActive={activeWindow === 'vault'}
                       onClose={() => closeWindow(name)}
-                      onDragStart={(e) => startDragging(e, name)}
-                      onClick={() => activateWindow(name)}
-                      resizable
+                      onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                      onClick={() => focusWindow(name)}
+                      resizable={defaultWindowConfigs['vault'].resizable}
                       onResize={(e) => resizeWindow(e, name)}
-                      zIndex={zOrder.indexOf(name) + 1}
+                      zIndex={getZIndex(name)}
                     >
                       <VaultWindow name={name} />
                     </Window>
@@ -205,13 +202,38 @@ export default function Home() {
                         size={windowSizes.terminal}
                         isActive={activeWindow === 'terminal'}
                         onClose={() => closeWindow(name)}
-                        onDragStart={(e) => startDragging(e, name)}
-                        onClick={() => activateWindow(name)}
+                        onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                        onClick={() => focusWindow(name)}
                         // resizable
                         onResize={(e) => resizeWindow(e, name)}
-                        zIndex={zOrder.indexOf(name) + 1}
+                        zIndex={getZIndex(name)}
                       >
                         <Terminal />
+                      </Window>
+                    );
+                  case 'pavilion':
+                    return (
+                      <Window
+                        key={name}
+                        name={name}
+                        title={defaultWindowConfigs['pavilion'].title}
+                        position={windowPositions['pavilion']}
+                        size={windowSizes['pavilion']}
+                        isActive={activeWindow === 'pavilion'}
+                        onClose={() => closeWindow(name)}
+                        onDragStart={(e) => {
+                        focusWindow(name);
+                        startDragging(e, name);
+                      }}
+                        onClick={() => focusWindow(name)}
+                        resizable
+                        onResize={(e) => resizeWindow(e, name)}
+                        zIndex={getZIndex(name)}
+                      >
+                        <PavilionWindow name={name} />
                       </Window>
                     );
                   default:

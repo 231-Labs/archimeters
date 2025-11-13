@@ -36,10 +36,13 @@ const ArchimetersTerminal = () => {
     initialized.current = true;
 
     const initializeTerminal = async () => {
-      const xtermModule = await import('@xterm/xterm');
-      const fitAddonModule = await import('@xterm/addon-fit');
-      const Terminal = xtermModule.Terminal;
-      const FitAddon = fitAddonModule.FitAddon;
+      try {
+        const [xtermModule, fitAddonModule] = await Promise.all([
+          import('@xterm/xterm'),
+          import('@xterm/addon-fit')
+        ]);
+        const Terminal = xtermModule.Terminal;
+        const FitAddon = fitAddonModule.FitAddon;
 
       // Add custom styles
       const styleSheet = document.createElement('style');
@@ -92,10 +95,9 @@ const ArchimetersTerminal = () => {
         }
       }, 0);
 
-      // 捲動到底部
+      // Scroll to bottom
       const scrollToBottom = () => {
         if (terminal.current) {
-          // xterm.js 提供 scrollToBottom
           terminal.current.scrollToBottom();
         }
       };
@@ -185,7 +187,7 @@ const ArchimetersTerminal = () => {
           }
           inputBuffer.current = '';
           // showPrompt();
-        } else if (data === '\u007f') {  // back
+        } else if (data === '\u007f') {  // backspace
           if (inputBuffer.current.length > 0) {
             inputBuffer.current = inputBuffer.current.slice(0, -1);
             terminal.current?.write('\b \b');
@@ -208,11 +210,23 @@ const ArchimetersTerminal = () => {
         }
       };
       window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        terminal.current?.dispose();
-        styleSheet.remove();
-      };
+        return () => {
+          window.removeEventListener('resize', handleResize);
+          terminal.current?.dispose();
+          styleSheet.remove();
+        };
+      } catch (error) {
+        console.error('Failed to initialize terminal:', error);
+        // Show error message to user
+        if (terminalRef.current) {
+          terminalRef.current.innerHTML = `
+            <div style="color: #ff6b6b; padding: 20px; font-family: monospace;">
+              ❌ Terminal failed to load<br/>
+              Please refresh the page or contact support
+            </div>
+          `;
+        }
+      }
     };
     initializeTerminal();
   }, [currentAccount]);

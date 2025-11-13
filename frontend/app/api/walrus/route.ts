@@ -29,9 +29,12 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await walrusApi.readBlob(blobId);
-    return new NextResponse(await response.text(), {
+    
+    // Return binary data directly (important for GLB files)
+    return new NextResponse(response.body, {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
+        'Content-Length': response.headers.get('Content-Length') || '',
       },
     });
   } catch (error) {

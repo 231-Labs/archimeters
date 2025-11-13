@@ -1,6 +1,6 @@
 import { UploadStatuses, UploadResults } from '../../types';
 import { TemplateSeries, FontStyle } from '../../types';
-import { RetroConsole } from '../animations/RetroConsole';
+import { RetroConsole } from '@/components/common/RetroConsole';
 
 interface UploadStatusPageProps {
   isLoading: boolean;
@@ -29,6 +29,8 @@ interface UploadStatusPageProps {
   transactionError?: string;
   onSubmit: () => void;
   onPrevious: () => void;
+  onGoToVault?: () => void;
+  onGoToMarketplace?: () => void;
 }
 
 export function UploadStatusPage({
@@ -46,7 +48,9 @@ export function UploadStatusPage({
   intro,
   price,
   transactionDigest,
-  transactionError
+  transactionError,
+  onGoToVault,
+  onGoToMarketplace
 }: UploadStatusPageProps) {
   // 檢查當前狀態
   const currentStepInfo = steps[currentStep];
@@ -153,20 +157,15 @@ export function UploadStatusPage({
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent">
-      <div className="flex-1 px-2 py-4">
-        <div className="w-full mx-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="w-full col-span-2">
-              <RetroConsole 
-                currentStep={currentStep}
-                steps={steps}
-                txHash={transactionDigest}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="h-full bg-[#0a0a0a]">
+      <RetroConsole 
+        currentStep={currentStep}
+        steps={steps}
+        txHash={transactionDigest}
+        title="PUBLISHING ATELIER"
+        onGoToVault={onGoToVault}
+        onGoToMarketplace={onGoToMarketplace}
+      />
     </div>
   );
 } 

@@ -2,44 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 滾動條樣式 */
+/* Scrollbar styles - aligned with Retro UI system */
 ::-webkit-scrollbar {
-  width: 16px;
+  width: 18px;
   background: #0a0a0a;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  /* Inset border effect consistent with RetroPanel */
+  border-top: 2px solid #000000;
+  border-left: 2px solid #000000;
+  border-bottom: 2px solid #2a2a2a;
+  border-right: 2px solid #2a2a2a;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.8),
+              inset -1px -1px 2px rgba(255, 255, 255, 0.03);
 }
 
 ::-webkit-scrollbar-track {
-  background: repeating-linear-gradient(
-    45deg,
-    #0a0a0a,
-    #0a0a0a 2px,
-    #141414 2px,
-    #141414 4px
-  );
+  background: #0a0a0a;
+  /* Solid background consistent with components */
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-bottom: 1px solid #1a1a1a;
+  border-right: 1px solid #1a1a1a;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.05),
-              inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+  background-color: #1a1a1a;
+  /* 3D raised effect similar to RetroButton */
+  border-top: 2px solid #444;
+  border-left: 2px solid #444;
+  border-bottom: 2px solid #000;
+  border-right: 2px solid #000;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.08),
+              inset -1px -1px 2px rgba(0, 0, 0, 0.5),
+              0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #333333;
+  background-color: #252525;
+  /* Enhanced hover effect consistent with other components */
+  border-top: 2px solid #555;
+  border-left: 2px solid #555;
+  box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.12),
+              inset -1px -1px 3px rgba(0, 0, 0, 0.6),
+              0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+  /* Active press effect consistent with RetroButton */
+  background-color: #1a1a1a;
+  border-top: 2px solid #000;
+  border-left: 2px solid #000;
+  border-bottom: 2px solid #444;
+  border-right: 2px solid #444;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8),
+              inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+  transform: translateY(1px);
 }
 
 ::-webkit-scrollbar-button {
   display: block;
-  height: 16px;
-  background-color: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.05),
-              inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+  height: 18px;
+  background-color: #1a1a1a;
+  /* Same 3D effect as scrollbar thumb */
+  border-top: 2px solid #444;
+  border-left: 2px solid #444;
+  border-bottom: 2px solid #000;
+  border-right: 2px solid #000;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.08),
+              inset -1px -1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* 動畫效果 */
+::-webkit-scrollbar-button:hover {
+  background-color: #252525;
+  border-top: 2px solid #555;
+  border-left: 2px solid #555;
+}
+
+::-webkit-scrollbar-button:active {
+  background-color: #1a1a1a;
+  border-top: 2px solid #000;
+  border-left: 2px solid #000;
+  border-bottom: 2px solid #444;
+  border-right: 2px solid #444;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8),
+              inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Animation effects */
 @keyframes typing {
   from { clip-path: inset(0 100% 0 0); }
   to { clip-path: inset(0 0 0 0); }
@@ -67,7 +116,7 @@
   animation: blink 1.5s step-end infinite;
 }
 
-/* 主題顏色 */
+/* Theme colors */
 :root {
   --background: #1A1A1A;
   --foreground: #ffffff;
@@ -85,14 +134,12 @@
   }
 }
 
-/* 基礎樣式 */
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Chicago', monospace;
 }
 
-/* 復古效果 */
 .window-shadow {
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
 }
@@ -121,7 +168,6 @@ body {
   pointer-events: none;
 }
 
-/* DappKit 按鈕樣式 */
 [data-dapp-kit] {
   background-color: rgba(239, 231, 231, 0.1) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -145,13 +191,12 @@ body {
   border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* 按鈕內文字樣式 */
 button[data-dapp-kit] .Text_textVariants_mono_true__2bv1ur7,
 button[data-dapp-kit] .Text_textVariants_size_sm__2bv1ur1 {
   color: #ffffff !important;
 }
 
-/* 下拉菜單容器樣式 */
+/* Dropdown menu container styles */
 div[data-side="bottom"][data-align="center"][role="menu"] {
   background-color: #141414 !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -166,7 +211,6 @@ div[data-side="bottom"][data-align="center"][role="menu"] {
   gap: 2px !important;
 }
 
-/* 菜單項目樣式 */
 div[role="menuitem"] {
   font-family: monospace !important;
   font-size: 14px !important;
@@ -190,7 +234,6 @@ div[role="menuitem"] .Text_textVariants_size_sm__2bv1ur1 {
   color: #ffffff !important;
 }
 
-/* 選中項目的勾勾圖標 */
 div[role="menuitem"] svg {
   width: 12px !important;
   height: 12px !important;
@@ -204,12 +247,10 @@ div[role="menuitem"] svg path {
   stroke: #ffffff !important;
 }
 
-/* 菜單項目懸停效果 */
 div[role="menuitem"]:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 下拉箭頭圖標樣式 */
 button[data-dapp-kit] svg {
   width: 12px !important;
   height: 12px !important;
@@ -227,12 +268,10 @@ button[data-dapp-kit] svg * {
   stroke: #ffffff !important;
 }
 
-/* 隱藏分隔線 */
 div.AccountDropdownMenu_separator__div2ql5 {
   display: none !important;
 }
 
-/* 圖片樣式 */
 .artlier-image {
   image-rendering: pixelated;
   border: 1px solid rgba(255, 255, 255, 0.1);

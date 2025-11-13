@@ -1,7 +1,19 @@
-import Terminal from '../features/terminal/Terminal';
-import Window from '@/components/common/Window';
-import type { WindowName } from '@/types';
+import dynamic from 'next/dynamic';
+import { Window, WindowName } from '@/components/features/window-manager';
 import { defaultWindowConfigs } from '@/config/windows';
+
+// Dynamic import to avoid SSR issues and chunk loading errors
+const Terminal = dynamic(() => import('../features/terminal/Terminal'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full bg-black text-white font-mono">
+      <div className="text-center">
+        <div className="animate-pulse text-green-400 mb-2">⚡ Loading...</div>
+        <div className="text-sm text-gray-400">Initializing terminal</div>
+      </div>
+    </div>
+  ),
+});
 
 /**
  * Props for the TerminalWindow component

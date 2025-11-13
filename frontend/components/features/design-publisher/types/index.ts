@@ -21,8 +21,29 @@ export interface UploadResults {
 }
 
 // Parameter types
+export interface GeometryParameter {
+  type: 'number' | 'color';
+  label: string;
+  default: number | string;
+  min?: number;
+  max?: number;
+  current: number | string;
+}
+
+export interface ParameterRule {
+  type: 'number' | 'color';
+  label: string;
+  minValue: number;
+  maxValue: number;
+  defaultValue: number;
+}
+
+export interface ParameterRules {
+  [key: string]: ParameterRule;
+}
+
 export interface ParameterState {
-  extractedParameters: Record<string, any>;
+  extractedParameters: Record<string, GeometryParameter>;
   hasExtractedParams: boolean;
   previewParams: Record<string, any>;
   showPreview: boolean;

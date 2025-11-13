@@ -1,911 +1,502 @@
-import { useState, useEffect } from 'react';
-import { BasicInfoPage } from '@/components/features/design-publisher/components/pages/BasicInfoPage';
-import { AlgorithmPage } from '@/components/features/design-publisher/components/pages/AlgorithmPage';
-import { PreviewPage } from '@/components/features/design-publisher/components/pages/PreviewPage';
+import { useEffect, useRef, useState } from 'react';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { UploadStatusPage } from '@/components/features/design-publisher/components/pages/UploadStatusPage';
-import { useUpload } from '@/components/features/design-publisher/hooks/useUpload';
+import { useDesignPublisherForm } from '@/components/features/design-publisher/hooks/useDesignPublisherForm';
 import { createMetadataJson } from '@/components/features/design-publisher/utils/metadata';
-import { TemplateSeries, FontStyle, UploadResults } from '@/components/features/design-publisher/types';
-import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { createArtlier, ATELIER_STATE_ID, PACKAGE_ID } from '@/utils/transactions';
+import { RetroButton } from '@/components/common/RetroButton';
+import { RetroInput } from '@/components/common/RetroInput';
+import { ParameterControls } from '@/components/common/ParameterControls';
+import { WindowName } from '@/components/features/window-manager/types';
 
-export default function DesignPublisher() {
-  // State Management Section
-  // Image states
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [imageRequired, setImageRequired] = useState(false);
+interface DesignPublisherProps {
+  onOpenWindow?: (windowName: WindowName) => void;
+}
 
-  // Algorithm states
-  const [algoFile, setAlgoFile] = useState<File | null>(null);
-  const [algoResponse, setAlgoResponse] = useState<string>('');
-  const [algoError, setAlgoError] = useState<string>('');
-  const [algoRequired, setAlgoRequired] = useState(false);
-  
-  // Parameter states
-  const [extractedParameters, setExtractedParameters] = useState<Record<string, any>>({});
-  const [hasExtractedParams, setHasExtractedParams] = useState(false);
-  const [previewParams, setPreviewParams] = useState<Record<string, any>>({});
-  const [showPreview, setShowPreview] = useState(false);
-
-  // Artwork information
-  const [workName, setWorkName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-
-  // Artist information
-  const [name, setName] = useState('');
-  const [social, setSocial] = useState('');
-  const [intro, setIntro] = useState('');
-
-  // Design settings
-  const [style, setStyle] = useState<TemplateSeries>('default');
-  const [fontStyle, setFontStyle] = useState<FontStyle>('sans');
-
-  // Validation states
-  const [workNameRequired, setWorkNameRequired] = useState(false);
-  const [descriptionRequired, setDescriptionRequired] = useState(false);
-  const [priceRequired, setPriceRequired] = useState(false);
-  const [introRequired, setIntroRequired] = useState(false);
-  const [priceError, setPriceError] = useState<string>('');
-
-  // Page control
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 4;
-
-  // Upload states
-  const [error, setError] = useState<string>('');
-
-  // Upload hook configuration
-  const { 
-    isLoading, 
-    uploadStatus, 
-    uploadResults, 
-    currentStep: uploadStep,
-    steps: uploadSteps,
-    handleUpload: uploadFiles, 
-    resetUpload
-  } = useUpload({
-    onSuccess: (results) => {
-      console.log('Upload completed with results:', results);
-      if (results.success) {
-        // Set current step to transaction step after upload completion
-        const transactionStepIndex = 2; // Index of transaction step
-        setCurrentStep(transactionStepIndex);
-        
-        // Update transaction step status to processing
-        setSteps(prev => {
-          const newSteps = [...prev];
-          if (newSteps[transactionStepIndex]) {
-            newSteps[transactionStepIndex].status = 'processing';
-          }
-          return newSteps;
-        });
-        
-        handleMint(results);
-      }
-    },
-    onError: (error) => setError(error)
-  });
-
-  // Transaction states
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  const [transactionDigest, setTransactionDigest] = useState<string>('');
-  const [transactionError, setTransactionError] = useState<string>('');
-
-  // User account states
+export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps = {}) {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
-  const [membershipId, setMembershipId] = useState<string>('');
-  const [membershipData, setMembershipData] = useState<{
-    username: string;
-    description: string;
-    address: string;
-  } | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const algoInputRef = useRef<HTMLInputElement>(null);
+  const [showUploadStatus, setShowUploadStatus] = useState(false);
 
-  // User script state
-  const [userScript, setUserScript] = useState<{ code: string; filename: string } | null>(null);
+  const {
+    // Form state
+    artworkInfo,
+    artistInfo,
+    designSettings,
+    updateArtworkInfo,
+    
+    // Parameters
+    extractedParameters,
+    previewParams,
+    handleParameterChange,
+    
+    // Validation
+    validationState,
+    
+    // Files
+    imageFile,
+    imageUrl,
+    algoFile,
+    userScript,
+    handleImageFileChange,
+    handleAlgoFileChange,
+    handlePriceChange,
+    
+    // Membership
+    membershipData,
+    
+    // Upload & Transaction
+    isUploading,
+    uploadStatus,
+    uploadResults,
+    currentStep,
+    steps,
+    transactionDigest,
+    transactionError,
+    
+    // Upload function
+    uploadFiles,
+    
+    // Reset
+    resetAll,
+  } = useDesignPublisherForm();
 
-  // Update local state when uploadStep or uploadSteps change
-  useEffect(() => {
-    if (uploadSteps) {
-      setCurrentStep(uploadStep);
-      setSteps(prev => {
-        // Preserve transaction step if exists
-        const transactionStep = prev.find(step => step.id === 'transaction');
-        const newSteps = [...uploadSteps];
-        
-        if (transactionStep && !newSteps.find(step => step.id === 'transaction')) {
-          newSteps.push(transactionStep);
-        }
-        
-        return newSteps;
-      });
-    }
-  }, [uploadStep, uploadSteps]);
-
-  // Cleanup function
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Clear file-related states
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-      setImageFile(null);
-      setImageUrl('');
-      setAlgoFile(null);
-      setAlgoResponse('');
-      
-      // Reset all states
-      setCurrentPage(1);
-      setError('');
-      setTransactionDigest('');
-      setTransactionError('');
-      resetUpload?.();
-      
-      // Clear parameter-related states
-      setExtractedParameters({});
-      setHasExtractedParams(false);
-      setPreviewParams({});
-      setShowPreview(false);
-      
-      // Reset validation states
-      setWorkNameRequired(false);
-      setDescriptionRequired(false);
-      setPriceRequired(false);
-      setIntroRequired(false);
-      setPriceError('');
+      resetAll();
     };
   }, []);
 
-  // Sync membershipData to form fields
-  useEffect(() => {
-    if (membershipData) {
-      if (membershipData.username && !name) {
-        setName(membershipData.username);
-      }
-      if (membershipData.description && !intro) {
-        setIntro(membershipData.description);
-      }
-      if (membershipData.address && !social) {
-        setSocial(membershipData.address);
-      }
+  // Handle publish
+  const handlePublish = async () => {
+    if (!imageFile || !algoFile) {
+      alert('Please upload both cover image and algorithm file');
+      return;
     }
-  }, [membershipData]);
-
-  // Fetch membership ID only
-  useEffect(() => {
-    const fetchMembership = async () => {
-      if (!currentAccount?.address) return;
-
-      try {
-        const { data: objects } = await suiClient.getOwnedObjects({
-          owner: currentAccount.address,
-          filter: {
-            StructType: `${PACKAGE_ID}::archimeters::MemberShip`
-          },
-          options: {
-            showType: true,
-          }
-        });
-
-        if (objects && objects.length > 0) {
-          setMembershipId(objects[0].data?.objectId || '');
-        }
-      } catch (error) {
-        console.error('Error fetching membership:', error);
-      }
-    };
-
-    fetchMembership();
-  }, [currentAccount, suiClient]);
-
-  // File handlers
-  const handleImageFileChange = (file: File) => {
-    try {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(file.type)) {
-        setImageRequired(true);
-        throw new Error('Only JPG, PNG and GIF formats are supported');
-      }
-
-      // Validate file size
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        setImageRequired(true);
-        throw new Error(`Image size cannot exceed ${maxSize / 1024 / 1024}MB`);
-      }
-
-      const url = URL.createObjectURL(file);
-      setImageFile(file);
-      setImageUrl(url);
-      setImageRequired(false);
-    } catch (error) {
-      console.error('Image upload error:', error);
-      setImageRequired(true);
-      setError(error instanceof Error ? error.message : 'Image upload failed');
+    if (!artworkInfo.workName.trim()) {
+      alert('Please enter artwork title');
+      return;
     }
-  };
-
-  const handleAlgoFileChange = (file: File) => {
-    try {
-      // Validate file type
-      const allowedTypes = ['text/javascript', 'application/javascript'];
-      if (!allowedTypes.includes(file.type)) {
-        setAlgoRequired(true);
-        throw new Error('Only JavaScript files are supported');
-      }
-
-      // Validate file size
-      const maxSize = 1 * 1024 * 1024; // 1MB
-      if (file.size > maxSize) {
-        setAlgoRequired(true);
-        throw new Error(`Algorithm file size cannot exceed ${maxSize / 1024 / 1024}MB`);
-      }
-
-      setAlgoFile(file);
-      setHasExtractedParams(false);
-      setAlgoError('');
-      setAlgoRequired(false);
-      
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        try {
-          const content = event.target?.result as string;
-          setAlgoResponse(content.substring(0, 500));
-          // Set userScript
-          setUserScript({
-            code: content,
-            filename: file.name
-          });
-          processSceneFile(content);
-        } catch (error) {
-          setAlgoError('Failed to read algorithm file');
-          console.error('Error reading algorithm file:', error);
-        }
-      };
-      
-      reader.onerror = () => {
-        setAlgoError('Failed to read algorithm file');
-      };
-      
-      reader.readAsText(file);
-    } catch (error) {
-      console.error('Algorithm file upload error:', error);
-      setAlgoRequired(true);
-      setAlgoError(error instanceof Error ? error.message : 'Algorithm file upload failed');
+    if (!artworkInfo.description.trim()) {
+      alert('Please enter description');
+      return;
     }
-  };
 
-  // Algorithm file processing
-  const processSceneFile = (code: string) => {
-    try {
-      // Support multiple parameter definition formats
-      const paramPatterns = [
-        /(?:export\s+)?const\s+parameters\s*=\s*(\{[\s\S]*?\})\s*;/,    // Object format
-        /(?:export\s+)?const\s+parameters\s*=\s*(\[[\s\S]*?\])\s*;/,    // Array format
-        /(?:export\s+)?const\s+defaultParameters\s*=\s*(\{[\s\S]*?\})\s*;/, // TestPage format
-        /module\.parameters\s*=\s*(\{[\s\S]*?\})\s*;/,                  // CommonJS object format
-        /module\.parameters\s*=\s*(\[[\s\S]*?\])\s*;/,                  // CommonJS array format
-        /function\s+createGeometry\s*\([^)]*\)\s*\{[\s\S]*?return[^;]*;/  // Extract directly from createGeometry function
-      ];
+    // Show upload status page
+    setShowUploadStatus(true);
 
-      let extractedCode = '';
-      
-      // Try all patterns
-      for (const pattern of paramPatterns) {
-        const match = code.match(pattern);
-        if (match) {
-          if (pattern.toString().includes('createGeometry')) {
-            // Extract parameters from createGeometry function
-            const geometryCode = match[0];
-            const paramMatches = geometryCode.match(/(\w+):\s*([^,}\s]+)/g);
-            if (paramMatches) {
-              const paramsObj: Record<string, any> = {};
-              paramMatches.forEach(param => {
-                const [key, value] = param.split(':').map(s => s.trim());
-                if (key && !['new', 'return', 'function'].includes(key)) {
-                  paramsObj[key] = {
-                    type: 'number',
-                    label: key,
-                    default: parseFloat(value) || 0,
-                    min: 0,
-                    max: 100,
-                    current: parseFloat(value) || 0
-                  };
-                }
-              });
-              extractedCode = JSON.stringify(paramsObj);
-              break;
-            }
-          } else {
-            extractedCode = match[1];
-            break;
-          }
-        }
-      }
-
-      if (!extractedCode) {
-        throw new Error("Failed to extract parameters from code");
-      }
-
-      console.log("Found parameters definition:", extractedCode);
-      
-      // Clean code
-      let cleanCode = extractedCode
-        .replace(/(\w+):/g, '"$1":')  // Convert key names to strings
-        .replace(/'([^']*?)'/g, '"$1"')  // Convert single quotes to double quotes
-        .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
-        .replace(/\/\/.*/g, '')  // Remove single-line comments
-        .replace(/\/\*[\s\S]*?\*\//g, ''); // Remove multi-line comments
-      
-      console.log("Cleaned code:", cleanCode);
-      
-      let extractedParams: Record<string, any>;
-      
-      try {
-        // Try JSON.parse first
-        const parsedParams = JSON.parse(cleanCode);
-        
-        // Standardize parameter format
-        extractedParams = {};
-        
-        if (Array.isArray(parsedParams)) {
-          parsedParams.forEach((param: any, index: number) => {
-            const key = param.key || `param${index}`;
-            extractedParams[key] = {
-              type: param.type || 'number',
-              label: param.label || key,
-              default: param.default ?? 0,
-              min: param.min ?? 0,
-              max: param.max ?? 100,
-              current: param.default ?? 0
-            };
-          });
-        } else if (typeof parsedParams === 'object' && parsedParams !== null) {
-          Object.entries(parsedParams).forEach(([key, param]: [string, any]) => {
-            if (typeof param === 'object') {
-              extractedParams[key] = {
-                type: param.type || 'number',
-                label: param.label || key,
-                default: param.default ?? param.current ?? 0,
-                min: param.min ?? 0,
-                max: param.max ?? 100,
-                current: param.current ?? param.default ?? 0
-              };
-            } else {
-              // If parameter is a direct value
-              extractedParams[key] = {
-                type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
-                label: key,
-                default: param,
-                min: 0,
-                max: typeof param === 'number' ? param * 2 : 100,
-                current: param
-              };
-            }
-          });
-        } else {
-          throw new Error("Invalid parameters format");
-        }
-      } catch (parseError) {
-        console.error("JSON parsing failed, trying Function:", parseError);
-        try {
-          // If JSON.parse fails, try using Function
-          const func = new Function(`return ${extractedCode}`);
-          const funcParams = func();
-          
-          // Standardize parameter format
-          extractedParams = {};
-          
-          if (Array.isArray(funcParams)) {
-            funcParams.forEach((param: any, index: number) => {
-              const key = param.key || `param${index}`;
-              extractedParams[key] = {
-                type: param.type || 'number',
-                label: param.label || key,
-                default: param.default ?? 0,
-                min: param.min ?? 0,
-                max: param.max ?? 100,
-                current: param.default ?? 0
-              };
-            });
-          } else if (typeof funcParams === 'object' && funcParams !== null) {
-            Object.entries(funcParams).forEach(([key, param]: [string, any]) => {
-              if (typeof param === 'object') {
-                extractedParams[key] = {
-                  type: param.type || 'number',
-                  label: param.label || key,
-                  default: param.default ?? param.current ?? 0,
-                  min: param.min ?? 0,
-                  max: param.max ?? 100,
-                  current: param.current ?? param.default ?? 0
-                };
-              } else {
-                // If parameter is a direct value
-                extractedParams[key] = {
-                  type: typeof param === 'string' && param.startsWith('#') ? 'color' : 'number',
-                  label: key,
-                  default: param,
-                  min: 0,
-                  max: typeof param === 'number' ? param * 2 : 100,
-                  current: param
-                };
-              }
-            });
-          } else {
-            throw new Error("Invalid parameters format");
-          }
-        } catch (funcError) {
-          console.error("Function parsing failed:", funcError);
-          throw new Error("Failed to parse parameters");
-        }
-      }
-      
-      if (Object.keys(extractedParams).length === 0) {
-        throw new Error("No valid parameters found in code");
-      }
-      
-      const initialParams = Object.fromEntries(
-        Object.entries(extractedParams).map(([key, value]) => [key, value.default])
-      );
-      
-      setPreviewParams(initialParams);
-      setShowPreview(true);
-      
-      setExtractedParameters(extractedParams);
-      setHasExtractedParams(true);
-      setAlgoError('');
-    } catch (err) {
-      console.error("Error processing algorithm file:", err);
-      setAlgoError(`Parameter parsing failed: ${err instanceof Error ? err.message : String(err)}`);
-      setShowPreview(false);
-    }
-  };
-
-  // Parameter change handler
-  const handleParameterChange = (key: string, value: string | number | Record<string, any>) => {
-
-    // 批量更新
-    setPreviewParams((prev) => {
-      if (key === 'all' && typeof value === 'object') {
-        return { ...value };
-      }
-
-      const paramDef = extractedParameters[key];
-      if (!paramDef) return;
-
-      let processedValue: any = value;
-      if (paramDef.type === 'number') {
-        processedValue = value === '' ? '' : Number(value);
-        if (typeof processedValue === 'number' && isNaN(processedValue)) return;
-      }
-
-      if (prev[key] === processedValue) return prev;
-      return { ...prev, [key]: processedValue };
+    const metadata = createMetadataJson({
+      workName: artworkInfo.workName,
+      description: artworkInfo.description,
+      style: designSettings.style,
+      fontStyle: designSettings.fontStyle,
+      name: artistInfo.name,
+      address: currentAccount?.address || '',
+      intro: artistInfo.intro,
+      membershipData: membershipData,
+      extractedParameters: extractedParameters
     });
+
+    uploadFiles(imageFile, algoFile, metadata);
   };
 
-  // Price input handler
-  const handlePriceChange = (value: string) => {
-    if (value === '' || /^\d+$/.test(value)) {
-      setPrice(value);
-      setPriceRequired(false);
-      setPriceError('');
-    }
-  };
+  const isPublishDisabled = 
+    !imageFile || 
+    !algoFile || 
+    !artworkInfo.workName.trim() || 
+    !artworkInfo.description.trim() ||
+    isUploading;
 
-  const handleMint = async (results?: UploadResults) => {
-    if (!membershipId) {
-      console.error('No membership ID available');
-      setTransactionError('Membership ID not found');
-      
-      // Update transaction step status to error
-      setSteps(prev => {
-        const newSteps = [...prev];
-        const transactionStep = newSteps.find(step => step.id === 'transaction');
-        if (transactionStep) {
-          transactionStep.status = 'error';
-        }
-        return newSteps;
-      });
-      
-      return;
-    }
-
-    const uploadData = results || uploadResults;
-    if (!uploadData) {
-      console.error('No upload results available');
-      setTransactionError('Upload results not found');
-      
-      // Update transaction step status to error
-      setSteps(prev => {
-        const newSteps = [...prev];
-        const transactionStep = newSteps.find(step => step.id === 'transaction');
-        if (transactionStep) {
-          transactionStep.status = 'error';
-        }
-        return newSteps;
-      });
-      
-      return;
-    }
-
-    // Directly use blob IDs from uploadResults
-    const { imageBlobId, algoBlobId, metadataBlobId } = uploadData;
-
-    console.log('=== Transaction Parameters ===');
-    console.log(JSON.stringify({
-      artlierState: ATELIER_STATE_ID,
-      membershipId,
-      imageBlobId,
-      websiteBlobId: metadataBlobId,  // Use metadata blobId as website blobId
-      algorithmBlobId: algoBlobId,     // Use algoBlobId
-      clock: '0x6',
-      price: parseInt(price)
-    }, null, 2));
-
-    if (!imageBlobId || !algoBlobId || !metadataBlobId) {
-      const errorMsg = 'Missing blob IDs';
-      console.error(errorMsg);
-      setTransactionError(errorMsg);
-      
-      // Update transaction step status to error
-      setSteps(prev => {
-        const newSteps = [...prev];
-        const transactionStep = newSteps.find(step => step.id === 'transaction');
-        if (transactionStep) {
-          transactionStep.status = 'error';
-        }
-        return newSteps;
-      });
-      
-      return;
-    }
-
-    try {
-      const tx = await createArtlier(
-        ATELIER_STATE_ID,
-        membershipId,
-        workName,
-        imageBlobId,
-        metadataBlobId,  // Use metadata blobId as website blobId
-        algoBlobId,      // Use algoBlobId
-        '0x6',
-        parseInt(price)
-      );
-
-      console.log('=== Transaction Object ===');
-      console.log(JSON.stringify(tx, null, 2));
-
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            console.log('=== Transaction Result ===');
-            console.log(JSON.stringify(result, null, 2));
-            setTransactionDigest(result.digest);
-            
-            // Update transaction step status to success
-            setSteps(prev => {
-              const newSteps = [...prev];
-              const transactionStep = newSteps.find(step => step.id === 'transaction');
-              if (transactionStep) {
-                transactionStep.status = 'success';
-              }
-              return newSteps;
-            });
-          },
-          onError: (error) => {
-            console.error('=== Transaction Error ===');
-            console.error(error);
-            setTransactionError(error.message);
-            
-            // Update transaction step status to error
-            setSteps(prev => {
-              const newSteps = [...prev];
-              const transactionStep = newSteps.find(step => step.id === 'transaction');
-              if (transactionStep) {
-                transactionStep.status = 'error';
-              }
-              return newSteps;
-            });
-          }
-        }
-      );
-    } catch (error) {
-      console.error('=== Error in handleMint ===');
-      console.error(error);
-      setTransactionError(error instanceof Error ? error.message : String(error));
-      
-      // Update transaction step status to error
-      setSteps(prev => {
-        const newSteps = [...prev];
-        const transactionStep = newSteps.find(step => step.id === 'transaction');
-        if (transactionStep) {
-          transactionStep.status = 'error';
-        }
-        return newSteps;
-      });
-    }
-  };
-
-  // Modify handleUpload function
-  const handleUpload = async (imageFile: File, algoFile: File, metadataFile: File) => {
-    try {
-      const metadata = createMetadataJson({
-        workName,
-        description,
-        style,
-        fontStyle,
-        name,
-        address: currentAccount?.address || '',
-        intro,
-        membershipData: membershipData
-      });
-      
-      await uploadFiles(imageFile, algoFile, metadata);
-    } catch (error) {
-      console.error('Error in handleUpload:', error);
-      setError(error instanceof Error ? error.message : String(error));
-    }
-  };
-
-  // Page navigation
-  const goToNextPage = () => {
-    if (currentPage === 1) {
-      let hasError = false;
-      
-      if (!workName.trim()) {
-        setWorkNameRequired(true);
-        hasError = true;
-      }
-      
-      if (!description.trim()) {
-        setDescriptionRequired(true);
-        hasError = true;
-      }
-      
-      if (!price.trim()) {
-        setPriceRequired(true);
-        setPriceError('Artwork price is required');
-        hasError = true;
-      } else if (!/^\d+$/.test(price)) {
-        setPriceRequired(true);
-        setPriceError('Please enter a valid number');
-        hasError = true;
-      }
-      
-      if (!intro.trim()) {
-        setIntroRequired(true);
-        hasError = true;
-      }
-      
-      if (!imageFile) {
-        setImageRequired(true);
-        hasError = true;
-      }
-
-      if (hasError) {
-        return;
-      }
-    }
-
-    if (currentPage === 2 && !algoFile) {
-      setAlgoRequired(true);
-      return;
-    }
-
-    if (currentPage === 3) {
-      setCurrentPage(4);
-      const metadataFile = createMetadataJson({
-        workName,
-        description,
-        style,
-        fontStyle,
-        name,
-        address: currentAccount?.address || '',
-        intro
-      });
-      handleUpload(imageFile!, algoFile!, metadataFile);
-      return;
-    }
-    
-    if (currentPage < totalPages) {
-      setWorkNameRequired(false);
-      setDescriptionRequired(false);
-      setPriceRequired(false);
-      setIntroRequired(false);
-      setImageRequired(false);
-      setAlgoRequired(false);
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  // Navigation buttons component
-  const NavigationButtons = () => (
-    <div className="fixed bottom-6 right-6 flex gap-2 z-20">
-      {currentPage > 1 && currentPage < 4 && (
-        <button 
-          onClick={goToPreviousPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
-        >
-          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">←</span>
-        </button>
-      )}
-      {currentPage < 3 && (
-        <button 
-          onClick={goToNextPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
-        >
-          <div className="absolute inset-0 border border-white/10 rotate-45 group-hover:border-white/20 transition-colors" />
-          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors" />
-          <span className="relative text-sm text-white/70 group-hover:text-white/90 transition-colors">→</span>
-        </button>
-      )}
-      {currentPage === 3 && (
-        <button 
-          onClick={goToNextPage}
-          className="group relative w-10 h-10 flex items-center justify-center bg-transparent backdrop-blur-sm"
-        >
-          <div className="absolute inset-0 bg-white/5 rounded-sm group-hover:bg-white/10 transition-all duration-300"></div>
-          <div className="absolute inset-0 border border-white/20 rotate-45 group-hover:border-white/30 transition-colors"></div>
-          <div className="absolute inset-[1px] bg-[rgba(20,20,20,0.8)] rotate-45 group-hover:bg-[rgba(30,30,30,0.8)] transition-colors"></div>
-          <span className="relative text-sm text-white/80 group-hover:text-white transition-colors">✓</span>
-        </button>
-      )}
-    </div>
-  );
-
-  const [currentStep, setCurrentStep] = useState(0);
-  const [steps, setSteps] = useState<{
-    id: string;
-    label: string;
-    status: 'pending' | 'processing' | 'success' | 'error';
-    subSteps?: {
-      id: string;
-      label: string;
-      status: 'pending' | 'processing' | 'success' | 'error';
-    }[];
-  }[]>([
-    {
-      id: 'prepare',
-      label: 'PREPARING FILES FOR UPLOAD',
-      status: 'pending'
-    },
-    {
-      id: 'upload',
-      label: 'UPLOADING FILES TO WALRUS',
-      status: 'pending',
-      subSteps: [
-        {
-          id: 'upload-image',
-          label: 'IMAGE FILE',
-          status: 'pending'
-        },
-        {
-          id: 'upload-algorithm',
-          label: 'ALGORITHM FILE',
-          status: 'pending'
-        },
-        {
-          id: 'upload-metadata',
-          label: 'METADATA FILE',
-          status: 'pending'
-        }
-      ]
-    },
-    {
-      id: 'transaction',
-      label: 'EXECUTING MOVE FUNCTION',
-      status: 'pending'
-    }
-  ]);
+  // Show upload status page if upload is in progress or has started
+  if (showUploadStatus) {
+    return (
+      <div className="h-full bg-[#0a0a0a] text-white">
+        <UploadStatusPage
+          isLoading={isUploading}
+          uploadStatus={uploadStatus}
+          uploadResults={uploadResults}
+          currentStep={currentStep}
+          steps={steps}
+          workName={artworkInfo.workName}
+          description={artworkInfo.description}
+          style={designSettings.style}
+          fontStyle={designSettings.fontStyle}
+          name={membershipData?.username || artistInfo.name}
+          social={currentAccount?.address || ''}
+          intro={membershipData?.description || artistInfo.intro}
+          price={artworkInfo.price}
+          transactionDigest={transactionDigest}
+          transactionError={transactionError}
+          onSubmit={() => {
+            // Handle mint transaction if needed
+          }}
+          onPrevious={() => {
+            setShowUploadStatus(false);
+          }}
+          onGoToVault={() => {
+            onOpenWindow?.('vault');
+          }}
+          onGoToMarketplace={() => {
+            onOpenWindow?.('marketplace');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full w-full bg-[#1a1a1a]">
-      {/* Page content */}
-      <div className="h-full relative">
-        {currentPage === 1 && (
-          <BasicInfoPage
-            workName={workName}
-            description={description}
-            price={price}
-            name={name}
-            social={social}
-            intro={intro}
-            imageFile={imageFile}
-            imageUrl={imageUrl}
-            onWorkNameChange={setWorkName}
-            onDescriptionChange={setDescription}
-            onPriceChange={handlePriceChange}
-            onIntroChange={setIntro}
-            onImageFileChange={handleImageFileChange}
-            onMembershipDataChange={setMembershipData}
-            workNameRequired={workNameRequired}
-            descriptionRequired={descriptionRequired}
-            priceRequired={priceRequired}
-            introRequired={introRequired}
-            imageRequired={imageRequired}
-            priceError={priceError}
-          />
-        )}
-        {currentPage === 2 && (
-          <AlgorithmPage
-            algoFile={algoFile}
-            algoResponse={algoResponse}
-            algoError={algoError}
-            algoRequired={algoRequired}
-            showPreview={showPreview}
-            previewParams={previewParams}
-            extractedParameters={extractedParameters}
-            style={style}
-            fontStyle={fontStyle}
-            onFileChange={handleAlgoFileChange}
-            onUpdatePreviewParams={(params) => setPreviewParams(params)}
-            onStyleChange={setStyle}
-            onFontStyleChange={setFontStyle}
-            onExtractParameters={setExtractedParameters}
-            onTogglePreview={() => setShowPreview(!showPreview)}
-            onNext={goToNextPage}
-            onPrevious={goToPreviousPage}
+    <div className="h-full bg-[#0a0a0a] text-white overflow-auto hide-scrollbar">
+      <div className="relative min-h-full max-w-[1800px] mx-auto flex flex-col">
+        {/* Sticky header */}
+        <div 
+          className="sticky top-0 z-30 px-6 py-3 flex items-center gap-4"
+          style={{
+            background: '#1a1a1a',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <div className="flex-1">
+            <RetroInput
+              type="text"
+              value={artworkInfo.workName}
+              onChange={(e) => updateArtworkInfo('workName', e.target.value)}
+              placeholder="ENTER ARTWORK TITLE"
+              className="text-xl"
+            />
+          </div>
+          <div className="flex items-center text-white/40 text-sm font-mono">
+            <span className="font-light">by</span>
+            <span className="mx-2">{membershipData?.username || artistInfo.name || 'Artist'}</span>
+            <span className="text-white/30">|</span>
+            <span className="ml-2 text-xs">@{(currentAccount?.address || '0x0000...0000').slice(0, 6)}...{(currentAccount?.address || '0x0000...0000').slice(-4)}</span>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="px-6 pb-6 mt-4 flex-1 flex flex-col lg:flex-row gap-3">
+          {/* Left column: 3D Preview and Artwork Info */}
+          <div className="lg:w-[55%] flex flex-col gap-3">
+            {/* 3D Preview */}
+            <div 
+              className="relative overflow-hidden"
+              style={{
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                backgroundColor: '#0a0a0a',
+                boxShadow: 'inset 1px 1px 3px rgba(255, 255, 255, 0.08), inset -1px -1px 3px rgba(0, 0, 0, 0.5)',
+                height: '400px',
+              }}
+            >
+              {userScript && algoFile ? (
+          <ParametricViewer
             userScript={userScript}
-            onUserScriptChange={setUserScript}
+            parameters={previewParams}
           />
-        )}
-        {currentPage === 3 && (
-          <PreviewPage
-            workName={workName}
-            description={description}
-            price={price}
-            name={name}
-            social={social}
-            intro={intro}
-            imageUrl={imageUrl}
-            parameters={extractedParameters}
-            previewParams={previewParams}
-            onParameterChange={handleParameterChange}
-            onMint={goToNextPage}
-            userScript={userScript}
-            membershipData={membershipData}
-          />
-        )}
-        {currentPage === 4 && (
-          <UploadStatusPage
-            isLoading={isLoading}
-            uploadStatus={uploadStatus}
-            uploadResults={uploadResults}
-            currentStep={currentStep}
-            steps={steps}
-            workName={workName}
-            description={description}
-            style={style}
-            fontStyle={fontStyle}
-            name={name}
-            social={social}
-            intro={intro}
-            price={price}
-            transactionDigest={transactionDigest}
-            transactionError={transactionError}
-            onSubmit={() => handleMint()}
-            onPrevious={goToPreviousPage}
-          />
-        )}
-        <NavigationButtons />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <svg className="w-16 h-16 text-white/10 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
+                  </svg>
+                  <p className="text-white/30 text-sm font-mono">NO ALGORITHM LOADED</p>
+                  <p className="text-white/20 text-xs font-mono mt-2">Upload .js file to generate 3D preview</p>
+                </div>
+              )}
+            </div>
+
+            {/* Artwork Info */}
+            <div 
+              className="p-4"
+              style={{
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                backgroundColor: '#1a1a1a',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">ARTWORK INFO</h3>
+              
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {/* Cover Image */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white/60 text-xs font-mono uppercase">Cover Image</span>
+                    {validationState.imageRequired && (
+                      <span className="text-[9px] text-red-400">REQUIRED</span>
+                    )}
+                  </div>
+                  {!imageFile ? (
+                    <div 
+                      className="relative border-2 rounded cursor-pointer transition-colors hover:border-white/30"
+                      style={{
+                        borderTop: '2px solid #0a0a0a',
+                        borderLeft: '2px solid #0a0a0a',
+                        borderBottom: '2px solid #333',
+                        borderRight: '2px solid #333',
+                        backgroundColor: '#0a0a0a',
+                        height: '180px',
+                      }}
+                      onClick={() => coverInputRef.current?.click()}
+                    >
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                        <svg className="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <p className="text-[10px] text-white/60 font-mono uppercase">CLICK TO UPLOAD</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      className="relative border-2 rounded overflow-hidden group"
+                      style={{
+                        borderTop: '2px solid #333',
+                        borderLeft: '2px solid #333',
+                        borderBottom: '2px solid #0a0a0a',
+                        borderRight: '2px solid #0a0a0a',
+                        height: '180px',
+                      }}
+                    >
+                      <img 
+                        src={imageUrl} 
+                        alt="Cover" 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <RetroButton 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={() => coverInputRef.current?.click()}
+                        >
+                          CHANGE
+                        </RetroButton>
+                      </div>
+                    </div>
+                  )}
+                  <input 
+                    ref={coverInputRef}
+                    type="file" 
+                    accept="image/jpeg,image/png,image/gif"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageFileChange(file);
+                    }}
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white/60 text-xs font-mono uppercase">Description</span>
+                    {validationState.descriptionRequired && (
+                      <span className="text-[9px] text-red-400">REQUIRED</span>
+                    )}
+                  </div>
+                  <textarea
+                    value={artworkInfo.description}
+                    onChange={(e) => updateArtworkInfo('description', e.target.value)}
+                    placeholder="Describe your artwork..."
+                    className="w-full bg-black/60 text-white/90 text-xs p-2 font-mono border border-white/10 focus:outline-none focus:border-white/30 resize-none placeholder:text-white/20"
+                    style={{
+                      height: '180px',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Artist Statement */}
+              <div className="border-t border-white/10 pt-3">
+                <h4 className="text-white/60 text-xs font-mono uppercase mb-2">ARTIST INFORMATION</h4>
+                <p className="text-white/50 text-xs font-mono leading-relaxed">
+                  {membershipData?.description || artistInfo.intro || 'No artist statement provided'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="lg:w-[45%] flex flex-col gap-3">
+            {/* Algorithm File Upload */}
+            <div 
+              className="p-4"
+              style={{
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                backgroundColor: '#1a1a1a',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide">Algorithm File</h3>
+                {validationState.algoRequired && (
+                  <span className="text-[9px] text-red-400">REQUIRED</span>
+                )}
+              </div>
+              
+              {!algoFile ? (
+                <div 
+                  className="relative border-2 rounded cursor-pointer transition-colors hover:border-white/30"
+                  style={{
+                    borderTop: '2px solid #0a0a0a',
+                    borderLeft: '2px solid #0a0a0a',
+                    borderBottom: '2px solid #333',
+                    borderRight: '2px solid #333',
+                    backgroundColor: '#0a0a0a',
+                    height: '120px',
+                  }}
+                  onClick={() => algoInputRef.current?.click()}
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    <svg className="w-10 h-10 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <p className="text-[10px] text-white/60 font-mono uppercase">CLICK TO UPLOAD</p>
+                    <p className="text-[9px] text-white/30 font-mono">JAVASCRIPT (.js) • MAX 1MB</p>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="relative border-2 rounded overflow-hidden group"
+                  style={{
+                    borderTop: '2px solid #333',
+                    borderLeft: '2px solid #333',
+                    borderBottom: '2px solid #0a0a0a',
+                    borderRight: '2px solid #0a0a0a',
+                    height: '120px',
+                    backgroundColor: '#0a0a0a',
+                  }}
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <svg className="w-10 h-10 text-white/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <p className="text-white/70 text-xs font-mono">{algoFile.name}</p>
+                    <p className="text-white/40 text-[10px] font-mono mt-1">
+                      {(algoFile.size / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <RetroButton 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={() => algoInputRef.current?.click()}
+                    >
+                      CHANGE
+                    </RetroButton>
+                  </div>
+                </div>
+              )}
+              <input 
+                ref={algoInputRef}
+                type="file" 
+                accept=".js,application/javascript,text/javascript"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAlgoFileChange(file);
+                }}
+              />
+            </div>
+
+            {/* Parameters */}
+            <div 
+              className="p-4"
+              style={{
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                backgroundColor: '#1a1a1a',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Parameters</h3>
+              
+              {Object.keys(extractedParameters).length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-white/40 text-xs font-mono">NO PARAMETERS FOUND</p>
+                  <p className="text-white/30 text-[10px] font-mono mt-2">Upload algorithm file to extract parameters</p>
+                </div>
+              ) : (
+                <div className="max-h-[350px] overflow-y-auto pr-2">
+                  <ParameterControls
+                    parameters={extractedParameters}
+                    previewParams={previewParams}
+                    onParameterChange={handleParameterChange}
+                    showResetAll={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Publish */}
+            <div 
+              className="p-4"
+              style={{
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                backgroundColor: '#1a1a1a',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Publish Atelier</h3>
+              
+              {/* Price */}
+              <div className="flex items-center justify-between py-2 mb-4 border-b border-white/10">
+                <span className="text-white/60 text-xs font-mono uppercase">Price</span>
+                <div className="flex items-baseline gap-2">
+                  <img src="/sui_symbol_white.png" alt="Sui" width={14} height={24} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={artworkInfo.price}
+                    onChange={(e) => handlePriceChange(e.target.value)}
+                    placeholder="0"
+                    className="bg-transparent text-white/90 text-xl font-mono text-right w-32 border-b border-transparent focus:outline-none focus:border-white/30 placeholder:text-white/20"
+                  />
+                </div>
+              </div>
+
+              <RetroButton 
+                onClick={handlePublish}
+                disabled={isPublishDisabled}
+                size="lg"
+                variant="primary"
+                className="w-full"
+              >
+                {isUploading ? 'PUBLISHING...' : 'PUBLISH ATELIER'}
+              </RetroButton>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }

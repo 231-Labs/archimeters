@@ -2,7 +2,8 @@ import { ConnectButton, useCurrentAccount, useSuiClient, useSignAndExecuteTransa
 import { retroButtonStyles } from '@/styles/components';
 import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
-import { WindowName } from '@/types';
+import { WindowName } from '@/components/features/window-manager';
+import KioskSelector from '@/components/features/entry/components/KioskSelector';
 
 // Wallet connection status types
 export type WalletStatus = 'disconnected' | 'connected-no-nft' | 'connected-with-nft';
@@ -123,7 +124,6 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
         },
         {
           onSuccess: async (result) => {
-            console.log("Transaction successful:", result);
             setDigest(result.digest);
             
             // Check NFT ownership after transaction
@@ -170,14 +170,14 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
     let welcomeText = '';
     if (walletStatus === 'disconnected') {
-      welcomeText = '> WELCOME TO ARCHIMETERS \n> PLEASE CONNECT YOUR WALLET TO CONTINUE';
+      welcomeText = '> WELCOME TO ARCHIMETERS \n> 3D ASSETS ALGORITHM MARKETPLACE\n> CONNECT YOUR WALLET TO CONTINUE';
     } else if (walletStatus === 'connected-no-nft') {
       if (inputStage === 'username') {
-        welcomeText = '> ACCESS GRANTED\n> INITIATING IDENTITY MINTING PROTOCOL\n> AWAITING DESIGNATION INPUT\n> ENTER YOUR CODENAME (3-20 CHARACTERS)_';
+        welcomeText = '> ARCHIMETERS: PARAMETRIC DESIGN PLATFORM\n> CREATE, TRADE & MINT ALGORITHMIC 3D ASSETS\n> REGISTER AS DESIGNER OR COLLECTOR\n> ENTER YOUR USERNAME (3-20 CHARACTERS)_';
       } else if (inputStage === 'description') {
-        welcomeText = `> CODENAME "${username}" ACKNOWLEDGED\n> PERSONAL PROFILE REQUIRED\n> ENTER YOUR BIO (MAX 100 CHARACTERS)_`;
+        welcomeText = `> USERNAME "${username}" CONFIRMED\n> DESCRIBE YOUR ROLE\n> (DESIGNER, COLLECTOR, OR 3D ENTHUSIAST)\n> ENTER YOUR DESCRIPTION (MAX 100 CHARACTERS)_`;
       } else if (inputStage === 'confirm') {
-        welcomeText = `> IDENTITY PARAMETERS RECEIVED\n> CODENAME: ${username}\n> BIO: ${description}\n> CONFIRM IDENTITY PARAMETERS [ENTER]_`;
+        welcomeText = `> MEMBERSHIP DETAILS\n> USERNAME: ${username}\n> DESCRIPTION: ${description}\n> MINT YOUR MEMBERSHIP NFT [PRESS ENTER]_`;
       }
     }
 
@@ -407,8 +407,14 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
         {/* NFT Verified Status */}
         {walletStatus === 'connected-with-nft' && (
-          <div className="flex flex-col items-center">
-            <div className="text-green-400 text-base mt-12 bg-black px-4 py-2 flex items-center">
+          <div className="flex flex-col items-center justify-between h-full">
+            {/* Kiosk Selector - Top */}
+            <div className="w-full max-w-md px-4 mt-8">
+              <KioskSelector />
+            </div>
+            
+            {/* Welcome Message - Bottom */}
+            <div className="text-green-400 text-base mb-8 bg-black px-4 py-2 flex items-center">
               &gt; IDENTITY VERIFIED - WELCOME BACK
               <span className={`inline-block w-2 h-5 bg-green-400 ml-2 ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
             </div>

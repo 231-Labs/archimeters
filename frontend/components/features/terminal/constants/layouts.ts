@@ -1,4 +1,4 @@
-// 基礎布局常量
+// Basic layout constants
 export const LAYOUT = {
   BOX_WIDTH: 78,
   CONTENT_PADDING: 28,
@@ -11,15 +11,15 @@ export const LAYOUT = {
   }
 } as const;
 
-// 布局生成器
+// Layout generator
 export const createLayout = {
-  // 居中文本
+  // Centered text
   centerText: (text: string, width: number = LAYOUT.BOX_WIDTH) => {
     const padding = Math.floor((width - text.length) / 2);
     return ' '.repeat(padding) + text + ' '.repeat(width - padding - text.length);
   },
 
-  // Logo 布局
+  // Logo layout
   logo: (title: string, subtitle: string) => ({
     title: createLayout.centerText(title),
     frame: {
@@ -29,7 +29,7 @@ export const createLayout = {
     }
   }),
 
-  // 雙欄布局
+  // Two-column layout
   twoColumns: (left: string, right: string) => ({
     header: LAYOUT.DIVIDER,
     content: `  │ ${left.padEnd(32)}│  │ ${right.padEnd(32)}│   `,
