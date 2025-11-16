@@ -125,6 +125,31 @@ export const useSculptMint = ({
     }
 
     try {
+      if (!alias.trim()) {
+        setMintError('Name your model');
+        setMintStatus('error');
+        return;
+      }
+
+      const { scene, renderer, camera } = sceneRefs;
+      if (!scene || !renderer || !camera) {
+        throw new Error('3D scene not ready');
+      }
+
+      // IMPORTANT: Capture screenshot BEFORE changing mint status
+      // Once mintStatus changes, the UI switches and the renderer may be unmounted
+      renderer.render(scene, camera);
+      await new Promise(requestAnimationFrame);
+      
+      const dataUrl = renderer.domElement.toDataURL('image/png');
+      const blob = await (await fetch(dataUrl)).blob();
+      const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
+
+      // Export GLB BEFORE changing mint status
+      const baseName = `${atelier.title}_${Date.now()}`;
+      const glbFile = await exportScene(scene, baseName, 'glb');
+
+      // NOW we can change the status and show the progress console
       // Reset steps
       setSteps(createInitialSteps(generateStl));
       setCurrentStep(0);
@@ -132,46 +157,23 @@ export const useSculptMint = ({
       setMintError(null);
       setTxDigest(null);
 
-      if (!alias.trim()) {
-        setMintError('Name your model');
-        setMintStatus('error');
-        return;
-      }
-
       // Step 0: Prepare
       updateStepStatus('prepare', 'processing');
       setCurrentStep(0);
-
-      const { scene, renderer, camera } = sceneRefs;
-      if (!scene || !renderer || !camera) {
-        throw new Error('3D scene not ready');
-      }
-
       updateStepStatus('prepare', 'success');
 
       // Step 1: Upload phase
       setCurrentStep(1);
       updateStepStatus('upload', 'processing');
 
-      // Step 1a: Capture and upload screenshot
+      // Step 1a: Upload screenshot (already captured)
       updateStepStatus('upload', 'processing', 'upload-screenshot');
-      renderer.render(scene, camera);
-      await new Promise(requestAnimationFrame);
-      
-      const dataUrl = renderer.domElement.toDataURL('image/png');
-      const blob = await (await fetch(dataUrl)).blob();
-      const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
       const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
       updateStepStatus('upload', 'success', 'upload-screenshot');
 
-      // Step 1b: Export and upload GLB (always, for 3D preview)
+      // Step 1b: Upload GLB (already exported)
       updateStepStatus('upload', 'processing', 'upload-glb');
-      const baseName = `${atelier.title}_${Date.now()}`;
-      const glbFile = await exportScene(scene, baseName, 'glb');
-      console.log('📦 GLB file exported for 3D preview');
-
       const glbBlobId = await uploadToWalrus(glbFile, 'GLB');
-      console.log('✅ GLB uploaded:', glbBlobId);
       updateStepStatus('upload', 'success', 'upload-glb');
 
       // Step 1c: Optionally generate and encrypt STL for printing
@@ -309,6 +311,8 @@ export const useSculptMint = ({
       updateStepStatus('transaction', 'processing');
       setMintStatus('minting');
 
+      const blueprintUrl = `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`;
+
       const tx = mintSculpt(
         atelier.id,
         atelier.poolId,
@@ -316,7 +320,7 @@ export const useSculptMint = ({
         kioskId,
         kioskCapId,
         alias,
-        `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${screenshotBlobId}`,
+        blueprintUrl,
         glbBlobId, // glb_file: String (required)
         stlBlobId, // structure: Option<String> (optional STL blob ID)
         sealResourceId, // seal_resource_id: Option<String> (optional Seal resource ID)

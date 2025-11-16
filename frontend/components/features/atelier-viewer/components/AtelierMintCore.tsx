@@ -181,6 +181,12 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
         steps={steps}
         txDigest={txDigest}
         mintError={mintError}
+        previewImage={atelier.url}
+        sculptName={alias || atelier.title}
+        atelierName={atelier.title}
+        atelierAuthor={atelier.author || 'Unknown'}
+        atelierDescription={atelier.intro || atelier.description || ''}
+        sculptOwner={currentAccount?.address ? formatAddress(currentAccount.address) : ''}
         onGoToVault={onOpenWindow ? handleGoToVault : undefined}
         onBack={onBack}
       />

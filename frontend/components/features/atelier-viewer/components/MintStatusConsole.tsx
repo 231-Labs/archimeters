@@ -18,6 +18,12 @@ interface MintStatusConsoleProps {
   steps: MintStep[];
   txDigest: string | null;
   mintError: string | null;
+  previewImage?: string;
+  sculptName?: string;
+  atelierName?: string;
+  atelierAuthor?: string;
+  atelierDescription?: string;
+  sculptOwner?: string;
   onGoToVault?: () => void;
   onGoToMarketplace?: () => void;
   onBack?: () => void;
@@ -28,6 +34,12 @@ export function MintStatusConsole({
   steps,
   txDigest,
   mintError,
+  previewImage,
+  sculptName,
+  atelierName,
+  atelierAuthor,
+  atelierDescription,
+  sculptOwner,
   onGoToVault,
   onGoToMarketplace,
   onBack
@@ -39,6 +51,13 @@ export function MintStatusConsole({
         steps={steps}
         txHash={txDigest || undefined}
         title="MINTING SCULPT"
+        errorMessage={mintError}
+        previewImage={previewImage}
+        sculptName={sculptName}
+        atelierName={atelierName}
+        atelierAuthor={atelierAuthor}
+        atelierDescription={atelierDescription}
+        sculptOwner={sculptOwner}
         onGoToVault={onGoToVault}
         onGoToMarketplace={onGoToMarketplace}
         onBack={onBack}
