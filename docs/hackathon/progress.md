@@ -58,8 +58,8 @@
 - [ ] 測試 iframe 打開和參數傳遞
 
 **Task 2: 品牌設計** [⏱️ 2-3 小時] 🟡 P1
-- [ ] 設計 Project LOGO
-- [ ] 更新前端 favicon 和 logo
+- [X] 設計 Project LOGO
+- [X] 更新前端 favicon 和 logo
 
 **Task 3: 落地頁準備** [⏱️ 2-3 小時] 🟡 P1
 - [ ] 落地頁內容規劃

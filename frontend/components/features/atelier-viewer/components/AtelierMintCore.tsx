@@ -44,13 +44,55 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
     camera: cameraRef.current,
   }), [sceneRef.current, rendererRef.current, cameraRef.current]);
 
+  // Extract isPrintable from atelier metadata
+  // Check both metadata structure and top-level (for backward compatibility)
+  const isPrintable = useMemo(() => {
+    // Try to get from metadata.artwork.isPrintable
+    if (atelier?.metadata?.artwork?.isPrintable !== undefined) {
+      return atelier.metadata.artwork.isPrintable;
+    }
+    // Try to get from top-level isPrintable
+    if (atelier?.isPrintable !== undefined) {
+      return atelier.isPrintable;
+    }
+    
+    // Fallback: Detect from algorithm code for old artworks
+    // This helps identify animated artworks that were uploaded before isPrintable support
+    if (atelier?.algorithmContent) {
+      const code = atelier.algorithmContent;
+      
+      // Check for explicit flags in code
+      if (code.includes('isPrintable: false') || code.includes('printable: false')) {
+        console.log('🎨 [Runtime Detection] Detected non-printable artwork from code flag');
+        return false;
+      }
+      
+      // Check for animation features
+      const hasCreateAnimatedScene = code.includes('createAnimatedScene');
+      const hasAnimateFunction = /function\s+animate\s*\(/.test(code) || /\.animate\s*=/.test(code);
+      const hasAnimationParams = code.includes('Animation Speed') || code.includes('speed');
+      
+      if (hasCreateAnimatedScene || (hasAnimateFunction && hasAnimationParams)) {
+        console.log('🎨 [Runtime Detection] Detected animated artwork from code features');
+        return false;
+      }
+    }
+    
+    // Default to true (3D printable) for backward compatibility
+    return true;
+  }, [atelier]);
+
+  // For animated artworks, force generateStl to false (safety check)
+  // Even if UI somehow allows it, backend should not generate STL
+  const effectiveGenerateStl = isPrintable ? generateStl : false;
+
   const { mintStatus, mintError, txDigest, handleMint } = useSculptMint({
     atelier,
     sceneRefs,
     exportScene,
     uploadToWalrus,
     exportFormat,
-    generateStl,
+    generateStl: effectiveGenerateStl,
     parameters,
     previewParams,
   });
@@ -58,6 +100,7 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
   const viewerProps = useMemo(() => ({
     userScript,
     parameters: previewParams,
+    isPrintable, // Pass to ParametricViewer to choose renderer
     onSceneReady: (scene: THREE.Scene) => {
       sceneRef.current = scene;
     },
@@ -67,17 +110,29 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
     onCameraReady: (camera: THREE.Camera) => {
       cameraRef.current = camera;
     }
-  }), [userScript, previewParams]);
+  }), [userScript, previewParams, isPrintable]);
 
   const onMint = async () => {
+    // For animated artworks, ensure STL generation is disabled
+    // even if generateStl state is true (shouldn't happen with UI logic, but safety check)
     await handleMint(alias);
   };
 
-  const stlToggle = (
+  // For animated artworks, STL export should be disabled
+  const stlToggle = isPrintable ? (
     <StlToggle 
       generateStl={generateStl} 
       onToggle={() => setGenerateStl(prev => !prev)} 
     />
+  ) : (
+    <div className="flex items-center gap-2 px-3 py-2 bg-black/20 border border-white/10 rounded">
+      <svg className="w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+        />
+      </svg>
+      <span className="text-white/40 text-xs font-mono">STL export not available for animated artworks</span>
+    </div>
   );
 
   const tooltipComponent = mintButtonState.disabled ? (
@@ -126,8 +181,35 @@ export function AtelierMintCore({ atelier }: AtelierMintCoreProps) {
         alias={alias}
         onAliasChange={setAlias}
         preview3D={
-          <div className="w-full h-full">
+          <div className="w-full h-full relative">
             <ParametricViewer {...viewerProps} />
+            {/* Artwork type indicator */}
+            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm px-3 py-1.5 border border-white/20 rounded">
+              <div className="flex items-center gap-2">
+                {isPrintable ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      />
+                    </svg>
+                    <span className="text-white/80 text-[10px] font-mono uppercase tracking-wide">3D Printable</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="text-cyan-400 text-[10px] font-mono uppercase tracking-wide">Animated</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         }
       />

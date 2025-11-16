@@ -9,10 +9,14 @@ import { useUpload } from './useUpload';
 import { useKiosk } from '../../entry/hooks';
 import { createMetadataJson } from '../utils/metadata';
 import { useCurrentAccount } from '@mysten/dapp-kit';
+import { analyzeScript, getRecommendationMessage, type ScriptAnalysis } from '../utils/scriptDetection';
 import type { UploadResults } from '../types';
 
 export function useDesignPublisherForm() {
   const currentAccount = useCurrentAccount();
+  
+  // Script analysis state
+  const [scriptAnalysis, setScriptAnalysis] = useState<ScriptAnalysis | null>(null);
   
   // Form state management
   const { artworkInfo, artistInfo, designSettings, updateArtworkInfo, updateArtistInfo, updateDesignSettings } = useArtworkForm();
@@ -238,7 +242,19 @@ export function useDesignPublisherForm() {
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
+          
+          // Process scene file for parameters
           processSceneFile(content);
+          
+          // Analyze script to detect artwork type (3D printable vs 2D/animated)
+          const analysis = analyzeScript(content);
+          setScriptAnalysis(analysis);
+          
+          // Auto-update isPrintable based on analysis (only if high confidence)
+          if (analysis.confidence === 'high') {
+            updateArtworkInfo('isPrintable', analysis.isPrintable);
+            console.log('Auto-detected artwork type:', analysis.recommendedMode);
+          }
         } catch (error) {
           console.error('Error processing algorithm file:', error);
         }
@@ -248,7 +264,7 @@ export function useDesignPublisherForm() {
       console.error('Algorithm file upload error:', error);
       throw error;
     }
-  }, [baseHandleAlgoFileChange, processSceneFile]);
+  }, [baseHandleAlgoFileChange, processSceneFile, updateArtworkInfo]);
 
   // Price handler with validation - supports decimals and zero
   const handlePriceChange = useCallback((value: string) => {
@@ -392,6 +408,9 @@ export function useDesignPublisherForm() {
     handleAlgoFileChange,
     handlePriceChange,
     setUserScript,
+    
+    // Script Analysis
+    scriptAnalysis,
     
     // Membership
     membershipId,

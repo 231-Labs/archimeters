@@ -18,6 +18,7 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
   const coverInputRef = useRef<HTMLInputElement>(null);
   const algoInputRef = useRef<HTMLInputElement>(null);
   const [showUploadStatus, setShowUploadStatus] = useState(false);
+  const [isDraggingAlgo, setIsDraggingAlgo] = useState(false);
 
   const {
     // Form state
@@ -42,6 +43,9 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
     handleImageFileChange,
     handleAlgoFileChange,
     handlePriceChange,
+    
+    // Script Analysis
+    scriptAnalysis,
     
     // Membership
     membershipData,
@@ -69,6 +73,40 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
     };
   }, []);
 
+  // Handle drag and drop for algorithm file
+  const handleAlgoDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAlgo(true);
+  };
+
+  const handleAlgoDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAlgo(false);
+  };
+
+  const handleAlgoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleAlgoDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAlgo(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.name.endsWith('.js')) {
+        handleAlgoFileChange(file);
+      } else {
+        alert('Please upload a JavaScript (.js) file');
+      }
+    }
+  };
+
   // Handle publish
   const handlePublish = async () => {
     if (!imageFile || !algoFile) {
@@ -95,6 +133,7 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
       name: artistInfo.name,
       address: currentAccount?.address || '',
       intro: artistInfo.intro,
+      isPrintable: artworkInfo.isPrintable,
       membershipData: membershipData,
       extractedParameters: extractedParameters
     });
@@ -178,9 +217,9 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
         <div className="px-6 pb-6 mt-4 flex-1 flex flex-col lg:flex-row gap-3">
           {/* Left column: 3D Preview and Artwork Info */}
           <div className="lg:w-[55%] flex flex-col gap-3">
-            {/* 3D Preview */}
+            {/* 3D Preview with Upload */}
             <div 
-              className="relative overflow-hidden"
+              className="relative overflow-hidden group"
               style={{
                 borderTop: '2px solid #444',
                 borderLeft: '2px solid #444',
@@ -190,23 +229,97 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
                 boxShadow: 'inset 1px 1px 3px rgba(255, 255, 255, 0.08), inset -1px -1px 3px rgba(0, 0, 0, 0.5)',
                 height: '400px',
               }}
+              onDragEnter={handleAlgoDragEnter}
+              onDragLeave={handleAlgoDragLeave}
+              onDragOver={handleAlgoDragOver}
+              onDrop={handleAlgoDrop}
             >
               {userScript && algoFile ? (
-          <ParametricViewer
-            userScript={userScript}
-            parameters={previewParams}
-          />
+                <>
+                  <ParametricViewer
+                    userScript={userScript}
+                    parameters={previewParams}
+                    isPrintable={artworkInfo.isPrintable}
+                  />
+                  {/* Floating change button */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => algoInputRef.current?.click()}
+                      className="bg-black/80 hover:bg-black/90 text-white/90 text-[10px] font-mono px-3 py-1.5 border border-white/20 hover:border-white/40 transition-all"
+                      style={{
+                        borderTop: '2px solid #666',
+                        borderLeft: '2px solid #666',
+                        borderBottom: '2px solid #000',
+                        borderRight: '2px solid #000',
+                      }}
+                    >
+                      CHANGE ALGORITHM
+                    </button>
+                  </div>
+                  {/* File info badge */}
+                  <div className="absolute bottom-3 left-3 bg-black/60 px-2 py-1 border border-white/10">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <span className="text-white/60 text-[9px] font-mono">{algoFile.name}</span>
+                      <span className="text-white/30 text-[9px] font-mono">
+                        ({(algoFile.size / 1024).toFixed(1)}KB)
+                      </span>
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center">
-                  <svg className="w-16 h-16 text-white/10 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                    />
-                  </svg>
-                  <p className="text-white/30 text-sm font-mono">NO ALGORITHM LOADED</p>
-                  <p className="text-white/20 text-xs font-mono mt-2">Upload .js file to generate 3D preview</p>
+                <div 
+                  className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-all ${
+                    isDraggingAlgo ? 'bg-cyan-500/10 border-2 border-cyan-400/40 border-dashed' : 'hover:bg-white/[0.02]'
+                  }`}
+                  onClick={() => algoInputRef.current?.click()}
+                >
+                  {isDraggingAlgo && (
+                    <div className="absolute inset-0 bg-cyan-500/5 backdrop-blur-sm flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 text-cyan-400 mx-auto mb-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p className="text-cyan-400 text-sm font-mono uppercase">DROP FILE HERE</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className={`flex flex-col items-center ${isDraggingAlgo ? 'opacity-20' : ''}`}>
+                    <svg className="w-20 h-20 text-white/10 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                        d="M9 12h6m-3-3v6"
+                      />
+                    </svg>
+                    <p className="text-white/60 text-sm font-mono uppercase mb-2">Upload Algorithm File</p>
+                    <p className="text-white/30 text-xs font-mono mb-4">Click to browse or drag & drop</p>
+                    <div className="px-4 py-2 bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
+                      <span className="text-white/50 text-[10px] font-mono uppercase">JAVASCRIPT (.js) • MAX 1MB</span>
+                    </div>
+                  </div>
+                  {validationState.algoRequired && (
+                    <p className="text-red-400 text-[10px] font-mono mt-4 uppercase">ALGORITHM FILE REQUIRED</p>
+                  )}
                 </div>
               )}
+              <input 
+                ref={algoInputRef}
+                type="file" 
+                accept=".js,application/javascript,text/javascript"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAlgoFileChange(file);
+                }}
+              />
             </div>
 
             {/* Artwork Info */}
@@ -325,7 +438,7 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
 
           {/* Right column */}
           <div className="lg:w-[45%] flex flex-col gap-3">
-            {/* Algorithm File Upload */}
+            {/* Artwork Type Selection */}
             <div 
               className="p-4"
               style={{
@@ -337,80 +450,78 @@ export default function DesignPublisher({ onOpenWindow }: DesignPublisherProps =
                 boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide">Algorithm File</h3>
-                {validationState.algoRequired && (
-                  <span className="text-[9px] text-red-400">REQUIRED</span>
-                )}
-              </div>
+              <h3 className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Artwork Type</h3>
               
-              {!algoFile ? (
-                <div 
-                  className="relative border-2 rounded cursor-pointer transition-colors hover:border-white/30"
-                  style={{
-                    borderTop: '2px solid #0a0a0a',
-                    borderLeft: '2px solid #0a0a0a',
-                    borderBottom: '2px solid #333',
-                    borderRight: '2px solid #333',
-                    backgroundColor: '#0a0a0a',
-                    height: '120px',
-                  }}
-                  onClick={() => algoInputRef.current?.click()}
-                >
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <svg className="w-10 h-10 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <p className="text-[10px] text-white/60 font-mono uppercase">CLICK TO UPLOAD</p>
-                    <p className="text-[9px] text-white/30 font-mono">JAVASCRIPT (.js) • MAX 1MB</p>
+              {/* Auto-detection result */}
+              {scriptAnalysis && algoFile && (
+                <div className="mb-3 p-2 bg-black/40 border border-white/10 rounded">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-2 h-2 rounded-full ${
+                      scriptAnalysis.confidence === 'high' ? 'bg-green-400' : 
+                      scriptAnalysis.confidence === 'medium' ? 'bg-yellow-400' : 
+                      'bg-gray-400'
+                    }`} />
+                    <span className="text-white/70 text-[10px] font-mono uppercase">
+                      Auto-detected: {scriptAnalysis.recommendedMode === '3d-static' ? '3D Printable' : '2D/Animated'}
+                    </span>
                   </div>
-                </div>
-              ) : (
-                <div 
-                  className="relative border-2 rounded overflow-hidden group"
-                  style={{
-                    borderTop: '2px solid #333',
-                    borderLeft: '2px solid #333',
-                    borderBottom: '2px solid #0a0a0a',
-                    borderRight: '2px solid #0a0a0a',
-                    height: '120px',
-                    backgroundColor: '#0a0a0a',
-                  }}
-                >
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <svg className="w-10 h-10 text-white/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <p className="text-white/70 text-xs font-mono">{algoFile.name}</p>
-                    <p className="text-white/40 text-[10px] font-mono mt-1">
-                      {(algoFile.size / 1024).toFixed(2)} KB
+                  {scriptAnalysis.detectedFeatures.length > 0 && (
+                    <p className="text-white/40 text-[9px] font-mono">
+                      Features: {scriptAnalysis.detectedFeatures.slice(0, 3).join(', ')}
                     </p>
-                  </div>
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <RetroButton 
-                      size="sm" 
-                      variant="secondary"
-                      onClick={() => algoInputRef.current?.click()}
-                    >
-                      CHANGE
-                    </RetroButton>
-                  </div>
+                  )}
                 </div>
               )}
-              <input 
-                ref={algoInputRef}
-                type="file" 
-                accept=".js,application/javascript,text/javascript"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAlgoFileChange(file);
-                }}
-              />
+
+              {/* Manual toggle */}
+              <div className="flex items-center justify-between py-2 px-3 bg-black/30 border border-white/10 rounded">
+                <div className="flex-1">
+                  <div className="text-white/70 text-xs font-mono">
+                    {artworkInfo.isPrintable ? '3D Printable Object' : '2D / Animated Artwork'}
+                  </div>
+                  <div className="text-white/40 text-[9px] font-mono mt-1">
+                    {artworkInfo.isPrintable 
+                      ? 'Static 3D geometry for physical printing' 
+                      : 'Supports animations, shaders, and visual effects'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateArtworkInfo('isPrintable', !artworkInfo.isPrintable as any)}
+                  className={`
+                    relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
+                    ${artworkInfo.isPrintable ? 'bg-white/20' : 'bg-cyan-500/60'}
+                  `}
+                  disabled={!algoFile}
+                >
+                  <span
+                    className={`
+                      inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200
+                      ${artworkInfo.isPrintable ? 'translate-x-1' : 'translate-x-6'}
+                    `}
+                  />
+                </button>
+              </div>
+
+              {/* Info message */}
+              {!algoFile ? (
+                <p className="text-white/30 text-[9px] font-mono mt-2 text-center">
+                  Upload algorithm file to enable type selection
+                </p>
+              ) : (
+                <div className="mt-2 p-2 bg-black/20 border border-white/5 rounded">
+                  <p className="text-white/40 text-[9px] font-mono leading-relaxed">
+                    {artworkInfo.isPrintable ? (
+                      <>
+                        <span className="text-white/60">3D Mode:</span> Uses static rendering. Best for parametric designs that can be 3D printed.
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-cyan-400/80">2D/Animation Mode:</span> Enables animation loops and shader effects. Perfect for digital art displays.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Parameters */}
