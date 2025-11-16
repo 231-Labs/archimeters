@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { AtelierMintCore } from './components/AtelierMintCore';
-import { RetroButton } from '@/components/common/RetroButton';
 import { WindowName } from '@/components/features/window-manager/types';
 
 interface AtelierMintModalProps {

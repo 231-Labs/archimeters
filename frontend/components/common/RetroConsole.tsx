@@ -121,7 +121,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       {/* Main Content - Two Columns */}
       <div className="flex gap-8 items-start" style={{ maxHeight: '60vh' }}>
         {/* Left Column - Progress & Status */}
-        <div className="w-[60%] flex flex-col gap-3 overflow-y-auto pr-2" style={{ maxHeight: '60vh' }}>
+        <div className="w-[70%] flex flex-col gap-3 overflow-y-auto pr-2" style={{ maxHeight: '60vh' }}>
           {/* Steps List */}
           <div className="space-y-2">
             {steps.map((step, index) => (
@@ -284,7 +284,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
         {/* Right Column - Card Preview */}
         {previewImage && (
           <div className="flex-1 flex items-center justify-center px-8">
-            <div className="w-[340px]">
+            <div className="w-[360px]">
               <RetroMintCard
               imageUrl={previewImage}
               sculptName={sculptName}
