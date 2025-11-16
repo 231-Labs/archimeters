@@ -65,20 +65,12 @@ export interface Parameters {
 
 export type ExportFormat = 'glb' | 'stl';
 
-export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
-
 export type MintStatus = 'idle' | 'preparing' | 'minting' | 'success' | 'error';
 
 export interface MintButtonState {
   disabled: boolean;
   tooltip: string;
   tooltipComponent?: React.ReactNode;
-}
-
-export interface UploadResult {
-  blobId: string;
-  success: boolean;
-  error?: string;
 }
 
 export interface SceneRefs {

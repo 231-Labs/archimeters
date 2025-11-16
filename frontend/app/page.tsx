@@ -167,7 +167,7 @@ export default function Home() {
                       onResize={(e) => resizeWindow(e, name)}
                       zIndex={getZIndex(name)}
                     >
-                      <AtelierViewerWindow name={name} />
+                      <AtelierViewerWindow name={name} onOpenWindow={openWindow} />
                     </Window>
                   );
                   case 'vault':

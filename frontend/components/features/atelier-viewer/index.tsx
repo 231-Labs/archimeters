@@ -4,13 +4,14 @@ import type { WindowName } from '@/components/features/window-manager';
 
 interface AtelierViewerProps {
   name: WindowName;
+  onOpenWindow?: (windowName: WindowName) => void;
 }
 
 /**
  * AtelierViewer - Window mode wrapper for Atelier minting
  * Loads atelier data from sessionStorage and displays it in a window
  */
-export default function AtelierViewer({ name }: AtelierViewerProps) {
+export default function AtelierViewer({ name, onOpenWindow }: AtelierViewerProps) {
   const { atelier, isLoading, error } = useAtelierData();
 
   if (isLoading) {
@@ -37,6 +38,6 @@ export default function AtelierViewer({ name }: AtelierViewerProps) {
     );
   }
 
-  return <AtelierMintCore atelier={atelier} />;
+  return <AtelierMintCore atelier={atelier} onOpenWindow={onOpenWindow} />;
 }
 

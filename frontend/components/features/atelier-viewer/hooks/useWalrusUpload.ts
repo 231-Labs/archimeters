@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { UploadStatus, UploadResult } from '../types';
+
+type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 export const useWalrusUpload = () => {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
@@ -72,16 +73,8 @@ export const useWalrusUpload = () => {
     throw lastError || new Error('Upload failed after maximum retries');
   };
 
-  const resetUploadStatus = () => {
-    setUploadStatus('idle');
-    setUploadProgress('');
-  };
-
   return {
-    uploadStatus,
-    uploadProgress,
     uploadToWalrus,
-    resetUploadStatus,
   };
 };
 

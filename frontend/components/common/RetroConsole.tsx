@@ -20,9 +20,10 @@ interface RetroConsoleProps {
   title?: string;
   onGoToVault?: () => void;
   onGoToMarketplace?: () => void;
+  onBack?: () => void;
 }
 
-export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS', onGoToVault, onGoToMarketplace }: RetroConsoleProps) {
+export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS', onGoToVault, onGoToMarketplace, onBack }: RetroConsoleProps) {
   // 檢查交易狀態
   const transactionStep = steps.find(step => step.id === 'transaction');
   const isTransactionComplete = transactionStep?.status === 'success';
@@ -209,6 +210,27 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                     >
                       <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
                         OPEN VAULT
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Back Button (when modal) */}
+                  {onBack && (
+                    <button
+                      onClick={onBack}
+                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                      style={{
+                        background: '#1a1a1a',
+                        borderTop: '2px solid #444',
+                        borderLeft: '2px solid #444',
+                        borderBottom: '2px solid #000',
+                        borderRight: '2px solid #000',
+                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                        padding: '12px',
+                      }}
+                    >
+                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
+                        BACK
                       </div>
                     </button>
                   )}

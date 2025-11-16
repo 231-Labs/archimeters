@@ -7,6 +7,17 @@ import { encryptModelFile, SEAL_CONFIG } from '@/utils/seal';
 import { MintStatus, Atelier, UseSculptMintOptions, SceneRefs, ExportFormat } from '../types';
 import { useKiosk } from '@/components/features/entry/hooks';
 
+interface MintStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  subSteps?: {
+    id: string;
+    label: string;
+    status: 'pending' | 'processing' | 'success' | 'error';
+  }[];
+}
+
 interface UseSculptMintProps {
   atelier: Atelier | null;
   sceneRefs: SceneRefs;
@@ -18,6 +29,48 @@ interface UseSculptMintProps {
   previewParams: Record<string, any>; // Current parameter values
   options?: UseSculptMintOptions;
 }
+
+const createInitialSteps = (generateStl: boolean): MintStep[] => {
+  const subSteps = [
+    {
+      id: 'upload-screenshot',
+      label: 'SCREENSHOT',
+      status: 'pending' as const
+    },
+    {
+      id: 'upload-glb',
+      label: 'GLB MODEL FILE',
+      status: 'pending' as const
+    }
+  ];
+
+  if (generateStl) {
+    subSteps.push({
+      id: 'upload-stl',
+      label: 'STL FILE (PRINTABLE)',
+      status: 'pending' as const
+    });
+  }
+
+  return [
+    {
+      id: 'prepare',
+      label: 'PREPARING SCULPT FILES',
+      status: 'pending'
+    },
+    {
+      id: 'upload',
+      label: 'UPLOADING FILES TO WALRUS',
+      status: 'pending',
+      subSteps
+    },
+    {
+      id: 'transaction',
+      label: 'EXECUTING MINT TRANSACTION',
+      status: 'pending'
+    }
+  ];
+};
 
 export const useSculptMint = ({
   atelier,
@@ -33,9 +86,37 @@ export const useSculptMint = ({
   const [mintStatus, setMintStatus] = useState<MintStatus>('idle');
   const [mintError, setMintError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [steps, setSteps] = useState<MintStep[]>(() => createInitialSteps(generateStl));
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const { selectedKiosk, kiosks } = useKiosk();
   // const suiClient = useSuiClient();
+
+  const updateStepStatus = useCallback((
+    stepId: string,
+    status: 'pending' | 'processing' | 'success' | 'error',
+    subStepId?: string
+  ) => {
+    setSteps(prev => prev.map(step => {
+      if (step.id !== stepId) return step;
+      
+      if (subStepId && step.subSteps) {
+        const updatedSubSteps = step.subSteps.map(sub =>
+          sub.id === subStepId ? { ...sub, status } : sub
+        );
+        
+        const allSuccess = updatedSubSteps.every(sub => sub.status === 'success');
+        const hasError = updatedSubSteps.some(sub => sub.status === 'error');
+        const hasProcessing = updatedSubSteps.some(sub => sub.status === 'processing');
+        
+        const parentStatus = allSuccess ? 'success' : hasError ? 'error' : hasProcessing ? 'processing' : step.status;
+        
+        return { ...step, status: parentStatus, subSteps: updatedSubSteps };
+      }
+      
+      return { ...step, status };
+    }));
+  }, []);
 
   const handleMint = useCallback(async (alias: string) => {
     if (!atelier) {
@@ -44,8 +125,12 @@ export const useSculptMint = ({
     }
 
     try {
+      // Reset steps
+      setSteps(createInitialSteps(generateStl));
+      setCurrentStep(0);
       setMintStatus('preparing');
       setMintError(null);
+      setTxDigest(null);
 
       if (!alias.trim()) {
         setMintError('Name your model');
@@ -53,12 +138,23 @@ export const useSculptMint = ({
         return;
       }
 
+      // Step 0: Prepare
+      updateStepStatus('prepare', 'processing');
+      setCurrentStep(0);
+
       const { scene, renderer, camera } = sceneRefs;
       if (!scene || !renderer || !camera) {
         throw new Error('3D scene not ready');
       }
 
-      // Step 1: Capture screenshot
+      updateStepStatus('prepare', 'success');
+
+      // Step 1: Upload phase
+      setCurrentStep(1);
+      updateStepStatus('upload', 'processing');
+
+      // Step 1a: Capture and upload screenshot
+      updateStepStatus('upload', 'processing', 'upload-screenshot');
       renderer.render(scene, camera);
       await new Promise(requestAnimationFrame);
       
@@ -66,21 +162,24 @@ export const useSculptMint = ({
       const blob = await (await fetch(dataUrl)).blob();
       const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
       const screenshotBlobId = await uploadToWalrus(screenshotFile, 'Screenshot');
+      updateStepStatus('upload', 'success', 'upload-screenshot');
 
-      // Step 2: Export GLB (always, for 3D preview)
+      // Step 1b: Export and upload GLB (always, for 3D preview)
+      updateStepStatus('upload', 'processing', 'upload-glb');
       const baseName = `${atelier.title}_${Date.now()}`;
       const glbFile = await exportScene(scene, baseName, 'glb');
       console.log('📦 GLB file exported for 3D preview');
 
-      // Step 3: Upload GLB to Walrus (required for glb_file field)
       const glbBlobId = await uploadToWalrus(glbFile, 'GLB');
       console.log('✅ GLB uploaded:', glbBlobId);
+      updateStepStatus('upload', 'success', 'upload-glb');
 
-      // Step 4: Optionally generate and encrypt STL for printing
+      // Step 1c: Optionally generate and encrypt STL for printing
       let stlBlobId: string | null = null;
       let sealResourceId: string | null = null;
       
       if (generateStl) {
+        updateStepStatus('upload', 'processing', 'upload-stl');
         console.log('🏗️ Generating STL file for printing...');
         const stlFile = await exportScene(scene, baseName, 'stl');
         
@@ -89,7 +188,6 @@ export const useSculptMint = ({
         let encrypted = false;
       
         if (SEAL_CONFIG.enabled) {
-          setMintStatus('preparing');
           console.log('🔐 Encrypting STL with Seal...');
         
         try {
@@ -140,6 +238,7 @@ export const useSculptMint = ({
           encrypted ? 'STL (Encrypted)' : 'STL'
         );
         console.log('✅ STL uploaded:', stlBlobId, encrypted ? '🔐' : '');
+        updateStepStatus('upload', 'success', 'upload-stl');
       } else {
         console.log('⏭️ Skipping STL generation (toggle off)');
       }
@@ -148,7 +247,10 @@ export const useSculptMint = ({
         throw new Error('Failed to get required blob IDs');
       }
 
-      // Step 4: Verify kiosk selection
+      // Mark upload step as complete
+      updateStepStatus('upload', 'success');
+
+      // Verify kiosk selection
       if (!selectedKiosk) {
         const errorMsg = kiosks.length === 0 
           ? 'No kiosk found, create at Entry Window.'
@@ -202,7 +304,9 @@ export const useSculptMint = ({
         parameterKeys: Object.keys(parameters),
       });
       
-      // Step 7: Execute on-chain transaction
+      // Step 2: Execute on-chain transaction
+      setCurrentStep(2);
+      updateStepStatus('transaction', 'processing');
       setMintStatus('minting');
 
       const tx = mintSculpt(
@@ -230,30 +334,47 @@ export const useSculptMint = ({
           onSuccess: (result) => {
             setTxDigest(result.digest);
             setMintStatus('success');
+            updateStepStatus('transaction', 'success');
           },
           onError: (error) => {
-            setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
+            const errorMsg = error instanceof Error ? error.message : 'Failed to mint sculpt';
+            setMintError(errorMsg);
             setMintStatus('error');
+            updateStepStatus('transaction', 'error');
           }
         }
       );
 
     } catch (error) {
-      setMintError(error instanceof Error ? error.message : 'Failed to mint sculpt');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to mint sculpt';
+      setMintError(errorMsg);
       setMintStatus('error');
+      // Mark all incomplete steps as error
+      setSteps(prev => prev.map(step => ({
+        ...step,
+        status: step.status === 'success' ? step.status : 'error',
+        subSteps: step.subSteps?.map(sub => ({
+          ...sub,
+          status: sub.status === 'success' ? sub.status : 'error'
+        }))
+      })));
     }
-  }, [atelier, sceneRefs, exportScene, uploadToWalrus, exportFormat, signAndExecuteTransaction, options]);
+  }, [atelier, sceneRefs, exportScene, uploadToWalrus, exportFormat, generateStl, parameters, previewParams, signAndExecuteTransaction, selectedKiosk, kiosks, updateStepStatus]);
 
   const resetMintStatus = () => {
     setMintStatus('idle');
     setMintError(null);
     setTxDigest(null);
+    setCurrentStep(0);
+    setSteps(createInitialSteps(generateStl));
   };
 
   return {
     mintStatus,
     mintError,
     txDigest,
+    currentStep,
+    steps,
     handleMint,
     resetMintStatus,
   };
