@@ -309,7 +309,7 @@ export default function UnifiedParametricScene({
     controls.addEventListener('start', () => {
       isInteracting = true;
       if (isStaticRef.current) {
-        function interactionRender() {
+        const interactionRender = () => {
           if (!isInteracting || !controlsRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
             interactionFrameId = null;
             return;
@@ -317,7 +317,7 @@ export default function UnifiedParametricScene({
           controlsRef.current.update();
           render();
           interactionFrameId = requestAnimationFrame(interactionRender);
-        }
+        };
         interactionRender();
       }
     });
