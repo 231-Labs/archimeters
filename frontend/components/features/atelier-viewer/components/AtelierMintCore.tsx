@@ -89,7 +89,7 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
   // Even if UI somehow allows it, backend should not generate STL
   const effectiveGenerateStl = isPrintable ? generateStl : false;
 
-  const { mintStatus, mintError, txDigest, currentStep, steps, handleMint } = useSculptMint({
+  const { mintStatus, mintError, txDigest, currentStep, steps, screenshotDataUrl, handleMint } = useSculptMint({
     atelier,
     sceneRefs,
     exportScene,
@@ -181,10 +181,10 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
         steps={steps}
         txDigest={txDigest}
         mintError={mintError}
-        previewImage={atelier.url}
+        previewImage={screenshotDataUrl || atelier.url}
         sculptName={alias || atelier.title}
         atelierName={atelier.title}
-        atelierAuthor={atelier.author || 'Unknown'}
+        atelierAuthor={atelier.artistName || atelier.author || 'Unknown'}
         atelierDescription={atelier.intro || atelier.description || ''}
         sculptOwner={currentAccount?.address ? formatAddress(currentAccount.address) : ''}
         onGoToVault={onOpenWindow ? handleGoToVault : undefined}
@@ -194,58 +194,58 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
   }
 
   return (
-    <AtelierMintLayout
-      workName={atelier.title}
-      description={atelier.description || ''}
-      price={scaleSuiPrice(atelier.price)}
-      author={atelier.artistName || atelier.author}
-      social={formatAddress(atelier.artistAddress || '')}
-      intro={formatText(atelier.artistStatement || '')}
-      imageUrl={atelier.url || ''}
-      parameters={parameters}
-      previewParams={previewParams}
-      onParameterChange={handleParameterChange}
-      onMint={onMint}
-      exportFormatToggle={stlToggle}
-      mintButtonState={{
-        ...mintButtonState,
-        tooltipComponent,
-      }}
-      alias={alias}
-      onAliasChange={setAlias}
-      preview3D={
-        <div className="w-full h-full relative">
-          <ParametricViewer {...viewerProps} />
-          {/* Artwork type indicator */}
-          <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm px-3 py-1.5 border border-white/20 rounded">
-            <div className="flex items-center gap-2">
-              {isPrintable ? (
-                <>
-                  <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                    />
-                  </svg>
-                  <span className="text-white/80 text-[10px] font-mono uppercase tracking-wide">3D Printable</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="text-cyan-400 text-[10px] font-mono uppercase tracking-wide">Animated</span>
-                </>
-              )}
+      <AtelierMintLayout
+        workName={atelier.title}
+        description={atelier.description || ''}
+        price={scaleSuiPrice(atelier.price)}
+        author={atelier.artistName || atelier.author}
+        social={formatAddress(atelier.artistAddress || '')}
+        intro={formatText(atelier.artistStatement || '')}
+        imageUrl={atelier.url || ''}
+        parameters={parameters}
+        previewParams={previewParams}
+        onParameterChange={handleParameterChange}
+        onMint={onMint}
+        exportFormatToggle={stlToggle}
+        mintButtonState={{
+          ...mintButtonState,
+          tooltipComponent,
+        }}
+        alias={alias}
+        onAliasChange={setAlias}
+        preview3D={
+          <div className="w-full h-full relative">
+            <ParametricViewer {...viewerProps} />
+            {/* Artwork type indicator */}
+            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm px-3 py-1.5 border border-white/20 rounded">
+              <div className="flex items-center gap-2">
+                {isPrintable ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      />
+                    </svg>
+                    <span className="text-white/80 text-[10px] font-mono uppercase tracking-wide">3D Printable</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="text-cyan-400 text-[10px] font-mono uppercase tracking-wide">Animated</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      }
-    />
+        }
+      />
   );
 }
 

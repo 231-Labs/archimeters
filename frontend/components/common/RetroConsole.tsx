@@ -119,9 +119,9 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       </div>
 
       {/* Main Content - Two Columns */}
-      <div className="flex gap-6 items-start" style={{ maxHeight: '60vh' }}>
+      <div className="flex gap-8 items-start" style={{ maxHeight: '60vh' }}>
         {/* Left Column - Progress & Status */}
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2" style={{ maxHeight: '60vh' }}>
+        <div className="w-[60%] flex flex-col gap-3 overflow-y-auto pr-2" style={{ maxHeight: '60vh' }}>
           {/* Steps List */}
           <div className="space-y-2">
             {steps.map((step, index) => (
@@ -283,8 +283,9 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
 
         {/* Right Column - Card Preview */}
         {previewImage && (
-          <div className="w-[340px] shrink-0">
-            <RetroMintCard
+          <div className="flex-1 flex items-center justify-center px-8">
+            <div className="w-[340px]">
+              <RetroMintCard
               imageUrl={previewImage}
               sculptName={sculptName}
               atelierName={atelierName}
@@ -293,7 +294,8 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
               sculptOwner={sculptOwner}
               isGenerating={!allStepsComplete && !isTransactionFailed}
               isComplete={allStepsComplete}
-            />
+              />
+            </div>
           </div>
         )}
       </div>

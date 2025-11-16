@@ -88,6 +88,7 @@ export const useSculptMint = ({
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<MintStep[]>(() => createInitialSteps(generateStl));
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const { selectedKiosk, kiosks } = useKiosk();
   // const suiClient = useSuiClient();
@@ -142,6 +143,7 @@ export const useSculptMint = ({
       await new Promise(requestAnimationFrame);
       
       const dataUrl = renderer.domElement.toDataURL('image/png');
+      setScreenshotDataUrl(dataUrl); // Save for preview in mint card
       const blob = await (await fetch(dataUrl)).blob();
       const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
 
@@ -371,6 +373,7 @@ export const useSculptMint = ({
     setTxDigest(null);
     setCurrentStep(0);
     setSteps(createInitialSteps(generateStl));
+    setScreenshotDataUrl(null);
   };
 
   return {
@@ -379,6 +382,7 @@ export const useSculptMint = ({
     txDigest,
     currentStep,
     steps,
+    screenshotDataUrl,
     handleMint,
     resetMintStatus,
   };

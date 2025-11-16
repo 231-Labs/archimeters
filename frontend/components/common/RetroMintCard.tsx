@@ -105,51 +105,29 @@ export function RetroMintCard({
           transformStyle: 'preserve-3d',
         }}
       >
-        {/* Card Container with Trading Card Border */}
+        {/* Card Container - Retro Style */}
         <div
-          className="w-full h-full relative overflow-hidden rounded-lg"
+          className="w-full h-full relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
-            borderTop: '4px solid #555',
-            borderLeft: '4px solid #555',
-            borderBottom: '4px solid #000',
-            borderRight: '4px solid #000',
+            background: '#1a1a1a',
+            borderTop: '3px solid #555',
+            borderLeft: '3px solid #555',
+            borderBottom: '3px solid #000',
+            borderRight: '3px solid #000',
             boxShadow: `
-              inset 0 0 0 2px rgba(100, 200, 255, 0.15),
-              inset 3px 3px 6px rgba(255, 255, 255, 0.08),
-              inset -3px -3px 6px rgba(0, 0, 0, 0.8),
-              0 10px 30px rgba(0, 0, 0, 0.9),
-              0 0 20px rgba(0, 0, 0, 0.5)
+              inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+              inset -2px -2px 4px rgba(0, 0, 0, 0.8),
+              0 4px 8px rgba(0, 0, 0, 0.5)
             `,
           }}
         >
-          {/* Decorative Corner Marks */}
-          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500/30" />
-          <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-500/30" />
-          <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-500/30" />
-          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-500/30" />
-
-          {/* Card Header */}
-          <div 
-            className="absolute top-0 left-0 right-0 z-10 px-3 py-2"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6))',
-              borderBottom: '1px solid rgba(100, 200, 255, 0.2)',
-            }}
-          >
-            <div className="flex items-center justify-center">
-              <div className="text-cyan-400 text-[10px] font-mono uppercase tracking-widest">
-                Archimeters Sculpt
-              </div>
-            </div>
-          </div>
-          {/* Image Frame */}
-          <div className="absolute inset-0 flex items-center justify-center p-4 pt-12">
+          {/* Image Frame - MTG Style */}
+          <div className="absolute top-3 left-3 right-3 bottom-24">
             <div 
-              className="relative w-full h-full rounded overflow-hidden"
+              className="relative w-full h-full rounded-lg overflow-hidden"
               style={{
-                border: '2px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.6)',
               }}
             >
               {imageUrl ? (
@@ -193,211 +171,126 @@ export function RetroMintCard({
                 }}
               />
 
-              {/* CRT Scanlines Effect (when generating) */}
+              {/* CRT Scanline Effect (when minting) */}
               {isGenerating && (
                 <>
+                  {/* Scanline moving from top to bottom */}
                   <div 
-                    className="absolute inset-0 pointer-events-none"
+                    className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden"
                     style={{
                       background: `
                         repeating-linear-gradient(
                           0deg,
-                          rgba(0, 255, 0, 0.03) 0px,
-                          rgba(0, 0, 0, 0.05) 1px,
-                          rgba(0, 255, 0, 0.03) 2px
+                          rgba(255, 255, 255, 0.1) 0px,
+                          rgba(255, 255, 255, 0.05) 1px,
+                          transparent 2px,
+                          transparent 3px
                         )
                       `,
-                      animation: 'scanline 8s linear infinite',
+                      animation: 'scanline 3s linear infinite',
                     }}
                   />
                   
                   {/* Static Noise */}
                   <div 
-                    className="absolute inset-0 opacity-30 mix-blend-overlay pointer-events-none"
+                    className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none rounded-lg"
                     style={{
                       backgroundImage: `
                         repeating-linear-gradient(
                           0deg,
                           transparent,
-                          transparent 2px,
-                          rgba(255, 255, 255, 0.03) 4px
+                          transparent 1px,
+                          rgba(255, 255, 255, 0.08) 2px
                         ),
                         repeating-linear-gradient(
                           90deg,
                           transparent,
-                          transparent 2px,
-                          rgba(255, 255, 255, 0.03) 4px
+                          transparent 1px,
+                          rgba(255, 255, 255, 0.08) 2px
                         )
                       `,
                       animation: 'flicker 0.15s infinite',
                     }}
                   />
-
-                  {/* Generating Overlay */}
-                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="relative w-16 h-16 mx-auto mb-4">
-                        <div className="absolute inset-0 border-4 border-green-500/30 rounded" />
-                        <div 
-                          className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded animate-spin"
-                          style={{ animationDuration: '1s' }}
-                        />
-                      </div>
-                      <div className="text-green-400 text-sm font-mono uppercase tracking-widest animate-pulse">
-                        Generating...
-                      </div>
-                    </div>
-                  </div>
                 </>
               )}
 
-              {/* Complete Shine Effect */}
+              {/* Complete Shine Effect - Flash once only */}
               {isComplete && (
                 <div 
                   className="absolute inset-0 pointer-events-none"
                   style={{
                     background: 'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)',
-                    animation: 'shine 2s ease-in-out',
-                  }}
-                />
-              )}
-
-              {/* Holographic Border Glow (when complete) */}
-              {isComplete && (
-                <div 
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    boxShadow: `
-                      inset 0 0 20px rgba(100, 200, 255, 0.4),
-                      0 0 30px rgba(100, 200, 255, 0.3)
-                    `,
-                    animation: 'glow 2s ease-in-out infinite',
+                    animation: 'shine 1.5s ease-out 1',
+                    animationFillMode: 'forwards',
+                    opacity: 0,
                   }}
                 />
               )}
             </div>
           </div>
 
-          {/* Card Footer Info Panel */}
+          {/* Card Footer Info Panel - Retro Style */}
           <div 
             className="absolute bottom-0 left-0 right-0 p-3"
             style={{
-              background: 'linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%)',
-              borderTop: '1px solid rgba(100, 200, 255, 0.2)',
+              background: 'linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(33, 33, 33, 0.7) 70%, transparent 100%)',
             }}
           >
             {/* Sculpt Name */}
-            <div className="mb-2">
-              <div className="text-white/50 text-[9px] font-mono uppercase tracking-widest mb-0.5">
-                Sculpt Name
-              </div>
-              <div className="text-white/95 text-sm font-mono uppercase tracking-wide truncate">
+            <div 
+              className="mb-2 pb-2"
+              style={{
+                borderBottom: '2px solid #444',
+                borderTop: '2px solid #000',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+                background: '#1a1a1a',
+                padding: '6px 8px',
+              }}
+            >
+              <div className="text-white/90 text-sm font-mono uppercase tracking-wide truncate">
                 {sculptName}
               </div>
             </div>
 
-            {/* Atelier Info */}
+            {/* Atelier Info - Retro Panel Style */}
             <div 
-              className="space-y-1.5 pt-2 mb-2"
+              className="space-y-1"
               style={{
-                borderTop: '1px solid rgba(100, 200, 255, 0.15)',
+                background: '#1a1a1a',
+                borderTop: '2px solid #444',
+                borderLeft: '2px solid #444',
+                borderBottom: '2px solid #000',
+                borderRight: '2px solid #000',
+                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
+                padding: '6px 8px',
               }}
             >
-              <div>
-                <div className="text-white/40 text-[8px] font-mono uppercase tracking-widest mb-0.5">
-                  Atelier
-                </div>
-                <div className="text-cyan-400/90 text-[11px] font-mono truncate">
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Atelier</span>
+                <span className="text-white/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                   {atelierName}
-                </div>
+                </span>
               </div>
               
-              <div>
-                <div className="text-white/40 text-[8px] font-mono uppercase tracking-widest mb-0.5">
-                  Author
-                </div>
-                <div className="text-white/70 text-[11px] font-mono truncate">
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Artist</span>
+                <span className="text-white/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                   {atelierAuthor}
-                </div>
+                </span>
               </div>
 
-              {atelierDescription && (
-                <div>
-                  <div className="text-white/40 text-[8px] font-mono uppercase tracking-widest mb-0.5">
-                    Description
-                  </div>
-                  <div className="text-white/60 text-[10px] font-mono line-clamp-2 leading-tight">
-                    {atelierDescription}
-                  </div>
-                </div>
-              )}
-
               {sculptOwner && (
-                <div>
-                  <div className="text-white/40 text-[8px] font-mono uppercase tracking-widest mb-0.5">
-                    Owner
-                  </div>
-                  <div className="text-purple-400/80 text-[10px] font-mono truncate">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Owner</span>
+                  <span className="text-white/70 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                     {sculptOwner}
-                  </div>
+                  </span>
                 </div>
               )}
             </div>
-            
-            {/* Status Indicator */}
-            {isGenerating && (
-              <div 
-                className="flex items-center gap-2 pt-1.5"
-                style={{
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <div className="flex-1 flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500/50 animate-pulse" />
-                  <span className="text-yellow-400/80 text-[10px] font-mono uppercase tracking-widest">
-                    Minting...
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {isComplete && (
-              <div 
-                className="flex items-center justify-center gap-1.5 pt-1.5"
-                style={{
-                  borderTop: '1px solid rgba(100, 200, 255, 0.15)',
-                }}
-              >
-                <div className="w-2 h-2 rounded-full bg-cyan-500" />
-                <span className="text-cyan-400 text-[10px] font-mono uppercase tracking-widest">
-                  Minted
-                </span>
-              </div>
-            )}
           </div>
 
-          {/* Holographic Overlay Pattern */}
-          <div 
-            className="absolute inset-0 opacity-5 pointer-events-none"
-            style={{
-              backgroundImage: `
-                repeating-linear-gradient(
-                  0deg,
-                  transparent,
-                  transparent 10px,
-                  rgba(100, 200, 255, 0.1) 10px,
-                  rgba(100, 200, 255, 0.1) 11px
-                ),
-                repeating-linear-gradient(
-                  90deg,
-                  transparent,
-                  transparent 10px,
-                  rgba(100, 200, 255, 0.1) 10px,
-                  rgba(100, 200, 255, 0.1) 11px
-                )
-              `,
-            }}
-          />
         </div>
       </div>
 
@@ -413,13 +306,17 @@ export function RetroMintCard({
         }
         
         @keyframes shine {
-          0% { transform: translateX(-100%) translateY(-100%); }
-          100% { transform: translateX(100%) translateY(100%); }
-        }
-        
-        @keyframes glow {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
+          0% { 
+            transform: translateX(-100%) translateY(-100%);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% { 
+            transform: translateX(100%) translateY(100%);
+            opacity: 0;
+          }
         }
       `}</style>
     </div>
