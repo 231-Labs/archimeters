@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useMemo, memo } from 'react';
-import ParametricScene from '@/components/3d/ParametricScene';
-import AnimatedParametricScene from '@/components/3d/AnimatedParametricScene';
+import UnifiedParametricScene from '@/components/3d/UnifiedParametricScene';
 import * as THREE from 'three';
 
 interface ParametricViewerProps {
@@ -9,7 +8,7 @@ interface ParametricViewerProps {
     filename: string;
   } | null;
   parameters: Record<string, any>;
-  isPrintable?: boolean; // true = use static renderer, false = use animated renderer
+  isPrintable?: boolean; // Used for STL export control, not rendering
   className?: string;
   onSceneReady?: (scene: THREE.Scene) => void;
   onRendererReady?: (renderer: THREE.WebGLRenderer) => void;
@@ -20,7 +19,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
   function ParametricViewer({
     userScript,
     parameters,
-    isPrintable = true,
+    isPrintable = true, // Still tracked for STL export control
     className = 'w-full h-full rounded-lg overflow-hidden bg-black/30',
     onSceneReady,
     onRendererReady,
@@ -67,12 +66,12 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
         </div>
       );
     }
-    // Choose renderer based on isPrintable flag
-    const SceneComponent = isPrintable ? ParametricScene : AnimatedParametricScene;
     
+    // Use unified renderer for all artwork types
+    // It automatically detects and handles both static and animated scenes
     return (
       <div className={className} style={{ minHeight: '400px' }}>
-        <SceneComponent
+        <UnifiedParametricScene
           userScript={userScript}
           parameters={parameters}
           {...callbacks}
@@ -80,7 +79,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
         {/* Debug indicator */}
         {process.env.NODE_ENV === 'development' && (
           <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-[9px] font-mono text-white/60">
-            {isPrintable ? '3D STATIC' : '2D ANIMATED'}
+            {isPrintable ? 'PRINTABLE' : 'ANIMATED'} | UNIFIED
           </div>
         )}
       </div>
