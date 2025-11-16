@@ -170,8 +170,12 @@ export default function AnimatedParametricScene({
         // Fallback to standard geometry
         if (typeof createGeometry === 'function') {
           const geometry = createGeometry(THREE, params);
+          
+          // Check if geometry has vertex colors
+          const hasVertexColors = geometry.getAttribute('color') !== undefined;
+          
           const material = new THREE.MeshPhongMaterial({
-            color: params.color || 0xff3366,
+            color: hasVertexColors ? 0xffffff : (params.color || 0xff3366),
             emissive: params.emissive || 0x000000,
             specular: 0x111111,
             shininess: 30,
@@ -179,6 +183,7 @@ export default function AnimatedParametricScene({
             transparent: params.opacity !== undefined && params.opacity < 1,
             opacity: params.opacity || 1.0,
             side: THREE.DoubleSide,
+            vertexColors: hasVertexColors, // Enable vertex colors if available
           });
           const mesh = new THREE.Mesh(geometry, material);
           mesh.castShadow = true;
