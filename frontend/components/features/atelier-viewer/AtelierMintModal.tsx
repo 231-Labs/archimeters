@@ -2,19 +2,20 @@
 
 import { useEffect } from 'react';
 import { AtelierMintCore } from './components/AtelierMintCore';
-import { RetroButton } from '@/components/common/RetroButton';
+import { WindowName } from '@/components/features/window-manager/types';
 
 interface AtelierMintModalProps {
   atelier: any;
   isOpen: boolean;
   onClose: () => void;
+  onOpenWindow?: (windowName: WindowName) => void;
 }
 
 /**
  * AtelierMintModal - Modal wrapper for Atelier minting
  * Displays the minting interface in a modal overlay
  */
-export function AtelierMintModal({ atelier, isOpen, onClose }: AtelierMintModalProps) {
+export function AtelierMintModal({ atelier, isOpen, onClose, onOpenWindow }: AtelierMintModalProps) {
 
   // ESC key support
   useEffect(() => {
@@ -45,18 +46,7 @@ export function AtelierMintModal({ atelier, isOpen, onClose }: AtelierMintModalP
 
       {/* Modal Content - covers entire window content area */}
       <div className="absolute inset-0 z-50 overflow-auto hide-scrollbar bg-[#0a0a0a]">
-        {/* Close Button */}
-        <div className="absolute top-4 right-4 z-[60]">
-          <RetroButton
-            size="sm"
-            variant="secondary"
-            onClick={onClose}
-          >
-            BACK
-          </RetroButton>
-        </div>
-
-        <AtelierMintCore atelier={atelier} />
+        <AtelierMintCore atelier={atelier} onOpenWindow={onOpenWindow} onBack={onClose} />
 
         <style jsx>{`
           .hide-scrollbar {

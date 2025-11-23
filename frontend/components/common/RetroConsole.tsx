@@ -1,6 +1,7 @@
 'use client';
 
 import { RetroProgressStep } from './RetroProgressStep';
+import { RetroMintCard } from './RetroMintCard';
 
 interface Step {
   id: string;
@@ -18,17 +19,23 @@ interface RetroConsoleProps {
   steps: Step[];
   txHash?: string;
   title?: string;
+  errorMessage?: string | null;
+  previewImage?: string;
+  sculptName?: string;
+  atelierName?: string;
+  atelierAuthor?: string;
+  atelierDescription?: string;
+  sculptOwner?: string;
   onGoToVault?: () => void;
   onGoToMarketplace?: () => void;
+  onBack?: () => void;
 }
 
-export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS', onGoToVault, onGoToMarketplace }: RetroConsoleProps) {
-  // 檢查交易狀態
+export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING STATUS', errorMessage, previewImage, sculptName, atelierName, atelierAuthor, atelierDescription, sculptOwner, onGoToVault, onGoToMarketplace, onBack }: RetroConsoleProps) {
   const transactionStep = steps.find(step => step.id === 'transaction');
   const isTransactionComplete = transactionStep?.status === 'success';
   const isTransactionFailed = transactionStep?.status === 'error';
 
-  // 檢查所有步驟是否完成
   const allStepsComplete = steps.every(step => {
     if (step.status !== 'success') return false;
     if (step.subSteps) {
@@ -37,7 +44,6 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
     return true;
   });
 
-  // 計算整體進度
   const totalSteps = steps.reduce((acc, step) => {
     return acc + 1 + (step.subSteps?.length || 0);
   }, 0);
@@ -113,24 +119,24 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
       </div>
 
       {/* Main Content - Two Columns */}
-      <div className="flex gap-4 items-start" style={{ maxHeight: '60vh' }}>
-        {/* Left Column - Steps List */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2" style={{ maxHeight: '60vh' }}>
-          {steps.map((step, index) => (
-            <RetroProgressStep
-              key={step.id}
-              step={step}
-              isActive={currentStep === index}
-              isCompleted={currentStep > index}
-            />
-          ))}
-        </div>
+      <div className="flex gap-8 items-start" style={{ maxHeight: '60vh' }}>
+        {/* Left Column - Progress & Status */}
+        <div className="w-[70%] flex flex-col gap-3 overflow-y-auto pr-2" style={{ maxHeight: '60vh' }}>
+          {/* Steps List */}
+          <div className="space-y-2">
+            {steps.map((step, index) => (
+              <RetroProgressStep
+                key={step.id}
+                step={step}
+                isActive={currentStep === index}
+                isCompleted={currentStep > index}
+              />
+            ))}
+          </div>
 
-        {/* Right Column - Transaction & Success */}
-        <div className="w-[400px] flex flex-col gap-3 overflow-y-auto pr-2 shrink-0" style={{ maxHeight: '60vh' }}>
-          {/* Transaction Hash - Always visible */}
+          {/* Transaction Digest - Compact Version */}
           <div 
-            className="p-4"
+            className="p-3 mt-2"
             style={{
               background: '#1a1a1a',
               borderTop: '2px solid #444',
@@ -140,9 +146,9 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
               boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
             }}
           >
-            <div className="text-white/90 text-xs font-mono uppercase tracking-wide mb-3">Transaction Digest</div>
+            <div className="text-white/80 text-[10px] font-mono uppercase tracking-wide mb-2">Transaction Digest</div>
             <div 
-              className="p-2 bg-black/60 border border-white/10 break-all font-mono text-xs"
+              className="p-2 bg-black/60 border border-white/10 break-all font-mono text-[10px] leading-tight"
               style={{
                 borderTop: '2px solid #000',
                 borderLeft: '2px solid #000',
@@ -163,7 +169,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 href={`https://suiscan.xyz/testnet/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-white/60 hover:text-white/90 text-xs font-mono transition-colors"
+                className="mt-2 inline-flex items-center gap-1 text-white/60 hover:text-white/90 text-[10px] font-mono transition-colors"
               >
                 <span>→</span>
                 <span>VIEW ON EXPLORER</span>
@@ -171,9 +177,9 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
             )}
           </div>
 
-          {/* Status Message - Always visible */}
+          {/* Status Message - Compact Version */}
           <div 
-            className="p-4"
+            className="p-3"
             style={{
               background: '#1a1a1a',
               borderTop: '2px solid #444',
@@ -185,13 +191,13 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
           >
             {allStepsComplete ? (
               <>
-                <div className="text-center mb-3">
-                  <div className="text-green-400 text-lg font-mono mb-2">PUBLISH COMPLETE</div>
-                  <div className="text-white/60 text-xs font-mono">What would you like to do next?</div>
+                <div className="text-center mb-2">
+                  <div className="text-green-400 text-sm font-mono mb-1">MINT COMPLETE</div>
+                  <div className="text-white/60 text-[10px] font-mono">What would you like to do next?</div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {/* Vault Button */}
                   {onGoToVault && (
                     <button
@@ -204,11 +210,32 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                         borderBottom: '2px solid #000',
                         borderRight: '2px solid #000',
                         boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '12px',
+                        padding: '8px',
                       }}
                     >
-                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                        OPEN VAULT
+                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                        VAULT
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Back Button (when modal) */}
+                  {onBack && (
+                    <button
+                      onClick={onBack}
+                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+                      style={{
+                        background: '#1a1a1a',
+                        borderTop: '2px solid #444',
+                        borderLeft: '2px solid #444',
+                        borderBottom: '2px solid #000',
+                        borderRight: '2px solid #000',
+                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
+                        padding: '8px',
+                      }}
+                    >
+                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                        BACK
                       </div>
                     </button>
                   )}
@@ -225,24 +252,52 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                         borderBottom: '2px solid #000',
                         borderRight: '2px solid #000',
                         boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '12px',
+                        padding: '8px',
                       }}
                     >
-                      <div className="text-white/80 group-hover:text-white text-sm font-mono mb-1 transition-colors">
-                        OPEN MARKETPLACE
+                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                        MARKETPLACE
                       </div>
                     </button>
                   )}
                 </div>
               </>
+            ) : isTransactionFailed ? (
+              <div className="text-center">
+                <div className="text-red-400 text-sm font-mono mb-1">TRANSACTION FAILED</div>
+                {errorMessage && (
+                  <div className="text-white/60 text-[10px] font-mono mt-1 break-words">
+                    {errorMessage}
+                  </div>
+                )}
+                <div className="text-white/40 text-[10px] font-mono mt-2">Try again or contact support</div>
+              </div>
             ) : (
               <div className="text-center">
-                <div className="text-white/70 text-lg font-mono mb-2">PUBLISHING IN PROGRESS</div>
-                <div className="text-white/40 text-xs font-mono">Please wait while your Atelier is being published...</div>
+                <div className="text-white/70 text-sm font-mono mb-1">MINTING IN PROGRESS</div>
+                <div className="text-white/40 text-[10px] font-mono">Please wait...</div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Right Column - Card Preview */}
+        {previewImage && (
+          <div className="flex-1 flex items-center justify-center px-8">
+            <div className="w-[360px]">
+              <RetroMintCard
+              imageUrl={previewImage}
+              sculptName={sculptName}
+              atelierName={atelierName}
+              atelierAuthor={atelierAuthor}
+              atelierDescription={atelierDescription}
+              sculptOwner={sculptOwner}
+              isGenerating={!allStepsComplete && !isTransactionFailed}
+              isComplete={allStepsComplete}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

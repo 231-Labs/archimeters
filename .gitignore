@@ -55,8 +55,8 @@ package-lock.json
 yarn.lock
 
 # Documentation - Internal development docs
-# docs/ (commented out to allow docs/hackathon/)
-!docs/hackathon/
+# Ignore entire docs folder for hackathon submission
+docs/
 *.md.backup
 
 # Contract

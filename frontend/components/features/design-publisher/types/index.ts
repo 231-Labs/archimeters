@@ -83,6 +83,7 @@ export interface ArtworkInfo {
   workName: string;
   description: string;
   price: string;
+  isPrintable: boolean; // true = 3D printable, false = 2D/animated artwork
 }
 
 export interface ArtistInfo {

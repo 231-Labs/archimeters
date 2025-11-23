@@ -140,6 +140,10 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
       const geometry = createGeometry(THREE, parameters);
       console.log('Geometry created successfully');
 
+      // Check if geometry has vertex colors
+      const hasVertexColors = geometry.getAttribute('color') !== undefined;
+      console.log('Geometry has vertex colors:', hasVertexColors);
+
       // if there is an existing mesh, update its geometry and material
       if (meshRef.current) {
         console.log('Updating existing mesh');
@@ -147,9 +151,9 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
         const oldMaterial = meshRef.current.material;
         const oldGeometry = meshRef.current.geometry;
         
-        // create new material
+        // create new material based on whether geometry has vertex colors
         const material = new THREE.MeshPhongMaterial({
-          color: parameters.color || 0xff3366,
+          color: hasVertexColors ? 0xffffff : (parameters.color || 0xff3366),
           emissive: parameters.emissive || 0x000000,
           specular: 0x111111,
           shininess: 30,
@@ -157,6 +161,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
           transparent: parameters.opacity !== undefined && parameters.opacity < 1,
           opacity: parameters.opacity || 1.0,
           side: THREE.DoubleSide,
+          vertexColors: hasVertexColors, // Enable vertex colors if available
         });
 
         // update mesh
@@ -178,7 +183,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
         console.log('Creating new mesh');
         // if there is no mesh, create a new one
         const material = new THREE.MeshPhongMaterial({
-          color: parameters.color || 0xff3366,
+          color: hasVertexColors ? 0xffffff : (parameters.color || 0xff3366),
           emissive: parameters.emissive || 0x000000,
           specular: 0x111111,
           shininess: 30,
@@ -186,6 +191,7 @@ export default function ParametricScene({ userScript, parameters = {}, onSceneRe
           transparent: parameters.opacity !== undefined && parameters.opacity < 1,
           opacity: parameters.opacity || 1.0,
           side: THREE.DoubleSide,
+          vertexColors: hasVertexColors, // Enable vertex colors if available
         });
 
         const mesh = new THREE.Mesh(geometry, material);

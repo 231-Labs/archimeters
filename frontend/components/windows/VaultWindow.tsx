@@ -19,6 +19,7 @@ import { RetroImageItem } from '@/components/common/RetroImageItem';
 
 interface VaultWindowProps {
   name: WindowName;
+  initialTab?: 'ateliers' | 'sculpts';
 }
 
 
@@ -66,8 +67,19 @@ const ImageItem: React.FC<{
   );
 };
 
-export default function VaultWindow({}: VaultWindowProps) {
-  const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>('ateliers');
+export default function VaultWindow({ initialTab }: VaultWindowProps) {
+  // Check sessionStorage for initial tab (from mint sculpt success)
+  const getInitialTab = (): 'ateliers' | 'sculpts' => {
+    if (initialTab) return initialTab;
+    const savedTab = sessionStorage.getItem('vault-initial-tab');
+    if (savedTab === 'sculpts') {
+      sessionStorage.removeItem('vault-initial-tab'); // Clear after reading
+      return 'sculpts';
+    }
+    return 'ateliers';
+  };
+
+  const [activeTab, setActiveTab] = useState<'ateliers' | 'sculpts'>(getInitialTab());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [withdrawStatus, setWithdrawStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [withdrawMessage, setWithdrawMessage] = useState<string>('');

@@ -330,6 +330,7 @@ export default function MarketplaceWindow({
           atelier={selectedAtelier}
           isOpen={!!selectedAtelier}
           onClose={() => setSelectedAtelier(null)}
+          onOpenWindow={onOpenWindow}
         />
       )}
 

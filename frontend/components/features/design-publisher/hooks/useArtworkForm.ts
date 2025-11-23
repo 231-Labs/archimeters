@@ -6,6 +6,7 @@ const defaultArtworkInfo: ArtworkInfo = {
   workName: '',
   description: '',
   price: '',
+  isPrintable: true, // Default to printable (3D) for backward compatibility
 };
 
 const defaultArtistInfo: ArtistInfo = {
@@ -24,7 +25,7 @@ export function useArtworkForm() {
   const [artistInfo, setArtistInfo] = useState<ArtistInfo>(defaultArtistInfo);
   const [designSettings, setDesignSettings] = useState<DesignSettings>(defaultDesignSettings);
 
-  const updateArtworkInfo = useCallback((field: keyof ArtworkInfo, value: string) => {
+  const updateArtworkInfo = useCallback(<K extends keyof ArtworkInfo>(field: K, value: ArtworkInfo[K]) => {
     setArtworkInfo(prev => ({ ...prev, [field]: value }));
   }, []);
 

@@ -9,6 +9,7 @@ interface MetadataParams {
   name: string;
   address: string;
   intro: string;
+  isPrintable?: boolean; // true = 3D printable, false = 2D/animated
   membershipData?: {
     username: string;
     description: string;
@@ -25,6 +26,7 @@ export const createMetadataJson = ({
   name,
   address,
   intro,
+  isPrintable = true,
   membershipData,
   extractedParameters = {}
 }: MetadataParams): File => {
@@ -53,6 +55,7 @@ export const createMetadataJson = ({
     artwork: {
       title: workName,
       description: description,
+      isPrintable: isPrintable, // Flag to indicate if artwork is 3D printable or 2D/animated
       template: {
         id: style === 'default' ? 'default-v1' : `${style}-${fontStyle}`,
         series: style,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, memo } from 'react';
-import ParametricScene from '@/components/3d/ParametricScene';
+import UnifiedParametricScene from '@/components/3d/UnifiedParametricScene';
 import * as THREE from 'three';
 
 interface ParametricViewerProps {
@@ -8,6 +8,7 @@ interface ParametricViewerProps {
     filename: string;
   } | null;
   parameters: Record<string, any>;
+  isPrintable?: boolean; // Used for STL export control, not rendering
   className?: string;
   onSceneReady?: (scene: THREE.Scene) => void;
   onRendererReady?: (renderer: THREE.WebGLRenderer) => void;
@@ -18,6 +19,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
   function ParametricViewer({
     userScript,
     parameters,
+    isPrintable = true, // Still tracked for STL export control
     className = 'w-full h-full rounded-lg overflow-hidden bg-black/30',
     onSceneReady,
     onRendererReady,
@@ -64,13 +66,22 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
         </div>
       );
     }
+    
+    // Use unified renderer for all artwork types
+    // It automatically detects and handles both static and animated scenes
     return (
       <div className={className} style={{ minHeight: '400px' }}>
-        <ParametricScene
+        <UnifiedParametricScene
           userScript={userScript}
           parameters={parameters}
           {...callbacks}
         />
+        {/* Debug indicator */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-[9px] font-mono text-white/60">
+            {isPrintable ? 'PRINTABLE' : 'ANIMATED'} | UNIFIED
+          </div>
+        )}
       </div>
     );
   },
@@ -86,7 +97,8 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
     return (
       userScriptEqual &&
       parametersEqual &&
-      prevProps.className === nextProps.className
+      prevProps.className === nextProps.className &&
+      prevProps.isPrintable === nextProps.isPrintable
     );
   }
 );

@@ -10,7 +10,6 @@ export type WindowName =
   | 'marketplace'     // Marketplace (formerly Gallery)
   | 'atelier-viewer'  // Atelier Viewer
   | 'vault'           // User Assets Vault
-  | 'pavilion'        // Pavilion Browser
   ; 
 
 export interface WindowPosition {
