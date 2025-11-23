@@ -1,9 +1,9 @@
 # Archimeters 🏛️
 ![archimeters_main_vision](https://github.com/user-attachments/assets/5aade832-2568-46e2-9600-336a13353681)
 
-A parametric design platform on the Sui blockchain that connects NFTs with functional 3D designs. Archimeters links digital creation to physical manufacturing, offering model configuration, design previewing, and asset storage through Sui's Walrus decentralized storage.  
+A parametric 3D design platform and marketplace on the Sui blockchain. Creators upload custom algorithms, users co-create personalized designs through parameter adjustment, and mint them as NFTs with secondary market trading. Features Seal encryption for IP protection and connects digital designs to physical manufacturing.  
 
-[Live Demo](https://archimeters-do0x0obs-projects.vercel.app/) 👩🏻‍💻
+[Live Demo](https://archimeters.vercel.app/) 👩🏻‍💻
   
 [繁體中文版](README.zh-TW.md) 🌏
 
@@ -11,10 +11,10 @@ A parametric design platform on the Sui blockchain that connects NFTs with funct
 
 Archimeters connects digital designs with practical applications. Unlike traditional NFTs that often focus on community value, we emphasize functional utility:
 
-- **Parametric Design Tools**: Helping designers create algorithmic designs with ongoing revenue opportunities
-- **User Customization**: Users can adjust parameters to create personalized designs
+- **Reusable Design Algorithm Sales**: Creators earn revenue every time users mint designs using their algorithms, enabling sustainable "one algorithm, multiple revenue streams" business model
+- **User Participation in Creation**: Users actively participate by adjusting parameters, previewing in real-time, and minting personalized designs—true "co-creation" experience
 - **Physical Production**: Digital designs can be manufactured into physical products through the Eureka project
-- **Decentralized Storage**: Using Sui Walrus for design storage
+- **Decentralized Storage**: Using Sui Walrus for design storage with Seal encryption protection
 
 ## Quick Start 🚀
 
@@ -60,12 +60,20 @@ npm run dev
 - **Project Information**: View team and feature information in an interactive format
 - **Command-line Experience**: Navigate project details using text commands
 
+## Key Features ⭐
+
+- **Kiosk Standard Trading**: Secondary market for Sculpt NFTs with automatic royalty distribution
+- **Seal Layered Encryption**: GLB free preview + STL encryption protection, balancing UX and IP protection
+- **Type-Safe Contracts**: Generic type safety with parameter range validation ensuring design integrity
+- **Enhanced UI/UX**: Simplified Publisher, redesigned Marketplace, and improved Vault functionality
+
 ## Sui Blockchain Integration 🔄
 
 Archimeters uses Sui blockchain for:
 - **Walrus Storage**: Storing design files and parameters
-- **[In Development] Seal Encryption**: Encrypted asset protection
-- **Sui Move Contracts**: Ownership verification and fee distribution
+- **Seal Encryption**: Layered encryption (GLB preview + encrypted STL) for IP protection
+- **Sui Move Contracts**: Ownership verification, fee distribution, and on-chain parameter validation
+- **Kiosk Protocol**: Standard NFT trading with automatic royalties
 
 ## Technology Stack 🛠️
 
@@ -95,6 +103,10 @@ npm run lint
 
 ## Future Plans 🚀
 
-- **Off-chain Computation**: Additional 3D modeling capabilities
+- **AtelierCap Trading**: Enable trading of 3D algorithms themselves
 - **AI Integration**: Parameter optimization tools
 - **Manufacturing Network**: Production partnerships for physical items
+
+---
+
+📋 **Detailed changelog**: See [HACKATHON_SUBMISSION_EN.md](HACKATHON_SUBMISSION_EN.md) for complete hackathon updates
