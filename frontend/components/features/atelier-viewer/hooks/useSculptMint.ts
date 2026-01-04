@@ -206,6 +206,7 @@ export const useSculptMint = ({
               atelierId: atelier.id,
               timestamp,
               uniqueResourceId: `0x${uniqueResourceId}`,
+              note: 'This ID will be stored in sculpt.seal_resource_id'
             });
             
             const encryptionResult = await encryptModelFile(
