@@ -40,12 +40,12 @@ export function AtelierMintModal({ atelier, isOpen, onClose, onOpenWindow }: Ate
     <>
       {/* Backdrop - covers entire window content area */}
       <div
-        className="absolute inset-0 bg-black/50 z-40"
+        className="absolute inset-0 bg-background/55 z-40"
         onClick={onClose}
       />
 
       {/* Modal Content - covers entire window content area */}
-      <div className="absolute inset-0 z-50 overflow-auto hide-scrollbar bg-[#0a0a0a]">
+      <div className="absolute inset-0 z-50 overflow-auto hide-scrollbar bg-background text-foreground">
         <AtelierMintCore atelier={atelier} onOpenWindow={onOpenWindow} onBack={onClose} />
 
         <style jsx>{`

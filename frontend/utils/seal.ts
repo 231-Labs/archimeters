@@ -3,12 +3,16 @@
  * Documentation: https://seal-docs.wal.app/UsingSeal/
  */
 import { SealClient, DemType } from '@mysten/seal';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import type { ClientWithCoreApi } from '@mysten/sui/client';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { Transaction } from '@mysten/sui/transactions';
 import { SEAL_CONFIG, getSealKeyServers } from '@/config/seal';
 import { EUREKA_PACKAGE_ID } from '@/utils/transactions';
 
-type SuiJsonRpcClient = any;
+const SEAL_GRPC_URLS: Record<'testnet' | 'mainnet', string> = {
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+};
 
 export interface SealEncryptionResult {
   encryptedBlob: Blob;
@@ -27,32 +31,26 @@ export interface SealEncryptionOptions {
   ownerAddress?: string;
 }
 
-/**
- * Get or create SealClient instance
- * Note: Seal SDK uses old @mysten/sui.js, we need to create a compatible client
- */
-let sealClientInstance: SealClient | null = null;
+const sealClients: Partial<Record<'testnet' | 'mainnet', SealClient>> = {};
 
 function getSealClient(network: 'testnet' | 'mainnet' = 'testnet'): SealClient {
-  if (!sealClientInstance) {
-    // Get key servers from config
+  if (!sealClients[network]) {
     const keyServers = getSealKeyServers(network);
     const serverConfigs = keyServers.map(server => ({
       objectId: server.objectId,
       weight: server.weight,
     }));
 
-    console.log('🔐 Initializing Seal Client with servers:', 
+    console.log('🔐 Initializing Seal Client with servers:',
       keyServers.map(s => s.provider).join(', ')
     );
 
-    // Create a fresh SuiClient instance for Seal SDK
-    // Seal SDK uses old @mysten/sui.js API
-    const suiClient = new SuiClient({ 
-      url: getFullnodeUrl(network) 
-    }) as SuiJsonRpcClient;
+    const suiClient = new SuiGrpcClient({
+      network,
+      baseUrl: SEAL_GRPC_URLS[network],
+    });
 
-    sealClientInstance = new SealClient({
+    sealClients[network] = new SealClient({
       suiClient,
       serverConfigs,
       verifyKeyServers: SEAL_CONFIG.verifyKeyServers,
@@ -60,7 +58,7 @@ function getSealClient(network: 'testnet' | 'mainnet' = 'testnet'): SealClient {
     });
   }
 
-  return sealClientInstance;
+  return sealClients[network]!;
 }
 
 /**
@@ -212,7 +210,7 @@ export async function encryptModelFile(
  * This function will be called to register the encrypted resource with Seal
  */
 export async function createSealResource(
-  suiClient: SuiClient | SuiJsonRpcClient,
+  suiClient: ClientWithCoreApi,
   transaction: Transaction,
   encryptedBlobId: string,
   ownerAddress: string
@@ -234,7 +232,7 @@ export async function createSealResource(
  * This will be called when adding a printer to the whitelist
  */
 export async function grantPrinterAccess(
-  suiClient: SuiClient | SuiJsonRpcClient,
+  suiClient: ClientWithCoreApi,
   transaction: Transaction,
   resourceId: string,
   printerAddress: string

@@ -18,10 +18,10 @@ interface BackgroundProps {
  */
 const Background = memo(({ walletStatus, paused }: BackgroundProps) => {
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none bg-[#1a1a1a]">
+    <div className="absolute inset-0 z-0 pointer-events-none bg-transparent">
       {/* Full noise effect when disconnected */}
       {walletStatus === 'disconnected' && (
-        <div className="transition-opacity duration-1000 opacity-100 bg-[#1a1a1a]">
+        <div className="transition-opacity duration-1000 opacity-100 bg-transparent">
           <Noise />
         </div>
       )}

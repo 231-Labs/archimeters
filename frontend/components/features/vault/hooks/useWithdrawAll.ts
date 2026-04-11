@@ -4,10 +4,13 @@
  */
 
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useDAppKit, useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
 import { PACKAGE_ID } from '@/utils/transactions';
 import type { AtelierItem } from './useUserItems';
+import { listAllOwnedObjectsByType } from '@/lib/list-owned-objects';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
+import { getEffectsResultDigest } from '@/utils/transaction-helpers';
 
 // Type argument for withdraw_pool - just the generic type parameter
 const ATELIER_TYPE_ARG = `${PACKAGE_ID}::atelier::ATELIER`;
@@ -28,9 +31,9 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
   const [error, setError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const [totalWithdrawn, setTotalWithdrawn] = useState<number>(0);
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
 
   const withdrawAll = async (ateliers: AtelierItem[]) => {
     if (!currentAccount?.address) {
@@ -69,24 +72,18 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
       setTotalWithdrawn(total);
 
       // Fetch all AtelierPoolCap objects owned by the user
-      const { data: poolCapObjects } = await suiClient.getOwnedObjects({
-        owner: currentAccount.address,
-        filter: {
-          StructType: `${PACKAGE_ID}::atelier::AtelierPoolCap<${ATELIER_TYPE_ARG}>`
-        },
-        options: {
-          showContent: true,
-        },
-      });
+      const poolCapObjects = await listAllOwnedObjectsByType(
+        suiClient,
+        currentAccount.address,
+        `${PACKAGE_ID}::atelier::AtelierPoolCap<${ATELIER_TYPE_ARG}>`
+      );
 
-      // Create a map of poolId -> poolCapId
       const poolCapMap = new Map<string, string>();
       for (const obj of poolCapObjects) {
-        if (!obj.data?.content) continue;
-        const content = obj.data.content as any;
-        const poolId = content.fields?.pool_id;
+        const fields = moveObjectFields(obj.json);
+        const poolId = String(pickField(fields, 'pool_id', 'poolId') ?? '');
         if (poolId) {
-          poolCapMap.set(poolId, obj.data.objectId);
+          poolCapMap.set(poolId, obj.objectId);
         }
       }
 
@@ -113,24 +110,9 @@ export function useWithdrawAll(): UseWithdrawAllReturn {
         });
       });
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            setStatus('success');
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to withdraw';
-            setError(errorMessage);
-            setStatus('error');
-            console.error('❌ Batch withdraw failed:', err);
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+      setStatus('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to withdraw';
       setError(errorMessage);

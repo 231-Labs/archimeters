@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSuiClient } from '@mysten/dapp-kit';
-import { KioskClient, Network } from '@mysten/kiosk';
-import { SCULPT_TYPE } from '@/utils/transactions';
+import { useCurrentClient } from '@mysten/dapp-kit-react';
+import { KioskClient } from '@mysten/kiosk';
+import { getSuiJsonRpcClientForEvents } from '@/lib/sui-jsonrpc-events';
 
 interface ListedStatus {
   isListed: boolean;
@@ -16,7 +16,7 @@ export function useSculptListedStatus(
   refreshKey: number = 0,
   kioskId: string | null = null
 ): ListedStatus {
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [status, setStatus] = useState<ListedStatus>({
     isListed: false,
     price: null,
@@ -64,8 +64,8 @@ export function useSculptListedStatus(
         setStatus(prev => ({ ...prev, isLoading: true, error: null }));
 
         const kioskClient = new KioskClient({
-          client: suiClient as any,
-          network: Network.TESTNET,
+          client: suiClient as never,
+          network: 'testnet',
         });
 
         if (kioskId) {
@@ -103,16 +103,13 @@ export function useSculptListedStatus(
         }
 
         try {
-          const sculptObj = await suiClient.getObject({
-            id: sculptId,
-            options: {
-              showOwner: true,
-            }
+          const { object: sculptRow } = await suiClient.getObject({
+            objectId: sculptId,
           });
 
-          const owner = sculptObj.data?.owner;
-          if (owner && typeof owner === 'object' && 'ObjectOwner' in owner) {
-            const ownerKioskId = (owner as any).ObjectOwner;
+          const owner = sculptRow.owner;
+          if (owner?.$kind === 'ObjectOwner') {
+            const ownerKioskId = owner.ObjectOwner;
             
             try {
               const kioskData = await kioskClient.getKiosk({
@@ -150,7 +147,9 @@ export function useSculptListedStatus(
           console.error('Error checking sculpt owner:', sculptErr);
         }
 
-        const listedEvents = await suiClient.queryEvents({
+        const eventsClient = getSuiJsonRpcClientForEvents('testnet');
+
+        const listedEvents = await eventsClient.queryEvents({
           query: {
             MoveEventType: '0x2::kiosk::ItemListed',
           },
@@ -158,7 +157,7 @@ export function useSculptListedStatus(
           order: 'descending',
         });
 
-        const delistedEvents = await suiClient.queryEvents({
+        const delistedEvents = await eventsClient.queryEvents({
           query: {
             MoveEventType: '0x2::kiosk::ItemDelisted',
           },

@@ -8,7 +8,7 @@ import { useTransaction } from './useTransaction';
 import { useUpload } from './useUpload';
 import { useKiosk } from '../../entry/hooks';
 import { createMetadataJson } from '../utils/metadata';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit-react';
 import { analyzeScript, getRecommendationMessage, type ScriptAnalysis } from '../utils/scriptDetection';
 import type { UploadResults } from '../types';
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 
 export function useSuiBalance() {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [balance, setBalance] = useState<bigint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +24,8 @@ export function useSuiBalance() {
           owner: currentAccount.address,
           coinType: '0x2::sui::SUI',
         });
-        
-        setBalance(BigInt(balanceData.totalBalance));
+
+        setBalance(BigInt(balanceData.balance.balance));
       } catch (err) {
         console.error('Error fetching balance:', err);
         setError('Failed to fetch balance');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit';
+import { useDAppKit, useCurrentAccount } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
-import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
+import { isTransactionSuccessful, getTransactionError, getEffectsResultDigest } from '@/utils/transaction-helpers';
 
 const MARKETPLACE_PACKAGE = process.env.NEXT_PUBLIC_MARKETPLACE_PACKAGE || '';
 const ATELIER_PACKAGE = process.env.NEXT_PUBLIC_ATELIER_PACKAGE || '';
@@ -31,7 +31,7 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
   const [status, setStatus] = useState<MarketplaceStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const currentAccount = useCurrentAccount();
 
   const listAtelier = async (
@@ -69,30 +69,15 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         typeArguments: [ATELIER_TYPE],
       });
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to list atelier';
       setError(errorMessage);
@@ -133,30 +118,15 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         typeArguments: [ATELIER_TYPE],
       });
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delist atelier';
       setError(errorMessage);
@@ -210,30 +180,15 @@ export function useAtelierMarketplace(): UseAtelierMarketplaceReturn {
         typeArguments: [ATELIER_TYPE],
       });
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to purchase atelier';
       setError(errorMessage);

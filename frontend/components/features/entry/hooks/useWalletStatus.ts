@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { PACKAGE_ID } from '@/utils/transactions';
 import type { WalletStatus } from '../types';
 
@@ -7,7 +7,7 @@ const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export function useWalletStatus() {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
   const [isMinting, setIsMinting] = useState(false);
 
@@ -19,17 +19,13 @@ export function useWalletStatus() {
     }
 
     try {
-      const { data: objects } = await suiClient.getOwnedObjects({
+      const { objects } = await suiClient.listOwnedObjects({
         owner: currentAccount.address,
-        filter: {
-          StructType: MEMBERSHIP_TYPE
-        },
-        options: {
-          showType: true,
-        }
+        type: MEMBERSHIP_TYPE,
+        limit: 1,
       });
 
-      if (objects && objects.length > 0) {
+      if (objects.length > 0) {
         setWalletStatus('connected-with-nft');
         setIsMinting(false);
         return true;

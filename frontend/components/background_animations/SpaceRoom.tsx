@@ -1,12 +1,15 @@
 'use client';
 
 import { useRef, useEffect, useCallback, memo } from 'react';
-import "./SpaceRoom.css";
+import { useDataTheme } from '@/hooks/useDataTheme';
+import './SpaceRoom.css';
 
 const SpaceRoom = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
   const resizeObserverRef = useRef<ResizeObserver>();
+  const theme = useDataTheme();
+  const isLight = theme === 'light';
 
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -15,7 +18,6 @@ const SpaceRoom = memo(() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // Set canvas size
     const updateCanvasSize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -30,28 +32,17 @@ const SpaceRoom = memo(() => {
     if (!setup) return;
     const { ctx, canvas, updateCanvasSize } = setup;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const drawLeftWall = (width: number, height: number) => {
+      const wallFrontBottom = { x: 0, y: height };
+      const wallFrontTop = { x: 0, y: 26 };
+      const wallBackTop = { x: width * 0.15, y: 26 };
+      const wallBackBottom = { x: width * 0.4, y: height * 0.85 };
 
-    // Left wall coordinates
-    const wallFrontBottom = { x: 0, y: height }; // Bottom left
-    const wallFrontTop = { x: 0, y: 26 }; // Top left
-    const wallBackTop = { x: width * 0.15, y: 26 }; // Top right
-    const wallBackBottom = { x: width * 0.4, y: height * 0.85 }; // Bottom right
-
-    // Floor coordinates
-    const wallFrontBottomB = { x: 0, y: height }; // Bottom left
-    const wallFrontTopB = { x: width * 0.4, y: height * 0.85 }; // Top left
-    const wallBackTopB = { x: width * 1.2, y: height * 0.85 }; // Top right
-    const wallBackBottomB = { x: width, y: height }; // Bottom right
-
-    const drawLeftWall = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = isLight ? 'rgba(88, 90, 92, 0.26)' : 'white';
+      ctx.lineWidth = isLight ? 1.5 : 2;
+      ctx.globalAlpha = isLight ? 0.85 : 0.6;
 
-      // Draw wall outline
       ctx.beginPath();
       ctx.moveTo(wallFrontBottom.x, wallFrontBottom.y);
       ctx.lineTo(wallFrontTop.x, wallFrontTop.y);
@@ -60,26 +51,29 @@ const SpaceRoom = memo(() => {
       ctx.closePath();
 
       const leftGradient = ctx.createLinearGradient(wallBackBottom.x, 0, wallFrontBottom.x, 0);
-      leftGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
-      leftGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
+      if (isLight) {
+        leftGradient.addColorStop(0, 'rgba(198, 198, 196, 0.4)');
+        leftGradient.addColorStop(1, 'rgba(175, 175, 172, 0.16)');
+      } else {
+        leftGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
+        leftGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
+      }
       ctx.fillStyle = leftGradient;
       ctx.fill();
       ctx.stroke();
 
-      // Calculate right boundary line equation
       const rightBoundarySlope = (wallBackBottom.y - wallBackTop.y) / (wallBackBottom.x - wallBackTop.x);
       const rightBoundaryIntercept = wallBackTop.y - rightBoundarySlope * wallBackTop.x;
       const getRightBoundaryY = (x: number) => rightBoundarySlope * x + rightBoundaryIntercept;
 
-      // Draw vertical grid lines
       const verticalLines = 20;
       for (let i = 0; i <= verticalLines; i++) {
         const tLinear = i / verticalLines;
-        const t = Math.sqrt(tLinear); // Non-linear distribution: denser at back
+        const t = Math.sqrt(tLinear);
 
         const x = wallFrontBottom.x + t * (wallBackBottom.x - wallFrontBottom.x);
         const yBottom = wallFrontBottom.y + t * (wallBackBottom.y - wallFrontBottom.y);
-        
+
         if (x <= wallBackBottom.x) {
           const rightBoundaryY = getRightBoundaryY(x);
           const yTop = Math.max(wallFrontTop.y, rightBoundaryY);
@@ -91,7 +85,6 @@ const SpaceRoom = memo(() => {
         }
       }
 
-      // Draw horizontal grid lines
       const horizontalLines = 7;
       for (let i = 1; i < horizontalLines; i++) {
         const t = i / horizontalLines;
@@ -103,7 +96,6 @@ const SpaceRoom = memo(() => {
         ctx.stroke();
       }
 
-      // Draw diagonal lines
       ctx.beginPath();
       ctx.moveTo(width * 0.03, wallFrontTop.y);
       ctx.lineTo(wallBackBottom.x, wallBackBottom.y);
@@ -112,12 +104,16 @@ const SpaceRoom = memo(() => {
       ctx.globalAlpha = 1;
     };
 
-    const drawFloor = () => {
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.6;
+    const drawFloor = (width: number, height: number) => {
+      const wallFrontBottomB = { x: 0, y: height };
+      const wallFrontTopB = { x: width * 0.4, y: height * 0.85 };
+      const wallBackTopB = { x: width * 1.2, y: height * 0.85 };
+      const wallBackBottomB = { x: width, y: height };
 
-      // Draw floor outline
+      ctx.strokeStyle = isLight ? 'rgba(88, 90, 92, 0.26)' : 'white';
+      ctx.lineWidth = isLight ? 1.5 : 2;
+      ctx.globalAlpha = isLight ? 0.85 : 0.6;
+
       ctx.beginPath();
       ctx.moveTo(wallFrontBottomB.x, wallFrontBottomB.y);
       ctx.lineTo(wallFrontTopB.x, wallFrontTopB.y);
@@ -126,13 +122,17 @@ const SpaceRoom = memo(() => {
       ctx.closePath();
 
       const bottomGradient = ctx.createLinearGradient(0, wallFrontTopB.y, 0, wallBackBottomB.y);
-      bottomGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
-      bottomGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
+      if (isLight) {
+        bottomGradient.addColorStop(1, 'rgba(168, 168, 165, 0.22)');
+        bottomGradient.addColorStop(0, 'rgba(205, 205, 202, 0.38)');
+      } else {
+        bottomGradient.addColorStop(1, 'rgba(76, 76, 104, 0.4)');
+        bottomGradient.addColorStop(0, 'rgba(120, 120, 129, 1)');
+      }
       ctx.fillStyle = bottomGradient;
       ctx.fill();
       ctx.stroke();
 
-      // Draw vertical grid lines
       const verticalLines = 12;
       for (let i = 0; i <= verticalLines; i++) {
         const t = i / verticalLines;
@@ -146,11 +146,10 @@ const SpaceRoom = memo(() => {
         ctx.stroke();
       }
 
-      // Draw horizontal grid lines (floor, dense at front)
       const horizontalLines = 20;
       for (let i = 1; i < horizontalLines; i++) {
         const tLinear = i / horizontalLines;
-        const t = Math.sqrt(tLinear); // Non-linear: dense at front, sparse at back
+        const t = Math.sqrt(tLinear);
 
         const xStart = wallFrontBottomB.x + t * (wallFrontTopB.x - wallFrontBottomB.x);
         const yStart = wallFrontBottomB.y + t * (wallFrontTopB.y - wallFrontBottomB.y);
@@ -167,36 +166,34 @@ const SpaceRoom = memo(() => {
     };
 
     const draw = () => {
-      drawLeftWall();
-      drawFloor();
+      const width = canvas.width;
+      const height = canvas.height;
+      drawLeftWall(width, height);
+      drawFloor(width, height);
       animationFrameRef.current = requestAnimationFrame(draw);
     };
 
-    // Setup resize observer
     resizeObserverRef.current = new ResizeObserver(() => {
       updateCanvasSize();
-      draw(); // Redraw when size changes
     });
     resizeObserverRef.current.observe(canvas);
 
-    // Start animation
     draw();
 
-    // Cleanup
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
+      resizeObserverRef.current?.disconnect();
     };
-  }, [setupCanvas]);
+  }, [setupCanvas, isLight]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full z-0 opacity-10 pointer-events-none animate-[appear_2s_ease-out]"
+      className={`fixed top-0 left-0 w-full h-full z-0 pointer-events-none animate-[appear_2s_ease-out] ${
+        isLight ? 'opacity-[0.14]' : 'opacity-10'
+      }`}
       style={{ animationFillMode: 'forwards' }}
     />
   );

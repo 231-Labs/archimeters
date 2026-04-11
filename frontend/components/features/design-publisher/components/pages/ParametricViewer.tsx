@@ -20,7 +20,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
     userScript,
     parameters,
     isPrintable = true, // Still tracked for STL export control
-    className = 'w-full h-full rounded-lg overflow-hidden bg-black/30',
+    className = 'w-full h-full rounded-lg overflow-hidden bg-panel-deep/40',
     onSceneReady,
     onRendererReady,
     onCameraReady
@@ -53,7 +53,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
 
     if (!userScript) {
       return (
-        <div className={`${className} flex items-center justify-center text-white/50`}>
+        <div className={`${className} flex items-center justify-center text-muted-foreground`}>
           No geometry script provided
         </div>
       );
@@ -78,7 +78,7 @@ export const ParametricViewer: React.FC<ParametricViewerProps> = memo(
         />
         {/* Debug indicator */}
         {process.env.NODE_ENV === 'development' && (
-          <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-[9px] font-mono text-white/60">
+          <div className="absolute top-2 right-2 bg-panel-deep/85 border border-border px-2 py-1 rounded text-[9px] font-mono text-muted-foreground z-10">
             {isPrintable ? 'PRINTABLE' : 'ANIMATED'} | UNIFIED
           </div>
         )}

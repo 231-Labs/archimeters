@@ -50,28 +50,30 @@ export function RetroImageItem({
   });
   const [loaded, setLoaded] = useState(false);
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className={`w-full aspect-square bg-neutral-800/50 rounded-sm ${className}`}>
-        {!lazyLoad && <div className="w-full h-full animate-pulse" />}
+      <div className={`w-full aspect-square bg-panel-deep/60 border border-border rounded-sm ${className}`}>
+        {!lazyLoad && <div className="w-full h-full animate-pulse bg-panel-deep/40" />}
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className={`w-full aspect-square bg-red-900/20 flex items-center justify-center rounded-sm ${className}`}>
-        <p className="text-red-500 text-sm">{error}</p>
+      <div
+        className={`w-full aspect-square bg-red-500/10 border border-red-500/30 flex items-center justify-center rounded-sm px-2 text-center ${className}`}
+      >
+        <p className="text-red-600 dark:text-red-400 text-xs font-mono leading-snug">{error}</p>
       </div>
     );
   }
 
   if (!imageSrc || imageSrc.trim() === '') {
     return (
-      <div className={`w-full aspect-square bg-neutral-800/50 flex items-center justify-center rounded-sm ${className}`}>
-        <p className="text-neutral-500 text-xs">No image</p>
+      <div
+        className={`w-full aspect-square bg-panel-deep/50 border border-border flex items-center justify-center rounded-sm ${className}`}
+      >
+        <p className="text-muted-foreground text-xs font-mono">No image</p>
       </div>
     );
   }
@@ -113,10 +115,9 @@ export function RetroImageItem({
             unoptimized={imageUrl.includes('/api/image-proxy')}
           />
         ) : (
-          <div className="w-full aspect-square bg-neutral-800/50 animate-pulse rounded-sm" />
+          <div className="w-full aspect-square bg-panel-deep/50 animate-pulse rounded-sm border border-border" />
         )}
-        {/* Subtle overlay for depth - very transparent, disappears on hover */}
-        <div className="absolute inset-0 bg-black/10 rounded-sm pointer-events-none transition-opacity duration-300 group-hover:opacity-0" />
+        <div className="absolute inset-0 bg-foreground/[0.06] rounded-sm pointer-events-none transition-opacity duration-300 group-hover:opacity-0" />
         
         {/* Bottom info bar */}
         {infoContent && (
@@ -127,7 +128,7 @@ export function RetroImageItem({
                 : ''
             }`}
           >
-            <div className="bg-black/40 backdrop-blur-sm px-3 py-2">
+            <div className="bg-panel-deep/90 backdrop-blur-sm border-t border-border px-3 py-2 text-foreground">
               {infoContent}
             </div>
           </div>

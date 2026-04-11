@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useDAppKit } from '@mysten/dapp-kit-react';
+import { getExecutedTransactionDigest } from '@/lib/transaction-result';
 import * as THREE from 'three';
 import { mintSculpt } from '@/utils/transactions';
 import { convertParamsToChain } from '@/utils/parameterOffset';
@@ -89,7 +90,7 @@ export const useSculptMint = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<MintStep[]>(() => createInitialSteps(generateStl));
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const { selectedKiosk, kiosks } = useKiosk();
   // const suiClient = useSuiClient();
 
@@ -332,25 +333,10 @@ export const useSculptMint = ({
         Number(atelier.price),
       );
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            setMintStatus('success');
-            updateStepStatus('transaction', 'success');
-          },
-          onError: (error) => {
-            const errorMsg = error instanceof Error ? error.message : 'Failed to mint sculpt';
-            setMintError(errorMsg);
-            setMintStatus('error');
-            updateStepStatus('transaction', 'error');
-          }
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getExecutedTransactionDigest(result));
+      setMintStatus('success');
+      updateStepStatus('transaction', 'success');
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to mint sculpt';
@@ -366,7 +352,7 @@ export const useSculptMint = ({
         }))
       })));
     }
-  }, [atelier, sceneRefs, exportScene, uploadToWalrus, exportFormat, generateStl, parameters, previewParams, signAndExecuteTransaction, selectedKiosk, kiosks, updateStepStatus]);
+  }, [atelier, sceneRefs, exportScene, uploadToWalrus, exportFormat, generateStl, parameters, previewParams, dAppKit, selectedKiosk, kiosks, updateStepStatus]);
 
   const resetMintStatus = () => {
     setMintStatus('idle');

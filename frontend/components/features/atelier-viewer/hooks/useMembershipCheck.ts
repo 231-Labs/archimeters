@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { MEMBERSHIP_TYPE } from '@/utils/transactions';
 
 export const useMembershipCheck = () => {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [hasMembership, setHasMembership] = useState(false);
 
   const checkMembershipNFT = useCallback(async () => {
@@ -15,21 +15,17 @@ export const useMembershipCheck = () => {
     }
 
     try {
-      const { data: objects } = await suiClient.getOwnedObjects({
+      const { objects } = await suiClient.listOwnedObjects({
         owner: currentAccount.address,
-        filter: {
-          StructType: MEMBERSHIP_TYPE
-        },
-        options: {
-          showType: true,
-        }
+        type: MEMBERSHIP_TYPE,
+        limit: 1,
       });
 
-      const hasNFT = objects && objects.length > 0;
+      const hasNFT = objects.length > 0;
       setHasMembership(hasNFT);
       
-      if (hasNFT && objects[0].data?.objectId) {
-        sessionStorage.setItem('membership-id', objects[0].data.objectId);
+      if (hasNFT && objects[0].objectId) {
+        sessionStorage.setItem('membership-id', objects[0].objectId);
       } else {
         sessionStorage.removeItem('membership-id');
       }

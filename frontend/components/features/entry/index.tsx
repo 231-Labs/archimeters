@@ -1,5 +1,5 @@
-import { ConnectButton } from '@mysten/dapp-kit';
-import { retroButtonStyles } from '@/styles/components';
+import { ConnectButton } from '@mysten/dapp-kit-react/ui';
+import { dAppKit } from '@/lib/dapp-kit';
 import { useState, useEffect } from 'react';
 import type { EntryWindowProps } from './types';
 import { useWalletStatus } from './hooks/useWalletStatus';
@@ -102,11 +102,9 @@ export default function EntryWindow({ onDragStart }: EntryWindowProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="pt-6 px-4 flex justify-center">
-        <ConnectButton 
-          style={retroButtonStyles.button} 
-          onMouseOver={e => Object.assign(e.currentTarget.style, retroButtonStyles.buttonHover)}
-          onMouseOut={e => Object.assign(e.currentTarget.style, retroButtonStyles.button)}
-        />
+        <span className="retro-connect-host">
+          <ConnectButton instance={dAppKit} />
+        </span>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-4">

@@ -152,14 +152,15 @@ export function extractPrintableFlag(code: string): boolean | null {
 export function getRecommendationMessage(analysis: ScriptAnalysis): string {
   if (analysis.confidence === 'high') {
     if (analysis.isPrintable) {
-      return '偵測到標準 3D 幾何體，建議選擇「可列印」模式';
-    } else {
-      return `偵測到${analysis.detectedFeatures.includes('animate-function') ? '動畫' : '特殊'}效果，建議選擇「動畫/2D」模式`;
+      return 'Detected standard 3D geometry — “Printable” mode is recommended.';
     }
-  } else if (analysis.confidence === 'medium') {
-    return '無法確定作品類型，請手動選擇適合的模式';
-  } else {
-    return '未偵測到明確特徵，默認為「可列印」模式';
+    return analysis.detectedFeatures.includes('animate-function')
+      ? 'Detected animation-style behavior — “Animation / 2D” mode is recommended.'
+      : 'Detected non-printable effects — “Animation / 2D” mode is recommended.';
   }
+  if (analysis.confidence === 'medium') {
+    return 'Could not determine work type — please pick a mode manually.';
+  }
+  return 'No strong signals detected — defaulting to “Printable”.';
 }
 

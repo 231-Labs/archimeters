@@ -17,7 +17,7 @@ export function RetroPreview({ children, height = '500px', className = '' }: Ret
   return (
     <RetroCard variant="inset" className={className}>
       <div 
-        className="relative bg-[#0a0a0a] flex items-center justify-center"
+        className="relative bg-panel-deep flex items-center justify-center"
         style={{ height }}
       >
         {children}
@@ -38,7 +38,7 @@ interface RetroImageProps {
 export function RetroImage({ src, alt, className = '' }: RetroImageProps) {
   return (
     <RetroCard variant="inset" className={className}>
-      <div className="relative aspect-square bg-[#0a0a0a] overflow-hidden">
+      <div className="relative aspect-square bg-panel-deep overflow-hidden">
         <img
           src={src}
           alt={alt}

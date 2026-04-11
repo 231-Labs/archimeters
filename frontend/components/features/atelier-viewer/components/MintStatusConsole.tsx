@@ -45,7 +45,7 @@ export function MintStatusConsole({
   onBack
 }: MintStatusConsoleProps) {
   return (
-    <div className="h-full bg-[#0a0a0a]">
+    <div className="h-full bg-background text-foreground">
       <RetroConsole 
         currentStep={currentStep}
         steps={steps}

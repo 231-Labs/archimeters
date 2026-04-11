@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { MIST_PER_SUI } from '@/utils/transactions';
 import { MintButtonState, Atelier } from '../types';
 
@@ -8,7 +8,7 @@ export const useMintButtonState = (
   atelier: Atelier | null
 ) => {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [suiBalance, setSuiBalance] = useState<bigint>(BigInt(0));
   const [mintButtonState, setMintButtonState] = useState<MintButtonState>({
     disabled: true,
@@ -23,12 +23,12 @@ export const useMintButtonState = (
       }
 
       try {
-        const { totalBalance } = await suiClient.getBalance({
+        const res = await suiClient.getBalance({
           owner: currentAccount.address,
           coinType: '0x2::sui::SUI'
         });
 
-        setSuiBalance(BigInt(totalBalance));
+        setSuiBalance(BigInt(res.balance.balance));
       } catch (error) {
         console.error('Error checking SUI balance:', error);
         setSuiBalance(BigInt(0));

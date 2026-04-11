@@ -1,6 +1,7 @@
-import { useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentClient } from '@mysten/dapp-kit-react';
 import { useState, useEffect } from 'react';
 import { PRINTER_REGISTRY } from '@/utils/transactions';
+import { moveObjectFields } from '@/lib/sui-object-json';
 
 export interface Printer {
   id: string;
@@ -15,7 +16,7 @@ function extractId(id: string): string {
 }
 
 export function usePrinters() {
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,66 +43,44 @@ export function usePrinters() {
         }
 
         // Get the printer registry object
-        const registryObject = await suiClient.getObject({
-          id: registryId,
-          options: {
-            showContent: true,
-            showType: true,
-            showOwner: true,
-          }
+        const { object: registryRow } = await suiClient.getObject({
+          objectId: registryId,
+          include: { json: true },
         });
 
-        // Check if object was successfully retrieved
-        if (!registryObject.data) {
+        if (!registryRow) {
           console.error('Registry object not found:', registryId);
           throw new Error(`Printer registry not found: ${registryId}`);
         }
 
-        // Extract all printer IDs from the registry
-        const content = registryObject.data?.content;
-        
-        // Exit with error if content structure is incorrect
-        if (!content || typeof content !== 'object' || !('fields' in content)) {
+        const fields = moveObjectFields(registryRow.json);
+        if (!fields) {
           console.error('Invalid registry content format');
           throw new Error('Registry content format is invalid');
         }
+        
+        const printerData = fields.printers as any;
 
-        const fields = content.fields as any;
-        
-        // Get the printers field
-        const printerData = fields.printers;
-        
-        // Try to parse different formats of printer lists
         let printerIds: string[] = [];
-        
-        // VecSet type
+
         if (printerData && typeof printerData === 'object' && 'fields' in printerData && 'contents' in printerData.fields) {
           printerIds = printerData.fields.contents || [];
-        }
-        // Pure array type
-        else if (Array.isArray(printerData)) {
+        } else if (Array.isArray(printerData)) {
           printerIds = printerData;
-        }
-        // Table type
-        else if (printerData && typeof printerData === 'object' && 'fields' in printerData && 'items' in printerData.fields) {
+        } else if (printerData && typeof printerData === 'object' && 'fields' in printerData && 'items' in printerData.fields) {
           const items = printerData.fields.items;
           if (Array.isArray(items)) {
-            printerIds = items.map(item => {
-              if (typeof item === 'object' && item.id) {
+            printerIds = items.map((item: { id?: string } | string) => {
+              if (typeof item === 'object' && item && 'id' in item && item.id) {
                 return item.id;
               }
-              return item;
+              return item as string;
             }).filter(Boolean);
           }
-        }
-        // Single ID string
-        else if (typeof printerData === 'string' && printerData.startsWith('0x')) {
+        } else if (typeof printerData === 'string' && printerData.startsWith('0x')) {
           printerIds = [printerData];
-        }
-        // Unknown structure, use deep traversal to find IDs
-        else if (printerData && typeof printerData === 'object') {
-          // Recursive search for possible IDs
-          const findIds = (obj: any): string[] => {
+        } else if (printerData && typeof printerData === 'object') {
+          const findIds = (obj: unknown): string[] => {
             if (!obj) return [];
             if (typeof obj === 'string' && obj.startsWith('0x') && obj.length >= 30) {
               return [obj];
@@ -114,7 +93,7 @@ export function usePrinters() {
             }
             return [];
           };
-          
+
           printerIds = findIds(printerData);
         }
         
@@ -125,36 +104,23 @@ export function usePrinters() {
         }
 
         // Get detailed information for all printer objects
-        const printersData = await suiClient.multiGetObjects({
-          ids: printerIds,
-          options: {
-            showContent: true,
-            showType: true,
-            showOwner: true,
-          }
+        const { objects: printersData } = await suiClient.getObjects({
+          objectIds: printerIds,
+          include: { json: true },
         });
 
-        // Parse printer data
-        const parsedPrinters: Printer[] = printersData
-          .filter(obj => obj.data && obj.data.content)
-          .map(obj => {
-            const content = obj.data?.content;
-            if (!content || typeof content !== 'object' || !('fields' in content)) {
+        const parsedPrinters: Printer[] = printersData.flatMap((obj) => {
+            if (obj instanceof Error) return [];
+            const fields = moveObjectFields(obj.json);
+            if (!fields) {
               console.error('Invalid printer data format');
-              return null;
+              return [];
             }
 
             try {
-              const fields = content.fields as any;
-              
-              // Record found field names for debugging
-              const fieldNames = Object.keys(fields);
-              
-              // Try to find ID
               let id: string;
-              if (obj.data?.objectId) {
-                // Prefer using object ID
-                id = obj.data.objectId;
+              if (obj.objectId) {
+                id = obj.objectId;
               } else if (fields.id) {
                 if (typeof fields.id === 'string') {
                   // Direct string ID
@@ -221,13 +187,12 @@ export function usePrinters() {
                 owner
               };
               
-              return printer;
+              return [printer];
             } catch (e) {
               console.error('Error parsing printer data:', e);
-              return null;
+              return [];
             }
-          })
-          .filter((p): p is Printer => p !== null);
+          });
 
         setPrinters(parsedPrinters);
       } catch (err) {

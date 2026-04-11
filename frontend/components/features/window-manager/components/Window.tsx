@@ -45,109 +45,119 @@ const Window: React.FC<WindowProps> = ({
     }
   };
 
+  const frameShadow = `
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 10%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--foreground) 8%, transparent),
+    inset -1px 0 0 rgba(0, 0, 0, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent)
+  `;
+
   return (
-    <>
     <div
-      className={`absolute flex flex-col bg-[#0a0a0a] ${isActive ? 'ring-1 ring-white/20' : ''} ${className || ''}`}
+      className={`absolute flex flex-col text-foreground ${className || ''}`}
       style={{
         width: `${windowSize.width}px`,
         height: `${windowSize.height}px`,
         transform: `translate(${position.x}px, ${position.y}px)`,
-        zIndex: zIndex,
-  
-        // Outer frame - raised 3D effect
-        borderTop: '2px solid #666',
-        borderLeft: '2px solid #666',
-        borderBottom: '2px solid #0a0a0a',
-        borderRight: '2px solid #0a0a0a',
-  
-        boxShadow: `
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          inset 1px 0 0 rgba(255, 255, 255, 0.08),
-          inset -1px 0 0 rgba(0, 0, 0, 0.6),
-          inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-          0 4px 12px rgba(0, 0, 0, 0.6),
-          0 0 0 1px #333
-        `
+        zIndex,
+        background: 'var(--window-body)',
+        borderTop: '2px solid var(--window-frame-hi)',
+        borderLeft: '2px solid var(--window-frame-hi)',
+        borderBottom: '2px solid var(--window-frame-lo)',
+        borderRight: '2px solid var(--window-frame-lo)',
+        boxShadow: isActive ? `0 0 0 1px var(--window-active-ring), ${frameShadow}` : frameShadow,
       }}
       onClick={onClick}
     >
       <div
-        className={`h-8 px-2 flex items-center justify-between ${
-          isActive ? 'bg-[#0c0c0c]' : 'bg-[#141414]'
-        }`}
+        className="h-8 px-2 flex items-center justify-between"
         style={{
-          // Title bar inset effect
-          borderTop: '2px solid #0a0a0a',
-          borderLeft: '2px solid #0a0a0a',
-          borderBottom: '2px solid #333',
-          borderRight: '2px solid #2a2a2a',
-          background: 'linear-gradient(to bottom, #0f0f0f, #1a1a1a)',
-          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.6), inset -1px -1px 1px rgba(255, 255, 255, 0.03)'
+          borderTop: '2px solid var(--window-title-border-tl)',
+          borderLeft: '2px solid var(--window-title-border-tl)',
+          borderBottom: '2px solid var(--window-title-border-br)',
+          borderRight: '2px solid var(--window-title-border-br)',
+          background: isActive
+            ? `linear-gradient(to bottom, var(--window-title-start), var(--window-title-end))`
+            : `linear-gradient(to bottom, var(--window-inactive-title-start), var(--window-inactive-title-end))`,
+          boxShadow:
+            'inset 1px 1px 2px rgba(0, 0, 0, 0.35), inset -1px -1px 1px color-mix(in srgb, var(--foreground) 6%, transparent)',
         }}
         onClick={(e) => {
-          // Activate window on header click
           if (!(e.target as HTMLElement).closest('button')) {
             onClick?.();
           }
         }}
         onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
-          
-          // Pass the event directly - startDragging now uses state position
           onDragStart(e, name);
         }}
       >
-        <span className="text-xs font-mono text-white font-bold">{title}</span>
+        <span className="text-xs font-mono font-bold text-foreground truncate pr-2">{title}</span>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onClose(name);
           }}
-          className="w-5 h-5 flex items-center justify-center text-xs font-bold text-white
-             border border-[#555] bg-[#1a1a1a]
-             shadow-[inset_-1px_-1px_0_#000,inset_1px_1px_0_#555]
-             hover:shadow-[inset_1px_1px_0_#000,inset_-1px_-1px_0_#777]
-             transition-shadow"
+          className="w-5 h-5 flex items-center justify-center text-xs font-bold text-foreground shrink-0 transition-shadow"
+          style={{
+            border: '1px solid var(--window-close-border)',
+            backgroundColor: 'var(--window-close-bg)',
+            boxShadow: 'inset -1px -1px 0 rgba(0,0,0,0.45), inset 1px 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = 'var(--window-close-hover-shadow)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow =
+              'inset -1px -1px 0 rgba(0,0,0,0.45), inset 1px 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent)';
+          }}
+          aria-label="Close window"
         >
           ×
         </button>
       </div>
-      {/* Content area */}
       <div
-          className="flex-1 overflow-hidden bg-[#1a1a1a]"
-          style={{
-            borderTop: '4px solid #000',
-            borderLeft: '4px solid #000',
-            borderBottom: '4px solid #444',
-            borderRight: '4px solid #333',
-          }}
-        >
-          {children}
+        className="flex-1 overflow-hidden bg-[var(--window-content-bg)]"
+        style={{
+          borderTop: '4px solid var(--window-content-bevel-tl)',
+          borderLeft: '4px solid var(--window-content-bevel-tl)',
+          borderBottom: '4px solid var(--window-content-bevel-br)',
+          borderRight: '4px solid var(--window-content-bevel-br)',
+        }}
+      >
+        {children}
       </div>
 
-      {/* Resize Handle */}
       {resizable && onResize && (
         <div
           className="absolute"
           style={{
             bottom: '4px',
             right: '4px',
-
           }}
           onMouseDown={handleResizeStart}
         >
-        <div className="w-full h-full relative">
-            <div className="absolute bottom-0 right-0 w-[16px] h-[16px] border-l border-t border-[#777] group-hover:border-[#999]" />
-            <div className="absolute bottom-1 right-1 w-[8px] h-[8px] border-l border-t border-[#777] group-hover:border-[#999]" />
-            <div className="absolute bottom-2 right-2 w-[2px] h-[2px] border-l border-t border-[#777] group-hover:border-[#999]" />
-          </div>  
+          <div className="w-full h-full relative">
+            <div
+              className="absolute bottom-0 right-0 w-[16px] h-[16px] border-l border-t"
+              style={{ borderColor: 'var(--window-resize-grip)' }}
+            />
+            <div
+              className="absolute bottom-1 right-1 w-[8px] h-[8px] border-l border-t"
+              style={{ borderColor: 'var(--window-resize-grip)' }}
+            />
+            <div
+              className="absolute bottom-2 right-2 w-[2px] h-[2px] border-l border-t"
+              style={{ borderColor: 'var(--window-resize-grip)' }}
+            />
+          </div>
         </div>
       )}
     </div>
-    </>
   );
 };
 
 export default Window;
-

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
 import { PACKAGE_ID } from '@/utils/transactions';
 
 interface MembershipData {
@@ -10,7 +11,7 @@ interface MembershipData {
 
 export function useMembership() {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [membershipId, setMembershipId] = useState<string>('');
   const [membershipData, setMembershipData] = useState<MembershipData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,28 +29,22 @@ export function useMembership() {
       setError('');
 
       try {
-        const { data: objects } = await suiClient.getOwnedObjects({
+        const { objects } = await suiClient.listOwnedObjects({
           owner: currentAccount.address,
-          filter: {
-            StructType: `${PACKAGE_ID}::archimeters::MemberShip`
-          },
-          options: {
-            showType: true,
-            showContent: true,
-          }
+          type: `${PACKAGE_ID}::archimeters::MemberShip`,
+          limit: 1,
+          include: { json: true },
         });
 
-        if (objects && objects.length > 0) {
-          const objectId = objects[0].data?.objectId || '';
+        if (objects.length > 0) {
+          const objectId = objects[0].objectId || '';
           setMembershipId(objectId);
-          
-          // Extract membership data from content
-          const membership = objects[0].data?.content;
-          if (membership && 'fields' in membership) {
-            const fields = membership.fields as Record<string, unknown>;
+
+          const fields = moveObjectFields(objects[0].json);
+          if (fields) {
             const data = {
-              username: String(fields.username || ''),
-              description: String(fields.description || ''),
+              username: String(pickField(fields, 'username') ?? ''),
+              description: String(pickField(fields, 'description') ?? ''),
               address: currentAccount.address
             };
             setMembershipData(data);

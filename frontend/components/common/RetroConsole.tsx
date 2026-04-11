@@ -61,25 +61,15 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
   return (
     <div className="h-full flex flex-col justify-center p-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div 
-        className="p-4 mb-4"
-        style={{
-          background: '#1a1a1a',
-          borderTop: '2px solid #444',
-          borderLeft: '2px solid #444',
-          borderBottom: '2px solid #000',
-          borderRight: '2px solid #000',
-          boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-        }}
-      >
+      <div className="publisher-panel-out p-4 mb-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-white/90 text-sm font-mono uppercase tracking-wide">{title}</h2>
+          <h2 className="text-foreground/90 text-sm font-mono uppercase tracking-wide">{title}</h2>
           <div className="flex items-center gap-3">
-            <span className="text-white/50 text-xs font-mono">{completedSteps}/{totalSteps} STEPS</span>
+            <span className="text-muted-foreground text-xs font-mono">{completedSteps}/{totalSteps} STEPS</span>
             <span className={`text-xs font-mono ${
-              allStepsComplete ? 'text-green-400' :
-              isTransactionFailed ? 'text-red-400' :
-              'text-white/70'
+              allStepsComplete ? 'text-green-500' :
+              isTransactionFailed ? 'text-red-500' :
+              'text-foreground/75'
             }`}>
               {allStepsComplete ? 'COMPLETE' :
                isTransactionFailed ? 'FAILED' :
@@ -89,15 +79,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-3 h-6 bg-black/60 border border-white/10 overflow-hidden"
-          style={{
-            borderTop: '2px solid #000',
-            borderLeft: '2px solid #000',
-            borderBottom: '2px solid #2a2a2a',
-            borderRight: '2px solid #2a2a2a',
-            boxShadow: 'inset 2px 2px 4px rgba(0, 0, 0, 0.8)',
-          }}
-        >
+        <div className="mt-3 h-6 publisher-progress-track overflow-hidden relative">
           <div 
             className="h-full transition-all duration-500"
             style={{
@@ -111,7 +93,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
             }}
           />
           <div className="relative -mt-6 h-6 flex items-center justify-center">
-            <span className="text-white/90 text-xs font-mono font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+            <span className="text-foreground text-xs font-mono font-bold drop-shadow-sm">
               {progressPercent}%
             </span>
           </div>
@@ -135,33 +117,15 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
           </div>
 
           {/* Transaction Digest - Compact Version */}
-          <div 
-            className="p-3 mt-2"
-            style={{
-              background: '#1a1a1a',
-              borderTop: '2px solid #444',
-              borderLeft: '2px solid #444',
-              borderBottom: '2px solid #000',
-              borderRight: '2px solid #000',
-              boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            <div className="text-white/80 text-[10px] font-mono uppercase tracking-wide mb-2">Transaction Digest</div>
-            <div 
-              className="p-2 bg-black/60 border border-white/10 break-all font-mono text-[10px] leading-tight"
-              style={{
-                borderTop: '2px solid #000',
-                borderLeft: '2px solid #000',
-                borderBottom: '2px solid #2a2a2a',
-                borderRight: '2px solid #2a2a2a',
-              }}
-            >
+          <div className="publisher-panel-out p-3 mt-2">
+            <div className="text-foreground/80 text-[10px] font-mono uppercase tracking-wide mb-2">Transaction Digest</div>
+            <div className="p-2 publisher-inset-well break-all font-mono text-[10px] leading-tight">
               {txHash && (isTransactionComplete || isTransactionFailed) ? (
-                <span className={isTransactionComplete ? 'text-green-400' : 'text-red-400'}>
+                <span className={isTransactionComplete ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                   {txHash}
                 </span>
               ) : (
-                <span className="text-white/40">Waiting for transaction...</span>
+                <span className="text-muted-foreground">Waiting for transaction...</span>
               )}
             </div>
             {txHash && (isTransactionComplete || isTransactionFailed) && (
@@ -169,7 +133,7 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
                 href={`https://suiscan.xyz/testnet/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-white/60 hover:text-white/90 text-[10px] font-mono transition-colors"
+                className="mt-2 inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-[10px] font-mono transition-colors"
               >
                 <span>→</span>
                 <span>VIEW ON EXPLORER</span>
@@ -178,84 +142,46 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
           </div>
 
           {/* Status Message - Compact Version */}
-          <div 
-            className="p-3"
-            style={{
-              background: '#1a1a1a',
-              borderTop: '2px solid #444',
-              borderLeft: '2px solid #444',
-              borderBottom: '2px solid #000',
-              borderRight: '2px solid #000',
-              boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
-            }}
-          >
+          <div className="publisher-panel-out p-3">
             {allStepsComplete ? (
               <>
                 <div className="text-center mb-2">
-                  <div className="text-green-400 text-sm font-mono mb-1">MINT COMPLETE</div>
-                  <div className="text-white/60 text-[10px] font-mono">What would you like to do next?</div>
+                  <div className="text-green-600 dark:text-green-400 text-sm font-mono mb-1">MINT COMPLETE</div>
+                  <div className="text-muted-foreground text-[10px] font-mono">What would you like to do next?</div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-2">
-                  {/* Vault Button */}
                   {onGoToVault && (
                     <button
+                      type="button"
                       onClick={onGoToVault}
-                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                      style={{
-                        background: '#1a1a1a',
-                        borderTop: '2px solid #444',
-                        borderLeft: '2px solid #444',
-                        borderBottom: '2px solid #000',
-                        borderRight: '2px solid #000',
-                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '8px',
-                      }}
+                      className="publisher-panel-out p-2 group transition-all duration-200 hover:translate-y-[-1px]"
                     >
-                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                      <div className="text-foreground/80 group-hover:text-foreground text-xs font-mono transition-colors">
                         VAULT
                       </div>
                     </button>
                   )}
 
-                  {/* Back Button (when modal) */}
                   {onBack && (
                     <button
+                      type="button"
                       onClick={onBack}
-                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                      style={{
-                        background: '#1a1a1a',
-                        borderTop: '2px solid #444',
-                        borderLeft: '2px solid #444',
-                        borderBottom: '2px solid #000',
-                        borderRight: '2px solid #000',
-                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '8px',
-                      }}
+                      className="publisher-panel-out p-2 group transition-all duration-200 hover:translate-y-[-1px]"
                     >
-                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                      <div className="text-foreground/80 group-hover:text-foreground text-xs font-mono transition-colors">
                         BACK
                       </div>
                     </button>
                   )}
 
-                  {/* Marketplace Button */}
                   {onGoToMarketplace && (
                     <button
+                      type="button"
                       onClick={onGoToMarketplace}
-                      className="group relative overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
-                      style={{
-                        background: '#1a1a1a',
-                        borderTop: '2px solid #444',
-                        borderLeft: '2px solid #444',
-                        borderBottom: '2px solid #000',
-                        borderRight: '2px solid #000',
-                        boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                        padding: '8px',
-                      }}
+                      className="publisher-panel-out p-2 group transition-all duration-200 hover:translate-y-[-1px]"
                     >
-                      <div className="text-white/80 group-hover:text-white text-xs font-mono transition-colors">
+                      <div className="text-foreground/80 group-hover:text-foreground text-xs font-mono transition-colors">
                         MARKETPLACE
                       </div>
                     </button>
@@ -264,18 +190,18 @@ export function RetroConsole({ currentStep, steps, txHash, title = 'PUBLISHING S
               </>
             ) : isTransactionFailed ? (
               <div className="text-center">
-                <div className="text-red-400 text-sm font-mono mb-1">TRANSACTION FAILED</div>
+                <div className="text-red-600 dark:text-red-400 text-sm font-mono mb-1">TRANSACTION FAILED</div>
                 {errorMessage && (
-                  <div className="text-white/60 text-[10px] font-mono mt-1 break-words">
+                  <div className="text-muted-foreground text-[10px] font-mono mt-1 break-words">
                     {errorMessage}
                   </div>
                 )}
-                <div className="text-white/40 text-[10px] font-mono mt-2">Try again or contact support</div>
+                <div className="text-muted-foreground/80 text-[10px] font-mono mt-2">Try again or contact support</div>
               </div>
             ) : (
               <div className="text-center">
-                <div className="text-white/70 text-sm font-mono mb-1">MINTING IN PROGRESS</div>
-                <div className="text-white/40 text-[10px] font-mono">Please wait...</div>
+                <div className="text-foreground/75 text-sm font-mono mb-1">MINTING IN PROGRESS</div>
+                <div className="text-muted-foreground text-[10px] font-mono">Please wait...</div>
               </div>
             )}
           </div>
