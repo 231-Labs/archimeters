@@ -1,0 +1,12 @@
+---
+keystore:
+  File: /Users/harperdelaviga/archimeters-1/frontend/.walrus-publisher-wallets/sui_0.keystore
+external_keys: ~
+envs:
+  - alias: testnet
+    rpc: "https://fullnode.testnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+    chain_id: 4c78adac
+active_env: testnet
+active_address: "0x4c8697fd2a661722ca1bd20bef946ac8d3312ac2bccd1fa98acc65fb6b151bc2"
