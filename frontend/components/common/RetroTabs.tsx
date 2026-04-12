@@ -20,7 +20,7 @@ export const RetroTabsList = React.forwardRef<HTMLDivElement, RetroTabsListProps
     return (
       <Tabs.List
         ref={ref}
-        className={`retro-tabs-list flex gap-1 p-1 justify-center ${className}`}
+        className={`retro-tabs-list flex gap-1 justify-center ${className}`}
       >
         {children}
       </Tabs.List>
@@ -39,19 +39,7 @@ export const RetroTabsTrigger = React.forwardRef<HTMLButtonElement, RetroTabsTri
       <Tabs.Trigger
         ref={ref}
         value={value}
-        className={`relative px-4 py-1.5 text-xs font-medium transition-all duration-75 outline-none ${className}`}
-        onMouseDown={(e) => {
-          const isActive = e.currentTarget.getAttribute('data-state') === 'active';
-          if (!isActive) {
-            e.currentTarget.style.transform = 'translateY(1px)';
-          }
-        }}
-        onMouseUp={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
+        className={`relative px-4 py-1.5 text-xs font-medium transition-all outline-none rounded-md ${className}`}
         data-radix-tabs-trigger
       >
         {children}

@@ -164,16 +164,16 @@ html[data-theme="light"] {
   color-scheme: light;
   --background: #e4e4e0;
   --foreground: #141414;
-  --panel: #f2f2ee;
-  --panel-deep: #dcdcd6;
-  --muted: rgba(0, 0, 0, 0.06);
-  --muted-foreground: rgba(0, 0, 0, 0.5);
-  --accent: #c8c8c0;
-  --border: rgba(0, 0, 0, 0.12);
-  --border-subtle: rgba(0, 0, 0, 0.18);
-  --border-strong: rgba(0, 0, 0, 0.35);
-  --border-highlight: rgba(255, 255, 255, 0.75);
-  --border-shadow: rgba(0, 0, 0, 0.2);
+  --panel: #f8f8f5;
+  --panel-deep: #ebeae4;
+  --muted: rgba(0, 0, 0, 0.04);
+  --muted-foreground: rgba(0, 0, 0, 0.45);
+  --accent: #d2d0c8;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.25);
+  --border-highlight: rgba(255, 255, 255, 0.8);
+  --border-shadow: rgba(0, 0, 0, 0.15);
   --border-top: rgba(255, 255, 255, 0.9);
   --border-left: rgba(255, 255, 255, 0.85);
   --border-right: rgba(0, 0, 0, 0.22);
@@ -228,28 +228,28 @@ html[data-theme="light"] {
   --artlier-shadow: rgba(0, 0, 0, 0.06);
   --window-shadow: rgba(0, 0, 0, 0.08);
   --retro-raised-t: #ffffff;
-  --retro-raised-l: #fafaf8;
-  --retro-raised-b: #9a9a90;
-  --retro-raised-r: #9a9a90;
-  --retro-inset-t: #9a9a90;
-  --retro-inset-l: #9a9a90;
-  --retro-inset-b: #e8e8e4;
-  --retro-inset-r: #e8e8e4;
-  --panel-header-t: #eaeae6;
-  --panel-header-b: #e0e0da;
-  --window-body: #eceae4;
+  --retro-raised-l: #fdfdfc;
+  --retro-raised-b: #b8b6b0;
+  --retro-raised-r: #b8b6b0;
+  --retro-inset-t: #b8b6b0;
+  --retro-inset-l: #b8b6b0;
+  --retro-inset-b: #fdfdfc;
+  --retro-inset-r: #fdfdfc;
+  --panel-header-t: #f2f0ea;
+  --panel-header-b: #e8e6e0;
+  --window-body: #f4f2ec;
   --window-frame-hi: #ffffff;
-  --window-frame-lo: #8e8c82;
-  --window-title-start: #e2e0d8;
-  --window-title-end: #d4d2c8;
-  --window-title-border-tl: #a8a69c;
-  --window-title-border-br: #f6f4ec;
-  --window-content-bg: #f4f2ea;
-  --window-content-bevel-tl: #9c9a90;
-  --window-content-bevel-br: #fefefe;
-  --window-close-border: #7a786e;
-  --window-close-bg: #dedcd4;
-  --window-close-hover-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #8a887e;
+  --window-frame-lo: #b0ae9e;
+  --window-title-start: #ebe9e2;
+  --window-title-end: #e0ded6;
+  --window-title-border-tl: #b8b6a8;
+  --window-title-border-br: #ffffff;
+  --window-content-bg: #f8f7f2;
+  --window-content-bevel-tl: #b0ae9e;
+  --window-content-bevel-br: #ffffff;
+  --window-close-border: #9a988c;
+  --window-close-bg: #e6e4dc;
+  --window-close-hover-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #a4a296;
   --window-active-ring: rgba(0, 0, 0, 0.18);
   --window-inactive-title-start: #dcdad2;
   --window-inactive-title-end: #d0cec6;
@@ -307,23 +307,22 @@ html[data-theme="light"] {
   --retro-btn-danger-shadow-pressed: var(--retro-btn-primary-shadow-pressed);
   --retro-btn-danger-disabled-border-tl: #c0b0b0;
   --retro-btn-danger-disabled-border-br: #a89898;
-  /* Bottom dock — frosted warm gray tray, matches window chrome */
+  /* Bottom dock — liquid glass / neo-morphism fusion */
   --dock-surface: linear-gradient(
-    180deg,
-    rgba(252, 251, 248, 0.96) 0%,
-    rgba(238, 236, 230, 0.97) 48%,
-    rgba(228, 226, 220, 0.96) 100%
+    135deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.25) 100%
   );
-  --dock-border: rgba(0, 0, 0, 0.11);
-  --dock-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.92),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.07), 0 8px 26px rgba(0, 0, 0, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.04);
-  --dock-tooltip-bg: rgba(250, 248, 244, 0.98);
+  --dock-border: rgba(255, 255, 255, 0.5);
+  --dock-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.05), 0 8px 32px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.03);
+  --dock-tooltip-bg: rgba(255, 255, 255, 0.85);
   --dock-tooltip-fg: rgba(28, 28, 26, 0.95);
-  --dock-tooltip-border: rgba(0, 0, 0, 0.1);
-  --dock-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-  --dock-focus-ring: rgba(0, 0, 0, 0.22);
-  --dock-icon-hover-bg: rgba(0, 0, 0, 0.05);
+  --dock-tooltip-border: rgba(0, 0, 0, 0.08);
+  --dock-tooltip-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --dock-focus-ring: rgba(0, 0, 0, 0.15);
+  --dock-icon-hover-bg: rgba(255, 255, 255, 0.4);
 }
 
 /* Scrollbar — uses theme tokens */
@@ -462,10 +461,10 @@ body {
   background: var(--dock-surface);
   border: 1px solid var(--dock-border);
   box-shadow: var(--dock-shadow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 6px;
-  padding: 0.4rem 0.85rem;
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
 }
 
 .dock-tooltip {
@@ -473,7 +472,9 @@ body {
   color: var(--dock-tooltip-fg);
   border: 1px solid var(--dock-tooltip-border);
   box-shadow: var(--dock-tooltip-shadow);
-  border-radius: 5px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 6px;
 }
 
 .dock-icon-hit {
@@ -616,45 +617,47 @@ div.AccountDropdownMenu_separator__div2ql5 {
   box-shadow: 0 0 20px var(--artlier-shadow);
 }
 
-/* Retro radix tabs (theme-aware; replaces injected styles in RetroTabs) */
-.retro-tabs-list {
+/* Neo-Retro radix tabs (Segmented control style) */
+.tabs-bar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background-color: var(--tabs-bar-bg);
-  border-bottom: 2px solid var(--tabs-bar-border);
-  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--tabs-bar-border);
+  padding: 0.35rem 0.5rem;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.retro-tabs-list {
+  /* Handled by tabs-bar-container */
 }
 
 [data-radix-tabs-trigger] {
-  background-color: var(--panel);
+  background-color: transparent;
   color: var(--muted-foreground);
-  border-top: 2px solid var(--retro-raised-t);
-  border-left: 2px solid var(--retro-raised-l);
-  border-bottom: 2px solid var(--retro-raised-b);
-  border-right: 2px solid var(--retro-raised-r);
-  box-shadow:
-    inset 1px 1px 2px rgba(255, 255, 255, 0.06),
-    inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
+  box-shadow: none;
+  cursor: pointer;
 }
 
 [data-radix-tabs-trigger]:hover {
-  background-color: color-mix(in srgb, var(--panel) 88%, var(--foreground));
+  background-color: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--foreground);
 }
 
 [data-radix-tabs-trigger][data-state='active'] {
   background-color: var(--panel);
   color: var(--foreground);
-  border-top: 2px solid var(--retro-inset-t);
-  border-left: 2px solid var(--retro-inset-l);
-  border-bottom: 2px solid var(--retro-inset-b);
-  border-right: 2px solid var(--retro-inset-r);
-  box-shadow:
-    inset 1px 1px 3px rgba(0, 0, 0, 0.18),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
-  transform: translateY(1px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(0);
 }
 
-[data-radix-tabs-trigger][data-state='inactive'] {
-  cursor: pointer;
+[data-radix-tabs-trigger]:active:not([data-state='active']) {
+  transform: translateY(1px);
 }
 
 /* dapp-kit ConnectButton / account menu — CSS variables consumed inside shadow DOM */

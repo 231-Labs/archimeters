@@ -203,8 +203,8 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
         className="flex flex-col h-full bg-panel text-foreground"
       >
         {/* Header with Tabs and View Mode Toggle */}
-        <div className="flex items-center justify-between bg-panel-deep px-2 border-b-2 border-[var(--tabs-bar-border)] shadow-[inset_0_-1px_2px_rgba(0,0,0,0.12)]">
-          <RetroTabsList className="flex-1">
+        <div className="tabs-bar-container">
+          <RetroTabsList className="flex-1 justify-start">
             <RetroTabsTrigger value="ateliers">
               Ateliers
             </RetroTabsTrigger>
