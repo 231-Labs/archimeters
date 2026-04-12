@@ -51,7 +51,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
     <RetroDetailModal isOpen={isOpen} onClose={onClose}>
       <div className="flex items-start">
         <RetroPanel variant="inset" className="w-full">
-          <div className="aspect-square bg-[#000000] overflow-hidden">
+          <div className="aspect-square bg-panel-deep overflow-hidden">
             <img
               src={`/api/image-proxy?blobId=${atelier.photoBlobId}`}
               alt={atelier.title}
@@ -70,27 +70,27 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
 
         <div className="grid grid-cols-3 gap-2">
           <RetroPanel variant="inset" className="p-2">
-            <p className="text-white/50 text-xs font-mono tracking-wide mb-1">POOL</p>
-            <p className="text-white/90 text-sm font-mono">{formatSuiAmount(atelier.pool)}</p>
+            <p className="text-muted-foreground text-xs font-mono tracking-wide mb-1">POOL</p>
+            <p className="text-foreground/90 text-sm font-mono">{formatSuiAmount(atelier.pool)}</p>
           </RetroPanel>
           <RetroPanel variant="inset" className="p-2">
-            <p className="text-white/50 text-xs font-mono tracking-wide mb-1">PRICE</p>
-            <p className="text-white/90 text-sm font-mono">{formatSuiAmount(atelier.price)}</p>
+            <p className="text-muted-foreground text-xs font-mono tracking-wide mb-1">PRICE</p>
+            <p className="text-foreground/90 text-sm font-mono">{formatSuiAmount(atelier.price)}</p>
           </RetroPanel>
           <RetroPanel variant="inset" className="p-2">
-            <p className="text-white/50 text-xs font-mono tracking-wide mb-1">PUBLISHED</p>
-            <p className="text-white/90 text-sm font-mono">{atelier.publish_time}</p>
+            <p className="text-muted-foreground text-xs font-mono tracking-wide mb-1">PUBLISHED</p>
+            <p className="text-foreground/90 text-sm font-mono">{atelier.publish_time}</p>
           </RetroPanel>
         </div>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-1">DERIVED SCULPTS</h4>
-          <p className="text-white/70 text-sm font-mono mb-1">View all sculpts in Marketplace</p>
-          <p className="text-white/40 text-xs font-mono">ⓘ Tracking coming soon</p>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-1">DERIVED SCULPTS</h4>
+          <p className="text-foreground/70 text-sm font-mono mb-1">View all sculpts in Marketplace</p>
+          <p className="text-muted-foreground/80 text-xs font-mono">ⓘ Tracking coming soon</p>
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">WITHDRAW EARNINGS</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">WITHDRAW EARNINGS</h4>
           <AtelierWithdrawButton
             atelierId={atelier.id}
             poolId={atelier.poolId}
@@ -105,7 +105,7 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
           <div className="flex gap-2 mb-1">
             <RetroInput
               type="number"
@@ -126,11 +126,11 @@ export function AtelierDetailModal({ atelier, isOpen, onClose, onUpdate }: Ateli
               {marketplaceStatus === 'processing' ? 'Listing...' : 'List'}
             </RetroButton>
           </div>
-          <p className="text-white/40 text-xs font-mono">ⓘ List for sale on marketplace</p>
+          <p className="text-muted-foreground/80 text-xs font-mono">ⓘ List for sale on marketplace</p>
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
           <div className="space-y-1">
             <InfoField
               label="ATELIER ID"

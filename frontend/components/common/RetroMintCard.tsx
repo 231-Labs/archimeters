@@ -107,19 +107,7 @@ export function RetroMintCard({
       >
         {/* Card Container - Retro Style */}
         <div
-          className="w-full h-full relative overflow-hidden"
-          style={{
-            background: '#1a1a1a',
-            borderTop: '3px solid #555',
-            borderLeft: '3px solid #555',
-            borderBottom: '3px solid #000',
-            borderRight: '3px solid #000',
-            boxShadow: `
-              inset 2px 2px 4px rgba(255, 255, 255, 0.1),
-              inset -2px -2px 4px rgba(0, 0, 0, 0.8),
-              0 4px 8px rgba(0, 0, 0, 0.5)
-            `,
-          }}
+          className="w-full h-full relative overflow-hidden publisher-panel-out"
         >
           {/* Image Frame - MTG Style */}
           <div className="absolute top-3 left-3 right-3 bottom-24">
@@ -140,8 +128,8 @@ export function RetroMintCard({
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
-                  <div className="text-white/20 text-6xl font-mono">?</div>
+                <div className="w-full h-full bg-gradient-to-br from-panel-deep to-background flex items-center justify-center">
+                  <div className="text-muted-foreground opacity-50 text-6xl font-mono">?</div>
                 </div>
               )}
 
@@ -234,56 +222,46 @@ export function RetroMintCard({
           <div 
             className="absolute bottom-0 left-0 right-0 p-3"
             style={{
-              background: 'linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(33, 33, 33, 0.7) 70%, transparent 100%)',
+              background: 'linear-gradient(to top, var(--panel) 0%, color-mix(in srgb, var(--panel) 70%, transparent) 70%, transparent 100%)',
             }}
           >
             {/* Sculpt Name */}
             <div 
-              className="mb-2 pb-2"
+              className="mb-2 pb-2 publisher-inset-well"
               style={{
-                borderBottom: '2px solid #444',
-                borderTop: '2px solid #000',
-                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
-                background: '#1a1a1a',
                 padding: '6px 8px',
               }}
             >
-              <div className="text-white/90 text-sm font-mono uppercase tracking-wide truncate">
+              <div className="text-foreground/90 text-sm font-mono uppercase tracking-wide truncate">
                 {sculptName}
               </div>
             </div>
 
             {/* Atelier Info - Retro Panel Style */}
             <div 
-              className="space-y-1"
+              className="space-y-1 publisher-inset-well"
               style={{
-                background: '#1a1a1a',
-                borderTop: '2px solid #444',
-                borderLeft: '2px solid #444',
-                borderBottom: '2px solid #000',
-                borderRight: '2px solid #000',
-                boxShadow: 'inset 1px 1px 2px rgba(255, 255, 255, 0.08), inset -1px -1px 2px rgba(0, 0, 0, 0.5)',
                 padding: '6px 8px',
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Atelier</span>
-                <span className="text-white/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
+                <span className="text-muted-foreground text-[9px] font-mono uppercase tracking-wider">Atelier</span>
+                <span className="text-foreground/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                   {atelierName}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Artist</span>
-                <span className="text-white/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
+                <span className="text-muted-foreground text-[9px] font-mono uppercase tracking-wider">Artist</span>
+                <span className="text-foreground/80 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                   {atelierAuthor}
                 </span>
               </div>
 
               {sculptOwner && (
                 <div className="flex items-center justify-between">
-                  <span className="text-white/50 text-[9px] font-mono uppercase tracking-wider">Owner</span>
-                  <span className="text-white/70 text-[10px] font-mono truncate ml-2 max-w-[60%]">
+                  <span className="text-muted-foreground text-[9px] font-mono uppercase tracking-wider">Owner</span>
+                  <span className="text-foreground/70 text-[10px] font-mono truncate ml-2 max-w-[60%]">
                     {sculptOwner}
                   </span>
                 </div>

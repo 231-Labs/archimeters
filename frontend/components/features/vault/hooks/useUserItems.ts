@@ -84,26 +84,43 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         network: 'testnet',
       });
 
-      const { kioskOwnerCaps, kioskIds } = await kioskClient.getOwnedKiosks({ 
-        address: currentAccount!.address 
+      // Source of truth for "my sculpts" (same pattern as ateliers from MemberShip.ateliers).
+      const { objects: membershipObjects } = await suiClient.listOwnedObjects({
+        owner: currentAccount!.address,
+        type: `${PACKAGE_ID}::archimeters::MemberShip`,
+        limit: 1,
+        include: { json: true },
       });
 
-      if (kioskOwnerCaps.length === 0 || kioskIds.length === 0) {
-        setItems([]);
+      const mFields = membershipObjects[0]
+        ? moveObjectFields(membershipObjects[0].json)
+        : null;
+      const sculpturesRaw = mFields ? pickField(mFields, 'sculptures') : undefined;
+      const membershipSculptIds = extractObjectIdsFromMoveValue(sculpturesRaw);
+
+      const { kioskOwnerCaps, kioskIds } = await kioskClient.getOwnedKiosks({
+        address: currentAccount!.address,
+      });
+
+      let currentKioskInfo: KioskInfo | null = null;
+      if (kioskOwnerCaps.length > 0 && kioskIds.length > 0) {
+        const firstKiosk = kioskOwnerCaps[0];
+        currentKioskInfo = {
+          kioskId: firstKiosk.kioskId,
+          kioskCapId: firstKiosk.objectId,
+        };
+        setKioskInfo(currentKioskInfo);
+      } else {
         setKioskInfo(null);
-        return;
       }
 
-      const firstKiosk = kioskOwnerCaps[0];
-      const currentKioskInfo: KioskInfo = {
-        kioskId: firstKiosk.kioskId,
-        kioskCapId: firstKiosk.objectId,
-      };
-      setKioskInfo(currentKioskInfo);
-
-      const allSculptIds: string[] = [];
+      const allSculptIdSet = new Set<string>(membershipSculptIds);
       const sculptToKioskMap = new Map<string, { kioskId: string; kioskCapId: string }>();
-      
+
+      // Kiosk / indexer may omit "0x" on address segments; match both forms.
+      const pkgLower = PACKAGE_ID.toLowerCase();
+      const pkgNo0x = pkgLower.replace(/^0x/, '');
+
       for (let i = 0; i < kioskIds.length; i++) {
         const kioskId = kioskIds[i];
         const kioskCapId = kioskOwnerCaps[i].objectId;
@@ -114,36 +131,36 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
             options: {
               withKioskFields: true,
               withObjects: true,
-            }
+            },
           });
 
-          const sculptsInKiosk = kioskData.items
-            .filter((item) => {
-              const isSculpt = item.type?.includes('sculpt::Sculpt');
-              const isCurrentPackage = item.type?.includes(PACKAGE_ID);
-              return isSculpt && isCurrentPackage;
-            })
-            .map((item) => {
-              const oid =
-                item.objectId ||
-                (item as { id?: string }).id ||
-                (item as { object_id?: string }).object_id;
-              if (!oid) return null;
-              sculptToKioskMap.set(oid, { kioskId, kioskCapId });
-              return oid;
-            })
-            .filter((id): id is string => id != null);
-          
-          allSculptIds.push(...sculptsInKiosk);
-        } catch (singleKioskError) {
+          for (const item of kioskData.items) {
+            const t = (item.type || '').toLowerCase();
+            const isSculpt = t.includes('sculpt::sculpt');
+            const isCurrentPackage = t.includes(pkgLower) || t.includes(pkgNo0x);
+            if (!isSculpt || !isCurrentPackage) continue;
+            const oid =
+              item.objectId ||
+              (item as { id?: string }).id ||
+              (item as { object_id?: string }).object_id;
+            if (!oid) continue;
+            sculptToKioskMap.set(oid, { kioskId, kioskCapId });
+            allSculptIdSet.add(oid);
+          }
+        } catch {
           continue;
         }
       }
-      
+
       (window as any).__sculptToKioskMap = sculptToKioskMap;
+
+      const allSculptIds = [...allSculptIdSet];
 
       if (allSculptIds.length === 0) {
         setItems([]);
+        if (!membershipObjects.length) {
+          setError('No Membership NFT found. Please mint your Membership first.');
+        }
         return;
       }
 
@@ -160,8 +177,8 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         if (!fields) continue;
 
         const sculptKioskInfo = sculptToKioskMap.get(object.objectId);
-        const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo.kioskId;
-        const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo.kioskCapId;
+        const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo?.kioskId || '';
+        const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo?.kioskCapId || '';
 
         let structureValue = '';
         const structureRaw = pickField(fields, 'structure');
