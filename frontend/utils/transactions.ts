@@ -19,8 +19,15 @@ export const SCULPT_DISPLAY = '0xeed04d30f7012e2974d22a179c1d821aa542dd6c6223c83
 export const PUBLISHER_ARCHIMETERS = '0x5b07419add5738159ffc2bd45ea4be80855b92c08c6224c229d9318970dbba49';
 export const PUBLISHER_ATELIER = '0x6b6e18a792e5ae919fe6c09202c88bd5ddbb53353d9070e999c7da8c43df3001';
 export const PUBLISHER_SCULPT = '0x8ccd32f4c1a79d74d73fb1a68647bf3633de7687906ea5533a0a1d18004bbe29';
-export const EUREKA_PACKAGE_ID = '0x0be58b29c27063157169e31f9f86f360cf7b05bc5d755bc92d88ea5120dd88a2';
-export const PRINTER_REGISTRY = '0x4898fd8380fe9ce708313fe88985efbea1391af1b8b7be339462763e119792a8';
+/** Eureka Move package (Seal IBE namespace + print-job PTB targets). Set `NEXT_PUBLIC_EUREKA_PACKAGE_ID` to override. */
+export const EUREKA_PACKAGE_ID =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PACKAGE_ID) ||
+  '0x1737bb093b90783dfe0e0056df602bdfa42fc417d91fed1e02a27a88b949c3b3';
+
+/** Printer registry object for Eureka. Set `NEXT_PUBLIC_EUREKA_PRINTER_REGISTRY_ID` to override. */
+export const PRINTER_REGISTRY =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PRINTER_REGISTRY_ID) ||
+  '0x3498e9fef83b29ef471d3070daf7764f3f9abcc982daa34fdf7fda9b612e9409';
 
 // Type definitions
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;

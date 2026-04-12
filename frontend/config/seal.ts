@@ -1,7 +1,6 @@
 /**
- * Seal SDK 配置
- * manage Seal encryption related settings and Key Server configurations
- * documentation: https://seal-docs.wal.app/UsingSeal/
+ * Seal SDK settings and key-server list.
+ * Docs: https://seal-docs.wal.app/UsingSeal/
  */
 
 export interface SealKeyServer {
