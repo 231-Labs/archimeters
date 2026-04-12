@@ -19,10 +19,28 @@ export const SCULPT_DISPLAY = '0xeed04d30f7012e2974d22a179c1d821aa542dd6c6223c83
 export const PUBLISHER_ARCHIMETERS = '0x5b07419add5738159ffc2bd45ea4be80855b92c08c6224c229d9318970dbba49';
 export const PUBLISHER_ATELIER = '0x6b6e18a792e5ae919fe6c09202c88bd5ddbb53353d9070e999c7da8c43df3001';
 export const PUBLISHER_SCULPT = '0x8ccd32f4c1a79d74d73fb1a68647bf3633de7687906ea5533a0a1d18004bbe29';
-/** Eureka Move package (Seal IBE namespace + print-job PTB targets). Set `NEXT_PUBLIC_EUREKA_PACKAGE_ID` to override. */
-export const EUREKA_PACKAGE_ID =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PACKAGE_ID) ||
+const DEFAULT_EUREKA_ORIGINAL_ID =
   '0x1737bb093b90783dfe0e0056df602bdfa42fc417d91fed1e02a27a88b949c3b3';
+/** `published-at` for upgraded testnet Eureka (PTB target). */
+const DEFAULT_EUREKA_MOVE_CALL_ID =
+  '0x2ed3ff62c140c87f7bbd0c408b7a67e89fbc7bd60d7e587a0407cecca9204941';
+
+const resolvedEurekaPackageId =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PACKAGE_ID) ||
+  DEFAULT_EUREKA_ORIGINAL_ID;
+
+/** Eureka `original-id`: Seal IBE namespace (must match ciphertext). Set `NEXT_PUBLIC_EUREKA_PACKAGE_ID` to override. */
+export const EUREKA_PACKAGE_ID = resolvedEurekaPackageId;
+
+/**
+ * Eureka PTB `MoveCall` package (`published-at` after an upgrade). Set `NEXT_PUBLIC_EUREKA_MOVE_CALL_PACKAGE_ID` to override.
+ * If unset and `EUREKA_PACKAGE_ID` is still the default original id, defaults to the known upgraded `published-at`; otherwise same as `EUREKA_PACKAGE_ID`.
+ */
+export const EUREKA_MOVE_CALL_PACKAGE_ID =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_MOVE_CALL_PACKAGE_ID) ||
+  (resolvedEurekaPackageId === DEFAULT_EUREKA_ORIGINAL_ID
+    ? DEFAULT_EUREKA_MOVE_CALL_ID
+    : resolvedEurekaPackageId);
 
 /** Printer registry object for Eureka. Set `NEXT_PUBLIC_EUREKA_PRINTER_REGISTRY_ID` to override. */
 export const PRINTER_REGISTRY =
@@ -228,8 +246,8 @@ export const printSculpt = (
   
   // Use the new kiosk-aware functions that handle borrowing internally
   const target = payment
-    ? `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk`
-    : `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk_free`;
+    ? `${EUREKA_MOVE_CALL_PACKAGE_ID}::eureka::create_print_job_from_kiosk`
+    : `${EUREKA_MOVE_CALL_PACKAGE_ID}::eureka::create_print_job_from_kiosk_free`;
   
   const args = payment
     ? [
