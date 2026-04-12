@@ -144,14 +144,17 @@ html {
   --retro-btn-danger-disabled-border-tl: #2a1010;
   --retro-btn-danger-disabled-border-br: #0a0404;
   /* Bottom dock */
+  --dock-bg: rgba(10, 10, 10, 0.4);
   --dock-surface: linear-gradient(
-    180deg,
-    rgba(48, 48, 48, 0.72) 0%,
-    rgba(22, 22, 22, 0.82) 100%
+    to right,
+    rgba(49, 49, 49, 0.2),
+    rgba(29, 29, 29, 0.2),
+    rgba(19, 19, 19, 0.2),
+    rgba(11, 11, 11, 0.2)
   );
-  --dock-border: rgba(255, 255, 255, 0.12);
-  --dock-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.1),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.55), 0 10px 32px rgba(0, 0, 0, 0.42);
+  --dock-border: rgba(255, 255, 255, 0.1);
+  --dock-shadow: inset -2px -2px 0 #000, inset 2px 2px 0 #555;
+  --dock-blur: blur(2px);
   --dock-tooltip-bg: rgba(14, 14, 14, 0.94);
   --dock-tooltip-fg: rgba(248, 248, 246, 0.95);
   --dock-tooltip-border: rgba(255, 255, 255, 0.14);
@@ -308,15 +311,17 @@ html[data-theme="light"] {
   --retro-btn-danger-disabled-border-tl: #c0b0b0;
   --retro-btn-danger-disabled-border-br: #a89898;
   /* Bottom dock — liquid glass / neo-morphism fusion */
+  --dock-bg: rgba(255, 255, 255, 0.15);
   --dock-surface: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.6) 0%,
-    rgba(255, 255, 255, 0.25) 100%
+    to right,
+    rgba(255, 255, 255, 0.4),
+    rgba(240, 240, 240, 0.3),
+    rgba(230, 230, 230, 0.2)
   );
-  --dock-border: rgba(255, 255, 255, 0.5);
-  --dock-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.7),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.05), 0 8px 32px rgba(0, 0, 0, 0.06),
-    0 2px 8px rgba(0, 0, 0, 0.03);
+  --dock-border: rgba(255, 255, 255, 0.4);
+  --dock-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.9);
+  --dock-blur: blur(4px);
   --dock-tooltip-bg: rgba(255, 255, 255, 0.85);
   --dock-tooltip-fg: rgba(28, 28, 26, 0.95);
   --dock-tooltip-border: rgba(0, 0, 0, 0.08);
@@ -458,13 +463,14 @@ body {
 }
 
 .dock-tray {
-  background: var(--dock-surface);
+  background-color: var(--dock-bg);
+  background-image: var(--dock-surface);
   border: 1px solid var(--dock-border);
   box-shadow: var(--dock-shadow);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border-radius: 12px;
-  padding: 0.5rem 1rem;
+  backdrop-filter: var(--dock-blur);
+  -webkit-backdrop-filter: var(--dock-blur);
+  border-radius: 0;
+  padding: 0;
 }
 
 .dock-tooltip {

@@ -25,8 +25,8 @@ export default function Dock({ onOpenWindow, onActivateWindow }: DockProps) {
   };
 
   return (
-    <div className="dock-tray fixed left-1/2 -translate-x-1/2 bottom-4 z-50 pointer-events-none max-w-[calc(100vw-1.5rem)]">
-      <div className="flex items-center justify-center pointer-events-auto gap-2 sm:gap-3">
+    <div className="dock-tray fixed left-1/2 -translate-x-1/2 bottom-4 z-50 pointer-events-none max-w-[calc(100vw-1.5rem)] px-3 py-2">
+      <div className="flex items-center justify-center pointer-events-auto gap-4 sm:gap-6">
         {DOCK_ITEMS.map(({ name, label, src, imgClass }) => (
           <div key={name} className="group relative">
             <div
