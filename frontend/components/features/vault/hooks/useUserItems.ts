@@ -154,7 +154,7 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
 
       (window as any).__sculptToKioskMap = sculptToKioskMap;
 
-      const allSculptIds = [...allSculptIdSet];
+      const allSculptIds = Array.from(allSculptIdSet);
 
       if (allSculptIds.length === 0) {
         setItems([]);
