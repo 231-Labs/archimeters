@@ -2,6 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  transpilePackages: [
+    '@mysten/sui',
+    '@mysten/dapp-kit-react',
+    '@mysten/kiosk',
+    '@mysten/seal',
+  ],
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -15,7 +21,12 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '50mb',
     },
-    optimizePackageImports: ['@mysten/dapp-kit', '@mysten/sui'],
+    optimizePackageImports: [
+      '@mysten/dapp-kit-react',
+      '@mysten/sui',
+      '@mysten/kiosk',
+      '@mysten/seal',
+    ],
   },
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

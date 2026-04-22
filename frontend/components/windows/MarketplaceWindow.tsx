@@ -118,28 +118,22 @@ export default function MarketplaceWindow({
       <Tabs.Root 
         value={activeTab} 
         onValueChange={setActiveTab}
-        className="flex flex-col h-full bg-[#1a1a1a]"
+        className="flex flex-col h-full bg-panel text-foreground"
       >
       {isLoading && ateliers.length === 0 && sculpts.length === 0 && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-          <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-background/55 flex items-center justify-center z-10">
+          <div className="w-8 h-8 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       
       {error && ateliers.length === 0 && sculpts.length === 0 && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-          <p className="text-red-500">{error}</p>
+        <div className="absolute inset-0 bg-background/55 flex items-center justify-center z-10">
+          <p className="text-red-600 dark:text-red-400 font-mono text-sm px-4 text-center">{error}</p>
         </div>
       )}
 
-      <div 
-        className="flex items-center justify-between bg-[#0f0f0f] px-2"
-        style={{
-          borderBottom: '2px solid #0a0a0a',
-          boxShadow: 'inset 0 -1px 2px rgba(0, 0, 0, 0.5)',
-        }}
-      >
-        <RetroTabsList className="flex-1">
+      <div className="tabs-bar-container">
+        <RetroTabsList className="flex-1 justify-start">
           <RetroTabsTrigger value="ateliers">Ateliers</RetroTabsTrigger>
           <RetroTabsTrigger value="sculpts">Sculpts</RetroTabsTrigger>
         </RetroTabsList>
@@ -149,8 +143,8 @@ export default function MarketplaceWindow({
             onClick={() => setViewMode('grid')}
             className={`p-1.5 rounded transition-colors ${
               viewMode === 'grid'
-                ? 'bg-white/10 text-white/90'
-                : 'text-white/40 hover:text-white/70'
+                ? 'bg-foreground/10 text-foreground/90'
+                : 'text-muted-foreground hover:text-foreground/80'
             }`}
             title="Grid View"
           >
@@ -162,8 +156,8 @@ export default function MarketplaceWindow({
             onClick={() => setViewMode('list')}
             className={`p-1.5 rounded transition-colors ${
               viewMode === 'list'
-                ? 'bg-white/10 text-white/90'
-                : 'text-white/40 hover:text-white/70'
+                ? 'bg-foreground/10 text-foreground/90'
+                : 'text-muted-foreground hover:text-foreground/80'
             }`}
             title="List View"
           >
@@ -174,7 +168,7 @@ export default function MarketplaceWindow({
         </div>
       </div>
 
-      <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
+      <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-panel">
         <div className="p-4">
           {ateliers.length === 0 && !isLoading ? (
             <RetroEmptyState 
@@ -191,10 +185,10 @@ export default function MarketplaceWindow({
               {ateliers.map((atelier: Atelier) => {
                 const infoContent = (
                   <>
-                    <div className="text-sm text-white/95 font-medium">
+                    <div className="text-sm text-foreground/95 font-medium">
                       {atelier.title} | @{atelier.author?.slice(0, 8)}
                     </div>
-                    <div className="flex gap-1 justify-center items-center text-xs text-white/70">
+                    <div className="flex gap-1 justify-center items-center text-xs text-muted-foreground">
                       <SuiLogo />
                       {formatSuiPrice(atelier.price)}
                     </div>
@@ -229,7 +223,7 @@ export default function MarketplaceWindow({
                     <RetroListThumbnail
                       src={atelier.url || undefined}
                       alt={atelier.title}
-                      fallback={<div className="w-full h-full bg-[#0f0f0f] animate-pulse" />}
+                      fallback={<div className="w-full h-full bg-panel-deep animate-pulse" />}
                     />
                     <RetroListInfo
                       title={atelier.title}
@@ -248,7 +242,7 @@ export default function MarketplaceWindow({
           </div>
         </Tabs.Content>
 
-        <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
+        <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-panel">
           <div className="p-4">
             {sculpts.length === 0 && !isLoading ? (
               <RetroEmptyState 
@@ -265,7 +259,7 @@ export default function MarketplaceWindow({
                 {sculpts.map((sculpt: Sculpt) => {
                   const totalPrice = MARKETPLACE_CONFIG.calculateTotal(sculpt.price);
                   const infoContent = (
-                    <div className="flex flex-col text-xs text-white/90">
+                    <div className="flex flex-col text-xs text-foreground/90">
                       <span className="font-semibold">Sculpt #{sculpt.id.slice(0, 8)}</span>
                       <span>Creator: {sculpt.creator.substring(0, 6)}...{sculpt.creator.slice(-4)}</span>
                       <span className="flex gap-1 items-center justify-center mt-1">
@@ -301,8 +295,8 @@ export default function MarketplaceWindow({
                         src={sculpt.photoBlobId ? `/api/image-proxy?blobId=${sculpt.photoBlobId}` : undefined}
                         alt={`Sculpt #${sculpt.id.slice(0, 8)}`}
                         fallback={
-                          <div className="w-full h-full flex items-center justify-center bg-neutral-800/50">
-                            <p className="text-white/40 text-[10px] font-mono uppercase tracking-wider">IMAGE</p>
+                          <div className="w-full h-full flex items-center justify-center bg-panel-deep/80">
+                            <p className="text-muted-foreground text-[10px] font-mono uppercase tracking-wider">IMAGE</p>
                           </div>
                         }
                       />

@@ -3,12 +3,16 @@
  * Documentation: https://seal-docs.wal.app/UsingSeal/
  */
 import { SealClient, DemType } from '@mysten/seal';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import type { ClientWithCoreApi } from '@mysten/sui/client';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { Transaction } from '@mysten/sui/transactions';
 import { SEAL_CONFIG, getSealKeyServers } from '@/config/seal';
 import { EUREKA_PACKAGE_ID } from '@/utils/transactions';
 
-type SuiJsonRpcClient = any;
+const SEAL_GRPC_URLS: Record<'testnet' | 'mainnet', string> = {
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+};
 
 export interface SealEncryptionResult {
   encryptedBlob: Blob;
@@ -27,32 +31,26 @@ export interface SealEncryptionOptions {
   ownerAddress?: string;
 }
 
-/**
- * Get or create SealClient instance
- * Note: Seal SDK uses old @mysten/sui.js, we need to create a compatible client
- */
-let sealClientInstance: SealClient | null = null;
+const sealClients: Partial<Record<'testnet' | 'mainnet', SealClient>> = {};
 
 function getSealClient(network: 'testnet' | 'mainnet' = 'testnet'): SealClient {
-  if (!sealClientInstance) {
-    // Get key servers from config
+  if (!sealClients[network]) {
     const keyServers = getSealKeyServers(network);
     const serverConfigs = keyServers.map(server => ({
       objectId: server.objectId,
       weight: server.weight,
     }));
 
-    console.log('🔐 Initializing Seal Client with servers:', 
+    console.log('🔐 Initializing Seal Client with servers:',
       keyServers.map(s => s.provider).join(', ')
     );
 
-    // Create a fresh SuiClient instance for Seal SDK
-    // Seal SDK uses old @mysten/sui.js API
-    const suiClient = new SuiClient({ 
-      url: getFullnodeUrl(network) 
-    }) as SuiJsonRpcClient;
+    const suiClient = new SuiGrpcClient({
+      network,
+      baseUrl: SEAL_GRPC_URLS[network],
+    });
 
-    sealClientInstance = new SealClient({
+    sealClients[network] = new SealClient({
       suiClient,
       serverConfigs,
       verifyKeyServers: SEAL_CONFIG.verifyKeyServers,
@@ -60,7 +58,7 @@ function getSealClient(network: 'testnet' | 'mainnet' = 'testnet'): SealClient {
     });
   }
 
-  return sealClientInstance;
+  return sealClients[network]!;
 }
 
 /**
@@ -131,17 +129,12 @@ export async function encryptModelFile(
       sculptId: options.sculptId,
     };
 
-    // Prepare Seal encryption parameters
-    // packageId: The Move package ID (contract namespace)
-    // IMPORTANT: Use EUREKA_PACKAGE_ID because seal_approve is in the Eureka package
-    // Seal uses IBE (Identity-Based Encryption) where packageId is the namespace
-    const sealPackageId = EUREKA_PACKAGE_ID;
-    // sculptId is already a valid hex string (without 0x prefix)
+    // Seal IBE namespace must match the Eureka package that exposes `seal_approve` (same as `EUREKA_PACKAGE_ID`).
     const sealId = options.sculptId;
-    
+
     console.log('🔐 Encrypting with Seal SDK...', {
       dataSize: fileData.length,
-      packageId: sealPackageId,
+      packageId: EUREKA_PACKAGE_ID,
       id: sealId,
       idLength: sealId.length,
       atelierId: options.atelierId,
@@ -151,7 +144,7 @@ export async function encryptModelFile(
     const { encryptedObject, key } = await sealClient.encrypt({
       demType: DemType.AesGcm256,
       threshold: 1, // Number of key servers needed to decrypt
-      packageId: sealPackageId, // Contract package ID for namespace
+      packageId: EUREKA_PACKAGE_ID,
       id: sealId, // Resource identifier (timestamp or unique ID)
       data: fileData,
       aad: new TextEncoder().encode(JSON.stringify(metadata)),
@@ -166,7 +159,7 @@ export async function encryptModelFile(
 
     console.log('✅ Seal encryption completed', {
       resourceId,
-      packageId: sealPackageId,
+      packageId: EUREKA_PACKAGE_ID,
       originalSize: file.size,
       encryptedSize: encryptedBlob.size,
       compressionRatio: (encryptedBlob.size / file.size * 100).toFixed(2) + '%',
@@ -212,7 +205,7 @@ export async function encryptModelFile(
  * This function will be called to register the encrypted resource with Seal
  */
 export async function createSealResource(
-  suiClient: SuiClient | SuiJsonRpcClient,
+  suiClient: ClientWithCoreApi,
   transaction: Transaction,
   encryptedBlobId: string,
   ownerAddress: string
@@ -234,7 +227,7 @@ export async function createSealResource(
  * This will be called when adding a printer to the whitelist
  */
 export async function grantPrinterAccess(
-  suiClient: SuiClient | SuiJsonRpcClient,
+  suiClient: ClientWithCoreApi,
   transaction: Transaction,
   resourceId: string,
   printerAddress: string

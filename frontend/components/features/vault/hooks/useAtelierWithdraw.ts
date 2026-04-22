@@ -1,7 +1,9 @@
-import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useCurrentClient, useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react';
 import { useState } from 'react';
-import { withdrawAtelierPool, ATELIER_TYPE, PACKAGE_ID } from '@/utils/transactions';
-import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
+import { withdrawAtelierPool, PACKAGE_ID } from '@/utils/transactions';
+import { isTransactionSuccessful, getTransactionError, getEffectsResultDigest } from '@/utils/transaction-helpers';
+import { listAllOwnedObjectsByType } from '@/lib/list-owned-objects';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
 
 interface UseAtelierWithdrawProps {
   atelierId: string;
@@ -12,9 +14,9 @@ interface UseAtelierWithdrawProps {
 export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAtelierWithdrawProps) {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const currentAccount = useCurrentAccount();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
 
   const fetchPoolCap = async () => {
     if (!currentAccount?.address) {
@@ -26,24 +28,18 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
 
     try {
       // Fetch all AtelierPoolCap objects owned by the user
-      const { data: objects } = await suiClient.getOwnedObjects({
-        owner: currentAccount.address,
-        filter: {
-          StructType: `${PACKAGE_ID}::atelier::AtelierPoolCap<${PACKAGE_ID}::atelier::ATELIER>`
-        },
-        options: {
-          showContent: true,
-        },
-      });
+      const objects = await listAllOwnedObjectsByType(
+        suiClient,
+        currentAccount.address,
+        `${PACKAGE_ID}::atelier::AtelierPoolCap<${PACKAGE_ID}::atelier::ATELIER>`
+      );
 
-      // Find the PoolCap that matches this pool
       for (const object of objects) {
-        if (!object.data?.content) continue;
-        const content = object.data.content as any;
-        const capPoolId = content.fields?.pool_id;
-        
+        const fields = moveObjectFields(object.json);
+        const capPoolId = String(pickField(fields, 'pool_id', 'poolId') ?? '');
+
         if (capPoolId === poolId) {
-          return object.data.objectId;
+          return object.objectId;
         }
       }
 
@@ -80,42 +76,29 @@ export function useAtelierWithdraw({ atelierId, poolId, onStatusChange }: UseAte
 
       const tx = withdrawAtelierPool(poolCapId, atelierId, poolId, poolAmount, currentAccount.address);
 
-      return new Promise<boolean>((resolve) => {
-        signAndExecuteTransaction(
-          {
-            transaction: tx as any,
-            chain: 'sui:testnet',
-          },
-          {
-            onSuccess: (result) => {
-              if (isTransactionSuccessful(result)) {
-                const txHash = result?.digest ? ` (tx: ${result.digest})` : '';
-                onStatusChange?.('success', `Withdrawal successful!${txHash}`, result?.digest);
-                resolve(true);
-              } else {
-                const txError = getTransactionError(result);
-                const errorMsg = txError || 'Transaction execution failed';
-                setError(errorMsg);
-                onStatusChange?.('error', errorMsg);
-                setIsWithdrawing(false);
-                resolve(false);
-              }
-            },
-            onError: (error) => {
-              console.error("Transaction failed:", error);
-              const finalErrorMsg = (error.message || 'Withdrawal failed')
-                .toLowerCase().includes('rejected')
-                  ? 'Transaction cancelled by user'
-                  : error.message || 'Withdrawal failed';
-              
-              setError(finalErrorMsg);
-              onStatusChange?.('error', finalErrorMsg);
-              setIsWithdrawing(false);
-              resolve(false);
-            },
-          }
-        );
-      });
+      try {
+        const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+        if (isTransactionSuccessful(result)) {
+          const digest = getEffectsResultDigest(result);
+          const txHash = digest ? ` (tx: ${digest})` : '';
+          onStatusChange?.('success', `Withdrawal successful!${txHash}`, digest);
+          return true;
+        }
+        const txError = getTransactionError(result);
+        const errorMsg = txError || 'Transaction execution failed';
+        setError(errorMsg);
+        onStatusChange?.('error', errorMsg);
+        return false;
+      } catch (error) {
+        console.error('Transaction failed:', error);
+        const msg = error instanceof Error ? error.message : 'Withdrawal failed';
+        const finalErrorMsg = msg.toLowerCase().includes('rejected')
+          ? 'Transaction cancelled by user'
+          : msg;
+        setError(finalErrorMsg);
+        onStatusChange?.('error', finalErrorMsg);
+        return false;
+      }
     } catch (error) {
       console.error("Error in handleWithdraw:", error);
       const errorMessage = 'Withdrawal failed';

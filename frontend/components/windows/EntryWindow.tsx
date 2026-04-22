@@ -1,7 +1,9 @@
-import { ConnectButton, useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { retroButtonStyles } from '@/styles/components';
+import { ConnectButton } from '@mysten/dapp-kit-react/ui';
+import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react';
 import { useState, useEffect } from 'react';
 import { mintMembership, PACKAGE_ID } from '@/utils/transactions';
+import { dAppKit } from '@/lib/dapp-kit';
+import { getExecutedTransactionDigest } from '@/lib/transaction-result';
 import { WindowName } from '@/components/features/window-manager';
 import KioskSelector from '@/components/features/entry/components/KioskSelector';
 
@@ -20,9 +22,8 @@ interface EntryWindowProps {
 export default function EntryWindow({ onDragStart , walletStatus, setWalletStatus}: EntryWindowProps) {
   // Wallet and NFT states
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
-  // const [walletStatus, setWalletStatus] = useState<WalletStatus>('disconnected');
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const suiClient = useCurrentClient();
+  const dKit = useDAppKit();
 
   // User input states
   const [username, setUsername] = useState('');
@@ -83,17 +84,13 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
     }
 
     try {
-      const { data: objects } = await suiClient.getOwnedObjects({
+      const { objects } = await suiClient.listOwnedObjects({
         owner: currentAccount.address,
-        filter: {
-          StructType: MEMBERSHIP_TYPE
-        },
-        options: {
-          showType: true,
-        }
+        type: MEMBERSHIP_TYPE,
+        limit: 1,
       });
 
-      if (objects && objects.length > 0) {
+      if (objects.length > 0) {
         setWalletStatus('connected-with-nft');
         setIsMinting(false);
         return true;
@@ -115,42 +112,30 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
 
     try {
       setIsMinting(true);
-      const tx = await mintMembership(username, description);
+      const tx = mintMembership(username, description);
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: async (result) => {
-            setDigest(result.digest);
-            
-            // Check NFT ownership after transaction
-            setTimeout(async () => {
-              const hasNFT = await checkNFTOwnership();
-              
-              // Retry up to 3 times if NFT is not found
-              if (!hasNFT) {
-                let attempts = 0;
-                const maxAttempts = 3;
-                const retryInterval = setInterval(async () => {
-                  const found = await checkNFTOwnership();
-                  attempts++;
-                  
-                  if (found || attempts >= maxAttempts) {
-                    clearInterval(retryInterval);
-                  }
-                }, 2000);
-              }
-            }, 2000);
-          },
-          onError: (error) => {
-            console.error("Transaction failed:", error);
-            setIsMinting(false);
-          }
+      const result = await dKit.signAndExecuteTransaction({ transaction: tx });
+      setDigest(getExecutedTransactionDigest(result));
+
+      setTimeout(async () => {
+        const hasNFT = await checkNFTOwnership();
+
+        if (!hasNFT) {
+          let attempts = 0;
+          const maxAttempts = 3;
+          const retryInterval = setInterval(async () => {
+            const found = await checkNFTOwnership();
+            attempts++;
+
+            if (found || attempts >= maxAttempts) {
+              clearInterval(retryInterval);
+              if (!found) setIsMinting(false);
+            }
+          }, 2000);
+        } else {
+          setIsMinting(false);
         }
-      );
+      }, 2000);
     } catch (error) {
       console.error('Error in handleInitializeOS:', error);
       setIsMinting(false);
@@ -289,7 +274,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-[#1a1a1a] bg-opacity-90 backdrop-blur-sm">
+    <div className="flex flex-col h-full bg-panel/95 backdrop-blur-sm text-foreground">
       {/* Background Image */}
       <div className={`absolute inset-0 z-0 ${walletStatus === 'connected-with-nft' ? 'opacity-100' : 'opacity-20'}`}>
         <img
@@ -303,39 +288,9 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
       <div className="relative z-10 flex flex-col h-full p-6">
         {/* Connect Button Area */}
         <div className="flex justify-end mb-8">
-          <ConnectButton 
-            style={{
-              ...retroButtonStyles.button,
-              backgroundColor: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
-              background: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
-              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)'}`,
-              color: '#ffffff',
-              fontWeight: 'bold',
-              padding: '8px 16px',
-              backdropFilter: walletStatus === 'disconnected' ? 'blur(4px)' : 'none',
-              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 10px rgba(0, 0, 0, 0.5)',
-            }}
-            onMouseOver={e => Object.assign(e.currentTarget.style, {
-              ...retroButtonStyles.buttonHover,
-              backgroundColor: walletStatus === 'disconnected' ? 'rgba(0, 0, 0, 0.3)' : '#1a1a1a !important',
-              background: walletStatus === 'disconnected' ? 'rgba(0, 0, 0, 0.3)' : '#1a1a1a !important',
-              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.8)'}`,
-              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 15px rgba(0, 0, 0, 0.7)',
-            })}
-            onMouseOut={e => Object.assign(e.currentTarget.style, {
-              ...retroButtonStyles.button,
-              backgroundColor: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
-              background: walletStatus === 'disconnected' ? 'transparent' : '#000000 !important',
-              border: `2px solid ${walletStatus === 'disconnected' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)'}`,
-              color: '#ffffff',
-              fontWeight: 'bold',
-              padding: '8px 16px',
-              backdropFilter: walletStatus === 'disconnected' ? 'blur(4px)' : 'none',
-              boxShadow: walletStatus === 'disconnected' ? 'none' : '0 0 10px rgba(0, 0, 0, 0.5)',
-            })}
-            connectText="CONNECT_WALLET"
-            className="retro-button"
-          />
+          <span className="retro-connect-host">
+            <ConnectButton instance={dAppKit} />
+          </span>
         </div>
 
         {/* Terminal Display Area */}
@@ -344,9 +299,9 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
             <div className="terminal-text whitespace-pre-wrap">
               {typingText}
               {typingComplete && (walletStatus === 'disconnected' || (walletStatus === 'connected-no-nft' && inputStage === 'confirm')) && (
-                <span className={`inline-block w-2 h-5 bg-white ml-1 align-middle ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
+                <span className={`inline-block w-2 h-5 bg-foreground ml-1 align-middle ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
               )}
-              {!typingComplete && <span className="text-white">█</span>}
+              {!typingComplete && <span className="text-foreground">█</span>}
             </div>
           )}
 
@@ -355,18 +310,18 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
             <div className="mt-4">
               {inputStage !== 'confirm' && (
                 <>
-                  <div className="text-white mb-2 font-bold">
+                  <div className="text-foreground mb-2 font-bold">
                     &gt; {inputStage === 'username' ? 'ENTER YOUR CODENAME:' : 'ENTER YOUR BIO:'}
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-400">&gt;</span>
-                    <span className="text-white ml-2">
+                    <span className="text-foreground ml-2">
                       {inputStage === 'username' ? username : description}
-                      <span className={`inline-block w-2 h-5 bg-white ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
+                      <span className={`inline-block w-2 h-5 bg-foreground ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
                     </span>
                   </div>
                   {inputStage === 'username' && (
-                    <div className="mt-2 text-xs text-white/50">
+                    <div className="mt-2 text-xs text-muted-foreground">
                       &gt; {username.length === 0 ? 'WAITING FOR INPUT...' : 
                           username.length < 3 ? 'MINIMUM LENGTH NOT MET (3-20 CHARACTERS)' : 
                           username.length > 20 ? 'MAXIMUM LENGTH EXCEEDED (3-20 CHARACTERS)' : 
@@ -374,7 +329,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
                     </div>
                   )}
                   {inputStage === 'description' && (
-                    <div className="mt-2 text-xs text-white/50">
+                    <div className="mt-2 text-xs text-muted-foreground">
                       &gt; {description.length === 0 ? 'WAITING FOR INPUT...' : 
                           description.length > 100 ? 'MAXIMUM LENGTH EXCEEDED (MAX 100 CHARACTERS)' : 
                           'VALID BIO FORMAT'}
@@ -414,7 +369,7 @@ export default function EntryWindow({ onDragStart , walletStatus, setWalletStatu
             </div>
             
             {/* Welcome Message - Bottom */}
-            <div className="text-green-400 text-base mb-8 bg-black px-4 py-2 flex items-center">
+            <div className="text-green-400 text-base mb-8 bg-panel-deep px-4 py-2 flex items-center">
               &gt; IDENTITY VERIFIED - WELCOME BACK
               <span className={`inline-block w-2 h-5 bg-green-400 ml-2 ${showCursor ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}></span>
             </div>

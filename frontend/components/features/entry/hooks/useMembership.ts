@@ -1,36 +1,25 @@
 import { useState } from 'react';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react';
 import { mintMembership } from '@/utils/transactions';
+import { getExecutedTransactionDigest } from '@/lib/transaction-result';
 
 export function useMembership(onSuccess?: () => void) {
   const currentAccount = useCurrentAccount();
+  const dAppKit = useDAppKit();
   const [digest, setDigest] = useState('');
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const handleInitializeOS = async (username: string, description: string) => {
     if (!currentAccount?.address || !username.trim() || !description.trim()) return;
 
     try {
-      const tx = await mintMembership(username, description);
+      const tx = mintMembership(username, description);
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            console.log("Transaction successful:", result);
-            setDigest(result.digest);
-            onSuccess?.();
-          },
-          onError: (error) => {
-            console.error("Transaction failed:", error);
-          }
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      console.log('Transaction successful:', result);
+      setDigest(getExecutedTransactionDigest(result));
+      onSuccess?.();
     } catch (error) {
-      console.error('Error in handleInitializeOS:', error);
+      console.error('Transaction failed:', error);
     }
   };
 

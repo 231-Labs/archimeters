@@ -2,90 +2,410 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Scrollbar styles - aligned with Retro UI system */
+/* Theme tokens — html[data-theme] + localStorage key archimeters-theme */
+html {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #f6f6f6;
+  --panel: #1a1a1a;
+  --panel-deep: #0f0f0f;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: rgba(255, 255, 255, 0.45);
+  --accent: #333333;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.2);
+  --border-strong: rgba(255, 255, 255, 0.4);
+  --border-highlight: rgba(255, 255, 255, 0.28);
+  --border-shadow: rgba(0, 0, 0, 0.85);
+  --border-top: rgba(255, 255, 255, 0.3);
+  --border-left: rgba(255, 255, 255, 0.3);
+  --border-right: rgba(16, 16, 16, 1);
+  --border-bottom: rgba(16, 16, 16, 1);
+  --scroll-bg: #0a0a0a;
+  --scroll-border-tl: #000000;
+  --scroll-border-br: #2a2a2a;
+  --scroll-track-bg: #0a0a0a;
+  --scroll-track-border-tl: #000000;
+  --scroll-track-border-br: #1a1a1a;
+  --scroll-thumb-bg: #1a1a1a;
+  --scroll-thumb-hover-bg: #252525;
+  --scroll-raised-t: #444444;
+  --scroll-raised-t-hover: #555555;
+  --scroll-raised-b: #000000;
+  --dapp-kit-bg: rgba(239, 231, 231, 0.1);
+  --dapp-kit-border: rgba(255, 255, 255, 0.3);
+  --dapp-kit-shadow: rgba(173, 169, 169, 0.4);
+  --dapp-kit-text: #ffffff;
+  --dapp-kit-hover-bg: rgba(255, 255, 255, 0.2);
+  --dapp-kit-hover-border: rgba(255, 255, 255, 0.6);
+  --menu-bg: #141414;
+  --menu-border: rgba(255, 255, 255, 0.2);
+  --menu-shadow: rgba(255, 255, 255, 0.05);
+  --menu-item: #ffffff;
+  --menu-item-hover: rgba(255, 255, 255, 0.1);
+  --header-bg: linear-gradient(
+    to right,
+    rgba(79, 79, 79, 0.6),
+    rgba(49, 49, 49, 0.6),
+    rgba(19, 19, 19, 0.6),
+    rgba(11, 11, 11, 0.6)
+  );
+  --grain-opacity: 0.05;
+  /* Cosmic desktop + canvas (Noise / Galaxy / SpaceRoom read via getComputedStyle) */
+  --cosmic-root-gradient: linear-gradient(185deg, #0b0d18 0%, #0a0c14 42%, #060608 100%);
+  --cosmic-sky-top: #0c0e1a;
+  --cosmic-sky-mid: #101528;
+  --cosmic-sky-bottom: #07080c;
+  --cosmic-star-cool-rgb: 140, 180, 255;
+  --cosmic-star-warm-rgb: 255, 245, 220;
+  --cosmic-scanline-rgb: 0, 210, 255;
+  --cosmic-scanline-alpha: 0.14;
+  --artlier-border: rgba(255, 255, 255, 0.1);
+  --artlier-shadow: rgba(255, 255, 255, 0.05);
+  --window-shadow: rgba(255, 255, 255, 0.05);
+  --retro-raised-t: #2a2a2a;
+  --retro-raised-l: #2a2a2a;
+  --retro-raised-b: #0a0a0a;
+  --retro-raised-r: #0a0a0a;
+  --retro-inset-t: #0a0a0a;
+  --retro-inset-l: #0a0a0a;
+  --retro-inset-b: #333333;
+  --retro-inset-r: #333333;
+  --panel-header-t: #1f1f1f;
+  --panel-header-b: #1a1a1a;
+  /* OS window chrome */
+  --window-body: #070707;
+  --window-frame-hi: #5c5c5c;
+  --window-frame-lo: #030303;
+  --window-title-start: #111111;
+  --window-title-end: #1d1d1d;
+  --window-title-border-tl: #0a0a0a;
+  --window-title-border-br: #2c2c2c;
+  --window-content-bg: #151515;
+  --window-content-bevel-tl: #000000;
+  --window-content-bevel-br: #3a3a3a;
+  --window-close-border: #555555;
+  --window-close-bg: #1a1a1a;
+  --window-close-hover-shadow: inset 1px 1px 0 #777777, inset -1px -1px 0 #000000;
+  --window-active-ring: rgba(255, 255, 255, 0.2);
+  --window-inactive-title-start: #0e0e0e;
+  --window-inactive-title-end: #161616;
+  --window-resize-grip: #777777;
+  --tabs-bar-bg: #0c0c0c;
+  --tabs-bar-border: #050505;
+  /* @mysten/dapp-kit-core Lit: maps to --dapp-kit-* via --primary, --popover, etc. */
+  --connect-primary-bg: #0e0e0e;
+  --connect-primary-fg: #f2f2f2;
+  --connect-secondary-bg: #1a1a1a;
+  --connect-secondary-fg: #ececec;
+  --connect-border: rgba(255, 255, 255, 0.32);
+  --connect-destructive: #c85850;
+  --connect-ring: rgba(255, 255, 255, 0.45);
+  /* RetroButton — 3D raised; values follow dark chrome */
+  --retro-btn-primary-bg: #1a1a1a;
+  --retro-btn-primary-hover-bg: #222222;
+  --retro-btn-primary-fg: #f6f6f6;
+  --retro-btn-primary-disabled-bg: #0f0f0f;
+  --retro-btn-primary-disabled-fg: #555555;
+  --retro-btn-primary-raised-tl: #444444;
+  --retro-btn-primary-raised-br: #000000;
+  --retro-btn-primary-pressed-tl: #000000;
+  --retro-btn-primary-pressed-br: #444444;
+  --retro-btn-primary-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.08),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --retro-btn-primary-shadow-pressed: inset 1px 1px 3px rgba(0, 0, 0, 0.8),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+  --retro-btn-primary-disabled-border-tl: #1a1a1a;
+  --retro-btn-primary-disabled-border-br: #0a0a0a;
+  --retro-btn-secondary-bg: #2a2a2a;
+  --retro-btn-secondary-hover-bg: #333333;
+  --retro-btn-secondary-fg: #cccccc;
+  --retro-btn-secondary-disabled-bg: #1a1a1a;
+  --retro-btn-secondary-disabled-fg: #444444;
+  --retro-btn-secondary-raised-tl: #444444;
+  --retro-btn-secondary-raised-br: #000000;
+  --retro-btn-secondary-pressed-tl: #000000;
+  --retro-btn-secondary-pressed-br: #444444;
+  --retro-btn-secondary-shadow: var(--retro-btn-primary-shadow);
+  --retro-btn-secondary-shadow-pressed: var(--retro-btn-primary-shadow-pressed);
+  --retro-btn-secondary-disabled-border-tl: #1a1a1a;
+  --retro-btn-secondary-disabled-border-br: #0a0a0a;
+  --retro-btn-danger-bg: #3a1515;
+  --retro-btn-danger-hover-bg: #4a1a1a;
+  --retro-btn-danger-fg: #ff6b6b;
+  --retro-btn-danger-disabled-bg: #1a0a0a;
+  --retro-btn-danger-disabled-fg: #664444;
+  --retro-btn-danger-raised-tl: #5a3030;
+  --retro-btn-danger-raised-br: #1a0808;
+  --retro-btn-danger-pressed-tl: #1a0808;
+  --retro-btn-danger-pressed-br: #5a3030;
+  --retro-btn-danger-shadow: var(--retro-btn-primary-shadow);
+  --retro-btn-danger-shadow-pressed: var(--retro-btn-primary-shadow-pressed);
+  --retro-btn-danger-disabled-border-tl: #2a1010;
+  --retro-btn-danger-disabled-border-br: #0a0404;
+  /* Bottom dock */
+  --dock-bg: rgba(10, 10, 10, 0.4);
+  --dock-surface: linear-gradient(
+    to right,
+    rgba(49, 49, 49, 0.2),
+    rgba(29, 29, 29, 0.2),
+    rgba(19, 19, 19, 0.2),
+    rgba(11, 11, 11, 0.2)
+  );
+  --dock-border: rgba(255, 255, 255, 0.1);
+  --dock-shadow: inset -2px -2px 0 #000, inset 2px 2px 0 #555;
+  --dock-blur: blur(2px);
+  --dock-tooltip-bg: rgba(14, 14, 14, 0.94);
+  --dock-tooltip-fg: rgba(248, 248, 246, 0.95);
+  --dock-tooltip-border: rgba(255, 255, 255, 0.14);
+  --dock-tooltip-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --dock-focus-ring: rgba(255, 255, 255, 0.35);
+  --dock-icon-hover-bg: rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --background: #e4e4e0;
+  --foreground: #141414;
+  --panel: #f8f8f5;
+  --panel-deep: #ebeae4;
+  --muted: rgba(0, 0, 0, 0.04);
+  --muted-foreground: rgba(0, 0, 0, 0.45);
+  --accent: #d2d0c8;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.25);
+  --border-highlight: rgba(255, 255, 255, 0.8);
+  --border-shadow: rgba(0, 0, 0, 0.15);
+  --border-top: rgba(255, 255, 255, 0.9);
+  --border-left: rgba(255, 255, 255, 0.85);
+  --border-right: rgba(0, 0, 0, 0.22);
+  --border-bottom: rgba(0, 0, 0, 0.22);
+  --scroll-bg: #dcdcd6;
+  --scroll-border-tl: #b0b0a8;
+  --scroll-border-br: #f8f8f4;
+  --scroll-track-bg: #dcdcd6;
+  --scroll-track-border-tl: #a8a8a0;
+  --scroll-track-border-br: #ecece8;
+  --scroll-thumb-bg: #b8b8b0;
+  --scroll-thumb-hover-bg: #a8a8a0;
+  --scroll-raised-t: #f5f5f0;
+  --scroll-raised-t-hover: #ffffff;
+  --scroll-raised-b: #6a6a62;
+  --dapp-kit-bg: rgba(0, 0, 0, 0.06);
+  --dapp-kit-border: rgba(0, 0, 0, 0.2);
+  --dapp-kit-shadow: rgba(0, 0, 0, 0.12);
+  --dapp-kit-text: #141414;
+  --dapp-kit-hover-bg: rgba(0, 0, 0, 0.08);
+  --dapp-kit-hover-border: rgba(0, 0, 0, 0.35);
+  --menu-bg: #ecece8;
+  --menu-border: rgba(0, 0, 0, 0.15);
+  --menu-shadow: rgba(0, 0, 0, 0.08);
+  --menu-item: #141414;
+  --menu-item-hover: rgba(0, 0, 0, 0.06);
+  --header-bg: linear-gradient(
+    to right,
+    rgba(220, 220, 210, 0.92),
+    rgba(200, 200, 190, 0.9),
+    rgba(180, 180, 172, 0.88),
+    rgba(160, 160, 152, 0.86)
+  );
+  --grain-opacity: 0.035;
+  /* Day cosmic: 偏灰的薄霧／塵埃帶，少藍 */
+  --cosmic-root-gradient: linear-gradient(
+    168deg,
+    #ebe9e4 0%,
+    #e2e0db 30%,
+    #d9d7d2 55%,
+    #d4d2cc 78%,
+    #e0ded8 100%
+  );
+  --cosmic-sky-top: #eceae5;
+  --cosmic-sky-mid: #dddad4;
+  --cosmic-sky-bottom: #cfc9c2;
+  --cosmic-star-cool-rgb: 118, 122, 128;
+  --cosmic-star-warm-rgb: 252, 250, 246;
+  --cosmic-scanline-rgb: 108, 112, 116;
+  --cosmic-scanline-alpha: 0.07;
+  --artlier-border: rgba(0, 0, 0, 0.12);
+  --artlier-shadow: rgba(0, 0, 0, 0.06);
+  --window-shadow: rgba(0, 0, 0, 0.08);
+  --retro-raised-t: #ffffff;
+  --retro-raised-l: #fdfdfc;
+  --retro-raised-b: #b8b6b0;
+  --retro-raised-r: #b8b6b0;
+  --retro-inset-t: #b8b6b0;
+  --retro-inset-l: #b8b6b0;
+  --retro-inset-b: #fdfdfc;
+  --retro-inset-r: #fdfdfc;
+  --panel-header-t: #f2f0ea;
+  --panel-header-b: #e8e6e0;
+  --window-body: #f4f2ec;
+  --window-frame-hi: #ffffff;
+  --window-frame-lo: #b0ae9e;
+  --window-title-start: #ebe9e2;
+  --window-title-end: #e0ded6;
+  --window-title-border-tl: #b8b6a8;
+  --window-title-border-br: #ffffff;
+  --window-content-bg: #f8f7f2;
+  --window-content-bevel-tl: #b0ae9e;
+  --window-content-bevel-br: #ffffff;
+  --window-close-border: #9a988c;
+  --window-close-bg: #e6e4dc;
+  --window-close-hover-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #a4a296;
+  --window-active-ring: rgba(0, 0, 0, 0.18);
+  --window-inactive-title-start: #dcdad2;
+  --window-inactive-title-end: #d0cec6;
+  --window-resize-grip: #6a6860;
+  --tabs-bar-bg: #d8d6ce;
+  --tabs-bar-border: #b8b6ae;
+  --connect-primary-bg: #2a2a26;
+  --connect-primary-fg: #fafaf6;
+  --connect-secondary-bg: #e8e6de;
+  --connect-secondary-fg: #1a1a18;
+  --connect-border: rgba(0, 0, 0, 0.22);
+  --connect-destructive: #b04038;
+  --connect-ring: rgba(0, 0, 0, 0.35);
+  /* RetroButton — day mode: primary = charcoal + light text; disabled = flat panel gray */
+  --retro-btn-primary-bg: #2c2c28;
+  --retro-btn-primary-hover-bg: #383830;
+  --retro-btn-primary-fg: #fafaf6;
+  --retro-btn-primary-disabled-bg: #c8c6be;
+  --retro-btn-primary-disabled-fg: #6e6e66;
+  --retro-btn-primary-raised-tl: #f8f8f4;
+  --retro-btn-primary-raised-br: #5a5850;
+  --retro-btn-primary-pressed-tl: #6a6860;
+  --retro-btn-primary-pressed-br: #e8e8e4;
+  --retro-btn-primary-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.45),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --retro-btn-primary-shadow-pressed: inset 1px 1px 3px rgba(0, 0, 0, 0.18),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.35);
+  --retro-btn-primary-disabled-border-tl: #b0aea6;
+  --retro-btn-primary-disabled-border-br: #9a9890;
+  --retro-btn-secondary-bg: #e4e2da;
+  --retro-btn-secondary-hover-bg: #d8d6ce;
+  --retro-btn-secondary-fg: #1a1a18;
+  --retro-btn-secondary-disabled-bg: #d0cec6;
+  --retro-btn-secondary-disabled-fg: #8a8880;
+  --retro-btn-secondary-raised-tl: #ffffff;
+  --retro-btn-secondary-raised-br: #8a8880;
+  --retro-btn-secondary-pressed-tl: #8a8880;
+  --retro-btn-secondary-pressed-br: #fafaf8;
+  --retro-btn-secondary-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.65),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --retro-btn-secondary-shadow-pressed: inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.4);
+  --retro-btn-secondary-disabled-border-tl: #c0beb6;
+  --retro-btn-secondary-disabled-border-br: #a8a6a0;
+  --retro-btn-danger-bg: #c44848;
+  --retro-btn-danger-hover-bg: #d05050;
+  --retro-btn-danger-fg: #fff8f8;
+  --retro-btn-danger-disabled-bg: #d8c8c8;
+  --retro-btn-danger-disabled-fg: #8a7070;
+  --retro-btn-danger-raised-tl: #f0a0a0;
+  --retro-btn-danger-raised-br: #6a2020;
+  --retro-btn-danger-pressed-tl: #6a2020;
+  --retro-btn-danger-pressed-br: #f0a0a0;
+  --retro-btn-danger-shadow: var(--retro-btn-primary-shadow);
+  --retro-btn-danger-shadow-pressed: var(--retro-btn-primary-shadow-pressed);
+  --retro-btn-danger-disabled-border-tl: #c0b0b0;
+  --retro-btn-danger-disabled-border-br: #a89898;
+  /* Bottom dock — liquid glass / neo-morphism fusion */
+  --dock-bg: rgba(255, 255, 255, 0.15);
+  --dock-surface: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.4),
+    rgba(240, 240, 240, 0.3),
+    rgba(230, 230, 230, 0.2)
+  );
+  --dock-border: rgba(255, 255, 255, 0.4);
+  --dock-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.9);
+  --dock-blur: blur(4px);
+  --dock-tooltip-bg: rgba(255, 255, 255, 0.85);
+  --dock-tooltip-fg: rgba(28, 28, 26, 0.95);
+  --dock-tooltip-border: rgba(0, 0, 0, 0.08);
+  --dock-tooltip-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --dock-focus-ring: rgba(0, 0, 0, 0.15);
+  --dock-icon-hover-bg: rgba(255, 255, 255, 0.4);
+}
+
+/* Scrollbar — uses theme tokens */
 ::-webkit-scrollbar {
   width: 18px;
-  background: #0a0a0a;
-  /* Inset border effect consistent with RetroPanel */
-  border-top: 2px solid #000000;
-  border-left: 2px solid #000000;
-  border-bottom: 2px solid #2a2a2a;
-  border-right: 2px solid #2a2a2a;
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.8),
-              inset -1px -1px 2px rgba(255, 255, 255, 0.03);
+  background: var(--scroll-bg);
+  border-top: 2px solid var(--scroll-border-tl);
+  border-left: 2px solid var(--scroll-border-tl);
+  border-bottom: 2px solid var(--scroll-border-br);
+  border-right: 2px solid var(--scroll-border-br);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
-  /* Solid background consistent with components */
-  border-top: 1px solid #000000;
-  border-left: 1px solid #000000;
-  border-bottom: 1px solid #1a1a1a;
-  border-right: 1px solid #1a1a1a;
-  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.6);
+  background: var(--scroll-track-bg);
+  border-top: 1px solid var(--scroll-track-border-tl);
+  border-left: 1px solid var(--scroll-track-border-tl);
+  border-bottom: 1px solid var(--scroll-track-border-br);
+  border-right: 1px solid var(--scroll-track-border-br);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #1a1a1a;
-  /* 3D raised effect similar to RetroButton */
-  border-top: 2px solid #444;
-  border-left: 2px solid #444;
-  border-bottom: 2px solid #000;
-  border-right: 2px solid #000;
-  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.08),
-              inset -1px -1px 2px rgba(0, 0, 0, 0.5),
-              0 1px 2px rgba(0, 0, 0, 0.3);
+  background-color: var(--scroll-thumb-bg);
+  border-top: 2px solid var(--scroll-raised-t);
+  border-left: 2px solid var(--scroll-raised-t);
+  border-bottom: 2px solid var(--scroll-raised-b);
+  border-right: 2px solid var(--scroll-raised-b);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.12),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #252525;
-  /* Enhanced hover effect consistent with other components */
-  border-top: 2px solid #555;
-  border-left: 2px solid #555;
-  box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.12),
-              inset -1px -1px 3px rgba(0, 0, 0, 0.6),
-              0 2px 4px rgba(0, 0, 0, 0.4);
+  background-color: var(--scroll-thumb-hover-bg);
+  border-top: 2px solid var(--scroll-raised-t-hover);
+  border-left: 2px solid var(--scroll-raised-t-hover);
+  box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.18),
+    inset -1px -1px 3px rgba(0, 0, 0, 0.18), 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  /* Active press effect consistent with RetroButton */
-  background-color: #1a1a1a;
-  border-top: 2px solid #000;
-  border-left: 2px solid #000;
-  border-bottom: 2px solid #444;
-  border-right: 2px solid #444;
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8),
-              inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+  background-color: var(--scroll-thumb-bg);
+  border-top: 2px solid var(--scroll-raised-b);
+  border-left: 2px solid var(--scroll-raised-b);
+  border-bottom: 2px solid var(--scroll-raised-t);
+  border-right: 2px solid var(--scroll-raised-t);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.06);
   transform: translateY(1px);
 }
 
 ::-webkit-scrollbar-button {
   display: block;
   height: 18px;
-  background-color: #1a1a1a;
-  /* Same 3D effect as scrollbar thumb */
-  border-top: 2px solid #444;
-  border-left: 2px solid #444;
-  border-bottom: 2px solid #000;
-  border-right: 2px solid #000;
-  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.08),
-              inset -1px -1px 2px rgba(0, 0, 0, 0.5);
+  background-color: var(--scroll-thumb-bg);
+  border-top: 2px solid var(--scroll-raised-t);
+  border-left: 2px solid var(--scroll-raised-t);
+  border-bottom: 2px solid var(--scroll-raised-b);
+  border-right: 2px solid var(--scroll-raised-b);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.1),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.18);
 }
 
 ::-webkit-scrollbar-button:hover {
-  background-color: #252525;
-  border-top: 2px solid #555;
-  border-left: 2px solid #555;
+  background-color: var(--scroll-thumb-hover-bg);
+  border-top: 2px solid var(--scroll-raised-t-hover);
+  border-left: 2px solid var(--scroll-raised-t-hover);
 }
 
 ::-webkit-scrollbar-button:active {
-  background-color: #1a1a1a;
-  border-top: 2px solid #000;
-  border-left: 2px solid #000;
-  border-bottom: 2px solid #444;
-  border-right: 2px solid #444;
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8),
-              inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+  background-color: var(--scroll-thumb-bg);
+  border-top: 2px solid var(--scroll-raised-b);
+  border-left: 2px solid var(--scroll-raised-b);
+  border-bottom: 2px solid var(--scroll-raised-t);
+  border-right: 2px solid var(--scroll-raised-t);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.22),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
 }
 
 /* Animation effects */
@@ -116,24 +436,6 @@
   animation: blink 1.5s step-end infinite;
 }
 
-/* Theme colors */
-:root {
-  --background: #1A1A1A;
-  --foreground: #ffffff;
-  --accent: #333333;
-  --border-right: rgba(16, 16, 16);
-  --border-bottom: rgba(16, 16, 16);
-  --border-top: rgba(255, 255, 255, 0.3);
-  --border-left: rgb(255, 255, 255, 0.3);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1A1A1A;
-    --foreground: #ffffff;
-  }
-}
-
 body {
   color: var(--foreground);
   background: var(--background);
@@ -141,7 +443,7 @@ body {
 }
 
 .window-shadow {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px var(--window-shadow);
 }
 
 .retro-border {
@@ -150,6 +452,49 @@ body {
   border-right: 2px solid var(--border-right);
   border-bottom: 2px solid var(--border-bottom);
   border-radius: 0;
+}
+
+/* Full-viewport shell behind windows; theme-aware cosmic gradient */
+.cosmic-root {
+  background-image: var(--cosmic-root-gradient);
+  background-color: var(--background);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.dock-tray {
+  background-color: var(--dock-bg);
+  background-image: var(--dock-surface);
+  border: 1px solid var(--dock-border);
+  box-shadow: var(--dock-shadow);
+  backdrop-filter: var(--dock-blur);
+  -webkit-backdrop-filter: var(--dock-blur);
+  border-radius: 0;
+  padding: 0;
+}
+
+.dock-tooltip {
+  background: var(--dock-tooltip-bg);
+  color: var(--dock-tooltip-fg);
+  border: 1px solid var(--dock-tooltip-border);
+  box-shadow: var(--dock-tooltip-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 6px;
+}
+
+.dock-icon-hit {
+  border-radius: 8px;
+  transition: background-color 0.15s ease, transform 0.2s ease;
+}
+
+.dock-icon-hit:hover {
+  background-color: var(--dock-icon-hover-bg);
+}
+
+.dock-icon-hit:focus-visible {
+  outline: 2px solid var(--dock-focus-ring);
+  outline-offset: 2px;
 }
 
 .grain {
@@ -164,20 +509,20 @@ body {
   width: 100%;
   height: 100%;
   background-image: url('/grain.png');
-  opacity: 0.05;
+  opacity: var(--grain-opacity);
   pointer-events: none;
 }
 
 [data-dapp-kit] {
-  background-color: rgba(239, 231, 231, 0.1) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 0 20px rgba(173, 169, 169, 0.4) !important;
+  background-color: var(--dapp-kit-bg) !important;
+  border-top: 1px solid var(--dapp-kit-border) !important;
+  border-left: 1px solid var(--dapp-kit-border) !important;
+  border-right: 1px solid var(--dapp-kit-border) !important;
+  border-bottom: 1px solid var(--dapp-kit-border) !important;
+  box-shadow: 0 0 20px var(--dapp-kit-shadow) !important;
   font-family: monospace !important;
   font-size: 14px !important;
-  color: #ffffff !important;
+  color: var(--dapp-kit-text) !important;
   padding: 8px 16px !important;
   border-radius: 0 !important;
   transition: all 0.2s !important;
@@ -187,20 +532,20 @@ body {
 }
 
 [data-dapp-kit]:hover {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: var(--dapp-kit-hover-bg) !important;
+  border-color: var(--dapp-kit-hover-border) !important;
 }
 
 button[data-dapp-kit] .Text_textVariants_mono_true__2bv1ur7,
 button[data-dapp-kit] .Text_textVariants_size_sm__2bv1ur1 {
-  color: #ffffff !important;
+  color: var(--dapp-kit-text) !important;
 }
 
 /* Dropdown menu container styles */
 div[data-side="bottom"][data-align="center"][role="menu"] {
-  background-color: #141414 !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--menu-bg) !important;
+  border: 1px solid var(--menu-border) !important;
+  box-shadow: 0 0 20px var(--menu-shadow) !important;
   border-radius: 0 !important;
   padding: 4px !important;
   min-width: 200px !important;
@@ -214,7 +559,7 @@ div[data-side="bottom"][data-align="center"][role="menu"] {
 div[role="menuitem"] {
   font-family: monospace !important;
   font-size: 14px !important;
-  color: #ffffff !important;
+  color: var(--menu-item) !important;
   padding: 6px 12px !important;
   height: 28px !important;
   transition: all 0.2s !important;
@@ -231,41 +576,41 @@ div[role="menuitem"] {
 
 div[role="menuitem"] .Text_textVariants_mono_true__2bv1ur7,
 div[role="menuitem"] .Text_textVariants_size_sm__2bv1ur1 {
-  color: #ffffff !important;
+  color: var(--menu-item) !important;
 }
 
 div[role="menuitem"] svg {
   width: 12px !important;
   height: 12px !important;
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
+  fill: var(--menu-item) !important;
+  stroke: var(--menu-item) !important;
   margin-left: 8px !important;
 }
 
 div[role="menuitem"] svg path {
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
+  fill: var(--menu-item) !important;
+  stroke: var(--menu-item) !important;
 }
 
 div[role="menuitem"]:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--menu-item-hover) !important;
 }
 
 button[data-dapp-kit] svg {
   width: 12px !important;
   height: 12px !important;
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
+  fill: var(--dapp-kit-text) !important;
+  stroke: var(--dapp-kit-text) !important;
 }
 
 button[data-dapp-kit] svg path {
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
+  fill: var(--dapp-kit-text) !important;
+  stroke: var(--dapp-kit-text) !important;
 }
 
 button[data-dapp-kit] svg * {
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
+  fill: var(--dapp-kit-text) !important;
+  stroke: var(--dapp-kit-text) !important;
 }
 
 div.AccountDropdownMenu_separator__div2ql5 {
@@ -274,6 +619,154 @@ div.AccountDropdownMenu_separator__div2ql5 {
 
 .artlier-image {
   image-rendering: pixelated;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--artlier-border);
+  box-shadow: 0 0 20px var(--artlier-shadow);
+}
+
+/* Neo-Retro radix tabs (Segmented control style) */
+.tabs-bar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--tabs-bar-bg);
+  border-bottom: 1px solid var(--tabs-bar-border);
+  padding: 0.35rem 0.5rem;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.retro-tabs-list {
+  /* Handled by tabs-bar-container */
+}
+
+[data-radix-tabs-trigger] {
+  background-color: transparent;
+  color: var(--muted-foreground);
+  border: 1px solid transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+[data-radix-tabs-trigger]:hover {
+  background-color: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+}
+
+[data-radix-tabs-trigger][data-state='active'] {
+  background-color: var(--panel);
+  color: var(--foreground);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(0);
+}
+
+[data-radix-tabs-trigger]:active:not([data-state='active']) {
+  transform: translateY(1px);
+}
+
+/* dapp-kit ConnectButton / account menu — CSS variables consumed inside shadow DOM */
+.retro-connect-host,
+mysten-dapp-kit-connect-button {
+  --radius: 0px;
+  --primary: var(--connect-primary-bg);
+  --primary-foreground: var(--connect-primary-fg);
+  --secondary: var(--connect-secondary-bg);
+  --secondary-foreground: var(--connect-secondary-fg);
+  --popover: var(--menu-bg);
+  --popover-foreground: var(--menu-item);
+  --border: var(--connect-border);
+  --muted: var(--panel-deep);
+  --muted-foreground: var(--muted-foreground);
+  --accent: var(--panel);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--connect-destructive);
+  --ring: var(--connect-ring);
+  --font-sans: var(--font-space-mono), ui-monospace, monospace;
+}
+
+.retro-connect-host {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Design Publisher & upload console — beveled panels follow --retro-* tokens */
+.publisher-panel-out {
+  background-color: var(--panel);
+  border-top: 2px solid var(--retro-raised-t);
+  border-left: 2px solid var(--retro-raised-l);
+  border-bottom: 2px solid var(--retro-raised-b);
+  border-right: 2px solid var(--retro-raised-r);
+  box-shadow:
+    inset 1px 1px 2px color-mix(in srgb, var(--foreground) 7%, transparent),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.publisher-canvas-out {
+  background-color: var(--background);
+  border-top: 2px solid var(--retro-raised-t);
+  border-left: 2px solid var(--retro-raised-l);
+  border-bottom: 2px solid var(--retro-raised-b);
+  border-right: 2px solid var(--retro-raised-r);
+  box-shadow:
+    inset 1px 1px 3px color-mix(in srgb, var(--foreground) 8%, transparent),
+    inset -1px -1px 3px rgba(0, 0, 0, 0.14);
+}
+
+.publisher-inset-well {
+  background-color: var(--panel-deep);
+  border-top: 2px solid var(--retro-inset-t);
+  border-left: 2px solid var(--retro-inset-l);
+  border-bottom: 2px solid var(--retro-inset-b);
+  border-right: 2px solid var(--retro-inset-r);
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.publisher-input-embed {
+  background-color: var(--panel-deep);
+  color: var(--foreground);
+  border-top: 2px solid var(--retro-inset-t);
+  border-left: 2px solid var(--retro-inset-l);
+  border-bottom: 2px solid var(--retro-inset-b);
+  border-right: 2px solid var(--retro-inset-r);
+  box-shadow:
+    inset 2px 2px 3px rgba(0, 0, 0, 0.14),
+    inset -1px -1px 2px color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.publisher-input-embed:focus {
+  border-top-color: var(--border-strong);
+  border-left-color: var(--border-strong);
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.12),
+    0 0 0 1px var(--border-strong);
+}
+
+.publisher-progress-track {
+  background-color: var(--panel-deep);
+  border-top: 2px solid var(--retro-inset-t);
+  border-left: 2px solid var(--retro-inset-l);
+  border-bottom: 2px solid var(--retro-inset-b);
+  border-right: 2px solid var(--retro-inset-r);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* Marketplace / vault list rows */
+.retro-list-item-row {
+  background-color: var(--panel);
+  border-top: 2px solid var(--retro-raised-t);
+  border-left: 2px solid var(--retro-raised-l);
+  border-bottom: 2px solid var(--retro-raised-b);
+  border-right: 2px solid var(--retro-raised-r);
+  box-shadow:
+    inset 1px 1px 2px color-mix(in srgb, var(--foreground) 6%, transparent),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.14);
+}
+
+.retro-list-item-row:hover {
+  background-color: color-mix(in srgb, var(--panel) 86%, var(--foreground) 14%);
 }

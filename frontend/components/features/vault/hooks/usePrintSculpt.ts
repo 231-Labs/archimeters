@@ -1,4 +1,5 @@
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react';
+import { getEffectsResultDigest } from '@/utils/transaction-helpers';
 import { useState } from 'react';
 import { printSculpt } from '@/utils/transactions';
 
@@ -16,7 +17,7 @@ export function usePrintSculpt({ sculptId, printerId, kioskId, kioskCapId, onSta
   const [status, setStatus] = useState<'idle' | 'preparing' | 'printing' | 'success' | 'error'>('idle');
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
 
   const handlePrint = async (): Promise<boolean> => {
     if (!currentAccount?.address) {
@@ -46,49 +47,37 @@ export function usePrintSculpt({ sculptId, printerId, kioskId, kioskCapId, onSta
       setStatus('preparing');
       onStatusChange?.('preparing', 'Preparing print transaction...');
 
-      const tx = await printSculpt(sculptId, printerId, kioskId, kioskCapId);
-      
+      const tx = printSculpt(sculptId, printerId, kioskId, kioskCapId);
+
       setStatus('printing');
       onStatusChange?.('printing', 'Waiting for wallet approval...');
 
-      return new Promise<boolean>((resolve) => {
-        signAndExecuteTransaction(
-          {
-            transaction: tx as any,
-            chain: 'sui:testnet',
-          },
-          {
-            onSuccess: (result) => {
-              setStatus('success');
-              setTxDigest(result.digest);
-              setIsPrinting(false);
-              onStatusChange?.('success', 'Print job created successfully!', result.digest);
-              resolve(true);
-            },
-            onError: (error) => {
-              console.error("Print transaction error:", error);
-              
-              let finalErrorMsg = 'Print transaction failed';
-              const errorMsg = error.message || '';
-              
-              if (errorMsg.toLowerCase().includes('rejected') || 
-                  errorMsg.toLowerCase().includes('user rejected') ||
-                  errorMsg.toLowerCase().includes('user denied') ||
-                  errorMsg.toLowerCase().includes('cancelled')) {
-                finalErrorMsg = 'Transaction cancelled by user';
-              } else if (errorMsg) {
-                finalErrorMsg = errorMsg;
-              }
-              
-              setError(finalErrorMsg);
-              setStatus('error');
-              setIsPrinting(false);
-              onStatusChange?.('error', finalErrorMsg);
-              resolve(false);
-            }
-          }
-        );
-      });
+      try {
+        const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+        const digest = getEffectsResultDigest(result);
+        setStatus('success');
+        setTxDigest(digest);
+        setIsPrinting(false);
+        onStatusChange?.('success', 'Print job created successfully!', digest);
+        return true;
+      } catch (error) {
+        console.error('Print transaction error:', error);
+        let finalErrorMsg = 'Print transaction failed';
+        const errorMsg = error instanceof Error ? error.message : '';
+        if (errorMsg.toLowerCase().includes('rejected') ||
+            errorMsg.toLowerCase().includes('user rejected') ||
+            errorMsg.toLowerCase().includes('user denied') ||
+            errorMsg.toLowerCase().includes('cancelled')) {
+          finalErrorMsg = 'Transaction cancelled by user';
+        } else if (errorMsg) {
+          finalErrorMsg = errorMsg;
+        }
+        setError(finalErrorMsg);
+        setStatus('error');
+        setIsPrinting(false);
+        onStatusChange?.('error', finalErrorMsg);
+        return false;
+      }
     } catch (error) {
       console.error("Print failed:", error);
       const errorMsg = error instanceof Error ? error.message : 'Print preparation failed';

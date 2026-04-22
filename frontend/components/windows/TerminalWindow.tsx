@@ -6,10 +6,10 @@ import { defaultWindowConfigs } from '@/config/windows';
 const Terminal = dynamic(() => import('../features/terminal/Terminal'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full bg-black text-white font-mono">
+    <div className="flex items-center justify-center h-full bg-[var(--window-content-bg)] text-foreground font-mono">
       <div className="text-center">
-        <div className="animate-pulse text-green-400 mb-2">⚡ Loading...</div>
-        <div className="text-sm text-gray-400">Initializing terminal</div>
+        <div className="animate-pulse text-emerald-700 dark:text-green-400 mb-2">⚡ Loading...</div>
+        <div className="text-sm text-muted-foreground">Initializing terminal</div>
       </div>
     </div>
   ),
@@ -45,7 +45,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({ onClose, name }) => {
       onDragStart={() => {}}
       onClick={() => {}}
       zIndex={100}
-      className="bg-black"
+      className="bg-transparent"
     >
       <Terminal />
     </Window>

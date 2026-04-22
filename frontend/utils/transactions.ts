@@ -1,27 +1,51 @@
 import { bcs } from "@mysten/sui/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 
-// Contract addresses - Updated with simplified seal_approve (PrintJob-based auth)
-export const PACKAGE_ID = '0xc1814c4cbd4c23f306e886c7f8aace3ce1635d0a6e896b3bf35835139945d693';
-export const STATE_ID = '0x85963a4931321216f7437d2553bee6f0f5e9c84ee99365593080cc4e49eacae4'; // archimeters::State
-export const ATELIER_STATE_ID = '0x798380c7609c7baf783bfda0e605881dab053890fcfdd6b37df38de53d34416f'; // atelier::AtelierState
-export const UPGRADE_CAP = '0xafaac9c484de17c83cd7be20557fe3fb9bbd1352864f549402cc463c88f06404';
+// Contract addresses — testnet republish 2026-04-12 (tx EmhtHeTz… / 8ZLZZPb…)
+export const PACKAGE_ID = '0x51d9c918431258ae6748b50234d0da3d436e6df8e2087fa1446913e390336ab8';
+export const STATE_ID = '0x2112ac0c1f6849037d679345a63725bf04e5509fa66bc1142f75db3303e941b5'; // archimeters::State
+export const ATELIER_STATE_ID = '0xcee0db8c9506305d8946c2152619288494ae9300ea87dc5a8a7ee2b20cf76c20'; // atelier::AtelierState
+export const UPGRADE_CAP = '0xf6d985e84d86821f1d36406f346523f0cefe7d98821ca625db36714b62aa7a0d';
 
-export const ATELIER_TRANSFER_POLICY = '0x2917ca572a3a08ddd63b2c905a3e971306121781544a27c4be8cb0ab3cc321af';
-export const ATELIER_TRANSFER_POLICY_CAP = '0x51878c1f00080915eb1aec7860adeb283fb8178434c89eabfe98d180ceb78005';
-export const SCULPT_TRANSFER_POLICY = '0x9262f6a26fb1b5f57651d5019a60f83e7aebd093e7e03553c6ba681b5987eb28';
-export const SCULPT_TRANSFER_POLICY_CAP = '0xf8a24870fde03b88a0110e57ec110f716eb32217bb8ad35187de50c1254768b0';
+export const ATELIER_TRANSFER_POLICY = '0x2af0cf46dd176b491662fc452dc0e33391fda1fe0348b28dba2fb047b6cc145a';
+export const ATELIER_TRANSFER_POLICY_CAP = '0x3af7f72267333a35ef8701c72b89cd73b1d0ae9c3d3cd921805c61d9634b26e7';
+export const SCULPT_TRANSFER_POLICY = '0x3c9b8a7dc39dbbac12b40d82c0bbcd818be37d0bf59f66b59735f5f3eab71a6d';
+export const SCULPT_TRANSFER_POLICY_CAP = '0xac62a151f679dc6c594bc22b74b70a467229f737267ad6e6e24e2219e526fc86';
 
-export const MEMBERSHIP_DISPLAY = '0xf6967fbf6e6a46e32bcf0e41edaf4820db695375994c70302075c3df3261d7e6';
-export const ATELIER_DISPLAY = '0x2eb95e690958d9939d3960f52f4306c9cdd348338913a24c9b3cf3122a774346';
-export const SCULPT_DISPLAY = '0xc28077564e7ef5972741e945a3b65225d0220f7f35778b28242a46f8927ce55b';
+export const MEMBERSHIP_DISPLAY = '0xbc4a21a1dde7418cb717aaa9ce4f57babd00943fd67a0c22606c277af20253b3';
+export const ATELIER_DISPLAY = '0x3d1c0d604a31884c786e347ded0a0492c8820f0f4d4173bedf79df620c7bb5a5';
+export const SCULPT_DISPLAY = '0xeed04d30f7012e2974d22a179c1d821aa542dd6c6223c83175e4d41bccc7ee15';
 
-export const PUBLISHER_ARCHIMETERS = '0xe2aef16ac3ae67382444e9d57f5a916b5218506f626f47ae1a2b3a688f500919';
-export const PUBLISHER_ATELIER = '0xd3534970becc4469f714e6bf2a998d04878d6ec250e103e6855e49cce9c32e55';
-export const PUBLISHER_SCULPT = '0xd17920c9d31da535739ac08e8f91fa697345af1f8288dfddfedcb75d17cf4049';
-// Fresh deployment 2025-11-13
-export const EUREKA_PACKAGE_ID = '0x8852004ffc677790d0ee729aa386286cbcbc7f4f1b4aa87c50213d2acb5d678f';
-export const PRINTER_REGISTRY = '0xed250799748535bcaa187bad46f2fcd323f22d935454cef5bd724260a48a38a8';
+export const PUBLISHER_ARCHIMETERS = '0x5b07419add5738159ffc2bd45ea4be80855b92c08c6224c229d9318970dbba49';
+export const PUBLISHER_ATELIER = '0x6b6e18a792e5ae919fe6c09202c88bd5ddbb53353d9070e999c7da8c43df3001';
+export const PUBLISHER_SCULPT = '0x8ccd32f4c1a79d74d73fb1a68647bf3633de7687906ea5533a0a1d18004bbe29';
+const DEFAULT_EUREKA_ORIGINAL_ID =
+  '0x1737bb093b90783dfe0e0056df602bdfa42fc417d91fed1e02a27a88b949c3b3';
+/** `published-at` for upgraded testnet Eureka (PTB target). */
+const DEFAULT_EUREKA_MOVE_CALL_ID =
+  '0x2ed3ff62c140c87f7bbd0c408b7a67e89fbc7bd60d7e587a0407cecca9204941';
+
+const resolvedEurekaPackageId =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PACKAGE_ID) ||
+  DEFAULT_EUREKA_ORIGINAL_ID;
+
+/** Eureka `original-id`: Seal IBE namespace (must match ciphertext). Set `NEXT_PUBLIC_EUREKA_PACKAGE_ID` to override. */
+export const EUREKA_PACKAGE_ID = resolvedEurekaPackageId;
+
+/**
+ * Eureka PTB `MoveCall` package (`published-at` after an upgrade). Set `NEXT_PUBLIC_EUREKA_MOVE_CALL_PACKAGE_ID` to override.
+ * If unset and `EUREKA_PACKAGE_ID` is still the default original id, defaults to the known upgraded `published-at`; otherwise same as `EUREKA_PACKAGE_ID`.
+ */
+export const EUREKA_MOVE_CALL_PACKAGE_ID =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_MOVE_CALL_PACKAGE_ID) ||
+  (resolvedEurekaPackageId === DEFAULT_EUREKA_ORIGINAL_ID
+    ? DEFAULT_EUREKA_MOVE_CALL_ID
+    : resolvedEurekaPackageId);
+
+/** Printer registry object for Eureka. Set `NEXT_PUBLIC_EUREKA_PRINTER_REGISTRY_ID` to override. */
+export const PRINTER_REGISTRY =
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_EUREKA_PRINTER_REGISTRY_ID) ||
+  '0x3498e9fef83b29ef471d3070daf7764f3f9abcc982daa34fdf7fda9b612e9409';
 
 // Type definitions
 export const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
@@ -222,8 +246,8 @@ export const printSculpt = (
   
   // Use the new kiosk-aware functions that handle borrowing internally
   const target = payment
-    ? `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk`
-    : `${EUREKA_PACKAGE_ID}::eureka::create_print_job_from_kiosk_free`;
+    ? `${EUREKA_MOVE_CALL_PACKAGE_ID}::eureka::create_print_job_from_kiosk`
+    : `${EUREKA_MOVE_CALL_PACKAGE_ID}::eureka::create_print_job_from_kiosk_free`;
   
   const args = payment
     ? [

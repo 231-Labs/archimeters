@@ -1,12 +1,6 @@
-'use client';
-
-// import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
-import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getFullnodeUrl } from '@mysten/sui/client';
-import '@mysten/dapp-kit/dist/index.css';
+import { ClientProviders } from "@/components/ClientProviders";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,30 +17,22 @@ const spaceMono = Space_Mono({
   preload: true,
 });
 
-const networks = {
-  testnet: {
-    url: getFullnodeUrl('testnet'),
-    websocketUrl: 'wss://fullnode.testnet.sui.io:443',
-  },
-};
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const queryClient = new QueryClient();
-
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('archimeters-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);return;}if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)document.documentElement.setAttribute('data-theme','light');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} ${spaceMono.variable} font-mono antialiased`}>
-        <QueryClientProvider client={queryClient}>
-          <SuiClientProvider networks={networks} defaultNetwork="testnet">
-            <WalletProvider>
-              {children}
-            </WalletProvider>
-          </SuiClientProvider>
-        </QueryClientProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

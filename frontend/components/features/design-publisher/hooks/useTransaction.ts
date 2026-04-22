@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useDAppKit } from '@mysten/dapp-kit-react';
+import { getExecutedTransactionDigest } from '@/lib/transaction-result';
 import { createArtlier, ParameterInput } from '@/utils/transactions';
 import type { UploadResults, ParameterRules } from '../types';
 
@@ -30,7 +31,7 @@ export function useTransaction({
   onSuccess,
   onError,
 }: UseTransactionOptions) {
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const [state, setState] = useState<TransactionState>({
     transactionDigest: '',
     transactionError: '',
@@ -92,31 +93,14 @@ export function useTransaction({
         parameters
       );
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setState(prev => ({
-              ...prev,
-              transactionDigest: result.digest,
-              isProcessing: false,
-            }));
-            onSuccess?.(result.digest);
-          },
-          onError: (error) => {
-            const errorMsg = error.message || 'Transaction failed';
-            setState(prev => ({
-              ...prev,
-              transactionError: errorMsg,
-              isProcessing: false,
-            }));
-            onError?.(errorMsg);
-          }
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      const digest = getExecutedTransactionDigest(result);
+      setState(prev => ({
+        ...prev,
+        transactionDigest: digest,
+        isProcessing: false,
+      }));
+      onSuccess?.(digest);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       setState(prev => ({
@@ -126,7 +110,7 @@ export function useTransaction({
       }));
       onError?.(errorMsg);
     }
-  }, [membershipId, kioskId, kioskCapId, workName, price, parameterRules, signAndExecuteTransaction, onSuccess, onError]);
+  }, [membershipId, kioskId, kioskCapId, workName, price, parameterRules, dAppKit, onSuccess, onError]);
 
   const resetTransaction = useCallback(() => {
     setState({

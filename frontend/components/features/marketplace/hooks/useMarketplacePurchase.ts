@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useDAppKit, useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
 import { NETWORK, SCULPT_TYPE, PACKAGE_ID, SCULPT_TRANSFER_POLICY } from '@/utils/transactions';
-import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
+import { isTransactionSuccessful, getTransactionError, getEffectsResultDigest } from '@/utils/transaction-helpers';
+import { listAllOwnedObjectsByType } from '@/lib/list-owned-objects';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
 import type { KioskInfo } from '../types';
 
 export type PurchaseStatus = 'idle' | 'loading_kiosk' | 'processing' | 'success' | 'error';
@@ -19,35 +21,28 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
   const [status, setStatus] = useState<PurchaseStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
 
   const getUserKioskInfo = async (): Promise<KioskInfo | null> => {
     if (!currentAccount?.address) return null;
 
     try {
-      const { data: kioskCaps } = await suiClient.getOwnedObjects({
-        owner: currentAccount.address,
-        filter: {
-          StructType: '0x2::kiosk::KioskOwnerCap'
-        },
-        options: {
-          showContent: true,
-          showType: true,
-        }
-      });
+      const kioskCaps = await listAllOwnedObjectsByType(
+        suiClient,
+        currentAccount.address,
+        '0x2::kiosk::KioskOwnerCap'
+      );
 
-      if (kioskCaps && kioskCaps.length > 0) {
+      if (kioskCaps.length > 0) {
         const capObj = kioskCaps[0];
-        if (capObj.data?.content && 'fields' in capObj.data.content) {
-          const fields = capObj.data.content.fields as any;
-          const kioskId = fields.for || fields.kiosk_id;
-          const kioskCapId = capObj.data.objectId;
-          
-          if (kioskId && kioskCapId) {
-            return { kioskId, kioskCapId };
-          }
+        const fields = moveObjectFields(capObj.json);
+        const kioskId = String(pickField(fields, 'for', 'kiosk_id') ?? '');
+        const kioskCapId = capObj.objectId;
+
+        if (kioskId && kioskCapId) {
+          return { kioskId, kioskCapId };
         }
       }
       return null;
@@ -138,36 +133,22 @@ export function useMarketplacePurchase(): UseMarketplacePurchaseReturn {
         typeArguments: [SCULPT_TYPE],
       });
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: `sui:${NETWORK}`,
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
       setError(errorMessage);
       setStatus('error');
     }
-  }, [currentAccount?.address, suiClient, signAndExecuteTransaction]);
+  }, [currentAccount?.address, suiClient, dAppKit]);
 
   const resetStatus = useCallback(() => {
     setStatus('idle');

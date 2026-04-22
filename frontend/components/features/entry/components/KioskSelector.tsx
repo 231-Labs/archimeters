@@ -1,5 +1,6 @@
 import { useKiosk } from '../hooks/useKiosk';
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useDAppKit } from '@mysten/dapp-kit-react';
+import { getExecutedTransactionDigest } from '@/lib/transaction-result';
 import { useState } from 'react';
 
 export default function KioskSelector() {
@@ -12,7 +13,7 @@ export default function KioskSelector() {
     createKiosk, 
     selectKiosk 
   } = useKiosk();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateKiosk = async () => {
@@ -24,25 +25,17 @@ export default function KioskSelector() {
         return;
       }
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: async (result) => {
-            console.log('Kiosk created:', result.digest);
-            setTimeout(() => {
-              fetchUserKiosks();
-              setIsCreating(false);
-            }, 2000);
-          },
-          onError: (error) => {
-            console.error('Failed to create kiosk:', error);
-            setIsCreating(false);
-          }
-        }
-      );
+      try {
+        const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+        console.log('Kiosk created:', getExecutedTransactionDigest(result));
+        setTimeout(() => {
+          fetchUserKiosks();
+          setIsCreating(false);
+        }, 2000);
+      } catch (error) {
+        console.error('Failed to create kiosk:', error);
+        setIsCreating(false);
+      }
     } catch (err) {
       console.error('Error in handleCreateKiosk:', err);
       setIsCreating(false);

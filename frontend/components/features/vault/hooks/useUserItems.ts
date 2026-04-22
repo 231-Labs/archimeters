@@ -1,8 +1,9 @@
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { useState, useEffect } from 'react';
-import { KioskClient, Network } from '@mysten/kiosk';
+import { KioskClient } from '@mysten/kiosk';
 import { PACKAGE_ID } from '@/utils/transactions';
 import { extractBlobId } from '@/utils/formatters';
+import { extractObjectIdsFromMoveValue, moveObjectFields, pickField } from '@/lib/sui-object-json';
 
 export interface BaseVaultItem {
   id: string;
@@ -44,7 +45,7 @@ export interface KioskInfo {
 
 export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [items, setItems] = useState<VaultItem[]>([]);
   const [kioskInfo, setKioskInfo] = useState<KioskInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,30 +80,47 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
 
     const loadSculptsViaEvents = async () => {
       const kioskClient = new KioskClient({
-        client: suiClient as any,
-        network: Network.TESTNET,
+        client: suiClient as never,
+        network: 'testnet',
       });
 
-      const { kioskOwnerCaps, kioskIds } = await kioskClient.getOwnedKiosks({ 
-        address: currentAccount!.address 
+      // Source of truth for "my sculpts" (same pattern as ateliers from MemberShip.ateliers).
+      const { objects: membershipObjects } = await suiClient.listOwnedObjects({
+        owner: currentAccount!.address,
+        type: `${PACKAGE_ID}::archimeters::MemberShip`,
+        limit: 1,
+        include: { json: true },
       });
 
-      if (kioskOwnerCaps.length === 0 || kioskIds.length === 0) {
-        setItems([]);
+      const mFields = membershipObjects[0]
+        ? moveObjectFields(membershipObjects[0].json)
+        : null;
+      const sculpturesRaw = mFields ? pickField(mFields, 'sculptures') : undefined;
+      const membershipSculptIds = extractObjectIdsFromMoveValue(sculpturesRaw);
+
+      const { kioskOwnerCaps, kioskIds } = await kioskClient.getOwnedKiosks({
+        address: currentAccount!.address,
+      });
+
+      let currentKioskInfo: KioskInfo | null = null;
+      if (kioskOwnerCaps.length > 0 && kioskIds.length > 0) {
+        const firstKiosk = kioskOwnerCaps[0];
+        currentKioskInfo = {
+          kioskId: firstKiosk.kioskId,
+          kioskCapId: firstKiosk.objectId,
+        };
+        setKioskInfo(currentKioskInfo);
+      } else {
         setKioskInfo(null);
-        return;
       }
 
-      const firstKiosk = kioskOwnerCaps[0];
-      const currentKioskInfo: KioskInfo = {
-        kioskId: firstKiosk.kioskId,
-        kioskCapId: firstKiosk.objectId,
-      };
-      setKioskInfo(currentKioskInfo);
-
-      const allSculptIds: string[] = [];
+      const allSculptIdSet = new Set<string>(membershipSculptIds);
       const sculptToKioskMap = new Map<string, { kioskId: string; kioskCapId: string }>();
-      
+
+      // Kiosk / indexer may omit "0x" on address segments; match both forms.
+      const pkgLower = PACKAGE_ID.toLowerCase();
+      const pkgNo0x = pkgLower.replace(/^0x/, '');
+
       for (let i = 0; i < kioskIds.length; i++) {
         const kioskId = kioskIds[i];
         const kioskCapId = kioskOwnerCaps[i].objectId;
@@ -113,88 +131,77 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
             options: {
               withKioskFields: true,
               withObjects: true,
-            }
+            },
           });
 
-          const sculptsInKiosk = kioskData.items
-            .filter(item => {
-              const isSculpt = item.type?.includes('sculpt::Sculpt');
-              const isCurrentPackage = item.type?.includes(PACKAGE_ID);
-              return isSculpt && isCurrentPackage;
-            })
-            .map(item => {
-              sculptToKioskMap.set(item.objectId, { kioskId, kioskCapId });
-              return item.objectId;
-            });
-          
-          allSculptIds.push(...sculptsInKiosk);
-        } catch (singleKioskError) {
+          for (const item of kioskData.items) {
+            const t = (item.type || '').toLowerCase();
+            const isSculpt = t.includes('sculpt::sculpt');
+            const isCurrentPackage = t.includes(pkgLower) || t.includes(pkgNo0x);
+            if (!isSculpt || !isCurrentPackage) continue;
+            const oid =
+              item.objectId ||
+              (item as { id?: string }).id ||
+              (item as { object_id?: string }).object_id;
+            if (!oid) continue;
+            sculptToKioskMap.set(oid, { kioskId, kioskCapId });
+            allSculptIdSet.add(oid);
+          }
+        } catch {
           continue;
         }
       }
-      
+
       (window as any).__sculptToKioskMap = sculptToKioskMap;
+
+      const allSculptIds = Array.from(allSculptIdSet);
 
       if (allSculptIds.length === 0) {
         setItems([]);
+        if (!membershipObjects.length) {
+          setError('No Membership NFT found. Please mint your Membership first.');
+        }
         return;
       }
 
-      const results = await suiClient.multiGetObjects({
-        ids: allSculptIds,
-        options: {
-          showContent: true,
-          showType: true,
-        },
+      const { objects: sculptRows } = await suiClient.getObjects({
+        objectIds: allSculptIds,
+        include: { json: true },
       });
 
       const parsedItems: VaultItem[] = [];
 
-      for (const object of results) {
-        if (!object.data?.content) continue;
-        const content = object.data.content as any;
-        
-        const sculptKioskInfo = sculptToKioskMap.get(object.data.objectId);
-        const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo.kioskId;
-        const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo.kioskCapId;
-        
-        // Handle Option<String> for structure field
-        // Sui returns Option as {vec: ["value"]} for Some(value) or {vec: []} for None
+      for (const object of sculptRows) {
+        if (object instanceof Error) continue;
+        const fields = moveObjectFields(object.json);
+        if (!fields) continue;
+
+        const sculptKioskInfo = sculptToKioskMap.get(object.objectId);
+        const kioskId = sculptKioskInfo?.kioskId || currentKioskInfo?.kioskId || '';
+        const kioskCapId = sculptKioskInfo?.kioskCapId || currentKioskInfo?.kioskCapId || '';
+
         let structureValue = '';
-        if (content.fields.structure && typeof content.fields.structure === 'object') {
-          const structureOption = content.fields.structure as any;
-          console.log('🔍 Reading structure field:', {
-            sculptId: object.data.objectId,
-            alias: content.fields.alias,
-            structureRaw: content.fields.structure,
-            structureOption,
-            hasVec: !!structureOption.vec,
-            vecLength: structureOption.vec?.length,
-          });
-          if (structureOption.vec && Array.isArray(structureOption.vec) && structureOption.vec.length > 0) {
-            structureValue = structureOption.vec[0];
+        const structureRaw = pickField(fields, 'structure');
+        if (structureRaw && typeof structureRaw === 'object') {
+          const structureOption = structureRaw as { vec?: unknown[] };
+          if (Array.isArray(structureOption.vec) && structureOption.vec.length > 0) {
+            structureValue = String(structureOption.vec[0]);
           }
-        } else {
-          console.log('🔍 No structure field found:', {
-            sculptId: object.data.objectId,
-            alias: content.fields.alias,
-            structureExists: !!content.fields.structure,
-            structureType: typeof content.fields.structure,
-          });
         }
-        
+
+        const blueprint = String(pickField(fields, 'blueprint') ?? '');
         parsedItems.push({
-          id: object.data.objectId,
+          id: object.objectId,
           type: 'sculpt',
-          blueprint: content.fields.blueprint || '',
-          photoBlobId: extractBlobId(content.fields.blueprint) || '',
-          alias: content.fields.alias || '',
-          creator: content.fields.creator || '',
-          printed: content.fields.printed || '0',
-          glbFile: content.fields.glb_file || '', // glb_file is already a blob ID, not a URL
-          structure: structureValue, // structure is Option<String>, extract from vec if present
-          time: content.fields.time
-            ? new Date(Number(content.fields.time)).toLocaleDateString('en-CA')
+          blueprint,
+          photoBlobId: extractBlobId(blueprint) || '',
+          alias: String(pickField(fields, 'alias') ?? ''),
+          creator: String(pickField(fields, 'creator') ?? ''),
+          printed: String(pickField(fields, 'printed') ?? '0'),
+          glbFile: String(pickField(fields, 'glb_file', 'glbFile') ?? ''),
+          structure: structureValue,
+          time: pickField(fields, 'time')
+            ? new Date(Number(pickField(fields, 'time'))).toLocaleDateString('en-CA')
             : '',
           kioskId,
           kioskCapId,
@@ -207,30 +214,27 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
     };
 
     const loadAteliers = async () => {
-      const { data: objects } = await suiClient.getOwnedObjects({
+      const { objects } = await suiClient.listOwnedObjects({
         owner: currentAccount!.address,
-        filter: {
-          StructType: `${PACKAGE_ID}::archimeters::MemberShip`,
-        },
-        options: {
-          showContent: true,
-        },
+        type: `${PACKAGE_ID}::archimeters::MemberShip`,
+        limit: 1,
+        include: { json: true },
       });
 
-      if (!objects || !objects.length) {
+      if (!objects.length) {
         setError('No Membership NFT found. Please mint your Membership first.');
         setItems([]);
         return;
       }
 
-      const membership = objects[0];
-      const content = membership.data?.content as any;
-      let objectIds: string[] = content?.fields?.ateliers?.fields?.contents || [];
+      const mFields = moveObjectFields(objects[0].json);
+      const ateliersRaw = mFields ? pickField(mFields, 'ateliers') : undefined;
+      const objectIds = extractObjectIdsFromMoveValue(ateliersRaw);
       
       try {
         const kioskClient = new KioskClient({
-          client: suiClient as any,
-          network: Network.TESTNET,
+          client: suiClient as never,
+          network: 'testnet',
         });
 
         const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({ 
@@ -248,59 +252,56 @@ export function useUserItems(fieldKey: 'ateliers' | 'sculptures') {
         console.error('Error fetching kiosk info for ateliers:', err);
       }
 
-      if (!Array.isArray(objectIds)) {
-        objectIds = [];
-      }
-
       if (objectIds.length === 0) {
         setItems([]);
         return;
       }
 
-      const results = await suiClient.multiGetObjects({
-        ids: objectIds,
-        options: {
-          showContent: true,
-          showType: true,
-        },
+      const { objects: atelierRows } = await suiClient.getObjects({
+        objectIds,
+        include: { json: true },
       });
 
       const parsedItems: VaultItem[] = [];
 
-      for (const object of results) {
-        if (!object.data?.content) continue;
-        const content = object.data.content as any;
-        
-        const poolId = content.fields.pool_id || '';
+      for (const object of atelierRows) {
+        if (object instanceof Error) continue;
+        const fields = moveObjectFields(object.json);
+        if (!fields) continue;
+
+        const poolId = String(pickField(fields, 'pool_id', 'poolId') ?? '');
         let poolBalance = '0';
-        
+
         if (poolId) {
           try {
-            const poolObject = await suiClient.getObject({
-              id: poolId,
-              options: { showContent: true },
+            const { object: poolRow } = await suiClient.getObject({
+              objectId: poolId,
+              include: { json: true },
             });
-            
-            if (poolObject.data?.content) {
-              const poolContent = poolObject.data.content as any;
-              poolBalance = poolContent.fields?.balance || '0';
+            const poolFields = moveObjectFields(poolRow.json);
+            if (poolFields) {
+              poolBalance = String(pickField(poolFields, 'balance') ?? '0');
             }
           } catch (err) {
             console.error('Error fetching pool balance:', err);
           }
         }
-        
+
         parsedItems.push({
-          id: object.data.objectId,
+          id: object.objectId,
           type: 'atelier',
-          photoBlobId: content.fields.photo || '',
-          title: content.fields.name || '',
-          author: content.fields.current_owner || content.fields.original_creator || '',
-          price: content.fields.price || '',
+          photoBlobId: String(pickField(fields, 'photo') ?? ''),
+          title: String(pickField(fields, 'name') ?? ''),
+          author: String(
+            pickField(fields, 'current_owner', 'currentOwner') ??
+              pickField(fields, 'original_creator', 'originalCreator') ??
+              ''
+          ),
+          price: String(pickField(fields, 'price') ?? ''),
           pool: poolBalance,
-          poolId: poolId,
-          publish_time: content.fields.publish_time
-            ? new Date(Number(content.fields.publish_time)).toLocaleDateString('en-CA')
+          poolId,
+          publish_time: pickField(fields, 'publish_time', 'publishTime')
+            ? new Date(Number(pickField(fields, 'publish_time', 'publishTime'))).toLocaleDateString('en-CA')
             : '',
           isLoading: false,
           error: null,

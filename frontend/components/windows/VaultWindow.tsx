@@ -28,7 +28,7 @@ const ImageItem: React.FC<{
   onClick: () => void;
 }> = ({ atelier, onClick }) => {
   const infoContent = (
-    <div className="flex flex-col text-xs text-white/90">
+    <div className="flex flex-col text-xs text-foreground/90">
       {atelier.type === 'atelier' ? (
         <>
           <span className="font-semibold">{(atelier as AtelierItem).title}</span>
@@ -200,17 +200,11 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
       <Tabs.Root
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as 'ateliers' | 'sculpts')}
-        className="flex flex-col h-full bg-[#1a1a1a]"
+        className="flex flex-col h-full bg-panel text-foreground"
       >
         {/* Header with Tabs and View Mode Toggle */}
-        <div 
-          className="flex items-center justify-between bg-[#0f0f0f] px-2"
-          style={{
-            borderBottom: '2px solid #0a0a0a',
-            boxShadow: 'inset 0 -1px 2px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          <RetroTabsList className="flex-1">
+        <div className="tabs-bar-container">
+          <RetroTabsList className="flex-1 justify-start">
             <RetroTabsTrigger value="ateliers">
               Ateliers
             </RetroTabsTrigger>
@@ -225,8 +219,8 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-white/10 text-white/90'
-                  : 'text-white/40 hover:text-white/70'
+                  ? 'bg-foreground/10 text-foreground/90'
+                  : 'text-muted-foreground hover:text-foreground/80'
               }`}
               title="Grid View"
             >
@@ -238,8 +232,8 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
               onClick={() => setViewMode('list')}
               className={`p-1.5 rounded transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white/10 text-white/90'
-                  : 'text-white/40 hover:text-white/70'
+                  ? 'bg-foreground/10 text-foreground/90'
+                  : 'text-muted-foreground hover:text-foreground/80'
               }`}
               title="List View"
             >
@@ -250,14 +244,14 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
           </div>
         </div>
 
-        <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
+        <Tabs.Content value="ateliers" className="flex-1 overflow-y-auto bg-panel">
           <div className="p-4 space-y-4">
             {/* Withdraw All Button */}
             {ateliers.length > 0 && ateliers.some(a => Number((a as AtelierItem).pool) > 0) && (
               <RetroPanel className="flex items-center justify-between p-3">
                 <div>
-                  <p className="text-white/90 text-xs font-medium tracking-wide">WITHDRAW ALL EARNINGS</p>
-                  <p className="text-white/40 text-[10px] mt-1 font-mono">
+                  <p className="text-foreground/90 text-xs font-medium tracking-wide">WITHDRAW ALL EARNINGS</p>
+                  <p className="text-muted-foreground text-[10px] mt-1 font-mono">
                     Batch withdraw from all ateliers with balance
                   </p>
                 </div>
@@ -275,7 +269,7 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
             {/* Items Container */}
             <div className="relative">
               {isLoadingAteliers && !ateliers.length ? (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
                 <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : errorAteliers ? (
@@ -339,11 +333,11 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
           </div>
         </Tabs.Content>
 
-      <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-[#1a1a1a]">
+      <Tabs.Content value="sculpts" className="flex-1 overflow-y-auto bg-panel">
         <div className="p-4 space-y-4">
           <div className="relative">
             {isLoadingSculpts && !sculpts.length ? (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
               <div className="w-8 h-8 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : errorSculpts ? (
@@ -418,16 +412,16 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
 
       {/* Transaction status notification (for individual withdraws) */}
       {withdrawStatus !== 'idle' && (
-        <div className="fixed bottom-4 right-4 bg-black/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg z-50">
+        <div className="fixed bottom-4 right-4 bg-panel-deep/95 backdrop-blur-sm border border-border px-4 py-3 rounded-lg shadow-lg z-50 text-foreground">
           <div className="flex flex-col gap-2">
             {/* Processing */}
             {withdrawStatus === 'processing' && (
               <div className="flex items-center gap-3">
                 <div className="relative w-4 h-4">
-                  <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
-                  <div className="absolute inset-0 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 border-2 border-foreground/20 rounded-full" />
+                  <div className="absolute inset-0 border-2 border-foreground/50 border-t-transparent rounded-full animate-spin" />
                 </div>
-                <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Processing...'}</span>
+                <span className="text-foreground/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Processing...'}</span>
               </div>
             )}
             {/* Success */}
@@ -440,13 +434,13 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage}</span>
+                  <span className="text-foreground/90 text-sm font-mono tracking-wider">{withdrawMessage}</span>
                   {txDigest && (
                     <a
                       href={`https://suiexplorer.com/txblock/${txDigest}?network=testnet`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+                      className="text-xs text-muted-foreground hover:text-foreground/80 transition-colors underline underline-offset-2"
                     >
                       View Transaction
                     </a>
@@ -464,11 +458,12 @@ export default function VaultWindow({ initialTab }: VaultWindowProps) {
                   </svg>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-white/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Transaction failed'}</span>
+                  <span className="text-foreground/90 text-sm font-mono tracking-wider">{withdrawMessage || 'Transaction failed'}</span>
                   {/* Add close button */}
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => handleWithdrawStatusChange('idle')}
-                    className="text-xs text-white/50 hover:text-white/80 transition-colors underline self-start mt-1"
+                    className="text-xs text-muted-foreground hover:text-foreground/80 transition-colors underline self-start mt-1"
                   >
                     Close
                   </button>

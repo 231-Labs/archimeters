@@ -18,7 +18,7 @@ import { MarketplaceStatusNotification } from './MarketplaceStatusNotification';
 const GLBViewer = dynamic(() => import('@/components/3d/GLBViewer'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a]">
+    <div className="w-full h-full flex items-center justify-center bg-background">
       <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
     </div>
   ),
@@ -169,18 +169,18 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
     <RetroDetailModal isOpen={isOpen} onClose={onClose}>
       <div className="flex flex-col items-start space-y-3">
         <RetroPanel variant="inset" className="w-full">
-          <div className="aspect-square bg-[#000000] overflow-hidden relative">
+          <div className="aspect-square bg-panel-deep overflow-hidden relative">
             {show3DPreview ? (
               sculpt.glbFile ? (
                 <GLBViewer blobId={sculpt.glbFile} className="w-full h-full" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a]">
+                <div className="w-full h-full flex items-center justify-center bg-background">
                   <div className="text-center">
-                    <svg className="w-12 h-12 text-white/20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-12 h-12 text-muted-foreground opacity-50 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <p className="text-white/50 text-sm font-mono">3D MODEL NOT AVAILABLE</p>
-                    <p className="text-white/30 text-xs font-mono mt-2">This sculpt has no GLB file data</p>
+                    <p className="text-muted-foreground text-sm font-mono">3D MODEL NOT AVAILABLE</p>
+                    <p className="text-muted-foreground opacity-70 text-xs font-mono mt-2">This sculpt has no GLB file data</p>
                   </div>
                 </div>
               )
@@ -205,7 +205,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2 w-full">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">DETAILS</h4>
           <div className="space-y-1">
             <InfoField
               label="SCULPT ID"
@@ -235,34 +235,34 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
 
         <div className="grid grid-cols-2 gap-2">
           <RetroPanel variant="inset" className="p-2">
-            <p className="text-white/50 text-sm font-mono tracking-wide mb-1">CREATOR</p>
-            <p className="text-white/90 text-sm font-mono">{formatAddress(sculpt.creator)}</p>
+            <p className="text-muted-foreground text-sm font-mono tracking-wide mb-1">CREATOR</p>
+            <p className="text-foreground/90 text-sm font-mono">{formatAddress(sculpt.creator)}</p>
           </RetroPanel>
           <RetroPanel variant="inset" className="p-2">
-            <p className="text-white/50 text-sm font-mono tracking-wide mb-1">CREATED</p>
-            <p className="text-white/90 text-sm font-mono">{sculpt.time}</p>
+            <p className="text-muted-foreground text-sm font-mono tracking-wide mb-1">CREATED</p>
+            <p className="text-foreground/90 text-sm font-mono">{sculpt.time}</p>
           </RetroPanel>
         </div>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">KIOSK</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">KIOSK</h4>
           {sculpt.kioskId ? (
             <div className="space-y-1">
-              <p className="text-white/70 text-xs font-mono break-all">{sculpt.kioskId}</p>
-              <p className="text-white/40 text-[10px] font-mono">ⓘ Sculpt is stored in this Kiosk</p>
+              <p className="text-foreground/70 text-xs font-mono break-all">{sculpt.kioskId}</p>
+              <p className="text-muted-foreground/80 text-[10px] font-mono">ⓘ Sculpt is stored in this Kiosk</p>
             </div>
           ) : (
-            <p className="text-white/50 text-xs font-mono">No Kiosk assigned</p>
+            <p className="text-muted-foreground text-xs font-mono">No Kiosk assigned</p>
           )}
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">PRINT SCULPT</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">PRINT SCULPT</h4>
           
           {selectedPrinter && (
             <div className="flex items-center space-x-2 mb-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs font-medium text-white/90 font-mono">
+              <span className="text-xs font-medium text-foreground/90 font-mono">
                 {printers.find(p => p.id === selectedPrinter)?.alias || `${selectedPrinter.substring(0, 6)}...${selectedPrinter.slice(-6)}`}
               </span>
               <button
@@ -271,7 +271,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
                   setShowPrinters(true);
                   reloadPrinters();
                 }}
-                className="text-[10px] text-white/40 hover:text-white/80 underline font-mono"
+                className="text-[10px] text-muted-foreground/80 hover:text-foreground/80 underline font-mono"
               >
                 CHANGE
               </button>
@@ -286,21 +286,21 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
               {isLoadingPrinters ? (
                 <div className="p-4 text-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-sm text-white/50 font-mono">Loading printers...</p>
+                  <p className="text-sm text-muted-foreground font-mono">Loading printers...</p>
                 </div>
               ) : errorPrinters ? (
                 <div className="p-4 text-center">
                   <p className="text-sm text-red-400 font-mono">{errorPrinters}</p>
                   <button 
                     onClick={reloadPrinters}
-                    className="mt-2 text-xs text-white/40 hover:text-white/80 underline font-mono"
+                    className="mt-2 text-xs text-muted-foreground/80 hover:text-foreground/80 underline font-mono"
                   >
                     Retry
                   </button>
                 </div>
               ) : printers.length === 0 ? (
                 <div className="p-4 text-center">
-                  <p className="text-sm text-white/50 font-mono">No printers available</p>
+                  <p className="text-sm text-muted-foreground font-mono">No printers available</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-1.5">
@@ -368,11 +368,11 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
         </RetroPanel>
 
         <RetroPanel variant="inset" className="p-2">
-          <h4 className="text-white/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
+          <h4 className="text-foreground/90 text-sm font-mono tracking-wide mb-2">MARKETPLACE</h4>
           {!kioskInfo ? (
-            <p className="text-white/50 text-xs font-mono">ⓘ Kiosk not found. Please create a Kiosk first.</p>
+            <p className="text-muted-foreground text-xs font-mono">ⓘ Kiosk not found. Please create a Kiosk first.</p>
           ) : isLoadingListedStatus ? (
-            <p className="text-white/50 text-xs font-mono">Loading listing status...</p>
+            <p className="text-muted-foreground text-xs font-mono">Loading listing status...</p>
           ) : (
             <>
               <div className="flex gap-2 mb-1">
@@ -398,7 +398,7 @@ export function SculptDetailModal({ sculpt, isOpen, onClose, onUpdate, kioskInfo
                     : (isListed ? 'Delist' : 'List')}
                 </RetroButton>
               </div>
-              <p className="text-white/40 text-xs font-mono mt-1">
+              <p className="text-muted-foreground/80 text-xs font-mono mt-1">
                 ⓘ {isListed ? `Currently listed at ${formatSuiAmount(listedPrice || '0')} SUI` : 'List for sale on marketplace'}
               </p>
             </>

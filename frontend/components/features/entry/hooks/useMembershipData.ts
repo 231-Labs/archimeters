@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
 import { PACKAGE_ID } from '@/utils/transactions';
 
 interface MemberShipData {
@@ -20,7 +21,7 @@ const MEMBERSHIP_TYPE = `${PACKAGE_ID}::archimeters::MemberShip`;
 
 export function useMembershipData(): UseMembershipDataReturn {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [membership, setMembership] = useState<MemberShipData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,35 +35,40 @@ export function useMembershipData(): UseMembershipDataReturn {
 
     try {
       setIsLoading(true);
-      const { data: membershipObjects } = await suiClient.getOwnedObjects({
+      const { objects: membershipObjects } = await suiClient.listOwnedObjects({
         owner: currentAccount.address,
-        filter: {
-          StructType: MEMBERSHIP_TYPE
-        },
-        options: {
-          showContent: true,
-          showType: true,
-        }
+        type: MEMBERSHIP_TYPE,
+        limit: 1,
+        include: { json: true },
       });
 
-      if (!membershipObjects || membershipObjects.length === 0) {
+      if (!membershipObjects.length) {
         setMembership(null);
         setIsLoading(false);
         return;
       }
 
       const membership = membershipObjects[0];
-      const content = membership.data?.content;
-      if (!content || typeof content !== 'object' || !('fields' in content)) {
+      const fields = moveObjectFields(membership.json);
+      if (!fields) {
         throw new Error('Invalid membership data');
       }
 
-      const fields = content.fields as any;
+      const ateliersRaw = pickField(fields, 'ateliers') as Record<string, unknown> | undefined;
+      const atelierContents =
+        ateliersRaw &&
+        typeof ateliersRaw === 'object' &&
+        'fields' in ateliersRaw &&
+        typeof (ateliersRaw as { fields?: unknown }).fields === 'object' &&
+        (ateliersRaw as { fields?: { contents?: unknown } }).fields !== null
+          ? ((ateliersRaw as { fields: { contents?: unknown[] } }).fields.contents ?? [])
+          : [];
+
       setMembership({
-        id: membership.data?.objectId || '',
-        ateliers: fields.ateliers?.fields?.contents || [],
-        username: fields.username || '',
-        description: fields.description || ''
+        id: membership.objectId || '',
+        ateliers: Array.isArray(atelierContents) ? atelierContents.map(String) : [],
+        username: String(pickField(fields, 'username') ?? ''),
+        description: String(pickField(fields, 'description') ?? ''),
       });
       setIsLoading(false);
     } catch (error) {

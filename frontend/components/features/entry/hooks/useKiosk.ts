@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
+import { listAllOwnedObjectsByType } from '@/lib/list-owned-objects';
+import { moveObjectFields, pickField } from '@/lib/sui-object-json';
 
 export interface KioskInfo {
   kioskId: string;
@@ -10,7 +12,7 @@ export interface KioskInfo {
 
 export function useKiosk() {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
   const [kiosks, setKiosks] = useState<KioskInfo[]>([]);
   const [selectedKiosk, setSelectedKiosk] = useState<KioskInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,57 +30,45 @@ export function useKiosk() {
     setError(null);
 
     try {
-      // Fetch KioskOwnerCaps owned by the user
-      const { data: kioskCaps } = await suiClient.getOwnedObjects({
-        owner: currentAccount.address,
-        filter: {
-          StructType: '0x2::kiosk::KioskOwnerCap'
-        },
-        options: {
-          showContent: true,
-          showType: true,
-        }
-      });
+      const kioskCaps = await listAllOwnedObjectsByType(
+        suiClient,
+        currentAccount.address,
+        '0x2::kiosk::KioskOwnerCap'
+      );
 
-      if (!kioskCaps || kioskCaps.length === 0) {
+      if (!kioskCaps.length) {
         setKiosks([]);
         setSelectedKiosk(null);
         return;
       }
 
-      // Extract kiosk information
       const kioskInfos: KioskInfo[] = [];
-      
+
       for (const capObj of kioskCaps) {
-        if (capObj.data?.content && 'fields' in capObj.data.content) {
-          const fields = capObj.data.content.fields as any;
-          const kioskId = fields.for || fields.kiosk_id;
-          const kioskCapId = capObj.data.objectId;
+        const fields = moveObjectFields(capObj.json);
+        const kioskId = String(pickField(fields, 'for', 'kiosk_id') ?? '');
+        const kioskCapId = capObj.objectId;
 
-          if (kioskId) {
-            try {
-              // Fetch Kiosk details to get item count
-              const kioskObj = await suiClient.getObject({
-                id: kioskId,
-                options: {
-                  showContent: true,
-                }
-              });
+        if (kioskId) {
+          try {
+            const { object: kioskRow } = await suiClient.getObject({
+              objectId: kioskId,
+              include: { json: true },
+            });
 
-              let itemCount = 0;
-              if (kioskObj.data?.content && 'fields' in kioskObj.data.content) {
-                const kioskFields = kioskObj.data.content.fields as any;
-                itemCount = kioskFields.item_count || 0;
-              }
+            let itemCount = 0;
+            const kioskFields = moveObjectFields(kioskRow.json);
+            const rawCount = pickField(kioskFields, 'item_count', 'itemCount');
+            if (typeof rawCount === 'number') itemCount = rawCount;
+            else if (typeof rawCount === 'string') itemCount = Number(rawCount) || 0;
 
-              kioskInfos.push({
-                kioskId,
-                kioskCapId,
-                itemCount,
-              });
-            } catch (err) {
-              console.error(`Error fetching kiosk ${kioskId}:`, err);
-            }
+            kioskInfos.push({
+              kioskId,
+              kioskCapId,
+              itemCount,
+            });
+          } catch (err) {
+            console.error(`Error fetching kiosk ${kioskId}:`, err);
           }
         }
       }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo } from 'react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit-react';
 import * as THREE from 'three';
 import { ParametricViewer } from '@/components/features/design-publisher/components/pages/ParametricViewer';
 import { AtelierMintLayout } from './AtelierMintLayout';
@@ -128,37 +128,37 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
       onToggle={() => setGenerateStl(prev => !prev)} 
     />
   ) : (
-    <div className="flex items-center gap-2 px-3 py-2 bg-black/20 border border-white/10 rounded">
-      <svg className="w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="flex items-center gap-2 px-3 py-2 bg-foreground/5 border border-border rounded">
+      <svg className="w-4 h-4 text-muted-foreground/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
         />
       </svg>
-      <span className="text-white/40 text-xs font-mono">STL export not available for animated artworks</span>
+      <span className="text-muted-foreground text-xs font-mono">STL export not available for animated artworks</span>
     </div>
   );
 
   const tooltipComponent = mintButtonState.disabled ? (
-    <div className="absolute bottom-full left-1/3 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+    <div className="absolute bottom-full left-1/3 transform -translate-x-1/2 mb-2 px-3 py-2 bg-panel-deep/95 backdrop-blur-sm rounded-lg shadow-lg border border-border whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-foreground">
       <div className="flex items-center gap-2">
         {!currentAccount && (
-          <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )}
         {currentAccount && !hasMembership && (
-          <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
           </svg>
         )}
         {currentAccount && hasMembership && suiBalance < BigInt(atelier?.price || 0) && (
-          <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )}
-        <span className="text-sm font-mono text-white/90">{mintButtonState.tooltip}</span>
+        <span className="text-sm font-mono text-foreground/90">{mintButtonState.tooltip}</span>
       </div>
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-black/90 border-r border-b border-white/10"></div>
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-panel-deep/95 border-r border-b border-border"></div>
     </div>
   ) : null;
 
@@ -217,16 +217,16 @@ export function AtelierMintCore({ atelier, onOpenWindow, onBack }: AtelierMintCo
           <div className="w-full h-full relative">
             <ParametricViewer {...viewerProps} />
             {/* Artwork type indicator */}
-            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm px-3 py-1.5 border border-white/20 rounded">
+            <div className="absolute top-3 right-3 bg-panel-deep/90 backdrop-blur-sm px-3 py-1.5 border border-border rounded text-foreground">
               <div className="flex items-center gap-2">
                 {isPrintable ? (
                   <>
-                    <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                       />
                     </svg>
-                    <span className="text-white/80 text-[10px] font-mono uppercase tracking-wide">3D Printable</span>
+                    <span className="text-foreground/80 text-[10px] font-mono uppercase tracking-wide">3D Printable</span>
                   </>
                 ) : (
                   <>

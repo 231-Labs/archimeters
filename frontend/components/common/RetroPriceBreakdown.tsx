@@ -16,9 +16,9 @@ export function RetroPriceBreakdown({ priceInMist, className = '' }: RetroPriceB
   const royaltyPercentage = MARKETPLACE_CONFIG.getRoyaltyPercentage();
 
   return (
-    <div className={`font-mono text-xs ${className}`}>
+    <div className={`font-mono text-xs text-foreground ${className}`}>
       <div className="space-y-1">
-        <div className="flex justify-between items-center text-white/70">
+        <div className="flex justify-between items-center text-muted-foreground">
           <span>Item Price</span>
           <div className="flex items-center gap-1">
             <SuiLogo width={8} height={10} />
@@ -26,7 +26,7 @@ export function RetroPriceBreakdown({ priceInMist, className = '' }: RetroPriceB
           </div>
         </div>
         
-        <div className="flex justify-between items-center text-white/70">
+        <div className="flex justify-between items-center text-muted-foreground">
           <span>Royalty ({royaltyPercentage}%)</span>
           <div className="flex items-center gap-1">
             <SuiLogo width={8} height={10} />
@@ -34,15 +34,9 @@ export function RetroPriceBreakdown({ priceInMist, className = '' }: RetroPriceB
           </div>
         </div>
         
-        <div 
-          className="my-1"
-          style={{
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-          }}
-        />
+        <div className="my-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         
-        <div className="flex justify-between items-center text-white/90 font-semibold">
+        <div className="flex justify-between items-center text-foreground/90 font-semibold">
           <span>Total</span>
           <div className="flex items-center gap-1">
             <SuiLogo width={8} height={10} />

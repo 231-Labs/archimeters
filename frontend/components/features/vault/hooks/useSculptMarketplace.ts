@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import { useDAppKit, useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react';
 import { Transaction } from '@mysten/sui/transactions';
 import { SCULPT_TYPE, PACKAGE_ID } from '@/utils/transactions';
-import { KioskClient, KioskTransaction, Network } from '@mysten/kiosk';
-import { isTransactionSuccessful, getTransactionError } from '@/utils/transaction-helpers';
+import { KioskClient, KioskTransaction } from '@mysten/kiosk';
+import { isTransactionSuccessful, getTransactionError, getEffectsResultDigest } from '@/utils/transaction-helpers';
 
 const KIOSK_PACKAGE = '0x2';
 
@@ -23,9 +23,9 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
   const [status, setStatus] = useState<MarketplaceStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txDigest, setTxDigest] = useState<string | null>(null);
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const dAppKit = useDAppKit();
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClient = useCurrentClient();
 
   const listSculpt = async (
     sculptId: string,
@@ -45,8 +45,8 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setError(null);
 
       const kioskClient = new KioskClient({
-        client: suiClient as any,
-        network: Network.TESTNET,
+        client: suiClient as never,
+        network: 'testnet',
       });
 
       const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
@@ -73,33 +73,17 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
 
       kioskTx.finalize();
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-              if (onSuccessCallback) {
-                onSuccessCallback();
-              }
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to list sculpt';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+        onSuccessCallback?.();
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to list sculpt';
       setError(errorMessage);
@@ -124,8 +108,8 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
       setError(null);
 
       const kioskClient = new KioskClient({
-        client: suiClient as any,
-        network: Network.TESTNET,
+        client: suiClient as never,
+        network: 'testnet',
       });
 
       const { kioskOwnerCaps } = await kioskClient.getOwnedKiosks({
@@ -151,33 +135,17 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
 
       kioskTx.finalize();
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-              if (onSuccessCallback) {
-                onSuccessCallback();
-              }
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to delist sculpt';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+        onSuccessCallback?.();
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delist sculpt';
       setError(errorMessage);
@@ -242,30 +210,16 @@ export function useSculptMarketplace(): UseSculptMarketplaceReturn {
 
       tx.transferObjects([purchased[0]], currentAccount.address);
 
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-          chain: 'sui:testnet',
-        },
-        {
-          onSuccess: (result) => {
-            setTxDigest(result.digest);
-            
-            if (isTransactionSuccessful(result)) {
-              setStatus('success');
-            } else {
-              const txError = getTransactionError(result);
-              setError(txError || 'Transaction execution failed');
-              setStatus('error');
-            }
-          },
-          onError: (err) => {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
-            setError(errorMessage);
-            setStatus('error');
-          },
-        }
-      );
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
+      setTxDigest(getEffectsResultDigest(result));
+
+      if (isTransactionSuccessful(result)) {
+        setStatus('success');
+      } else {
+        const txError = getTransactionError(result);
+        setError(txError || 'Transaction execution failed');
+        setStatus('error');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to purchase sculpt';
       setError(errorMessage);
