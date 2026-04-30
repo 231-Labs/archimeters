@@ -5,6 +5,10 @@ import * as THREE from 'three';
 import { mintSculpt } from '@/utils/transactions';
 import { convertParamsToChain } from '@/utils/parameterOffset';
 import { encryptModelFile, SEAL_CONFIG } from '@/utils/seal';
+import {
+  isMintDebugStlDownloadEnabled,
+  triggerMintDebugStlDownload,
+} from '@/utils/debugMintStlDownload';
 import { MintStatus, Atelier, UseSculptMintOptions, SceneRefs, ExportFormat } from '../types';
 import { useKiosk } from '@/components/features/entry/hooks';
 
@@ -138,8 +142,8 @@ export const useSculptMint = ({
         throw new Error('3D scene not ready');
       }
 
-      // IMPORTANT: Capture screenshot BEFORE changing mint status
-      // Once mintStatus changes, the UI switches and the renderer may be unmounted
+      // IMPORTANT: Screenshot (and mesh exports below) BEFORE changing mint status.
+      // Once mintStatus !== 'idle', the mint console replaces the viewer and the scene is cleared.
       renderer.render(scene, camera);
       await new Promise(requestAnimationFrame);
       
@@ -148,9 +152,17 @@ export const useSculptMint = ({
       const blob = await (await fetch(dataUrl)).blob();
       const screenshotFile = new File([blob], `${atelier.title}_screenshot_${Date.now()}.png`, { type: 'image/png' });
 
-      // Export GLB BEFORE changing mint status
+      // Export GLB and STL BEFORE changing mint status. Once mintStatus !== 'idle',
+      // AtelierMintCore renders MintStatusConsole only and unmounts ParametricViewer,
+      // which clears the Three.js scene — STL exported later would be empty (0 triangles).
       const baseName = `${atelier.title}_${Date.now()}`;
       const glbFile = await exportScene(scene, baseName, 'glb');
+
+      let stlFileCaptured: File | null = null;
+      if (generateStl) {
+        console.log('🏗️ Generating STL while scene is still mounted...');
+        stlFileCaptured = await exportScene(scene, baseName, 'stl');
+      }
 
       // NOW we can change the status and show the progress console
       // Reset steps
@@ -183,11 +195,16 @@ export const useSculptMint = ({
       let stlBlobId: string | null = null;
       let sealResourceId: string | null = null;
       
-      if (generateStl) {
+      if (generateStl && stlFileCaptured) {
         updateStepStatus('upload', 'processing', 'upload-stl');
-        console.log('🏗️ Generating STL file for printing...');
-        const stlFile = await exportScene(scene, baseName, 'stl');
-        
+        const stlFile = stlFileCaptured;
+
+        if (isMintDebugStlDownloadEnabled()) {
+          console.log('🔧 DEBUG STL mint: downloading pre-Seal file to your Downloads folder');
+          triggerMintDebugStlDownload(stlFile, `${baseName}_mint_debug_before_seal.stl`);
+          await new Promise((r) => setTimeout(r, 350));
+        }
+
         // SEAL ENCRYPTION for STL
         let fileToUpload: File | Blob = stlFile;
         let encrypted = false;
@@ -236,6 +253,17 @@ export const useSculptMint = ({
         } catch (error) {
             console.error('⚠️ Seal encryption failed, uploading unencrypted STL:', error);
           }
+        }
+
+        if (isMintDebugStlDownloadEnabled()) {
+          const postName = encrypted
+            ? `${baseName}_mint_debug_after_seal_ciphertext.bin`
+            : `${baseName}_mint_debug_after_seal_plain.stl`;
+          console.log('🔧 DEBUG STL mint: downloading post-Seal payload:', postName);
+          const postBlob =
+            fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], postName);
+          triggerMintDebugStlDownload(postBlob, postName);
+          await new Promise((r) => setTimeout(r, 350));
         }
 
         // Upload STL (encrypted or unencrypted)
